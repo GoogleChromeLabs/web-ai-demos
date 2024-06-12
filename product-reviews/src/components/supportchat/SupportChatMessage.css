@@ -1,0 +1,46 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.chat-message {
+	display: flex;
+    background-color: white;
+	width: 80%;
+	border-radius: 4px;
+	padding: 8px;
+}
+
+.chat-message-system {
+	align-self: flex-start;
+    background-color: white;
+    flex-direction: row;	
+}
+
+.chat-message-user {
+	align-self: flex-end;
+    background-color: #c5d7f9;
+    flex-direction: row-reverse;	
+}
+
+.name {
+	color: #1967d2;
+	font-size: .9rem;
+	transform: translateY(4px);
+}
+
+.chat-bubble {
+	flex-grow: 1;
+}
+
+.chat-message > svg {
+	margin: 4px;
+	fill: #1967d2;
+}
+
+.chat-bubble-message {
+	border-top: 1px solid lightgrey;
+	opacity: 0.7;
+	margin-top: 8px;
+	padding-top: 8px;
+}

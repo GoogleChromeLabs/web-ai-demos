@@ -1,0 +1,14 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.chat-contents {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;	
+	padding: 4px;
+	flex-grow: 1;
+	flex-shrink: 1;
+	overflow: auto;
+}

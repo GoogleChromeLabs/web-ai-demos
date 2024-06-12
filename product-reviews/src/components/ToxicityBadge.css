@@ -1,0 +1,24 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.badge {
+  display: inline-block;
+  padding: 0.01rem 0.5rem;
+  margin: 0.5rem;
+  width: 6.5ch;
+  border-radius: 4rem;
+  background-color: var(--background-color);
+}
+
+/* TODO dry with sentiment badge code */
+.badge.not-toxic {
+  --background-color: rgba(17, 255, 0, 0.422);
+  color: #178708;
+}
+
+.badge.toxic {
+  --background-color: rgb(255 0 0 / 21%);
+  color: #e70000;
+}

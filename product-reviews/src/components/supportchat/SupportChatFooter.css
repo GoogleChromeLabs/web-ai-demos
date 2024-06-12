@@ -1,0 +1,33 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.chat-footer {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.send-button {
+	align-self: flex-end;
+	text-align: center;
+	display: flex;
+    align-items: center;
+}
+
+.send-button-label {
+	padding-left: .6rem;
+}
+
+.user-message textarea {
+	width: 100%;
+	border-radius: 8px;
+	/* border: none; */
+	resize: none;
+	/* outline: none; */
+}
+
+.icon {
+    fill: #1867d2;
+}

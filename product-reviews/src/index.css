@@ -1,0 +1,129 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  /* TODO use CSS variables for colors */
+  /* font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; */
+  font-family: 'Google Sans', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+  font-variation-settings: 'GRAD' 0;
+  line-height: 1.5;
+  font-weight: 400;
+  color: rgb(66, 63, 63);
+  background-color: white;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  font-weight: 500;
+}
+
+h1 {
+  font-size: 2.8em;
+  line-height: 1.1;
+}
+
+.toxic-warning-wrapper {
+  color: red;
+  font-size: .85rem;
+  height: 3rem;
+  line-height: 1.2;
+  padding: 1ch 1ch 1ch 11rem;
+}
+
+.post-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  transform: translateY(-1rem);
+}
+
+button {
+  border-radius: 3px;
+  border: 1px solid #1967d2;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1967d2;
+  color: white;
+  margin: .4rem 0;
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.25s;
+}
+button:hover {
+  border-color: #0a51b5;
+  background-color: #0a51b5;
+}
+button:focus,
+button:focus-visible {
+  outline:none;
+}
+
+textarea {
+  --padding-h: 1.5ch;
+  height: 5lh;
+  font-family: inherit;
+  box-sizing: border-box;
+  overflow-y: scroll;
+  padding: var(--padding-h) 2ch;
+  border-radius: 0.4rem;
+  text-align: left;
+  line-height: 2.5ch;
+  margin: 0;
+  width: 100%;
+  resize: none;
+  border: none;
+  display: block;
+  background: rgba(25, 102, 210, 0.05);
+  caret-color: rgb(25, 103, 210);
+  outline: transparent 1.8px solid;
+  transition: outline 0.2s linear, background-color 0.1s linear;
+  font-size: inherit;
+}
+
+textarea:hover {
+  cursor: pointer;
+  background: rgba(25, 102, 210, 0.08);
+  outline: rgb(25, 103, 210) 1.8px solid;
+}
+
+textarea:focus-visible {
+  cursor: text;
+  outline: rgb(25, 103, 210) 1.8px solid;
+  background: rgba(25, 102, 210, 0.08);
+}
+
+.product-overview {
+  display: flex;
+  justify-content: center;
+  margin-top: 5rem;
+}
+
+.product-overview > div {
+  padding: 0 1rem;
+}

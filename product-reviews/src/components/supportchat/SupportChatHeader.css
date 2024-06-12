@@ -1,0 +1,110 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.chat-header-translation {
+	padding: .4rem 0;
+    border-bottom: solid 1px #9daee2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-header h1 {
+	flex-grow: 1;
+	font-size: 24px;
+}
+/* 
+.chat-header > div {
+	align-self: center;
+} */
+
+.auto-translate-control {
+	display: flex;
+    align-items: center;
+	transform: translateY(1px);
+}
+
+#language-selector {
+	padding: 1ch;
+    border-radius: 8px;
+    border: solid 1px whitesmoke;
+    cursor: pointer;
+    margin-left: .6rem;
+	font-size: 1rem;
+}
+
+.label {
+	font-size: 1rem;
+}
+
+.toggle-switch {
+	position: relative;
+	display: inline-block;
+	width: 40px;
+	height: 24px;
+	margin: 10px;
+  }
+  
+  .toggle-switch .toggle-input {
+	display: none;
+  }
+  
+  .toggle-switch .toggle-label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 40px;
+	height: 24px;
+	background-color: red;
+	border-radius: 34px;
+	cursor: pointer;
+	transition: background-color 0.3s;
+  }
+  
+  .toggle-switch .toggle-label::before {
+	content: "";
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	top: 2px;
+	left: 2px;
+	background-color: #fff;
+	box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.3);
+	transition: transform 0.3s;
+  }
+  
+  .toggle-switch .toggle-input:checked + .toggle-label {
+	background-color: #1967d2;
+  }
+  
+  .toggle-switch .toggle-input:checked + .toggle-label::before {
+	transform: translateX(16px);
+  }
+  
+  .toggle-switch.light .toggle-label {
+	background-color: #BEBEBE;
+  }
+  
+  .toggle-switch.light .toggle-input:checked + .toggle-label {
+	background-color: #9B9B9B;
+  }
+  
+  .toggle-switch.light .toggle-input:checked + .toggle-label::before {
+	transform: translateX(6px);
+  }
+  
+  .toggle-switch.dark .toggle-label {
+	background-color: #4B4B4B;
+  }
+  
+  .toggle-switch.dark .toggle-input:checked + .toggle-label {
+	background-color: #717171;
+  }
+  
+  .toggle-switch.dark .toggle-input:checked + .toggle-label::before {
+	transform: translateX(16px);
+  }
+

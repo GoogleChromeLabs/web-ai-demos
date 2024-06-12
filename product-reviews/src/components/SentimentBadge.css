@@ -1,0 +1,28 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.badge {
+  display: inline-block;
+  padding: 0.01rem 0.5rem;
+  margin: 0.5rem;
+  width: 6.5ch;
+  border-radius: 4rem;
+  background-color: var(--background-color);
+}
+
+.badge.positive {
+  --background-color: rgba(17, 255, 0, 0.422);
+  color: #178708;
+}
+
+.badge.negative {
+  --background-color: rgb(255 0 0 / 21%);
+  color: #e70000;
+}
+
+.badge.unknown {
+  --background-color: #33333519;
+  color: #333335;
+}

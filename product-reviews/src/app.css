@@ -1,0 +1,118 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#app {
+  /* TODO use CSS variables for colors */
+  max-width: 970px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+h1 {
+  margin: 0 0 1rem 0;
+}
+
+.my-review-card {
+  padding: 0.8rem 0;
+  display: flex;
+  text-align: left;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.summary-reviews-wrapper {
+    background: #41cf463d;
+    padding: .5rem 1rem;
+    border-radius: 1rem;
+    margin: 1rem 0;
+    color: #213621;
+}
+
+.reviews {
+  max-width: 970px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.test-accuracy-server {
+  width: 28rem;
+  transform: translate(256px, -18px);
+  background: #fff8417a;
+  padding: 0 .4rem 0 0;
+  color: #645800d9;
+}
+
+.specs-wrapper > div {
+  padding: .4rem 0;
+}
+
+.product-wrapper {
+  padding: 0 2rem 0 0;
+}
+.price {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.spec-label {
+  font-weight: 800;
+  width: 6rem !important;
+  flex: 1;
+}
+
+.my-user {
+  width: 11rem;
+}
+
+.old-price {
+  text-decoration: line-through;
+    opacity: .6;
+    font-weight: 300;
+}
+
+.product-img {
+  border-radius: 8%;
+}
+
+.my-review-wrapper {
+  width: 44rem;
+}
+
+.my-review {
+  flex: 6;
+}
+
+.debug-zone {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1rem;
+  width: 100%;
+  background: #00800074;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 800;
+}
+
+.debug-zone button {
+  margin: 0 0.5rem;
+  background-color: #008000b3;
+  font-weight: 800;
+}
+
+.gen-ai-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.support-chat-button {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+}

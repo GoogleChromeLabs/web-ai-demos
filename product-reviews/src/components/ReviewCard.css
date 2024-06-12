@@ -1,0 +1,24 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.review-card {
+  padding: 0.8rem 0;
+  display: flex;
+  text-align: left;
+  flex-direction: row;
+  align-items: flex-start;
+  /* justify-content: space-between; */
+}
+
+.user {
+  width: 11rem;
+}
+
+.review {
+  flex: 6;
+  max-width: 32rem;
+}
+
+/* TODO 32rem */

@@ -1,0 +1,23 @@
+{
+  "name": "io-proto",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.2.1",
+    "@mediapipe/tasks-genai": "^0.10.12",
+    "@tensorflow/tfjs": "^4.17.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.17.0",
+    "@xenova/transformers": "^2.16.0",
+    "preact": "^10.19.5"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.8.1",
+    "vite": "^5.1.4"
+  }
+}

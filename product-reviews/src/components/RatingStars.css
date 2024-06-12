@@ -1,0 +1,14 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.star {
+  height: 1.1rem;
+  cursor: pointer;
+}
+
+.rating-stars-wrapper {
+  position: relative;
+  top: 4px;
+}

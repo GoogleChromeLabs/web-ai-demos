@@ -1,0 +1,43 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+
+.output-wrapper {
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .output-label {
+    flex: 1;
+    padding-left: 1.4rem;
+    padding-right: .4rem;
+  }
+  
+  .output-result {
+    width: 5.6rem;
+  }
+
+  .value {
+    text-align: center;
+    position: relative;
+  }
+  
+  .flash {
+    position: absolute;
+    color: rgb(25, 103, 210);
+    transform: translate(89px, -5px);
+    font-size: 1.2rem;
+    animation: flash 1s forwards;
+  }
+  
+  @keyframes flash {
+    0% {
+      opacity: 100;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
