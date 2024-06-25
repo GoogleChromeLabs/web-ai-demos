@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2024 Google LLC
+ SPDX-License-Identifier: Apache-2.0
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Streaming Gemini Response Demo</title>
+        <style>
+
+            :root {
+                --base-bg-color: #333;
+                --main-bg-color: #333;
+                --accent-bg-color: #b12287;
+                --fg-color: beige;            
+            }
+
+            body {
+                font-family: Roboto, Noto Sans, Noto Sans JP, Noto Sans KR, Noto Naskh Arabic, Noto Sans Thai, Noto Sans Hebrew, Noto Sans Bengali, sans-serif;;
+            }
+
+            button {
+                border-radius: 4px;
+                margin-right: 8px;
+                height: 32px;
+                background-color: #1a73e8;
+                color: #fff;
+                text-transform: uppercase;
+                font-weight: 700;
+                border: none;                
+            }
+
+            #root {
+                display: flex;
+                flex-direction: column;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            textarea {
+                box-sizing: border-box;
+                width: 100%;
+                border: none;
+                resize: none;
+                height: 100%;
+                outline: none;
+            }
+
+            .form {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+                align-items: center;
+                border: 1px solid lightgrey;
+                border-radius: 8px;
+                padding: 12px;
+            }
+
+            .loading {
+                width: 100%;
+                display: flex;
+                align-items: center;            
+            }
+
+            .loader {
+                border: 8px solid lightgrey; /* Light grey */
+                border-top: 8px solid blue; /* Blue */
+                border-radius: 50%;
+                margin: 4px;
+                width: 24px;
+                height: 24px;
+                animation: spin 2s linear infinite;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }            
+        </style>
+    </head>
+    <body>
+        <div id="root">
+            <h1>Streaming Gemini Response Demo</h1>
+            <div class="form">
+                <textarea id="user-input" placeholder="Why is the sky blue?"></textarea>
+                <button id="send">Send</button>
+            </div>
+            <div id="ai-content" class="hidden">
+                <h2>Response</h2>
+                <div id="model-response"></div>
+            </div>
+        </div>
+    </body>
+    <script>
+        const aiContentDiv = document.querySelector('#ai-content');
+        const userInputTextArea = document.querySelector('#user-input');
+        const sendButton = document.querySelector('#send');
+        const modelResponseDiv = document.querySelector('#model-response');
+
+        sendButton.addEventListener('click', () => {
+            aiContentDiv.classList.remove('hidden');
+            modelResponseDiv.textContent = '';
+
+            const userPrompt = userInputTextArea.value.trim();
+            if (userPrompt.length === 0) {
+                return;
+            }
+
+            // Build an EventSource object to the prompt endpoint, passing the user's input as the
+            // content parameter.
+            const eventSource = new EventSource(`/prompt?content=${encodeURIComponent(userPrompt)}`);
+
+            // Listen for partial responses from the server.
+            eventSource.addEventListener('chunk', (e) => {
+                modelResponseDiv.textContent += e.data;
+            });
+
+            // Listen for status changes.
+            eventSource.addEventListener('status', (e) => {
+                if (e.data === 'done') {
+                    eventSource.close();                    
+                }        
+            });
+
+            // The default behaviour for the EventSource is restarting on error. To prevent
+            // this behaviour, close the eventsource on error.
+            eventSource.addEventListener('error', (e) => {
+                console.error('error', e);
+                eventSource.close();
+            });
+        });
+    </script>
+</html>
