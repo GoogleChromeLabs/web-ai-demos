@@ -1,0 +1,1 @@
+export const OW_API_KEY = 'YOUR_API_KEY_HERE'; // Get at https://openweathermap.org/api
