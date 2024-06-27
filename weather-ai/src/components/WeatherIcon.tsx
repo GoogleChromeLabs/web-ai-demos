@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 const OW_ICON_URL = 'https://openweathermap.org/img/wn'
 
 export default function WeatherIcon({weather}: {weather: any}) {

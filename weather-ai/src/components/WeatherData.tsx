@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { ArrowDownward, ArrowUpward, Thermostat, WaterDrop } from "@mui/icons-material";
 import { WeatherResponse } from "../lib/openweather"
 import WeatherIcon from "./WeatherIcon";

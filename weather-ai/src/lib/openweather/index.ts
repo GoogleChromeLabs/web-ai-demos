@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { OW_API_KEY } from '../../env.js'
 const OW_API_URL = 'https://api.openweathermap.org/data/2.5'
 
