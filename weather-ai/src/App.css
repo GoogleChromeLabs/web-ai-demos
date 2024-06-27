@@ -1,0 +1,25 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  --accent-bg-color: #b12287;
+  --fg-color: #333;
+}
+
+.loader {
+  border: 4px solid var(--fg-color); /* Light grey */
+  border-top: 4px solid var(--accent-bg-color); /* Blue */
+  border-radius: 50%;
+  margin: 4px;
+  width: 24px;
+  height: 24px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
