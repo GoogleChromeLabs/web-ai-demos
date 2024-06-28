@@ -44,49 +44,40 @@ function App() {
     }
   }, [location]);
 
-  // On weather data change, prompt to get a weather description.
-  useEffect(() => {
+  const handleWeatherData = async (weatherData: WeatherResponse | undefined) => {
     if (weatherData && weatherData.cod === 200) {
       const prompt = `This is JSON data about the weather conditions now. \
                       ${JSON.stringify(weatherData)}. "clouds" is the percentage of the sky covered by clouds.\
                       The "sunrise" date is ${new Date(weatherData.sys.sunrise * 1000).toISOString()}, \
                       the "sunset" date is ${new Date(weatherData.sys.sunset * 1000).toISOString()},
                       and the current date is ${new Date(weatherData.dt * 1000)}. \
-                      Action: generate 1 free flow paragraph of text for a reader about the weather conditions. \
-                      Don't use bullet points. `;
+                      Action: Describe the weather conditions in one paragraph.
+                      Rules: Be concise. Don't use bullet points.`;
       const urlParams = new URLSearchParams(window.location.search);
       const streaming = urlParams.get('streaming');
 
-      if (streaming && streaming === 'true') {
-        BuiltinPrompting.createPrompting()
-          .then(async prompting => {
-            let reader = prompting.streamingPrompt(prompt);
-
-            async function handleNextChunk() {
-                const { value, done } = await reader.read();
-                if (done) {
-                  setWeatherDescriptionDone(true);
-                  return;
-                }
-                setWeatherDescription(value);
-                handleNextChunk();
+      try {
+        const promptApi = await BuiltinPrompting.createPrompting();;
+        if (streaming === 'true') {
+            const reader = await promptApi.streamingPrompt(prompt);
+            for await (const chunk of reader) {
+              setWeatherDescription(chunk);
             }
-            handleNextChunk();
-          })
-          .catch(error => {
-            console.error(error);
-            setWeatherApierror(error.message);
-          });
-      } else {
-        BuiltinPrompting.createPrompting()
-          .then(prompting => prompting.prompt(prompt))
-          .then(result => {
-            setWeatherDescription(result);
             setWeatherDescriptionDone(true);
-          })
-          .catch(error => setWeatherApierror(error.message))
+        } else {
+          const result = await promptApi.prompt(prompt)
+          setWeatherDescription(result);
+          setWeatherDescriptionDone(true);
+        }
+      } catch (e) {
+        setWeatherApierror(`Error: ${e}`);
       }
     }
+  };
+
+  // On weather data change, prompt to get a weather description.
+  useEffect(() => {
+    handleWeatherData(weatherData);
   }, [weatherData]);
 
   function speakIt() {

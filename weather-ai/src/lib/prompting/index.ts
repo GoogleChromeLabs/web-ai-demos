@@ -3,20 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ReadableStream } from "stream/web";
 
 export default class BuiltinPrompting {
-    constructor(private session: any) {}
+    constructor(private session: AITextSession) {}
 
-
-    streamingPrompt(prompt: string): any {
-        // Prompt the model and stream the result:
-        const stream = this.session.promptStreaming(prompt);
-        const reader = stream.getReader();
-        return reader;
+    async streamingPrompt(prompt: string): Promise<ReadableStream<string>> {
+        return await this.session.promptStreaming(prompt);
     }
     
     async prompt(prompt: string): Promise<string> {
-        return await this.session.execute(prompt);        
+        return await this.session.prompt(prompt);
     }
 
     static async createPrompting(): Promise<BuiltinPrompting> {
