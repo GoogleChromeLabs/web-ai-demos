@@ -8,6 +8,8 @@ Serve these 3 files from your local webserver in folder of your choice, and then
 
 This demo shows how to add utility to a webpage utilizing an LLM (Google's Gemma 2B) to perform common useful tasks like summarisation, translation, or defining words or phrases in a manner that is then easier to understand.
 
+![alt text](https://github.com/jasonmayes/web-ai-demos/blob/main/right-click-for-superpowers/demo.gif?raw=true)
+
 This demo is by no means perfect for the prompt engineering, and results may not be correct for all use cases - further work would be needed to use in any production use case such as fine tuning the model or distilling from a model that works well for your specific usecase.
 
 You could however envision something like this being turned into a Chrome extension to work accross websites and have the model file cached so fast to load on startup after the first download.
