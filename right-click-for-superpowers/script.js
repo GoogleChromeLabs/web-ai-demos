@@ -1,8 +1,6 @@
 import {FilesetResolver, LlmInference} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai';
 
-const modelFileName = 'https://storage.googleapis.com/jmstore/kaggleweb/grader/g-2b-it-gpu-int4.bin';
-
-//const modelFileName = 'http://localhost/gemma-2b-it-gpu-int4.bin';
+const MODEL_FILE_NAME = 'https://storage.googleapis.com/jmstore/kaggleweb/grader/g-2b-it-gpu-int4.bin';
 
 let promptText = '';
 let llmInference = undefined;
@@ -97,14 +95,13 @@ async function initLLM() {
   LlmInference
       .createFromOptions(genaiFileset, {
         baseOptions: {
-            modelAssetPath: modelFileName
+            modelAssetPath: MODEL_FILE_NAME
         },
         maxTokens: 1000,
         topK: 30,
         temperature: 0.75,
         randomSeed: 64
       })
-      //.createFromModelPath(genaiFileset, modelFileName)
       .then(llm => {
         llmInference = llm;
         preloader.classList.remove('animate__fadeIn');
