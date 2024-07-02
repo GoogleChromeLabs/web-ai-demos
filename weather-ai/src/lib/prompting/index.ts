@@ -8,12 +8,12 @@ import { ReadableStream } from "stream/web";
 export default class BuiltinPrompting {
     constructor(private session: AITextSession) {}
 
-    async streamingPrompt(prompt: string): Promise<ReadableStream<string>> {
-        return await this.session.promptStreaming(prompt);
+    streamingPrompt(prompt: string): Promise<ReadableStream<string>> {
+        return this.session.promptStreaming(prompt);
     }
     
-    async prompt(prompt: string): Promise<string> {
-        return await this.session.prompt(prompt);
+    prompt(prompt: string): Promise<string> {
+        return this.session.prompt(prompt);
     }
 
     static async createPrompting(): Promise<BuiltinPrompting> {
