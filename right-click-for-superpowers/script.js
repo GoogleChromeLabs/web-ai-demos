@@ -5,38 +5,38 @@
 
 import {FilesetResolver, LlmInference} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai';
 
-const MODEL_FILE_NAME = 'https://storage.googleapis.com/jmstore/kaggleweb/grader/g-2b-it-gpu-int4.bin';
+// TODO: Head to Kaggle, accept terms, and download the Gemma model here: https://www.kaggle.com/models/google/gemma/tfLite/gemma-2b-it-gpu-int4
+// Host on your CDN or server and update URL below to be that path. Ensure CORS headers are set so it can be used by your web app if different domain.
+const MODEL_FILE_NAME = 'https://';
+
+const MENU = document.getElementById('menu');
+const MENU_ITEMS = document.querySelectorAll('.item');
+const SIDE_PANEL = document.getElementById('sidePanel');
+const PRELOADER = document.getElementById('preloader');
 
 let promptText = '';
-let llmInference = undefined;
+let llmInference;
 let genText = '';
 let lastSelectedText = '';
-let menu = document.getElementById('menu');
-let menuItems = document.querySelectorAll('.item');
-let sidePanel = document.getElementById('sidePanel');
-let preloader = document.getElementById('preloader');
 
-for (let i = 0; i < menuItems.length; i++) {
-  menuItems[i].addEventListener('click', handleMenuClick);
+for (let i = 0; i < MENU_ITEMS.length; i++) {
+  MENU_ITEMS[i].addEventListener('click', handleMenuClick);
 }
 
 document.body.addEventListener('contextmenu', function (e) {
   e.preventDefault();
-  menu.setAttribute('style', 'left: ' + e.clientX + 'px; top: ' + e.clientY + 'px;');
-  menu.classList.add('enabled');
+  MENU.setAttribute('style', 'left: ' + e.clientX + 'px; top: ' + e.clientY + 'px;');
+  MENU.classList.add('enabled');
   lastSelectedText = getSelectionText();
-  console.log(lastSelectedText);
 });
 
 
 function resetMenu() {
-  menu.classList.remove('enabled');
+  MENU.classList.remove('enabled');
 }
 
 
-function handleMenuClick(e) {
-  console.log(this.innerText);
-  
+function handleMenuClick(e) { 
   switch (this.innerText) {
     case 'Define word':
       promptText = 'What does jasonholder mean? Explain with some examples.';
@@ -58,9 +58,8 @@ function handleMenuClick(e) {
   }
   
   if(llmInference !== undefined) {
-    let promptFinal = promptText.replace('jasonholder', lastSelectedText).split('\n').join(' ');
-    console.log(promptFinal);
-    llmInference.generateResponse(promptFinal, displayPartialResults);
+    const PROMPT_FINAL = promptText.replace('jasonholder', lastSelectedText).split('\n').join(' ');
+    llmInference.generateResponse(PROMPT_FINAL, displayPartialResults);
   } else {
     sidePanel.innerText  = 'Please wait for model to finish loading before trying the demo!';
     resetMenu();
@@ -80,13 +79,12 @@ function getSelectionText() {
 
 function displayPartialResults(partialResults, complete) {
   genText += partialResults;
-  sidePanel.innerText = genText;
+  SIDE_PANEL.innerText = genText;
   
   if (complete) {
     if (!genText) {
       console.error('Result is empty');
     }
-    console.log(genText);
     resetMenu(); 
     genText = '';
   }
@@ -109,10 +107,10 @@ async function initLLM() {
       })
       .then(llm => {
         llmInference = llm;
-        preloader.classList.remove('animate__fadeIn');
-        preloader.classList.add('animate__fadeOut');
+        PRELOADER.classList.remove('animate__fadeIn');
+        PRELOADER.classList.add('animate__fadeOut');
         setTimeout(function() {
-          preloader.setAttribute('class', 'removed');
+          PRELOADER.setAttribute('class', 'removed');
         }, 1000);
       }).catch(() =>{
         console.error('Failed to initialize the task.');
