@@ -37,7 +37,7 @@ import SupportChatWindow from './components/supportchat/SupportChatWindow';
 env.allowLocalModels = false;
 env.useBrowserCache = false;
 // Allocate a pipeline for sentiment-analysis
-let transformersjsClassifierSentiment = await pipeline('sentiment-analysis');
+let transformersjsClassifierSentimentPromise = pipeline('sentiment-analysis');
 
 const toxicWarning =
   'Your comment may be toxic. Please rephrase it before posting. We would like to share your feedback with other users! ';
@@ -145,6 +145,7 @@ export function App() {
     setSentiment(UNKNOWN);
 
     // POSITIVE NEGATIVE CLASSIFIER (ON-DEVICE)
+    const transformersjsClassifierSentiment = await transformersjsClassifierSentimentPromise;
     const sentimentResult = await transformersjsClassifierSentiment(review);
     console.log(sentimentResult);
     const sentiment = sentimentResult[0].label;
