@@ -37,7 +37,7 @@ import SupportChatWindow from './components/supportchat/SupportChatWindow';
 env.allowLocalModels = false;
 env.useBrowserCache = false;
 // Allocate a pipeline for sentiment-analysis
-let transformersjsClassifierSentiment = await pipeline('sentiment-analysis');
+let transformersjsClassifierSentiment = pipeline('sentiment-analysis');
 
 const toxicWarning =
   'Your comment may be toxic. Please rephrase it before posting. We would like to share your feedback with other users! ';
