@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2024 Google LLC
+ SPDX-License-Identifier: Apache-2.0
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <meta name="author" content="Jason Mayes" />
+    <title>Gemma 2B LLM Right Click Superpowers</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" />
+  </head>
+  <body>
+    <h1 class="animate__animated animate__bounce">This demo allows you to  highlight any text, right click, and choose a smart action powered by Google's Gemma 2B Web AI model entirely client side! It even works on Gemma's output too!</h1>
+    
+    <p>The demo shows the power of using a smaller sized LLM client side in the web browser. The model I am loading for this demo is a brand new shiny model from Google's MediaPipe team that has ported the latest open research model by Google (Gemma) to run super fast on the GPU in the web browser using technologies like WebGPU.</p>
+  
+    <p>You could use this Web AI LLM model for many things, but I decided to make this demo where you can use your mouse to select any text in this paragraph of text, right click, and then generate a summary for the selected text! You could imagine turning this into a Chrome extension if you wanted to be able to do this on any text on any website. The great thing about having the model run in the browser client side within the JavaScript ecosystem instead of on Cloud is that your privacy is preserved - none of the text you select to summarize is sent to a 3rd party to get the result! Yep, that means you could even use it offline once the model is downloaded!</p>
+  
+    <div id="sidePanel" class="animate__animated animate__bounceInRight">
+    </div>
+      
+    <div id="menu">
+      <div class="item">Define word</div>
+      <div class="item">Explain phrase like I'm a child</div>
+      <div class="item">Executive summary</div>
+      <div class="item">Turn into Tweet</div>
+      <div class="item">Translate to German</div>
+    </div>
+      
+    <div id="preloader" class="animate__animated animate__fadeIn">
+      <h2  class="animate__animated animate__pulse animate__infinite">Please wait. Loading 1.3GB Model file.</h2>
+    </div>
+    
+    <footer>
+      Created by <a href="https://www.linkedin.com/in/WebAI" target="_blank">Jason Mayes</a>, 2024. Note: This is not an official Google product.
+    </footer>
+    <script type="text/javascript" src="script.js"></script>
+
+  </body>
+</html>

@@ -1,0 +1,110 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+body {
+  background-color: #1d1d1d;
+  color: #efefef;
+  font-family: arial;
+  padding: 25px;
+}
+
+h1, p {
+  width: calc(100% - 680px);
+  max-width: 1280px;
+}
+
+h1 {
+  font-size: 32pt;
+}
+
+p {
+  font-size: 18pt;
+}
+
+a {
+  color: #FF0266;
+}
+
+::selection {
+  background: #6200ee; 
+}
+
+footer {
+  position: fixed;
+  z-index: 10000;
+  bottom: 10px;
+  right: 10px;
+  background-color: #3d3d3d;
+  padding: 3px;
+}
+
+#preloader {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  background-image: url("https://assets.codepen.io/48236/loader.svg");
+}
+
+#preloader h2 {
+  position: absolute;
+  top: calc(50% - 160px);
+  left: calc(50% - 160px);
+  width: 300px;
+  height: 300px;
+  padding: 20px;
+  background-color: #FF0266;
+  font-size: 24pt;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  border: 3px solid #efefef;
+}
+
+#menu {
+ background-color: rgba(255, 255, 255, 0.95);
+ box-shadow: 0 0 20px rgba(37, 40, 42, 0.22);
+ color: #1f194c;
+ width: 10em;
+ padding: 0.8em 0.6em;
+ font-size: 1.3rem;
+ position: fixed;
+ visibility: hidden;
+ box-sizing: border-box;
+}
+
+#menu.enabled {
+  visibility: initial;
+}
+
+.item {
+ padding: 0.3em 1.2em;
+  font-size: 12pt;
+}
+
+.item:hover {
+ background-color: rgba(44, 141, 247, 0.2);
+ cursor: pointer;
+}
+
+#sidePanel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 620px;
+  background-color: #01cAa6;
+  padding: 15px;
+  filter: drop-shadow(-8px 2px 3px #000000);
+  font-size: 18pt;
+  overflow-y: scroll;
+}
+
+.removed {
+  display: none;
+}
