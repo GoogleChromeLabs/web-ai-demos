@@ -26,7 +26,6 @@ declare global {
       defaultTextSessionOptions: () => Promise<AITextSessionOptions>,
       canCreateTextSession: () => Promise<AIModelAvailability>,
       createTextSession: (options?: AITextSessionOptions) => Promise<AITextSession>,
-      createGenericSession: (options: AITextSessionOptions) => Promise<AITextSession>,
     };
   }
 }
