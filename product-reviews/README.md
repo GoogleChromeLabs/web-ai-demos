@@ -13,7 +13,7 @@
 
 ## About vite env variables
 * 🚨 Important: `local` in the env file name ensures that the env file is gitignored.
-* If you introduce new env variables other developers will need, make sure to include them in `.env.template` in your PR.To prevent accidentally leaking env variables to the client, only variables prefixed with `VITE_` are exposed to your Vite-processed code.
+* If you introduce new env variables other developers will need, make sure to include them in `.env.template` in your PR. To prevent accidentally leaking env variables to the client, only variables prefixed with `VITE_` are exposed to your Vite-processed code.
 
 Learn more about vite env variables [here](https://vitejs.dev/guide/env-and-mode).
 
