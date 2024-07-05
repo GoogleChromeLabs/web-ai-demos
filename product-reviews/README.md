@@ -1,13 +1,14 @@
 ## Get started
-* [Only once, or when env variables are updated] Set up environment variables:
+* [Only once, or when new env variables are added] Set up environment variables:
   * Create an `.env.development.local` file that follows the structure documented in `.env.template`.
   * Fill in the values in `.env.development.local`. No quotes are needed. Googlers: Ask your teammates for the `VITE_GEMMA_MODEL_PATH` value we use.
 * [Only once, or when dependencies are updated] Run `npm install`.
 * Run `npm run dev`. The project is running!
 
 ## Build for deployment
-* [Only once] Create an `.env.production.local` file that follows the structure documented in `.env.template`.
-* [Only once] Fill in the values in `.env.production.local`. No quotes are needed. Googlers: Ask your teammates for the `VITE_GEMMA_MODEL_PATH` value we use. 
+* [Only once, or when new env variables are added]:
+  * Create an `.env.production.local` file that follows the structure documented in `.env.template`.
+  * Fill in the values in `.env.production.local`. No quotes are needed. Googlers: Ask your teammates for the `VITE_GEMMA_MODEL_PATH` value we use. 
 * Run `npm run build`, then run `npm run preview` and check that your changes don't include a regression.
 
 ## About vite env variables
