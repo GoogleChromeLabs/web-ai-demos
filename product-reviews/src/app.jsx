@@ -19,10 +19,8 @@ import { TOXICITY, SENTIMENT, RATING, UNKNOWN } from '.consts';
 // Gen AI imports
 import {
   TOXICITY_COMMENT_THRESHOLD,
-  SAFETY_SETTINGS_GEMINI,
   SENTIMENT_THRESHOLD,
 } from '.config-ai';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { pipeline, env, cat } from '@xenova/transformers';
 import { FilesetResolver, LlmInference } from '@mediapipe/tasks-genai';
 import binarySimdPath from '/node_modules/@mediapipe/tasks-genai/wasm/genai_wasm_internal.wasm?url';
@@ -55,7 +53,6 @@ export function App() {
   const [isThinkingToxic, setIsThinkingToxic] = useState(false);
   const [isThinkingSentiment, setIsThinkingSentiment] = useState(false);
 
-  const [geminiServerModel, setGeminiServerModel] = useState(null);
   const [mediaPipeLlm, setMediaPipeLlm] = useState(null);
   const [isGenAiReady, setIsGenAiReady] = useState(false);
   const [supportChatWindowVisible, setSupportChatWindowVisible] =
@@ -114,21 +111,6 @@ export function App() {
         console.error('Error loading Gemma', e);
         console.log('endof preparing Gemma', Date.now());
       }
-
-      try {
-        const geminiGenAi = new GoogleGenerativeAI(
-          import.meta.env.VITE_GEMINI_GENAI_KEY
-        );
-        // https://ai.google.dev/tutorials/web_quickstart?_gl=1*mnb5md*_up*MQ..*_ga*MTI3OTI5NDU0MC4xNzA5NzMyOTI0*_ga_P1DBVKWT6V*MTcwOTczMjkyMy4xLjAuMTcwOTczMzAwOS4wLjAuMA..#use-safety-settings
-        let modelGemini = geminiGenAi.getGenerativeModel({
-          model: 'gemini-1.0-pro-latest',
-          safetySettings: SAFETY_SETTINGS_GEMINI,
-        });
-        setGeminiServerModel(modelGemini);
-        setIsGenAiReady(true);
-      } catch (e) {
-        console.error('Error loading Gemini', e);
-      }
     };
 
     prep();
@@ -176,11 +158,17 @@ export function App() {
 
     // RATING (SERVER)
     try {
-      const result = await geminiServerModel.generateContent(
-        `Here is a product review: "${review}". Based on this review, assess how many stars (between 1 and 5) the review corresponds to. Return an integer. Don't give me a function, just give me a number between 1 and 5.`
-      );
-      const newRatingServer = parseInt(await result.response.text());
-      setRatingServer(newRatingServer);
+      const rating = await fetch(import.meta.env.VITE_GEMINI_RATING_ENDPOINT, {
+          method: 'POST',
+          body: JSON.stringify({
+            review
+          }),
+          headers: {
+            'Content-type': 'application/json; charset=UTF-8'
+          }
+        })
+        .then(res => res.text());
+      setRatingServer(rating);
       setIsThinkingRatingServer(false);
     } catch (e) {
       console.error('Error with Gemini API (server)', e);

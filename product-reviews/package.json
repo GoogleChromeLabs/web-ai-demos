@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.2.1",
+    "@google/generative-ai": "^0.14.1",
     "@mediapipe/tasks-genai": "^0.10.12",
     "@tensorflow/tfjs": "^4.17.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.17.0",
