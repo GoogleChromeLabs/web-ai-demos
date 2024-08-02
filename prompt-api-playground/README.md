@@ -1,6 +1,6 @@
 # ✨ Prompt API Playground
 
-I've created a Chrome [Prompt API Playground](https://tomayac.github.io/prompt-api-playground/) that hopefully is useful to more people:
+I ([@tomayac](https://github.com/tomayac)) have created a Chrome [Prompt API Playground](https://tomayac.github.io/prompt-api-playground/) that hopefully is useful to more people:
 
 ![Screenshot 2024-08-02 at 11 51 44](https://github.com/user-attachments/assets/4f46e3b5-41e4-4ab9-b006-fd173fae6711)
 

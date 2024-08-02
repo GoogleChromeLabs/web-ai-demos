@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 :root {
   color-scheme: dark light;
 }
@@ -12,7 +17,7 @@ html {
   box-sizing: inherit;
 }
 
-body {  
+body {
   font-family: system-ui, sans-serif;
   max-width: clamp(320px, 90%, 1000px);
   margin: auto;
@@ -23,13 +28,13 @@ h2 {
 }
 
 #error-message,
-#problem {  
+#problem {
   border: red solid 2px;
   padding: 10px;
 }
 
 #prompt-area {
-  margin-block-end: 1rem;  
+  margin-block-end: 1rem;
 }
 
 #prompt-area,
@@ -50,11 +55,11 @@ textarea {
 }
 
 details {
-  padding-block: 10px;    
+  padding-block: 10px;
 }
 
 details div {
-  padding: 10px;    
+  padding: 10px;
 }
 
 label {
