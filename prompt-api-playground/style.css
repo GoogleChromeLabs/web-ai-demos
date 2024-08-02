@@ -1,0 +1,87 @@
+:root {
+  color-scheme: dark light;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {  
+  font-family: system-ui, sans-serif;
+  max-width: clamp(320px, 90%, 1000px);
+  margin: auto;
+}
+
+h2 {
+  margin-block-end: 0;
+}
+
+#error-message,
+#problem {  
+  border: red solid 2px;
+  padding: 10px;
+}
+
+#prompt-area {
+  margin-block-end: 1rem;  
+}
+
+#prompt-area,
+#error-message,
+#problematic-area {
+  display: none;
+}
+
+textarea {
+  width: 100%;
+  height: 100px;
+}
+
+#response-area {
+  white-space: pre-wrap;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+details {
+  padding-block: 10px;    
+}
+
+details div {
+  padding: 10px;    
+}
+
+label {
+  display: block;
+  margin-bottom: 0.3em;
+  font-weight: bold;
+}
+
+summary {
+  cursor: pointer;
+  padding: 5px 10px;
+  background-color: gray;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  min-width: 130px;
+  width: min-content;
+}
+
+
+button {
+  margin-top: 10px;
+  cursor: pointer;
+  padding: 5px 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  min-width: 130px;
+}
