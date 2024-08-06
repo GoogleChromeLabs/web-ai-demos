@@ -25,12 +25,12 @@ const output = document.querySelector('#output') as HTMLDivElement;
  */
 const createSummarizationSession = async (downloadProgressCallback?: AIModelDownloadCallback): Promise<AISummarizerSession> =>  {
   const canSummarize = await window.ai.summarizer!.capabilities();
-  if (canSummarize.available == 'no') {
+  if (canSummarize.available === 'no') {
     throw new Error('AI Summarization is not supported');
   }
 
   const summarizationSession = await window.ai.summarizer!.create();
-  if (canSummarize.available == 'after-download') {
+  if (canSummarize.available === 'after-download') {
     if (downloadProgressCallback) {
       summarizationSession.addEventListener('downloadprogress', downloadProgressCallback);
     }
@@ -53,7 +53,7 @@ const initializeApplication = async () => {
   }
 
   const canSummarize = await window.ai.summarizer!.capabilities();
-  if (canSummarize.available == 'no') {
+  if (canSummarize.available === 'no') {
     summarizationUnsupportedDialog.showModal();
     return;
   }
