@@ -61,6 +61,9 @@ const initializeApplication = async () => {
   let timeout: number | undefined = undefined;
   inputTextArea.addEventListener('input', () => {
     characterCountSpan.textContent = inputTextArea.value.length.toFixed();
+
+    // Debounces the call to the summarization API. This will run the summarization once the user
+    // hasn't typed anything for at least 1 second.
     clearTimeout(timeout);
     timeout = setTimeout(async () => {
       output.textContent = 'Generating summary...';
