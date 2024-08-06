@@ -1,0 +1,39 @@
+<!doctype html>
+<!--
+  Copyright 2024 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script type="module" src="./src/main.ts"></script>
+    <title>Summarization API Playgroud</title>
+  </head>
+  <body>
+    <header>
+      <h1>Summarization API Playground</h1>
+    </header>
+    <main>
+        <div>
+          <h2>Input</h2>
+          <textarea id="input"></textarea>
+          <div><span id="character-count">0</span></div>
+        </div>
+        <div>
+          <h2>Summary</h2>
+          <div id="output"></div>
+        </div>
+    </main>
+    <footer>
+      Be the first to test new AI APIs. Your feedback is invaluable to our development process. Join our <a href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> today.
+    </footer>
+    <dialog id="summarization-unavailable">
+      <div>Your browser doesn't support the Summarization API. If you're on Chrome, join the <a href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> and enable it.</div>
+    </dialog>
+    <dialog id="summarization-unsupported">
+      <div>The Summarization API is available, but your device is unable to run it. Check device requirements in the <a href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> documentation.</div>
+    </dialog>
+  </body>
+</html>
