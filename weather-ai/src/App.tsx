@@ -7,12 +7,12 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 import { WeatherResponse, Location, getWeatherForLocation } from './lib/openweather';
 import WeatherData from './components/WeatherData';
 import BuiltinPrompting from './lib/prompting';
-import { Box, Button, Card, CircularProgress, Collapse, Container, CssBaseline, Link, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CircularProgress, Collapse, Container, CssBaseline, Link, Snackbar } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const defaultTheme = createTheme();
@@ -24,6 +24,13 @@ function App() {
   const [weatherDescription, setWeatherDescription] = useState<string>();
   const [weatherDescriptionDone, setWeatherDescriptionDone] = useState<boolean>();
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(true);
+  const [promptApiSupported, setPromptApiSupported] = useState<boolean>(true);
+
+  // Checks if the Prompt API is supported.
+  useEffect(() => {
+    const supported = window.ai !== undefined && window.ai.canCreateTextSession !== undefined;
+    setPromptApiSupported(supported);
+  }, []);
 
   // Get the user's location from the browser.
   useEffect(() => {
@@ -44,41 +51,41 @@ function App() {
     }
   }, [location]);
 
-  const handleWeatherData = async (weatherData: WeatherResponse | undefined) => {
-    if (weatherData && weatherData.cod === 200) {
-      const prompt = `This is JSON data about the weather conditions now. \
-                      ${JSON.stringify(weatherData)}. "clouds" is the percentage of the sky covered by clouds.\
-                      The "sunrise" date is ${new Date(weatherData.sys.sunrise * 1000).toISOString()}, \
-                      the "sunset" date is ${new Date(weatherData.sys.sunset * 1000).toISOString()},
-                      and the current date is ${new Date(weatherData.dt * 1000)}. \
-                      Action: Describe the weather conditions in one paragraph.
-                      Rules: Be concise. Don't use bullet points.`;
-      const urlParams = new URLSearchParams(window.location.search);
-      const streaming = urlParams.get('streaming');
-
-      try {
-        const promptApi = await BuiltinPrompting.createPrompting();;
-        if (streaming === 'true') {
-            const reader = await promptApi.streamingPrompt(prompt);
-            for await (const chunk of reader) {
-              setWeatherDescription(chunk);
-            }
-            setWeatherDescriptionDone(true);
-        } else {
-          const result = await promptApi.prompt(prompt)
-          setWeatherDescription(result);
-          setWeatherDescriptionDone(true);
-        }
-      } catch (e) {
-        setWeatherApierror(`Error: ${e}`);
-      }
-    }
-  };
 
   // On weather data change, prompt to get a weather description.
   useEffect(() => {
-    handleWeatherData(weatherData);
-  }, [weatherData]);
+    const handleWeatherData = async () => {
+      if (promptApiSupported && weatherData && weatherData.cod === 200) {
+        const prompt = `This is JSON data about the weather conditions now. \
+                        ${JSON.stringify(weatherData)}. "clouds" is the percentage of the sky covered by clouds.\
+                        The "sunrise" date is ${new Date(weatherData.sys.sunrise * 1000).toISOString()}, \
+                        the "sunset" date is ${new Date(weatherData.sys.sunset * 1000).toISOString()},
+                        and the current date is ${new Date(weatherData.dt * 1000)}. \
+                        Action: Describe the weather conditions in one paragraph.
+                        Rules: Be concise. Don't use bullet points.`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const streaming = urlParams.get('streaming');
+  
+        try {
+          const promptApi = await BuiltinPrompting.createPrompting();
+          if (streaming === 'true') {
+              const reader = await promptApi.streamingPrompt(prompt);
+              for await (const chunk of reader) {
+                setWeatherDescription(chunk);
+              }
+              setWeatherDescriptionDone(true);
+          } else {
+            const result = await promptApi.prompt(prompt)
+            setWeatherDescription(result);
+            setWeatherDescriptionDone(true);
+          }
+        } catch (e) {
+          setWeatherApierror(`${e}`);
+        }
+      }
+    };
+    handleWeatherData();
+  }, [weatherData, promptApiSupported]);
 
   function speakIt() {
     // let voice = window.speechSynthesis.getVoices().filter(v => v.default)[0];
@@ -116,11 +123,18 @@ function App() {
               <p>{weatherDescription}</p>
             </>
         }
+        {!promptApiSupported && 
+          <Alert
+            severity='error'
+          >Your browser doesn't support the Prompt API. If you're on Chrome, join the <Link href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</Link> and enable it.</Alert>
+        }
+        {promptApiSupported && 
+          <Alert
+            severity='info'
+          >Be the first to test new AI APIs. Your feedback is invaluable to our development process. Join our <Link href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</Link> today.</Alert>
+        }
       </Card>
       </Box>
-      <Typography variant="body2" color="text.secondary" align="center">
-          Made with ✨ by <Link color="inherit" href="https://moma.corp.google.com/team/8155109853">Chrome DevRel</Link> / <Link color="inherit" href="https://moma.corp.google.com/person/andreban">@andreban</Link>.
-      </Typography>
       {weatherApiError &&
           <Snackbar
             autoHideDuration={5000}
@@ -129,6 +143,7 @@ function App() {
             message={weatherApiError}
           />
       }
+
       </Container>
     </ThemeProvider>
   );
