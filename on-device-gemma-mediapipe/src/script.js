@@ -1,14 +1,54 @@
-import { FilesetResolver, LlmInference } from '@mediapipe/tasks-genai';
+const url = new URL('./worker.js', import.meta.url);
+import { MESSAGE_CODE, MODEL_STATUS } from './consts.js';
 
-const inputText = 'Tell me how to bake a cake';
-const MODEL_URL =
-  'https://storage.googleapis.com/jmstore/kaggleweb/grader/g-2b-it-gpu-int4.bin';
+function displayModelStatus(status) {
+  document.getElementById('modelStatus').className = status;
+}
 
-(async function () {
-  const genai = await FilesetResolver.forGenAiTasks(
-    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai/wasm'
-  );
-  const llmInference = await LlmInference.createFromModelPath(genai, MODEL_URL);
-  const response = await llmInference.generateResponse(inputText);
-  console.log(response);
-})();
+function runLLMInference() {
+  const userPrompt = document.getElementById('userPrompt').value;
+  worker.postMessage(userPrompt);
+}
+
+displayModelStatus(MODEL_STATUS.NOT_STARTED);
+const worker = new Worker(url);
+
+worker.onmessage = function (message) {
+  console.info('[Main thread] 📬 Message from worker: ', message);
+
+  if (!message.data || !message.data.code) {
+    throw new Error(
+      `Message from worker is empty or doesn't contain a code field: ${message}`
+    );
+  }
+  const messageCode = message.data.code;
+  switch (messageCode) {
+    case MESSAGE_CODE.PREPARING_MODEL:
+      displayModelStatus(MODEL_STATUS.PREPARING);
+      document.getElementById('inferenceButton').disabled = true;
+      break;
+
+    case MESSAGE_CODE.MODEL_READY:
+      displayModelStatus(MODEL_STATUS.READY);
+      document.getElementById('inferenceButton').disabled = false;
+      break;
+
+    case MESSAGE_CODE.GENERATING_RESPONSE:
+      displayModelStatus(MODEL_STATUS.GENERATING);
+      document.getElementById('inferenceButton').disabled = true;
+      break;
+
+    case MESSAGE_CODE.RESPONSE_READY:
+      displayModelStatus(MODEL_STATUS.READY);
+      document.getElementById('inferenceButton').disabled = false;
+      document.getElementById('llmOutput').innerText = message.data.payload;
+      break;
+
+    default:
+      throw new Error(
+        `Message from worker contains an unknown message code: ${messageCode}`
+      );
+  }
+};
+
+window.runLLMInference = runLLMInference;
