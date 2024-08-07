@@ -5,8 +5,13 @@
 
 import './style.css'
 
+// The underlying model has a context of 1024 tokens, of which 26 are used by the internal prompt,
+// leaving about 998 tokens for the input text. Each token is, roughly, about 4 characters, so 4000
+// is used as a limit to warn the user the content might be too long to summarize.
+const MAX_MODEL_CHARS = 4000;
 const inputTextArea = document.querySelector('#input') as HTMLTextAreaElement;
 const characterCountSpan = document.querySelector('#character-count') as HTMLSpanElement;
+const characterCountExceededSpan = document.querySelector('#character-count-exceed') as HTMLSpanElement;
 const summarizationUnsupportedDialog = document.querySelector('#summarization-unsupported') as HTMLDialogElement;
 const summarizationUnavailableDialog = document.querySelector('#summarization-unavailable') as HTMLDialogElement;
 const output = document.querySelector('#output') as HTMLDivElement;
@@ -61,6 +66,13 @@ const initializeApplication = async () => {
   let timeout: number | undefined = undefined;
   inputTextArea.addEventListener('input', () => {
     characterCountSpan.textContent = inputTextArea.value.length.toFixed();
+    if (inputTextArea.value.length > MAX_MODEL_CHARS) {
+      characterCountSpan.classList.add('tokens-exceeded');
+      characterCountExceededSpan.classList.remove('hidden');
+    } else {
+      characterCountSpan.classList.remove('tokens-exceeded');
+      characterCountExceededSpan.classList.add('hidden');
+    }
 
     // Debounces the call to the summarization API. This will run the summarization once the user
     // hasn't typed anything for at least 1 second.
