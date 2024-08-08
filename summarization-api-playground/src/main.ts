@@ -5,7 +5,7 @@
 
 import './style.css'
 
-// The underlying model has a context of 1024 tokens, of which 26 are used by the internal prompt,
+// The underlying model has a context of 1,024 tokens, out of which 26 are used by the internal prompt,
 // leaving about 998 tokens for the input text. Each token is, roughly, about 4 characters, so 4000
 // is used as a limit to warn the user the content might be too long to summarize.
 const MAX_MODEL_CHARS = 4000;
