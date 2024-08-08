@@ -7,9 +7,14 @@ let llmInference = null;
 (async function () {
   console.info('[Worker] Preparing model...');
   self.postMessage({ code: MESSAGE_CODE.PREPARING_MODEL, payload: null });
-  const genai = await FilesetResolver.forGenAiTasks(MEDIAPIPE_WASM);
-  llmInference = await LlmInference.createFromModelPath(genai, MODEL_URL);
-  self.postMessage({ code: MESSAGE_CODE.MODEL_READY, payload: null });
+  try {
+    const genai = await FilesetResolver.forGenAiTasks(MEDIAPIPE_WASM);
+    llmInference = await LlmInference.createFromModelPath(genai, MODEL_URL);
+    self.postMessage({ code: MESSAGE_CODE.MODEL_READY, payload: null });
+  } catch (error) {
+    console.error('[Worker] Error preparing model:', error);
+    self.postMessage({ code: MESSAGE_CODE.MODEL_ERROR, payload: null });
+  }
 })();
 
 self.onmessage = function (message) {
