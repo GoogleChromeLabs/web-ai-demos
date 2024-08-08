@@ -10,7 +10,7 @@
 </p>
 
 ## Browser support and prerequisites
-Because to MediaPipe LLM Inference API relies on WebGPU, this demo works in all browsers that support WebGPU. As of August 2024:
+Because the MediaPipe LLM Inference API relies on WebGPU, this demo runs in all browsers that support WebGPU. As of August 2024:
 * Chrome
 * Edge
 * Firefox Nightly ⚠️ Turn on the flag `dom.webgpu.workers.enabled` in `about:config`
