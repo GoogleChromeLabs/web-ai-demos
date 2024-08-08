@@ -14,7 +14,7 @@ Because the MediaPipe LLM Inference API relies on WebGPU, this demo runs in all 
 * Chrome
 * Edge
 * Firefox Nightly ⚠️ Turn on the flag `dom.webgpu.workers.enabled` in `about:config`
-* Safari technology Preview
+* Safari Technology Preview
 
 
 ## Quickstart
