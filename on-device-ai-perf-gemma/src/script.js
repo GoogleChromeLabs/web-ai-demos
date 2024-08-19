@@ -45,7 +45,6 @@ worker.onmessage = function (message) {
       break;
 
     case MESSAGE_CODE.MODEL_ERROR:
-      console.log('EYTFTYCVGJDVJGDSYUV');
       displayModelStatus(MODEL_STATUS.ERROR);
       document.getElementById('inferenceButton').disabled = true;
       break;
