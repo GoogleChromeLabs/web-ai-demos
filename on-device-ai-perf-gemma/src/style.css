@@ -38,11 +38,11 @@ div.animated {
 }
 
 .not-started {
-  color: red;
+  color: rgb(79, 78, 78);
 }
 
 .not-started::before {
-  content: '🔴 Model not ready';
+  content: '⚫️ Model not ready';
   padding-right: 0.4rem;
 }
 
@@ -70,6 +70,15 @@ div.animated {
 
 .generating-response::before {
   content: '🖊️ Generating response...';
+  padding-right: 0.4rem;
+}
+
+.error {
+  color: red;
+}
+
+.error::before {
+  content: '❌ Error while preparing the model';
   padding-right: 0.4rem;
 }
 

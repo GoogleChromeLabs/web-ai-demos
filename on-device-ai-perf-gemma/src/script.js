@@ -44,6 +44,11 @@ worker.onmessage = function (message) {
       document.getElementById('llmOutput').innerText = message.data.payload;
       break;
 
+    case MESSAGE_CODE.MODEL_ERROR:
+      displayModelStatus(MODEL_STATUS.ERROR);
+      document.getElementById('inferenceButton').disabled = true;
+      break;
+
     default:
       throw new Error(
         `Message from worker contains an unknown message code: ${messageCode}`

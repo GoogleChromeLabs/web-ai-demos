@@ -9,6 +9,7 @@ export const MESSAGE_CODE = {
   MODEL_READY: 'modelReady',
   GENERATING_RESPONSE: 'generatingResponse',
   RESPONSE_READY: 'responseReady',
+  MODEL_ERROR: 'modelError',
 };
 
 export const MODEL_STATUS = {
