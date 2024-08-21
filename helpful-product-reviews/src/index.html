@@ -26,25 +26,31 @@
             <div>
               <label for="reviewInputEl">Product review</label>
             </div>
-            <textarea name="reviewInputEl" id="reviewInputEl">I'm not happy with the price.</textarea>
+            <textarea name="reviewInputEl" id="reviewInputEl">Too pricey</textarea>
             <!-- <textarea name="test" id="test" oninput="handleUserInputChange()"></textarea> -->
-            <div class="action-wrapper">
-              <div class="review-helper-wrapper">
-                <div id="reviewHelperStatus"></div>
-                <div id="reviewHelperOutput"></div>
-              </div>
+            <div class="button-wrapper">
               <button onclick="simulatePostReview()">
                 Post
               </button>
             </div>
-            <div>
+            <div class="review-helper-wrapper">
+              <div class="flex-h">
+                <div id="reviewHelperStatus"></div>
+                <button id="inferenceButton" onclick="runLLMInference()">
+                  ▶️ Run review helper
+                </button>
+              </div>
+              <div id="reviewHelperOutput"></div>
+            </div>
+            <!-- <div>
               <div id="llmOutput"></div>
+            </div> -->
+            <div class="auto-checkbox-wrapper">
+              <input type="checkbox" id="autoInferCheckbox" name="autoInferCheckbox">
+              <label for="autoInferCheckbox">Automatically trigger the review helper when you stop typing (800ms timeout)</label>
             </div>
           </div>
         </div>
-        <button id="inferenceButton" onclick="runLLMInference()">
-          Assess helpfulness
-        </button>
     </main>
     <div class="demo-metadata">
       <h3>About this demo</h3>
@@ -56,6 +62,8 @@
       <p class="demo-explanation">
         <b>Why this demo?</b>
         Online stores can see a <b>270% increase in conversions</b> by showing product reviews (<a href="https://spiegel.medill.northwestern.edu/wp-content/uploads/sites/2/2021/04/Spiegel_Online-Review_eBook_Jun2017_FINAL.pdf" noreferrer noopener>Source</a>). But writing a product review is tricky. Here, we use Gen AI (an LLM) to help users write helpful reviews.
+        <br/>
+        <b>Some product reviews to try:</b> "I love these", "Hate these", "I'm not happy with the price", "Nice and warm"
       </p>
     </div>
     <script type="module" src="./script.js"></script>
