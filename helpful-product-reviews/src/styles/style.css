@@ -1,24 +1,33 @@
 /* REVIEW HELPER  */
 
-#reviewHelperStatus.not-ready::before {
-  content: 'Review helper is not ready yet';
-  padding-right: 0.4rem;
-  color: gray;
+#reviewHelperStatus {
+  padding: 0.4rem 0 0.8rem 0;
   font-style: italic;
+}
+
+#reviewHelperStatus.not-started::before {
+  content: 'Review helper is not ready yet';
+  color: gray;
+}
+
+#reviewHelperStatus.preparing::before {
+  content: 'Preparing review helper...';
+  color: rgb(140, 0, 255);
 }
 
 #reviewHelperStatus.ready::before {
   content: 'Review helper is ready';
-  padding-right: 0.4rem;
   color: rgb(0, 173, 0);
-  font-style: italic;
 }
 
 #reviewHelperStatus.error::before {
-  content: 'Review helper is unavailable';
-  padding-right: 0.4rem;
-  color: gray;
-  font-style: italic;
+  content: 'Error';
+  color: red;
+}
+
+#reviewHelperStatus.generating-response::before {
+  content: 'Generating response...';
+  color: rgb(0, 173, 0);
 }
 
 /* MODEL STATUS */
