@@ -7,7 +7,7 @@ Online stores can see a **270%** increase in conversions by showing product revi
 Writing a helpful product review, especially a negative one, can be tricky. In this demo, we use Gen AI (an LLM) to help users write informative reviews that will aid others' purchasing decisions.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/81608430-0b28-4a45-9d14-df619b20b9e7" width="300"/>
+  <img src="https://github.com/user-attachments/assets/f81ed907-93c3-4adf-90de-ad68db06f53c" width="400"/>
 </p>
 
 ## Quickstart
