@@ -3,65 +3,58 @@ import { MODEL_URL, MEDIAPIPE_WASM, MESSAGE_CODE } from './consts.js';
 
 let llmInference = null;
 
-// function generatePrompt(userInput) {
-//   return `Based on a product review for socks, analyze if the review is helpful to other buyers. A review is only helpful if it's specific and provides details or adjectives about the product itself (example: "These are warm"). A review is NOT helpful if it doesn't explain itself (example: "I don't like these socks", "This is too expensive"), or if it's not about the product itself, the socks. DO mark a review as NOT helpful when needed. If the review is not helpful, make a suggestion to improve the review text to make it more informative to other buyers. Do NOT make suggestions about the product itself. Follow the following structure and do not output anything other than that:
-// Helpful: <yes or no>
-// Suggestion: <suggestion to improve the product review. "none" if the product review is helpful>
-
 function generatePrompt(userInput) {
-  return `I will give you a product review for socks. Check if the review is specific, provides details or adjectives about the product itself (example: "These are warm"), and justifies itself. If so, mark the review as specific. If not, mark the review as not specific (example: "I don't like these socks", "This is too expensive"). Do mark a review as NOT specific if needed. If the review is not specific, make a suggestion to improve the review text to make it more informative to other buyers. Do NOT make suggestions about the product itself. Follow the following structure and do not output anything other than that:
-Specific: <yes or no>
-Suggestion: <suggestion to improve the product review. "none" if the product review is specific> 
+  return `You will be provided with a product review written by a user. Your task is to analyze the review and determine if other potential buyers will find it helpful. 
+A helpful review should fulfill two main criteria:
+1. Provides details about the product itself. This means mentioning specific aspects or qualities of the product, like its fit, comfort, material, durability, etc.
+2. Explains the user\'s opinion. This means the user gives reasons for why they like or dislike the product, or for pricing issues they explain why the price seems fair or not.
+If the review meets both of these criteria, mark it as "Helpful: Yes." Otherwise, mark it as "Helpful: No". If the review is not helpful, suggest to the user a fix for how to improve their review, and give an example review that is more helpful and applies your suggested fix. Your example review should focus solely on making the review more informative, detailed and useful to others. It should focus on the review itself, not suggest any changes to the product. If the review is helpful, leave the "Fix" and "Example" sections blank.
+Adhere strictly to the following output format (absolutely do NOT change the structure):
+Helpful: [Yes/No]
+Fix: [Your suggestion on how to improve the review text, or leave blank if it's already helpful]
+Example: [An example review that is more helpful and applies your suggested fix, or leave blank]
+
+I'll give you example reviews and outputs, and then give you one review to analyze. Let's go:
 
 
 Examples:
 
-Review:  "I received the wrong product."
-Specific: no
-Suggestion: Provide more context. For example, "I ordered the [product name], but I received [wrong product name] instead."
+Review: "These socks are not as warm as I expected."
+Helpful: Yes
+Fix:
+Example:
 
-Review: "These socks are not as warm as I expected. I've worn them on several cold winter days, and my feet still get cold."
-Specific: yes
-Suggestion: none
+Review: "I love these."
+Helpful: No
+Fix: Be more specific, explain why you like the socks.
+Example: "I love the blend of wool in these socks. Warm and not too heavy."
 
-Review: "I don't like the color."
-Specific: no
-Suggestion: Be more specific. For example, "The color is darker than on the picture."
-
-Review: "I love the blend of wool and synthetic fibers in these socks. They provide excellent insulation without feeling too heavy. The cushioning is perfect for long hikes, and they've held up well to repeated washes."
-Specific: yes
-Suggestion: none
-
-Review: "This is way too expensive."
-Specific: no
-Suggestion: Provide more context. For example, "The price is higher than similar products I've tried in the past, with no difference in quality."
-
-Review: "Not as warm as expected."
-Specific: yes
-Suggestion: none
-
-Review: "I don't like these."
-Specific: no
-Suggestion: Explain what you don't like. For example, "Not as warm as expected."
+Review: "Too expensive."
+Helpful: No
+Fix: Provide more context.
+Example: "The price is higher than similar products I've tried in the past, with no difference in quality."
 
 Review: "Perfect fit, no blisters."
-Specific: yes
-Suggestion: none
+Helpful: Yes
+Fix:
+Example:
 
 
 Review to analyze:
 
-Review: "${userInput}"          
+Review: "${userInput}"         
 `;
 }
 
 function isLlmResponseUseful(response) {
-  const { isHelpful, suggestion } = response;
-  if (isHelpful === null || suggestion === null) {
+  const { isHelpful, fix, example } = response;
+  if (isHelpful === null || fix === null || example === null) {
     // Llm response isn't formatted correctly
     return false;
   }
-  if (!isHelpful && suggestion === 'none') {
+  // helpful: false, fix: '', example: ''
+  // helpful: false, fix: '', example: 'bla'
+  if (!isHelpful && fix.toLowerCase() === '') {
     // Llm doesn't have any suggestion despite marking the review as not helpful
     return false;
   }
@@ -72,44 +65,50 @@ function generateReviewHelperOutput(response) {
   const parsedResponse = parseLlmResponse(response);
   if (!isLlmResponseUseful(parsedResponse)) {
     console.info('Llm response is not useful');
-    return;
+    return null;
   }
-  const { isHelpful, suggestion } = parsedResponse;
-  const output =
-    suggestion === 'none'
-      ? '👍 Your review is helpful!'
-      : `${isHelpful} 💡 Wanna make your review even more helpful? ${suggestion}`;
-  return output;
+  const { isHelpful, fix, example } = parsedResponse;
+  const output = isHelpful
+    ? '👍 Your review is helpful!'
+    : `💡 Wanna make your review even more helpful? ${fix} For example, ${example}`;
+
+  console.log('parsedResponse', parsedResponse);
+  console.log('RESPONSE', response);
+
+  return `${output}`;
 }
 
 function parseLlmResponse(response) {
   const result = {
     isHelpful: null,
-    suggestion: null,
+    fix: null,
+    example: null,
   };
-
-  const helpfulStringIndex = response.indexOf('Specific:');
-  const suggestionStringIndex = response.indexOf('Suggestion:');
-  if (helpfulStringIndex === -1 || suggestionStringIndex === -1) {
+  const helpfulStringIndex = response.indexOf('Helpful:');
+  const fixStringIndex = response.indexOf('Fix:');
+  if (helpfulStringIndex === -1 || fixStringIndex === -1) {
     return result;
   }
-
-  const startIndex = response.indexOf('Specific:') + 'Specific:'.length;
-  const endIndex = response.indexOf('Suggestion:', startIndex);
-
+  const startIndex = response.indexOf('Helpful:') + 'Helpful:'.length;
+  const endIndex = response.indexOf('Fix:', startIndex);
   const isHelpfulString = response.substring(startIndex, endIndex).trim();
   console.log('isHelpfulString', isHelpfulString);
-
-  if (isHelpfulString === 'yes') {
+  if (isHelpfulString.toLowerCase() === 'yes') {
     result.isHelpful = true;
-  } else if (isHelpfulString === 'no') {
+  } else if (isHelpfulString.toLowerCase() === 'no') {
     result.isHelpful = false;
   }
 
-  const suggestionString = response
-    .substring(endIndex + 'Suggestion:'.length)
+  const startIndexExample = response.indexOf('Example:') + 'Example:'.length;
+
+  const fixString = response
+    .substring(endIndex + 'Fix:'.length, startIndexExample - 'Example:'.length)
     .trim();
-  result.suggestion = suggestionString;
+  result.fix = fixString;
+
+  const exampleString = response.substring(startIndexExample).trim();
+  result.example = exampleString;
+
   return result;
 }
 
@@ -137,7 +136,7 @@ self.onmessage = function (message) {
   self.postMessage({ code: MESSAGE_CODE.GENERATING_RESPONSE, payload: null });
 
   (async function () {
-    // TODO handle errors (e.g. an inference error can happen when the input is too long). A simple try/catch isn't sufficient, we also need to terminate the previous/failing inference which I didn't figure out how to do
+    // TODO handle errors (e.g. an inference error can happen when the input is too long). A simple try/catch isn't sufficient, we also need to terminate the previous/failing inference which I didn't figure out how to do ("Previous invocation or loading is still ongoing.")
     const response = await llmInference.generateResponse(
       generatePrompt(message.data)
     );
