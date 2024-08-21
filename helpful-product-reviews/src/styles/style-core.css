@@ -35,35 +35,50 @@ p {
   line-height: 3ch;
 }
 
+/* FORM */
+
 label {
   display: block;
   color: grey;
   margin-bottom: 0.5rem;
   font-size: 1rem;
-  margin-top: 2rem;
+}
+
+input[type='checkbox'] {
+  cursor: pointer;
+  margin-right: 0.5rem;
+  transform: scale(1.3) translateY(10px);
+}
+
+/* INPUT  */
+
+.input-area {
+  min-width: 15rem;
+  width: 60%;
+  margin: 0 auto;
+}
+
+textarea {
+  width: 100%;
+  height: 6rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  resize: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+/* IMAGE */
+
+.img-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3rem;
 }
 
 /* BUTTONS */
-
-.action-wrapper {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.review-helper-wrapper {
-  flex: 2;
-  margin-right: 0.4rem;
-  min-height: 3rem;
-  background: #f5f5f5;
-  border-radius: 0.25rem;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1ch;
-  font-size: smaller;
-  display: flex;
-}
 
 button {
   background-color: #001aff;
@@ -80,32 +95,24 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* INPUT  */
+/* LAYOUT */
 
-.input-area {
-  min-width: 15rem;
-  width: 60%;
-  margin: 0 auto;
-}
-
-textarea {
-  width: 100%;
-  height: 6rem;
-  padding: 0.5rem;
-  margin: 0 0 0.5rem 0;
-  border-radius: 0.25rem;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-  resize: none;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-/* IMAGE */
-
-.img-wrapper {
+.button-wrapper {
   display: flex;
-  justify-content: center;
+  align-items: flex-end;
+  flex-direction: column;
+  margin: 0.4rem 0;
+}
+
+.review-helper-wrapper {
+  min-height: 3rem;
+  background: #f5f5f5;
+  border-radius: 0.25rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1ch;
+  font-size: smaller;
+  display: flex;
 }
 
 /* MISC */
@@ -131,14 +138,14 @@ p.demo-explanation {
   margin: 0 auto;
   padding: 1rem 0;
 }
-/* 
-#llmOutput {
-  height: 10ch;
-  max-height: 10ch;
-  overflow: scroll;
-  padding: 0.5rem;
-  border-radius: 0.25rem;
-  border: 1px solid whitesmoke;
-  background-color: whitesmoke;
-  color: #001affd3;
-} */
+
+.auto-checkbox-wrapper {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.4rem 0;
+}
+
+#reviewHelperOutput {
+  height: 3rem;
+  padding: 0.4rem 0;
+}
