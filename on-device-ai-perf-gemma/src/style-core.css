@@ -25,6 +25,10 @@ main {
   justify-content: space-between;
 }
 
+h3 {
+  margin-top: 0.5rem;
+}
+
 .button-wrapper {
   display: flex;
   flex-direction: row;
@@ -86,10 +90,13 @@ label {
   position: fixed;
   bottom: 0;
   left: 0;
-  background: rgba(255, 255, 255, 0.572);
-  text-align: center;
-  padding: 0.6rem 0;
+  box-sizing: border-box;
+  padding: 0.6rem;
   width: 100%;
+  background: #ff00d829;
+  backdrop-filter: blur(3px);
+  font-size: smaller;
+  text-align: center;
 }
 
 #llmOutput {
