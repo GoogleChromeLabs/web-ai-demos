@@ -16,6 +16,6 @@ If a **prompt crashes**, you can still [link to it](https://tomayac.github.io/pr
 
 ![Screenshot 2024-08-02 at 12 25 29](https://github.com/user-attachments/assets/9056e318-e5b6-4203-ac86-e4f32249dbc8)
 
-On **non-supported browsers**, it points people at the [Early Preview Program](https://docs.google.com/forms/d/e/1FAIpQLSfZXeiwj9KO9jMctffHPym88ln12xNWCrVkMY_u06WfSTulQg/viewform?resourcekey=0-dE0Rqy_GYXDEWSnU7Z0iHg):
+On **non-supported browsers**, it points people at the [Early Preview Program](https://developer.chrome.com/docs/ai/built-in):
 
 ![Screenshot 2024-08-02 at 12 01 23](https://github.com/user-attachments/assets/de3a372e-6293-4f14-ac77-a74522ad17ac)
