@@ -1,0 +1,19 @@
+{
+  "name": "product-reviews-gemini-get-rating",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "npx functions-framework --target=product-reviews-gemini-get-rating",
+    "deploy": "gcloud functions deploy product-reviews-gemini-get-rating  --runtime nodejs20 --trigger-http",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "devnook",
+  "license": "Apache-2.0",
+  "description": "",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.0",
+    "@google/generative-ai": "^0.14.1",
+    "dotenv": "^16.4.5"
+  }
+}
