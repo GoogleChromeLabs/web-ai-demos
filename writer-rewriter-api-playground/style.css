@@ -1,0 +1,68 @@
+:root {
+  color-scheme: dark light;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 1rem;
+  font-family: system-ui, sans-serif;
+  max-width: clamp(320px, 90%, 1000px);
+  margin: auto;
+}
+
+output,
+form {
+  margin-block: 1rem;
+}
+
+label {
+  font-weight: bold;
+}
+
+output {
+  white-space: pre;
+  text-wrap: wrap;
+  padding-block-end: 3rem;
+  outline: solid 1px CanvasText;
+  outline-offset: 0.25rem;
+  margin-inline: 0.5rem;
+}
+
+.copy-button {
+  position: relative;
+  top: -3rem;
+  left: 0.5rem;
+}
+
+.rewrite-form {
+  position: relative;
+  top: -3rem;
+}
+
+button {
+  width: 10rem;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.not-supported-message {
+  border: red solid 2px;
+  padding: 0.25rem;
+}
+
+footer {
+  margin-block: 1rem;
+}

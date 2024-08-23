@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>"
+    />
+    <title>Writer / Rewriter API Playground</title>
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      if (!isSecureContext) location.protocol = 'https:';
+    </script>
+    <script src="script.js" type="module"></script>
+  </head>
+  <body>
+    <h1>📝 Writer / Rewriter API Playground</h1>
+    <p>
+      This is a demo of Chrome's
+      <a href="https://developer.chrome.com/docs/ai/built-in"
+        >built-in Writer / Rewriter API</a
+      >
+      powered by Gemini Nano.
+    </p>
+    <div id="error-message"></div>
+    <div class="not-supported-message" hidden>
+      Your browser doesn't support the Writer / Rewriter API. If you're on Chrome, join the <a href="https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> to enable it.
+    </div>
+    <form hidden class="write-form">
+      <div class="wrapper">
+        <label for="prompt">Prompt</label>
+        <textarea id="prompt">
+Write an email to my bank asking them to raise my credit limit from $1,000 to $10,000.</textarea
+        >
+        <label for="context">Context</label>
+        <input id="context" value="I'm a long-standing customer." />
+        <label
+          >Tone:
+          <select class="tone">
+            <option value="formal">Formal</option>
+            <option selected value="neutral">Neutral</option>
+            <option value="casual">Casual</option>
+          </select></label
+        >
+        <label
+          >Format:
+          <select class="format">
+            <option value="plain-text">Plain text</option>
+            <option selected value="markdown">Markdown</option>
+          </select></label
+        >
+        <label
+          >Length:
+          <select class="length">
+            <option selected value="short">Short</option>
+            <option value="medium">Medium</option>
+            <option value="long">Long</option>
+          </select>
+        </label>
+        <button class="write-button" type="submit">📝 Write</button>
+      </div>
+    </form>
+    <output hidden></output>
+    <button hidden class="copy-button">📋 Copy</button>
+    <form hidden class="rewrite-form">
+      <div class="wrapper">
+        <label
+          >Rewrite tone:
+          <select class="rewrite-tone">
+            <option selected value="as-is">As is</option>
+            <option value="more-formal">More formal</option>
+            <option value="more-casual">More casual</option>
+          </select></label
+        >
+        <label
+          >Rewrite format:
+          <select class="rewrite-format">
+            <option selected value="as-is">As is</option>
+            <option value="plain-text">Plain text</option>
+            <option value="markdown">Markdown</option>
+          </select></label
+        >
+        <label
+          >Rewrite length:
+          <select class="rewrite-length">
+            <option selected value="as-is">As is</option>
+            <option value="shorter">Shorter</option>
+            <option value="longer">Longer</option>
+          </select>
+        </label>
+        <button class="rewrite-button" type="submit">♻️ Rewrite</button>
+      </div>
+    </form>
+    <footer>
+      Made by <a href="https://github.com/tomayac/">@tomayac</a>.
+      Source code on <a href="https://github.com/tomayac/writer-rewriter-api-playground">GitHub</a>.
+    </footer>
+  </body>
+</html>
