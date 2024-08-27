@@ -1,0 +1,15 @@
+{
+  "name": "prompt-api-playground",
+  "version": "1.0.0",
+  "description": "This is a demo of Chrome's experimental Prompt API.",
+  "scripts": {
+    "start": "npx http-server",
+    "fix": "prettier --write ."
+  },
+  "author": "Thomas Steiner (tomac@google.com)",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "prettier": "^3.3.3"
+  }
+}
