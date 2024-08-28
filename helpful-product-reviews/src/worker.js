@@ -70,7 +70,7 @@ function generateReviewHelperOutput(response) {
   const { isHelpful, fix, example } = parsedResponse;
   const output = isHelpful
     ? '👍 Your review is helpful!'
-    : `💡 Wanna make your review even more helpful? ${fix} For example, ${example}`;
+    : `💡 Tip: ${fix} For example, ${example}`;
 
   console.log('parsedResponse', parsedResponse);
   console.log('RESPONSE', response);
