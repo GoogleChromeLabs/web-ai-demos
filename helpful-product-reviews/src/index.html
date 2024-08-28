@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Helpful product reviews</title>
+    <link rel="stylesheet" href="./styles/style-core.css" />
+    <link rel="stylesheet" href="./styles/style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👍</text></svg>"
+    />
+  </head>
+  <body>
+    <main>
+      <div>
+        <h1>Helpful product reviews 👍</h1>
+        <div class="img-wrapper">
+          <img src="./socks.png" alt="" width="200">
+        </div>
+        <div>
+          <div id="modelStatusWrapper">
+            <div id="modelStatus"></div>
+          </div>
+          <div class="input-area">
+            <div>
+              <label for="reviewInputEl">Product review</label>
+            </div>
+            <textarea name="reviewInputEl" id="reviewInputEl">Too pricey</textarea>
+            <div class="button-wrapper">
+              <button onclick="simulatePostReview()">
+                Post
+              </button>
+            </div>
+            <div class="review-helper-wrapper">
+              <div class="flex-h">
+                <div id="reviewHelperStatus"></div>
+                <button id="inferenceButton" onclick="runLLMInference()">
+                  ▶️ Run review helper
+                </button>
+              </div>
+              <div id="reviewHelperOutput"></div>
+            </div>
+            <div class="auto-checkbox-wrapper">
+              <input type="checkbox" id="autoInferCheckbox" name="autoInferCheckbox">
+              <label for="autoInferCheckbox">Automatically trigger the review helper when you stop typing (800ms timeout)</label>
+            </div>
+          </div>
+        </div>
+    </main>
+    <div class="demo-metadata">
+      <h3>About this demo</h3>
+      By <a href="https://x.com/maudnals" noreferrer noopener>@maudnals</a> ・
+      <a
+        href="https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/helpful-product-reviews" noreferrer noopener
+        >Code and Docs</a
+      >
+      <p class="demo-explanation">
+        <b>Why this demo?</b>
+        Online stores can see a <b>270% increase in conversions</b> by showing product reviews (<a href="https://spiegel.medill.northwestern.edu/wp-content/uploads/sites/2/2021/04/Spiegel_Online-Review_eBook_Jun2017_FINAL.pdf" noreferrer noopener>Source</a>). But writing a product review is tricky. Here, we use Gen AI (an LLM) to help users write helpful reviews.
+        <br/>
+        <b>Some product reviews to try:</b> "I love these", "Hate these", "I'm not happy with the price", "Nice and warm"
+      </p>
+    </div>
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>
