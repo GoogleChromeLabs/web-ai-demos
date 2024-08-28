@@ -36,7 +36,7 @@ function simulatePostReview() {
 // Gen AI / inference + worker message handling
 
 function runLLMInference() {
-  const userPrompt = document.getElementById('reviewInputEl').value;
+  const userPrompt = document.getElementById('reviewInputEl').value.trim();
   worker.postMessage(userPrompt);
 }
 
