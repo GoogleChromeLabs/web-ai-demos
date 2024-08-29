@@ -1,8 +1,3 @@
-/**
- * Copyright 2024 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 :root {
   color-scheme: dark light;
 }
@@ -27,6 +22,10 @@ body {
 output,
 form {
   margin-block: 1rem;
+}
+
+label {
+  font-weight: bold;
 }
 
 output {
@@ -62,4 +61,8 @@ button {
 .not-supported-message {
   border: red solid 2px;
   padding: 0.25rem;
+}
+
+footer {
+  margin-block: 1rem;
 }
