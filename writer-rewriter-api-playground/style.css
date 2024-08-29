@@ -29,6 +29,10 @@ form {
   margin-block: 1rem;
 }
 
+label {
+  font-weight: bold;
+}
+
 output {
   white-space: pre;
   text-wrap: wrap;
@@ -62,4 +66,8 @@ button {
 .not-supported-message {
   border: red solid 2px;
   padding: 0.25rem;
+}
+
+footer {
+  margin-block: 1rem;
 }

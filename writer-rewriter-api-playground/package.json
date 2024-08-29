@@ -1,0 +1,12 @@
+{
+  "name": "writer-rewriter-api-playground",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "npx http-server -p 8080"
+  },
+  "author": "Thomas Steiner (tomac@google.com)",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "https-server": "^0.1.2"
+  }
+}
