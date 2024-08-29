@@ -11,14 +11,14 @@ export default class BuiltinPrompting {
     streamingPrompt(prompt: string): Promise<ReadableStream<string>> {
         return this.session.promptStreaming(prompt);
     }
-    
+
     prompt(prompt: string): Promise<string> {
         return this.session.prompt(prompt);
     }
 
     static async createPrompting(): Promise<BuiltinPrompting> {
-        if (window.ai && await window.ai.canCreateTextSession() === 'readily') {
-            let builtInsession = await window.ai.createTextSession();
+        if (window.ai && (await window.ai.assistant.capabilities()).available === 'readily') {
+            let builtInsession = await window.ai.assistant.create();
             return new BuiltinPrompting(builtInsession);
         } else {
             throw new Error("Built-in prompting not supported");
