@@ -26,24 +26,22 @@
             <div>
               <label for="reviewInputEl">Product review</label>
             </div>
-            <textarea name="reviewInputEl" id="reviewInputEl">Too pricey</textarea>
+            <div class="input-wrapper">
+              <textarea name="reviewInputEl" id="reviewInputEl" oninput="handleUserInputChange()">Too pricey</textarea>
+              <div class="ai-effect-wrapper" onclick="toggleReviewHelperBubble()">
+                <div id="aiEffect"></div>
+              </div>
+              <div id="reviewHelperBubble" class="hidden">
+                <div id="reviewHelperStatusWrapper">
+                  <div id="reviewHelperStatus"></div>
+                </div>
+                <div id="reviewHelperOutput"></div>
+              </div>
+            </div>
             <div class="button-wrapper">
               <button onclick="simulatePostReview()">
                 Post
               </button>
-            </div>
-            <div class="review-helper-wrapper">
-              <div class="flex-h">
-                <div id="reviewHelperStatus"></div>
-                <button id="inferenceButton" onclick="runLLMInference()">
-                  ▶️ Run review helper
-                </button>
-              </div>
-              <div id="reviewHelperOutput"></div>
-            </div>
-            <div class="auto-checkbox-wrapper">
-              <input type="checkbox" id="autoInferCheckbox" name="autoInferCheckbox">
-              <label for="autoInferCheckbox">Automatically trigger the review helper when you stop typing (800ms timeout)</label>
             </div>
           </div>
         </div>
