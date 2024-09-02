@@ -1,11 +1,26 @@
+:root {
+  --primary-color: rgb(0, 153, 255);
+  --primary-color-x-light: #cbe5ff;
+  --primary-color-dark: rgb(0, 130, 217);
+  --ai-color: rgb(177, 0, 255);
+  --error-color: red;
+  --neutral-color: rgb(78, 78, 78);
+  --demo-metadata-color: #ff00d829;
+  --box-shadow-default: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  --background-color-transition-default: background-color 0.1s linear;
+  --light-grey: #ccc;
+  --border-color: var(--light-grey);
+  --disabled-color: var(--light-grey);
+}
+
 html {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   font-size: 18px;
-  --padding: 2rem;
-  padding: var(--padding);
-  width: calc(100vw - 2 * var(--padding));
-  height: calc(100vh - 2 * var(--padding));
+  --padding-html: 2rem;
+  padding: var(--padding-html);
+  width: calc(100vw - 2 * var(--padding-html));
+  height: calc(100vh - 2 * var(--padding-html));
 }
 
 body {
@@ -35,7 +50,7 @@ p {
   line-height: 3ch;
 }
 
-/* FORM */
+/* INPUTS + INPUT LAYOUT */
 
 label {
   display: block;
@@ -43,14 +58,6 @@ label {
   margin-bottom: 0.5rem;
   font-size: 1rem;
 }
-
-input[type='checkbox'] {
-  cursor: pointer;
-  margin-right: 0.5rem;
-  transform: scale(1.3) translateY(10px);
-}
-
-/* INPUT  */
 
 .input-area {
   min-width: 15rem;
@@ -63,7 +70,7 @@ textarea {
   height: 6rem;
   padding: 0.5rem;
   border-radius: 0.25rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   font-size: 1rem;
   resize: none;
   font-family: inherit;
@@ -78,24 +85,25 @@ textarea {
   margin-bottom: 3rem;
 }
 
-/* BUTTONS */
+/* BUTTONS + BUTTON LAYOUT */
 
 button {
-  background-color: #001aff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
   cursor: pointer;
   font-size: 1rem;
+  transition: var(--background-color-transition-default);
+  &:disabled {
+    background-color: var(--disabled-color);
+    cursor: not-allowed;
+  }
+  &:hover {
+    background-color: var(--primary-color-dark);
+  }
 }
-
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-/* LAYOUT */
 
 .button-wrapper {
   display: flex;
@@ -104,31 +112,26 @@ button:disabled {
   margin: 0.4rem 0;
 }
 
-.review-helper-wrapper {
-  min-height: 3rem;
-  background: #f5f5f5;
-  border-radius: 0.25rem;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1ch;
-  font-size: smaller;
-  display: flex;
-}
-
-/* MISC */
+/* LAYOUT */
 
 .demo-metadata {
   position: fixed;
   bottom: 0;
   left: 0;
   box-sizing: border-box;
-  padding: 0.6rem;
   width: 100%;
-  background: #ff00d829;
+  padding: 0.6rem;
+  background: var(--demo-metadata-color);
   backdrop-filter: blur(3px);
   font-size: smaller;
   text-align: center;
 }
+
+.input-wrapper {
+  position: relative;
+}
+
+/* MISC */
 
 p.demo-explanation {
   line-height: 2ch;
@@ -137,15 +140,4 @@ p.demo-explanation {
   max-width: 40rem;
   margin: 0 auto;
   padding: 1rem 0;
-}
-
-.auto-checkbox-wrapper {
-  display: flex;
-  align-items: flex-start;
-  padding: 0.4rem 0;
-}
-
-#reviewHelperOutput {
-  height: 3rem;
-  padding: 0.4rem 0;
 }
