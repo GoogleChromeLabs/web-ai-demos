@@ -1,5 +1,6 @@
 const url = new URL('./worker.js', import.meta.url);
 import { MESSAGE_CODE, MODEL_STATUS } from './consts.js';
+import { TYPING_DELAY } from './config.js';
 
 // Initialization
 
@@ -16,8 +17,7 @@ const handleUserInputChange = (event) => {
   typingTimeout = setTimeout(() => {
     console.log('Input: User has stopped typing - Run inference');
     setTimeout(() => {}, 1000);
-  }, 800); // 800ms delay
-};
+  }, TYPING_DELAY); // 800ms delay
 
 function displayModelStatus(status) {
   document.getElementById('modelStatusWrapper').className = status;
