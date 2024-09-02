@@ -28,7 +28,7 @@ function App() {
 
   // Checks if the Prompt API is supported.
   useEffect(() => {
-    const supported = window.ai !== undefined && window.ai.canCreateTextSession !== undefined;
+    const supported = window.ai !== undefined && window.ai.assistant !== undefined;
     setPromptApiSupported(supported);
   }, []);
 
@@ -65,7 +65,7 @@ function App() {
                         Rules: Be concise. Don't use bullet points.`;
         const urlParams = new URLSearchParams(window.location.search);
         const streaming = urlParams.get('streaming');
-  
+
         try {
           const promptApi = await BuiltinPrompting.createPrompting();
           if (streaming === 'true') {
@@ -91,7 +91,7 @@ function App() {
     // let voice = window.speechSynthesis.getVoices().filter(v => v.default)[0];
     let utterThis = new SpeechSynthesisUtterance(weatherDescription);
     window.speechSynthesis.speak(utterThis);
-  }  
+  }
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -123,12 +123,12 @@ function App() {
               <p>{weatherDescription}</p>
             </>
         }
-        {!promptApiSupported && 
+        {!promptApiSupported &&
           <Alert
             severity='error'
           >Your browser doesn't support the Prompt API. If you're on Chrome, join the <Link href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</Link> and enable it.</Alert>
         }
-        {promptApiSupported && 
+        {promptApiSupported &&
           <Alert
             severity='info'
           >Be the first to test new AI APIs. Your feedback is invaluable to our development process. Join our <Link href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</Link> today.</Alert>
