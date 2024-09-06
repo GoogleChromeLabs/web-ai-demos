@@ -1,30 +1,53 @@
 const url = new URL('./worker.js', import.meta.url);
 import { MESSAGE_CODE, MODEL_STATUS } from './consts.js';
+import { TYPING_DELAY } from './config.js';
 
 // Initialization
 
-displayModelStatus(MODEL_STATUS.NOT_STARTED);
+let modelStatus = MODEL_STATUS.NOT_STARTED;
+displayModelStatus(modelStatus);
+displayReviewHelperOutput('No tip yet to improve your review.');
 const worker = new Worker(url);
 let typingTimeout = 0;
 
-// DOM manipulation and events
+// DOM manipulation, display and events
 
-const handleUserInputChange = (event) => {
+function handleUserInputChange(event) {
   if (typingTimeout) {
     clearTimeout(typingTimeout);
   }
   typingTimeout = setTimeout(() => {
-    console.log('Input: User has stopped typing - Run inference');
+    console.info('Input: User has stopped typing');
+    if (modelStatus === MODEL_STATUS.READY) {
+      console.info('Trigger inference');
+      runLLMInference();
+    }
     setTimeout(() => {}, 1000);
-  }, 800); // 800ms delay
-};
+  }, TYPING_DELAY); // 800ms delay
+}
+
+function updateUiByModelStatus(status) {
+  displayModelStatus(status);
+  displayReviewHelperStatus(status);
+  displayAiEffectStatus(status);
+}
+
+function displayAiEffectStatus(status) {
+  document.getElementById('aiEffect').className = status;
+}
 
 function displayModelStatus(status) {
   document.getElementById('modelStatusWrapper').className = status;
   document.getElementById('modelStatus').className = status;
 }
 
+function displayReviewHelperStatus(status) {
+  document.getElementById('reviewHelperStatusWrapper').className = status;
+  document.getElementById('reviewHelperStatus').className = status;
+}
+
 function displayReviewHelperOutput(output) {
+  resetScrollReviewHelperBubble();
   document.getElementById('reviewHelperOutput').innerText = output;
 }
 
@@ -33,9 +56,20 @@ function simulatePostReview() {
   window.alert('Review posted!');
 }
 
+function resetScrollReviewHelperBubble() {
+  const reviewHelperOutputEl = document.getElementById('reviewHelperOutput');
+  reviewHelperOutputEl.scrollTop = 0;
+}
+
+function toggleReviewHelperBubble() {
+  resetScrollReviewHelperBubble();
+  document.getElementById('reviewHelperBubble').classList.toggle('hidden');
+}
+
 // Gen AI / inference + worker message handling
 
 function runLLMInference() {
+  // TODO manage empty input
   const userPrompt = document.getElementById('reviewInputEl').value.trim();
   worker.postMessage(userPrompt);
 }
@@ -51,34 +85,32 @@ worker.onmessage = function (message) {
   const messageCode = message.data.code;
   switch (messageCode) {
     case MESSAGE_CODE.PREPARING_MODEL:
-      displayModelStatus(MODEL_STATUS.PREPARING);
-      document.getElementById('reviewHelperStatus').className =
-        MODEL_STATUS.PREPARING;
+      modelStatus = MODEL_STATUS.PREPARING;
+      updateUiByModelStatus(modelStatus);
       break;
 
     case MESSAGE_CODE.MODEL_READY:
-      displayModelStatus(MODEL_STATUS.READY);
-      document.getElementById('reviewHelperStatus').className =
-        MODEL_STATUS.READY;
+      modelStatus = MODEL_STATUS.READY;
+      updateUiByModelStatus(modelStatus);
+      runLLMInference();
       break;
 
     case MESSAGE_CODE.GENERATING_RESPONSE:
-      displayModelStatus(MODEL_STATUS.GENERATING);
-      document.getElementById('reviewHelperStatus').className =
-        MODEL_STATUS.GENERATING;
+      modelStatus = MODEL_STATUS.GENERATING;
+      updateUiByModelStatus(modelStatus);
+      displayReviewHelperOutput('Thinking...');
       break;
 
     case MESSAGE_CODE.RESPONSE_READY:
-      displayModelStatus(MODEL_STATUS.READY);
-      document.getElementById('reviewHelperStatus').className =
-        MODEL_STATUS.READY;
+      // TODO change to "ready again" to diff from first-time READY state?
+      modelStatus = MODEL_STATUS.READY;
+      updateUiByModelStatus(modelStatus);
       displayReviewHelperOutput(message.data.payload);
-      // document.getElementById('llmOutput').innerText = message.data.payload;
       break;
 
     case MESSAGE_CODE.MODEL_ERROR:
-      displayModelStatus(MODEL_STATUS.ERROR);
-      document.getElementById('reviewHelperStatus').className = 'error';
+      modelStatus = MODEL_STATUS.ERROR;
+      updateUiByModelStatus(modelStatus);
       break;
 
     default:
@@ -91,3 +123,4 @@ worker.onmessage = function (message) {
 window.runLLMInference = runLLMInference;
 window.simulatePostReview = simulatePostReview;
 window.handleUserInputChange = handleUserInputChange;
+window.toggleReviewHelperBubble = toggleReviewHelperBubble;

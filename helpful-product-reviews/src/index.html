@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Helpful product reviews</title>
     <link rel="stylesheet" href="./styles/style-core.css" />
-    <link rel="stylesheet" href="./styles/style.css" />
+    <link rel="stylesheet" href="./styles/style-ai.css" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👍</text></svg>"
@@ -26,24 +26,22 @@
             <div>
               <label for="reviewInputEl">Product review</label>
             </div>
-            <textarea name="reviewInputEl" id="reviewInputEl">Too pricey</textarea>
+            <div class="input-wrapper">
+              <textarea name="reviewInputEl" id="reviewInputEl" oninput="handleUserInputChange()">Too pricey</textarea>
+              <div class="ai-effect-wrapper" onclick="toggleReviewHelperBubble()">
+                <div id="aiEffect"></div>
+              </div>
+              <div id="reviewHelperBubble" class="hidden">
+                <div id="reviewHelperStatusWrapper">
+                  <div id="reviewHelperStatus"></div>
+                </div>
+                <div id="reviewHelperOutput"></div>
+              </div>
+            </div>
             <div class="button-wrapper">
               <button onclick="simulatePostReview()">
                 Post
               </button>
-            </div>
-            <div class="review-helper-wrapper">
-              <div class="flex-h">
-                <div id="reviewHelperStatus"></div>
-                <button id="inferenceButton" onclick="runLLMInference()">
-                  ▶️ Run review helper
-                </button>
-              </div>
-              <div id="reviewHelperOutput"></div>
-            </div>
-            <div class="auto-checkbox-wrapper">
-              <input type="checkbox" id="autoInferCheckbox" name="autoInferCheckbox">
-              <label for="autoInferCheckbox">Automatically trigger the review helper when you stop typing (800ms timeout)</label>
             </div>
           </div>
         </div>

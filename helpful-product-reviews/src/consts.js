@@ -5,11 +5,11 @@ export const MEDIAPIPE_WASM =
   'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai/wasm';
 
 export const MESSAGE_CODE = {
-  PREPARING_MODEL: 'preparingModel',
-  MODEL_READY: 'modelReady',
-  GENERATING_RESPONSE: 'generatingResponse',
-  RESPONSE_READY: 'responseReady',
-  MODEL_ERROR: 'modelError',
+  PREPARING_MODEL: 'preparing-model',
+  MODEL_READY: 'model-ready',
+  GENERATING_RESPONSE: 'generating-response',
+  RESPONSE_READY: 'response-ready',
+  MODEL_ERROR: 'model-error',
 };
 
 export const MODEL_STATUS = {

@@ -11,7 +11,7 @@ A helpful review should fulfill two main criteria:
 If the review meets both of these criteria, mark it as "Helpful: Yes." Otherwise, mark it as "Helpful: No". If the review is not helpful, suggest to the user a fix for how to improve their review, and give an example review that is more helpful and applies your suggested fix. Your example review should focus solely on making the review more informative, detailed and useful to others. It should focus on the review itself, not suggest any changes to the product. If the review is helpful, leave the "Fix" and "Example" sections blank.
 Adhere strictly to the following output format (absolutely do NOT change the structure):
 Helpful: [Yes/No]
-Fix: [Your suggestion on how to improve the review text, or leave blank if it's already helpful]
+Fix: [Your suggestion on how to improve the review text]
 Example: [An example review that is more helpful and applies your suggested fix, or leave blank]
 
 I'll give you example reviews and outputs, and then give you one review to analyze. Let's go:
@@ -54,8 +54,12 @@ function isLlmResponseUseful(response) {
   }
   // helpful: false, fix: '', example: ''
   // helpful: false, fix: '', example: 'bla'
-  if (!isHelpful && fix.toLowerCase() === '') {
-    // Llm doesn't have any suggestion despite marking the review as not helpful
+  // helpful: false, fix: 'bla', example: ''
+  if (
+    !isHelpful &&
+    (fix.toLowerCase() === '' || example.toLowerCase() === '')
+  ) {
+    // LLM doesn't have any suggestion despite marking the review as not helpful
     return false;
   }
   return true;
