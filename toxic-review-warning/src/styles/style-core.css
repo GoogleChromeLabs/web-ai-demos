@@ -60,7 +60,7 @@ label {
   font-size: 1rem;
 }
 
-.input-area {
+form {
   min-width: 15rem;
   width: 60%;
   margin: 0 auto;

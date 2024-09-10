@@ -23,7 +23,7 @@
           <div id="modelStatusWrapper">
             <div id="modelStatus"></div>
           </div>
-          <div class="input-area">
+          <form id="form">
             <div>
               <label for="reviewInputEl">Product review</label>
             </div>
@@ -37,11 +37,11 @@
                 </div>
                 <div id="toxicityAssessmentEl"></div>
               </div>
-              <button onclick="simulatePostReview()">
+              <button type="submit" onclick="simulatePostReview()">
                 Post
               </button>
             </div>
-          </div>
+          </form>
         </div>
     </main>
     <!-- Your comment is flagged as potentially harmful. -->

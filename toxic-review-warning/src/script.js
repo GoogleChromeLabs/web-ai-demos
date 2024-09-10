@@ -8,11 +8,18 @@ let modelStatus = MODEL_STATUS.NOT_STARTED;
 let isToxicityVisible = false;
 updateToxicityVisibility(isToxicityVisible);
 displayModelStatus(modelStatus);
+preventFormDefaultBehavior();
 updateToxicityAssessmentDisplay({ isToxic: false, toxicityTypeList: [] });
 const worker = new Worker(url);
 let typingTimeout = 0;
 
 // DOM manipulation, display and events
+
+function preventFormDefaultBehavior() {
+  document.getElementById('form').addEventListener('submit', (event) => {
+    event.preventDefault();
+  });
+}
 
 function updateToxicityVisibility(isVisible) {
   isToxicityVisible = isVisible;
