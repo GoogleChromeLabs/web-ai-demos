@@ -41,7 +41,6 @@ function handleUserInputChange(event) {
       console.info('Trigger inference');
       runLLMInference();
     }
-    setTimeout(() => {}, 1000);
   }, TYPING_DELAY);
 }
 
