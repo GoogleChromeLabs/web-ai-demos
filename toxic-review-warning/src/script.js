@@ -35,7 +35,7 @@ function handleUserInputChange(event) {
       runLLMInference();
     }
     setTimeout(() => {}, 1000);
-  }, TYPING_DELAY); // 800ms delay
+  }, TYPING_DELAY);
 }
 
 function updateUiByModelStatus(status) {
