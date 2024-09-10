@@ -130,14 +130,6 @@ button {
   text-align: center;
 }
 
-*.hidden {
-  opacity: 0;
-}
-
-*.visible {
-  opacity: 1;
-}
-
 p.demo-explanation {
   line-height: 2ch;
   line-height: normal;

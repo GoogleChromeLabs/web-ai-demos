@@ -76,7 +76,13 @@
   display: flex;
   flex: 1;
   align-items: center;
-  transition: opacity 0.2s ease;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  &.visible {
+    visibility: visible;
+    opacity: 1;
+  }
 }
 
 /* REVIEW HELPER OUTPUT */

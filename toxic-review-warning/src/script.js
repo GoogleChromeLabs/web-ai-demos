@@ -22,15 +22,14 @@ function preventFormDefaultBehavior() {
 }
 
 function updateToxicityVisibility(isVisible) {
-  isToxicityVisible = isVisible;
-  document.getElementById('aiWrapper').className = isToxicityVisible
-    ? 'visible'
-    : 'hidden';
+  document.getElementById('aiWrapper').classList.toggle('visible', isVisible);
 }
 
 function handleUserInputChange(event) {
   if (isToxicityVisible) {
-    updateToxicityVisibility(false);
+    // Hide toxicty when user starts typing again
+    isToxicityVisible = false;
+    updateToxicityVisibility(isToxicityVisible);
   }
   if (typingTimeout) {
     clearTimeout(typingTimeout);
@@ -67,7 +66,8 @@ function updateToxicityAssessmentDisplay(output) {
 
 function simulatePostReview() {
   document.getElementById('reviewInputEl').value = '';
-  updateToxicityVisibility(false);
+  isToxicityVisible = false;
+  updateToxicityVisibility(isToxicityVisible);
   window.alert('Review posted!');
 }
 
@@ -114,7 +114,8 @@ worker.onmessage = function (message) {
       updateUiByModelStatus(modelStatus);
       updateToxicityAssessmentDisplay(message.data.payload);
       if (message.data.payload.isToxic) {
-        updateToxicityVisibility(true);
+        isToxicityVisible = true;
+        updateToxicityVisibility(isToxicityVisible);
       }
       break;
 
