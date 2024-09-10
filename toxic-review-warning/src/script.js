@@ -22,7 +22,7 @@ function updateToxicityVisibility(isVisible) {
 }
 
 function handleUserInputChange(event) {
-  if (isToxicityVisible === true) {
+  if (isToxicityVisible) {
     updateToxicityVisibility(false);
   }
   if (typingTimeout) {
