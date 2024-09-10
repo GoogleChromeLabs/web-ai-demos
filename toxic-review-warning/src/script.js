@@ -68,8 +68,10 @@ function simulatePostReview() {
 // Gen AI / Inference + Worker message handling
 
 function runLLMInference() {
-  // TODO manage empty input
   const userPrompt = document.getElementById('reviewInputEl').value.trim();
+  if (!userPrompt) {
+    return;
+  }
   worker.postMessage(userPrompt);
 }
 
