@@ -1,3 +1,6 @@
+/* Copyright 2024 Google LLC
+SPDX-License-Identifier: Apache-2.0 */
+
 const url = new URL('./worker.js', import.meta.url);
 import { MESSAGE_CODE, MODEL_STATUS } from './consts.js';
 import { TYPING_DELAY } from './config.js';

@@ -1,3 +1,6 @@
+/* Copyright 2024 Google LLC
+SPDX-License-Identifier: Apache-2.0 */
+
 import { env, pipeline } from '@xenova/transformers';
 import { MESSAGE_CODE } from './consts.js';
 import { TOXICITY_THRESHOLD, MODEL_NAME } from './config.js';

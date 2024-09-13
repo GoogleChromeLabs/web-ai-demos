@@ -1,3 +1,6 @@
+/* Copyright 2024 Google LLC
+SPDX-License-Identifier: Apache-2.0 */
+
 export const MESSAGE_CODE = {
   PREPARING_MODEL: 'preparing-model',
   MODEL_READY: 'model-ready',
