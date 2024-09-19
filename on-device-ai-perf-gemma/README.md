@@ -1,8 +1,8 @@
-# On-device Gemma with MediaPipe
+# Client-side Gemma with MediaPipe in a worker
 
 ## Why this demo
 
-* This demo showcases web performance/UX tips for on-device AI (in-browser). It shows that using a worker frees up the main thread (the animation runs smoothly). It also includes an implementation of message passing between the worker and the main thread, to display model readiness status updates to the user.
+* This demo showcases web performance/UX tips for client-side AI (in-browser). It shows that using a worker frees up the main thread (the animation runs smoothly). It also includes an implementation of message passing between the worker and the main thread, to display model readiness status updates to the user.
 * The demo uses the Gemma 2B model, with the [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) (see [npm package](https://www.npmjs.com/package/@mediapipe/tasks-genai)).
 
 <p align="center">

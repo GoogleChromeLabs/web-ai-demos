@@ -144,8 +144,9 @@ export function App() {
     setRatingOnDevice(0);
     setSentiment(UNKNOWN);
 
-    // POSITIVE NEGATIVE CLASSIFIER (ON-DEVICE)
-    const transformersjsClassifierSentiment = await transformersjsClassifierSentimentPromise;
+    // POSITIVE NEGATIVE CLASSIFIER (CLIENT-SIDE)
+    const transformersjsClassifierSentiment =
+      await transformersjsClassifierSentimentPromise;
     const sentimentResult = await transformersjsClassifierSentiment(review);
     console.log(sentimentResult);
     const sentiment = sentimentResult[0].label;
@@ -156,7 +157,7 @@ export function App() {
     }
     setIsThinkingSentiment(false);
 
-    // RATING (ON-DEVICE)
+    // RATING (CLIENT-SIDE)
     try {
       const gemmaLlmPrompt = generateGemmaLLmPrompt(review);
       console.log(mediaPipeLlm);
