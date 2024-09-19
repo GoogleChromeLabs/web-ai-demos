@@ -6,9 +6,9 @@
 import { ReadableStream } from "stream/web";
 
 export default class BuiltinPrompting {
-    constructor(private session: AITextSession) {}
+    constructor(private session: AIAssistant) {}
 
-    streamingPrompt(prompt: string): Promise<ReadableStream<string>> {
+    streamingPrompt(prompt: string): ReadableStream<string> {
         return this.session.promptStreaming(prompt);
     }
 
