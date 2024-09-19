@@ -1,0 +1,57 @@
+:root {
+  color-scheme: dark light;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 1rem;
+  font-family: system-ui, sans-serif;
+  max-width: clamp(320px, 90%, 1000px);
+  margin: auto;
+}
+
+form {
+  visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-block: 1rem;
+}
+
+label {
+  font-weight: bold;
+}
+
+textarea {
+  display: block;
+}
+
+span {
+  font-weight: normal;
+}
+
+p {
+  font-variant: tabular-nums;
+}
+
+button {
+  width: fit-content;
+}
+
+.not-supported-message {
+  border: red solid 2px;
+  padding: 0.25rem;
+}
+
+footer {
+  margin-block: 1rem;
+}
