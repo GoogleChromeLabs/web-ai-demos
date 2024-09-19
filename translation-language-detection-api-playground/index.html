@@ -1,0 +1,66 @@
+<!--
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+ -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta http-equiv="origin-trial" content="AsBU3QyUBL+Bp/ayVhXIzhF0+sBq5ScCkktyzBQ31GSnYzIQgfy218jUcgXkTaQPzivvIcyWPzLRQpk75rSi8g0AAABYeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS5kZXY6NDQzIiwiZmVhdHVyZSI6Ikxhbmd1YWdlRGV0ZWN0aW9uQVBJIiwiZXhwaXJ5IjoxNzQ5NTk5OTk5fQ==" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>"
+    />
+    <title>Translation / Language Detection API Playground</title>
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      if (!isSecureContext) location.protocol = 'https:';
+    </script>
+    <script src="script.js" type="module"></script>
+  </head>
+  <body>
+    <h1>💬 Translation / Language Detection API Playground</h1>
+    <div class="not-supported-message" hidden>
+      Your browser doesn't support the Translation / Language Detection API. If
+      you're on Chrome, join the
+      <a
+        href="https://developer.chrome.com/docs/ai/built-in#get_an_early_preview"
+        >Early Preview Program</a
+      >
+      to enable it.
+    </div>
+    <form>
+      <label for="input">Input:</label>
+      <textarea id="input"></textarea>
+      <p>I'm <span>not sure what language this is</span>.</p>
+      <!--
+      <label for="translate"
+        >Translate to
+        <select id="translate">
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="it">Italian</option>
+          <option value="es">Spanish</option>
+        </select></label
+      >
+      <button type="submit">Translate</button>
+      -->
+    </form>
+    <!--
+    <label for="output">Translation:</label>
+    <output id="output"></output>
+    -->
+    <footer>
+      Made by <a href="https://github.com/tomayac/">@tomayac</a>. Source code on
+      <a
+        href="https://github.com/tomayac/translation-language-detection-api-playground"
+        >GitHub</a
+      >.
+    </footer>
+  </body>
+</html>
