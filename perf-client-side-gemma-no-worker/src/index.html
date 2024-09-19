@@ -11,7 +11,7 @@
   <body>
     <main>
       <div>
-        <h1>Client-side Gen AI: Performance demo with a worker ⏱️</h1>
+        <h1>Client-side Gen AI: Performance demo, no worker ⏱️</h1>
         <div class="demo-explanation">
           <p>
             This demo showcases web performance questions and tips for client-side Gen AI
@@ -26,11 +26,7 @@
             >.
           </p>
           <p>
-            The animation below should keep running smoothly without
-            jittering/freezing throughout your LLM usage. That's because we've
-            moved both the model preparation steps and the inference work off
-            the main thread, into a
-            <b>dedicated web worker</b>.
+            The animation below won't keep running smoothly throughout your LLM usage. Both the model preparation steps and the inference work are on the main thread. That's a performance bottleneck.
           </p>
         </div>
         <div>
@@ -64,7 +60,7 @@
       <h3>About this demo</h3>
       By <a href="https://x.com/maudnals">@maudnals</a> ・
       <a
-        href="https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/perf-client-side-gemma-worker"
+        href="https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/perf-client-side-gemma-no-worker"
         >Code and Docs</a
       >
     </div>
