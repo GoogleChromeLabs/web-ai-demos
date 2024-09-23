@@ -14,8 +14,8 @@
         <h1>Client-side Gen AI: Performance demo, no worker ⏱️</h1>
         <div class="demo-explanation">
           <p>
-            This demo showcases web performance questions and tips for client-side Gen AI
-            (in-browser). This web page downloads the
+            This demo showcases client-side Gen AI
+            (in-browser) without a worker. This web page downloads the
             <a
               href="https://www.kaggle.com/models/google/gemma/tfLite/gemma-2b-it-gpu-int4"
               >Gemma 2B model</a
@@ -26,7 +26,7 @@
             >.
           </p>
           <p>
-            The animation below won't keep running smoothly throughout your LLM usage. Both the model preparation steps and the inference work are on the main thread. That's a performance bottleneck.
+            The animation below won't keep running smoothly throughout your LLM usage. Both the model preparation steps and the inference work take place on the main thread. That's a performance bottleneck.
           </p>
         </div>
         <div>
