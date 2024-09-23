@@ -3,6 +3,7 @@ import { FilesetResolver, LlmInference } from '@mediapipe/tasks-genai';
 import { MODEL_URL, MEDIAPIPE_WASM, MESSAGE_CODE } from './consts.js';
 
 displayModelStatus(MODEL_STATUS.NOT_STARTED);
+let llmInference = null;
 
 (async function () {
   displayModelStatus(MODEL_STATUS.PREPARING);
