@@ -26,7 +26,7 @@ Because the MediaPipe LLM Inference API relies on WebGPU, this demo runs in all 
 
 ## Implementation details
 
-**This demo uses on-device AI (in-browser).**
+**This demo uses client-side AI (in-browser).**
 
 - This demo uses the Gemma 2B model, with the [MediaPipe LLM Inference API](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference/web_js) (see [npm package](https://www.npmjs.com/package/@mediapipe/tasks-genai)).
 - This demo uses a worker to free up the main thread. It also includes an implementation of message passing between the worker and the main thread, to display model readiness status updates to the user.

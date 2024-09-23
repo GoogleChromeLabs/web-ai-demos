@@ -1,6 +1,6 @@
 # Toxic review warning
 
-Keywords: `On-device` `Web AI` `Transformers.js` (NOT Chrome built-in)
+Keywords: `Client-side` `Web AI` `Transformers.js` (NOT Chrome built-in)
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/dca9238e-cf81-461c-aca5-5581cb48b929" width="400"/>
