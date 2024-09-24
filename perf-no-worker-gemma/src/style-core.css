@@ -46,7 +46,7 @@ button {
   font-size: 1rem;
 }
 
-button:disabled {
+button[aria-disabled="true"] {
   background-color: #ccc;
   cursor: not-allowed;
 }
