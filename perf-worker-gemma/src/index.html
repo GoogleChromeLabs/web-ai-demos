@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client-side Gen AI performance</title>
+    <link rel="stylesheet" href="style-core.css" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
+  </head>
+  <body>
+    <main>
+      <div>
+        <h1>Client-side Gen AI: Performance demo with a worker ⏱️</h1>
+        <div class="demo-explanation">
+          <p>
+            This demo showcases web performance questions and tips for client-side Gen AI
+            (in-browser). This web page downloads the
+            <a
+              href="https://www.kaggle.com/models/google/gemma/tfLite/gemma-2b-it-gpu-int4"
+              >Gemma 2B model</a
+            >, and uses it through the
+            <a
+              href="https://developers.google.com/mediapipe/solutions/genai/llm_inference/web_js"
+              >MediaPipe LLM Inference API</a
+            >.
+          </p>
+          <p>
+            The animation below should keep running smoothly without
+            jittering/freezing throughout your LLM usage. That's because we've
+            moved both the model preparation steps and the inference work off
+            the main thread, into a
+            <b>dedicated web worker</b>.
+          </p>
+        </div>
+        <div>
+          <div class="input-area">
+            <div>
+              <label for="userPrompt">LLM Prompt</label>
+            </div>
+            <textarea name="userPrompt" id="userPrompt">How fast are rockets?
+            </textarea>
+            <div class="button-wrapper">
+              <div id="modelStatus"></div>
+              <button id="inferenceButton" disabled onclick="runLLMInference()">
+                Go
+              </button>
+            </div>
+            <div>
+              <label>LLM Output</label>
+              <div id="llmOutput"></div>
+            </div>
+          </div>
+        </div>
+        <div class="animation-area">
+          <div class="animated-shape-wrapper">
+            <label>Expensive animation</label>
+            <div class="animated"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div class="demo-metadata">
+      <h3>About this demo</h3>
+      By <a href="https://x.com/maudnals">@maudnals</a> ・
+      <a
+        href="https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/perf-worker-gemma"
+        >Code and Docs</a
+      >
+    </div>
+    <script type="module" src="script.js"></script>
+  </body>
+</html>

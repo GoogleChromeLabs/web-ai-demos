@@ -1,0 +1,111 @@
+html {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 18px;
+  --padding: 2rem;
+  padding: var(--padding);
+  width: calc(100vw - 2 * var(--padding));
+  height: calc(100vh - 2 * var(--padding));
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+main {
+  margin: 0 auto;
+  height: 100%;
+  max-width: 40rem;
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+h3 {
+  margin-top: 0.5rem;
+}
+
+.button-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+button {
+  background-color: #001aff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+button[aria-disabled="true"] {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.input-area,
+.animation-area {
+  min-width: 15rem;
+  width: 60%;
+  margin: 0 auto;
+}
+
+.animation-area {
+  height: 180px;
+}
+
+textarea {
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0 0 0.5rem 0;
+  border-radius: 0.25rem;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  resize: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+p {
+  line-height: 3ch;
+}
+
+label {
+  display: block;
+  color: grey;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  margin-top: 2rem;
+}
+
+.demo-metadata {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  padding: 0.6rem;
+  width: 100%;
+  background: #ff00d829;
+  backdrop-filter: blur(3px);
+  font-size: smaller;
+  text-align: center;
+}
+
+#llmOutput {
+  height: 10ch;
+  max-height: 10ch;
+  overflow: scroll;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid whitesmoke;
+  background-color: whitesmoke;
+  color: #001affd3;
+}
