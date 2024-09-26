@@ -1,4 +1,4 @@
-# Helpful product review
+# Product review suggestions
 
 ## Why this demo
 

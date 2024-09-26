@@ -1,3 +1,23 @@
+# Product review auto-rating (I/O 2024)
+
+Demo for [I/O Talk 2024](https://www.youtube.com/watch?v=VDtgyEB9Q_Q).
+
+The input is a user review, based on which we generate:
+* Automatic star rating
+* Sentiment analysis
+* Toxicity analysis
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/938e9f27-f8cf-4479-a0c2-1bf234fbc1af" width="400"/>
+  <div align="center">Positive review</div>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/0987e08b-9b42-4172-854d-1ede0c9b1391" width="400"/>
+  <div align="center">Negative, toxic review</div>
+</p>
+
+
 ## Get started
 * [Only once, or when new env variables are added] Set up environment variables:
   * Create an `.env.development.local` file that follows the structure documented in `.env.template`.
@@ -18,5 +38,5 @@
 Learn more about vite env variables [here](https://vitejs.dev/guide/env-and-mode).
 
 ## Known issues
-The transformers.js model will download at each page load.
+The Transformers.js model will download at each page load.
 Issue: https://github.com/xenova/transformers.js/issues/366
