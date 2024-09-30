@@ -1,9 +1,7 @@
 <!--
-/**
- * Copyright 2024 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
- -->
+  Copyright 2024 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -36,25 +34,20 @@
     </div>
     <form>
       <label for="input">Input:</label>
-      <textarea id="input"></textarea>
+      <textarea id="input">Hello, world!</textarea>
       <p>I'm <span>not sure what language this is</span>.</p>
-      <!--
-      <label for="translate"
+
+      <label hidden for="translate"
         >Translate to
         <select id="translate">
-          <option value="fr">French</option>
-          <option value="de">German</option>
-          <option value="it">Italian</option>
+          <option selected value="ja">Japanese</option>
           <option value="es">Spanish</option>
         </select></label
       >
-      <button type="submit">Translate</button>
-      -->
+      <button hidden type="submit">Translate</button>
     </form>
-    <!--
-    <label for="output">Translation:</label>
-    <output id="output"></output>
-    -->
+    <label hidden for="output">Translation:</label>
+    <output hidden id="output"></output>
     <footer>
       Made by <a href="https://github.com/tomayac/">@tomayac</a>. Source code on
       <a
