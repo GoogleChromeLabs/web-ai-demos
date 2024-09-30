@@ -52,7 +52,7 @@
       e.preventDefault();
       try {
         const sourceLanguage = (await detector.detect(input.value.trim()))[0].detectedLanguage;
-        if (!['en', 'ja'].includes(sourceLanguage)) {
+        if (!['en', 'ja', 'es'].includes(sourceLanguage)) {
           output.textContent = 'Currently, only English ↔ Spanish and English ↔ Japanese are supported.';
           return;
         }
