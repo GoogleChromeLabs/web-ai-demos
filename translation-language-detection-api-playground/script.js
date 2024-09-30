@@ -4,7 +4,7 @@
  */
 
 (async () => {
-  if (!('translation' in self) || !(createDetector in self.translation)) {
+  if (!('translation' in self) || !('createDetector' in self.translation)) {
     document.querySelector('.not-supported-message').hidden = false;
     return;
   }
