@@ -1,0 +1,39 @@
+<!--
+  Copyright 2024 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✒️</text></svg>"
+    />
+    <title>Synonym Finder</title>
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      if (!isSecureContext) location.protocol = 'https:';
+    </script>
+    <script src="script.js" type="module"></script>
+  </head>
+  <body>
+    <h1>✒️ Synonym Finder</h1>
+    <div hidden>Your browser doesn't currently support the Prompt API.</div>
+    <main hidden>
+      <form>
+        <label for="synonym">I need synonyms for the word</label>
+        <input id="synonym" autofocus value="funny" placeholder="funny" />.
+        <button type="submit">Suggest</button>
+      </form>
+      <output></output>
+      <details>
+        <summary>Prompt and raw response</summary>
+        <pre></pre>
+      </details>
+    </main>
+  </body>
+</html>
