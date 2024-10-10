@@ -77,6 +77,10 @@ dialog {
   border-radius: 4px;
 }
 
+pre {
+  text-wrap: auto;
+}
+
 .tokens-exceeded, #character-count-exceed {
   color: red;
 }

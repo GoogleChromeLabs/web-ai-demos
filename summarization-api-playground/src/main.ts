@@ -10,6 +10,9 @@ import './style.css'
 // is used as a limit to warn the user that the content might be too long to summarize.
 const MAX_MODEL_CHARS = 4000;
 const inputTextArea = document.querySelector('#input') as HTMLTextAreaElement;
+const summaryTypeSelect = document.querySelector('#type') as HTMLSelectElement;
+const summaryFormatSelect = document.querySelector('#format') as HTMLSelectElement;
+const summaryLengthSelect = document.querySelector('#length') as HTMLSelectElement;
 const characterCountSpan = document.querySelector('#character-count') as HTMLSpanElement;
 const characterCountExceededSpan = document.querySelector('#character-count-exceed') as HTMLSpanElement;
 const summarizationUnsupportedDialog = document.querySelector('#summarization-unsupported') as HTMLDialogElement;
@@ -28,13 +31,17 @@ const output = document.querySelector('#output') as HTMLDivElement;
  * availability must be checked before calling it. If availability is `no`, the function will throw
  *  an error.
  */
-const createSummarizationSession = async (downloadProgressCallback?: AIModelDownloadCallback): Promise<AISummarizerSession> =>  {
+const createSummarizationSession = async (
+    type: AISummarizerType,
+    format: AISummarizerFormat,
+    length: AISummarizerLength,
+    downloadProgressCallback?: AIModelDownloadCallback): Promise<AISummarizerSession> =>  {
   const canSummarize = await window.ai.summarizer!.capabilities();
   if (canSummarize.available === 'no') {
     throw new Error('AI Summarization is not supported');
   }
 
-  const summarizationSession = await window.ai.summarizer!.create();
+  const summarizationSession = await window.ai.summarizer!.create({type: type, format: format, length: length});
   if (canSummarize.available === 'after-download') {
     if (downloadProgressCallback) {
       summarizationSession.addEventListener('downloadprogress', downloadProgressCallback);
@@ -64,6 +71,27 @@ const initializeApplication = async () => {
   }
 
   let timeout: number | undefined = undefined;
+  function scheduleSummarization() {
+    // Debounces the call to the summarization API. This will run the summarization once the user
+    // hasn't typed anything for at least 1 second.
+    clearTimeout(timeout);
+    timeout = setTimeout(async () => {
+      output.textContent = 'Generating summary...';
+      let session = await createSummarizationSession(
+        summaryTypeSelect.value as AISummarizerType,
+        summaryFormatSelect.value as AISummarizerFormat,
+        summaryLengthSelect.value as AISummarizerLength,
+      );
+      let summary = await session.summarize(inputTextArea.value);
+      session.destroy();
+      output.textContent = summary;
+    }, 1000);
+  }
+
+  summaryTypeSelect.addEventListener('change', scheduleSummarization);
+  summaryFormatSelect.addEventListener('change', scheduleSummarization);
+  summaryLengthSelect.addEventListener('change', scheduleSummarization);
+
   inputTextArea.addEventListener('input', () => {
     characterCountSpan.textContent = inputTextArea.value.length.toFixed();
     if (inputTextArea.value.length > MAX_MODEL_CHARS) {
@@ -73,17 +101,7 @@ const initializeApplication = async () => {
       characterCountSpan.classList.remove('tokens-exceeded');
       characterCountExceededSpan.classList.add('hidden');
     }
-
-    // Debounces the call to the summarization API. This will run the summarization once the user
-    // hasn't typed anything for at least 1 second.
-    clearTimeout(timeout);
-    timeout = setTimeout(async () => {
-      output.textContent = 'Generating summary...';
-      let session = await createSummarizationSession();
-      let summary = await session.summarize(inputTextArea.value);
-      session.destroy();
-      output.textContent = summary;
-    }, 1000);
+    scheduleSummarization();
   });  
 }
 

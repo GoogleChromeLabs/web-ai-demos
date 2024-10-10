@@ -16,14 +16,41 @@
       <h1>Summarization API Playground</h1>
     </header>
     <main>
-        <div>
-          <h2>Input</h2>
+        <fieldset>
+          <legend>Prompt</legend>
           <textarea id="input"></textarea>
           <div>Character Count: <span id="character-count">0</span><span id="character-count-exceed" class="hidden"> (may exceed maximum token limit supported by the API.)</span></div>
-        </div>
+        </fieldset>
+        <fieldset>
+          <legend>Settings</legend>
+          <div>
+            <label for="type">Summary Type:</label>
+            <select id="type">
+              <option value="key-points" selected>Key Points</option>
+              <option value="tl;dr">TL;DR</option>
+              <option value="teaser">Teaser</option>
+              <option value="headline">Headline</option>
+            </select>            
+          </div>
+          <div>
+            <label for="length">Length:</label>
+            <select id="length">
+              <option value="short" selected>Short</option>
+              <option value="medium">Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </div>
+          <div>
+            <label for="format">Format:</label>
+            <select id="format">
+              <option value="markdown" selected>Markdown</option>
+              <option value="plain-text">Plain text</option>
+            </select>
+          </div>
+        </fieldset>
         <div>
           <h2>Summary</h2>
-          <div id="output"></div>
+          <pre id="output"></pre>
         </div>
     </main>
     <footer>
