@@ -41,7 +41,7 @@ const createSummarizationSession = async (
     throw new Error('AI Summarization is not supported');
   }
 
-  const summarizationSession = await window.ai.summarizer!.create({type: type, format: format, length: length});
+  const summarizationSession = await window.ai.summarizer!.create({type, format, length});
   if (canSummarize.available === 'after-download') {
     if (downloadProgressCallback) {
       summarizationSession.addEventListener('downloadprogress', downloadProgressCallback);
