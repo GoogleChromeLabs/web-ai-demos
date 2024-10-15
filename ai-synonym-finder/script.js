@@ -12,14 +12,14 @@ const getPrompt = (word) =>
   `Suggest a list of unique synonyms for the word "${word}".`;
 
 (async () => {
-  const isAvailable = (await self.ai?.assistant?.capabilities?.())?.available;
+  const isAvailable = (await self.ai?.languageModel?.capabilities?.())?.available;
   if (!isAvailable || isAvailable === 'no') {
     document.querySelector('div').hidden = false;
     return;
   }
   document.querySelector('main').hidden = false;
 
-  const assistant = await self.ai.assistant.create({
+  const languageModel = await self.ai.languageModel.create({
     initialPrompts: [
       {
         role: 'system',
@@ -67,7 +67,7 @@ Each synonym may only occur once in the list.`,
     }
     const prompt = getPrompt(word);
     try {
-      const assistantClone = await assistant.clone();
+      const assistantClone = await languageModel.clone();
       const stream = assistantClone.promptStreaming(prompt);
       output.innerHTML = '';
       pre.innerHTML = '';
