@@ -13,7 +13,7 @@ declare global {
     }
 
     interface AI {
-        readonly assistant: AIAssistantFactory;
+        readonly languageModel: AIAssistantFactory;
     }
 
     interface AICreateMonitor extends EventTarget {
