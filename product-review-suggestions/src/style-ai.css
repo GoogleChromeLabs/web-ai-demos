@@ -65,7 +65,7 @@
     content: '🖊️ Generating response...';
   }
   &.error::before {
-    content: '❌ Error while preparing the model';
+    content: '❌ Error while preparing or running the model';
   }
 }
 

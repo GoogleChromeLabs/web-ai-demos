@@ -113,6 +113,12 @@ worker.onmessage = function (message) {
       updateUiByModelStatus(modelStatus);
       break;
 
+    case MESSAGE_CODE.INFERENCE_ERROR:
+      modelStatus = MODEL_STATUS.ERROR;
+      updateUiByModelStatus(modelStatus);
+      displayReviewHelperOutput('No suggestion');
+      break;
+
     default:
       throw new Error(
         `Message from worker contains an unknown message code: ${messageCode}`

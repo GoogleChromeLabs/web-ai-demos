@@ -130,7 +130,7 @@ function parseLlmResponse(response) {
   }
 })();
 
-self.onmessage = function (message) {
+self.onmessage = async function (message) {
   if (!llmInference) {
     // Just in case. This condition shouldn't normally be hit because the inference UI button is disabled until the model is ready
     throw new Error("Can't run inference, the model is not ready yet");
@@ -138,9 +138,8 @@ self.onmessage = function (message) {
   console.info('[Worker] 📬 Message from main thread: ', message);
   console.info('[Worker] Generating response...');
   self.postMessage({ code: MESSAGE_CODE.GENERATING_RESPONSE, payload: null });
-
-  (async function () {
-    // TODO handle errors (e.g. an inference error can happen when the input is too long). A simple try/catch isn't sufficient, we also need to terminate the previous/failing inference which I didn't figure out how to do ("Previous invocation or loading is still ongoing.")
+  // TODO handle errors (e.g. an inference error can happen when the input is too long). A simple try/catch isn't sufficient, we also need to terminate the previous/failing inference which I didn't figure out how to do ("Previous invocation or loading is still ongoing.")
+  try {
     const response = await llmInference.generateResponse(
       generatePrompt(message.data)
     );
@@ -150,5 +149,10 @@ self.onmessage = function (message) {
       code: MESSAGE_CODE.RESPONSE_READY,
       payload: reviewHelperOutput,
     });
-  })();
+    return reviewHelperOutput;
+  } catch (error) {
+    console.error('[Worker] Error during inference:', error);
+    self.postMessage({ code: MESSAGE_CODE.INFERENCE_ERROR, payload: null });
+    return null;
+  }
 };

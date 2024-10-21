@@ -44,7 +44,7 @@ function getToxicityTypes(results) {
   }
 })();
 
-self.onmessage = function (message) {
+self.onmessage = async function (message) {
   const textToClassify = message.data;
   if (!classifier) {
     // Just in case. This condition shouldn't normally be hit because inference won't be triggered in script.js unless modelStatus is READY
@@ -55,25 +55,23 @@ self.onmessage = function (message) {
   self.postMessage({ code: MESSAGE_CODE.GENERATING_RESPONSE, payload: null });
 
   // Run the classifier
-  (async function () {
-    try {
-      const classificationResults = await classify(textToClassify);
-      const toxicityTypes = getToxicityTypes(classificationResults);
-      const toxicityAssessement = {
-        isToxic: toxicityTypes.length > 0,
-        toxicityTypeList:
-          toxicityTypes.length > 0 ? toxicityTypes.join(', ') : '',
-      };
-      console.info('[Worker] Toxicity assessed: ', toxicityAssessement);
-      self.postMessage({
-        code: MESSAGE_CODE.RESPONSE_READY,
-        payload: toxicityAssessement,
-      });
-    } catch (error) {
-      console.log('ERROr');
-      self.postMessage({
-        code: MESSAGE_CODE.INFERENCE_ERROR,
-      });
-    }
-  })();
+  try {
+    const classificationResults = await classify(textToClassify);
+    const toxicityTypes = getToxicityTypes(classificationResults);
+    const toxicityAssessement = {
+      isToxic: toxicityTypes.length > 0,
+      toxicityTypeList:
+        toxicityTypes.length > 0 ? toxicityTypes.join(', ') : '',
+    };
+    console.info('[Worker] Toxicity assessed: ', toxicityAssessement);
+    self.postMessage({
+      code: MESSAGE_CODE.RESPONSE_READY,
+      payload: toxicityAssessement,
+    });
+  } catch (error) {
+    console.error('[Worker] Error: ', error);
+    self.postMessage({
+      code: MESSAGE_CODE.INFERENCE_ERROR,
+    });
+  }
 };
