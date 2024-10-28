@@ -49,6 +49,11 @@ worker.onmessage = function (message) {
       document.getElementById('inferenceButton').disabled = true;
       break;
 
+    case MESSAGE_CODE.INFERENCE_ERROR:
+      displayModelStatus(MODEL_STATUS.ERROR);
+      document.getElementById('inferenceButton').disabled = false;
+      break;
+
     default:
       throw new Error(
         `Message from worker contains an unknown message code: ${messageCode}`

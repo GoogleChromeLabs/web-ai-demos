@@ -26,8 +26,15 @@ self.onmessage = async function (message) {
   console.info('[Worker] Generating response...');
   self.postMessage({ code: MESSAGE_CODE.GENERATING_RESPONSE, payload: null });
 
-  // TODO handle errors (e.g. an inference error can happen when the input is too long). A simple try/catch isn't sufficient, we also need to terminate the previous/failing inference which I didn't figure out how to do
-  const response = await llmInference.generateResponse(message.data);
+  let response = null;
+  try {
+    response = await llmInference.generateResponse(message.data);
+  } catch (error) {
+    console.error('[Worker] Error during inference:', error);
+    self.postMessage({ code: MESSAGE_CODE.INFERENCE_ERROR, payload: null });
+    return;
+    // TODO Better handle errors (e.g. an inference error can happen when the input is too long). A simple try/catch isn't sufficient, we also need to terminate the previous/failing inference ("Previous invocation or loading is still ongoing.")
+  }
   console.info('[Worker] Response generated');
   self.postMessage({ code: MESSAGE_CODE.RESPONSE_READY, payload: response });
 };

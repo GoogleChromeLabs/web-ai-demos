@@ -10,6 +10,7 @@ export const MESSAGE_CODE = {
   GENERATING_RESPONSE: 'generatingResponse',
   RESPONSE_READY: 'responseReady',
   MODEL_ERROR: 'modelError',
+  INFERENCE_ERROR: 'inferenceError',
 };
 
 export const MODEL_STATUS = {
