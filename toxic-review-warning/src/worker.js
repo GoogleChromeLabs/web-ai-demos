@@ -54,24 +54,25 @@ self.onmessage = async function (message) {
   console.info('[Worker] Assessing toxicity...');
   self.postMessage({ code: MESSAGE_CODE.GENERATING_RESPONSE, payload: null });
 
-  // Run the classifier
+  // Inference: run the classifier
+  let classificationResults = null;
   try {
-    const classificationResults = await classify(textToClassify);
-    const toxicityTypes = getToxicityTypes(classificationResults);
-    const toxicityAssessement = {
-      isToxic: toxicityTypes.length > 0,
-      toxicityTypeList:
-        toxicityTypes.length > 0 ? toxicityTypes.join(', ') : '',
-    };
-    console.info('[Worker] Toxicity assessed: ', toxicityAssessement);
-    self.postMessage({
-      code: MESSAGE_CODE.RESPONSE_READY,
-      payload: toxicityAssessement,
-    });
+    classificationResults = await classify(textToClassify);
   } catch (error) {
     console.error('[Worker] Error: ', error);
     self.postMessage({
       code: MESSAGE_CODE.INFERENCE_ERROR,
     });
+    return;
   }
+  const toxicityTypes = getToxicityTypes(classificationResults);
+  const toxicityAssessement = {
+    isToxic: toxicityTypes.length > 0,
+    toxicityTypeList: toxicityTypes.length > 0 ? toxicityTypes.join(', ') : '',
+  };
+  console.info('[Worker] Toxicity assessed: ', toxicityAssessement);
+  self.postMessage({
+    code: MESSAGE_CODE.RESPONSE_READY,
+    payload: toxicityAssessement,
+  });
 };
