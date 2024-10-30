@@ -116,7 +116,7 @@ function parseLlmResponse(response) {
   return result;
 }
 
-// Trigger model preparation *before* a message arrives
+// Trigger model preparation *before* the first message arrives
 (async function () {
   console.info('[Worker] Preparing model...');
   self.postMessage({ code: MESSAGE_CODE.PREPARING_MODEL, payload: null });
@@ -130,25 +130,33 @@ function parseLlmResponse(response) {
   }
 })();
 
-self.onmessage = function (message) {
+// Trigger inference upon receiving a message from the main script
+self.onmessage = async function (message) {
   if (!llmInference) {
     // Just in case. This condition shouldn't normally be hit because the inference UI button is disabled until the model is ready
+    self.postMessage({ code: MESSAGE_CODE.INFERENCE_ERROR });
     throw new Error("Can't run inference, the model is not ready yet");
   }
   console.info('[Worker] 📬 Message from main thread: ', message);
   console.info('[Worker] Generating response...');
   self.postMessage({ code: MESSAGE_CODE.GENERATING_RESPONSE, payload: null });
-
-  (async function () {
-    // TODO handle errors (e.g. an inference error can happen when the input is too long). A simple try/catch isn't sufficient, we also need to terminate the previous/failing inference which I didn't figure out how to do ("Previous invocation or loading is still ongoing.")
-    const response = await llmInference.generateResponse(
+  // Run inference = Generate an LLM response
+  let response = null;
+  try {
+    response = await llmInference.generateResponse(
       generatePrompt(message.data)
     );
-    const reviewHelperOutput = generateReviewHelperOutput(response);
-    console.info('[Worker] Response generated', reviewHelperOutput);
-    self.postMessage({
-      code: MESSAGE_CODE.RESPONSE_READY,
-      payload: reviewHelperOutput,
-    });
-  })();
+  } catch (error) {
+    console.error('[Worker] Error during inference:', error);
+    self.postMessage({ code: MESSAGE_CODE.INFERENCE_ERROR, payload: null });
+    return;
+    // TODO Better handle errors (e.g. an inference error can happen when the input is too long). A simple try/catch isn't sufficient, we also need to terminate the previous/failing inference ("Previous invocation or loading is still ongoing.")
+  }
+  // Parse and process the output
+  const reviewHelperOutput = generateReviewHelperOutput(response);
+  console.info('[Worker] Response generated', reviewHelperOutput);
+  self.postMessage({
+    code: MESSAGE_CODE.RESPONSE_READY,
+    payload: reviewHelperOutput,
+  });
 };
