@@ -3,7 +3,7 @@
 Keywords: `Client-side` `Web AI` `Transformers.js` (NOT Chrome built-in)
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/dca9238e-cf81-461c-aca5-5581cb48b929" width="400"/>
+  <img src="https://github.com/user-attachments/assets/a9adc1d3-bce6-4721-850b-75c0312c35f0" width="400"/>
 </p>
 
 ## Technology and browser support
