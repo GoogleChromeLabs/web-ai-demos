@@ -11,13 +11,12 @@ env.useBrowserCache = false;
 
 let classifier = null;
 
-// Define an asynchronous function to classify text
+// Asynchronous function to classify text
 async function classify(text) {
   if (!classifier) {
     throw new Error("Can't run inference, the model is not ready yet");
   }
   let results = await classifier(text, { topk: null });
-  console.log('Results:', results);
   return results;
 }
 
