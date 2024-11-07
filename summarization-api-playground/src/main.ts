@@ -15,18 +15,18 @@ const summaryFormatSelect = document.querySelector('#format') as HTMLSelectEleme
 const summaryLengthSelect = document.querySelector('#length') as HTMLSelectElement;
 const characterCountSpan = document.querySelector('#character-count') as HTMLSpanElement;
 const characterCountExceededSpan = document.querySelector('#character-count-exceed') as HTMLSpanElement;
-const summarizationUnsupportedDialog = document.querySelector('#summarization-unsupported') as HTMLDialogElement;
-const summarizationUnavailableDialog = document.querySelector('#summarization-unavailable') as HTMLDialogElement;
+const summarizationUnsupportedDialog = document.querySelector('#summarization-unsupported') as HTMLDivElement;
+const summarizationUnavailableDialog = document.querySelector('#summarization-unavailable') as HTMLDivElement;
 const output = document.querySelector('#output') as HTMLDivElement;
 
 /*
  * Creates a summarization session. If the model has already been downloaded, this function will
  * create the session and return it. If the model needs to be downloaded, this function will
  * wait for the download to finish before resolving the promise.
- * 
+ *
  * If a downloadProgressCallback is provided, the function will add the callback to the session
  * creation.
- * 
+ *
  * The function expects the model availability to be either `readily` or `after-download`, so the
  * availability must be checked before calling it. If availability is `no`, the function will throw
  *  an error.
@@ -60,13 +60,13 @@ const createSummarizationSession = async (
 const initializeApplication = async () => {
   const summarizationApiAvailable = window.ai !== undefined && window.ai.summarizer !== undefined;
   if (!summarizationApiAvailable) {
-    summarizationUnavailableDialog.showModal();
+    summarizationUnavailableDialog.style.display = 'block';
     return;
   }
 
   const canSummarize = await window.ai.summarizer!.capabilities();
   if (canSummarize.available === 'no') {
-    summarizationUnsupportedDialog.showModal();
+    summarizationUnsupportedDialog.style.display = 'block';
     return;
   }
 
@@ -102,7 +102,7 @@ const initializeApplication = async () => {
       characterCountExceededSpan.classList.add('hidden');
     }
     scheduleSummarization();
-  });  
+  });
 }
 
 initializeApplication();
