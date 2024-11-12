@@ -12,5 +12,8 @@
   "devDependencies": {
     "typescript": "^5.2.2",
     "vite": "^5.3.6"
+  },
+  "dependencies": {
+    "@types/dom-chromium-ai": "^0.0.2"
   }
 }
