@@ -2,14 +2,14 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { ReadableStream } from "stream/web";
-
 export default class BuiltinPrompting {
-    constructor(private session: AIAssistant) {}
+    constructor(private session: AILanguageModel) {}
 
-    streamingPrompt(prompt: string): ReadableStream<string> {
-        return this.session.promptStreaming(prompt);
+    streamingPrompt(prompt: string): AsyncIterable<string> {
+        // The below typecasts ReadableStream<string> to AsyncIterable<string> as DefinitelyTyped
+        // doesn't add the implementation, due to browser compability issues. See
+        // https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/62651 for more details.
+        return this.session.promptStreaming(prompt) as any as AsyncIterable<string>;
     }
 
     prompt(prompt: string): Promise<string> {
