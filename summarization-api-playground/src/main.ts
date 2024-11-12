@@ -35,20 +35,20 @@ const createSummarizationSession = async (
     type: AISummarizerType,
     format: AISummarizerFormat,
     length: AISummarizerLength,
-    downloadProgressCallback?: AIModelDownloadCallback): Promise<AISummarizerSession> =>  {
+    downloadProgressListener?: (ev: DownloadProgressEvent) => void): Promise<AISummarizer> =>  {
   const canSummarize = await window.ai.summarizer!.capabilities();
   if (canSummarize.available === 'no') {
     throw new Error('AI Summarization is not supported');
   }
 
-  const summarizationSession = await window.ai.summarizer!.create({type, format, length});
-  if (canSummarize.available === 'after-download') {
-    if (downloadProgressCallback) {
-      summarizationSession.addEventListener('downloadprogress', downloadProgressCallback);
-    }
-    await summarizationSession.ready;
+  let monitor = undefined;
+  if (downloadProgressListener) { 
+    monitor = (m: AICreateMonitor) => {
+      m.addEventListener('downloadprogress', downloadProgressListener);
+    };
   }
 
+  const summarizationSession = await window.ai.summarizer!.create({type, format, length, monitor});
   return summarizationSession;
 }
 
