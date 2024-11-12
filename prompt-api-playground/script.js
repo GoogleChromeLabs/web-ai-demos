@@ -6,6 +6,8 @@
 import { marked } from "https://cdn.jsdelivr.net/npm/marked@13.0.3/lib/marked.esm.js";
 import DOMPurify from "https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.es.mjs";
 
+const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
+
 (async () => {
   const errorMessage = document.getElementById("error-message");
   const costSpan = document.getElementById("cost");
@@ -187,6 +189,7 @@ import DOMPurify from "https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     session = await self.ai.languageModel.create({
       temperature: Number(sessionTemperature.value),
       topK: Number(sessionTopK.value),
+      systemPrompt: SYSTEM_PROMPT,
     });
     resetUI();
     updateStats();
