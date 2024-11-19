@@ -43,7 +43,7 @@ const createSummarizationSession = async (
       };
   }
 
-  if (!await checkSummarizerSupport()) {
+  if (!(await checkSummarizerSupport())) {
     throw new Error('AI Summarization is not supported');
   }
 
