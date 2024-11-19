@@ -84,29 +84,6 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     }
   );
 
-  const createWriter = async () => {
-    writer = await self.ai.writer.create({
-      tone: toneSelect.value,
-      length: lengthSelect.value,
-      format: formatSelect.value,
-      sharedContext: context.value.trim(),
-    });
-    console.log(writer);
-  };
-
-  const createRewriter = async () => {
-    rewriter = await self.ai.rewriter.create({
-      tone: rewriteToneSelect.value,
-      length: rewriteLengthSelect.value,
-      format: rewriteFormatSelect.value,
-      sharedContext: context.value.trim(),
-    });
-    console.log(rewriter);
-  };
-
-  await createWriter();
-  await createRewriter();
-
   writeForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     await write();
@@ -140,6 +117,29 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     e.preventDefault();
     await rewrite();
   });
+
+  const createWriter = async () => {
+    writer = await self.ai.writer.create({
+      tone: toneSelect.value,
+      length: lengthSelect.value,
+      format: formatSelect.value,
+      sharedContext: context.value.trim(),
+    });
+    console.log(writer);
+  };
+
+  const createRewriter = async () => {
+    rewriter = await self.ai.rewriter.create({
+      tone: rewriteToneSelect.value,
+      length: rewriteLengthSelect.value,
+      format: rewriteFormatSelect.value,
+      sharedContext: context.value.trim(),
+    });
+    console.log(rewriter);
+  };
+
+  await createWriter();
+  await createRewriter();
 
   copyButton.addEventListener('click', async () => {
     await navigator.clipboard.writeText(output.innerText);
