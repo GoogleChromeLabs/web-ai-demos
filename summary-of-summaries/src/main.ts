@@ -61,25 +61,25 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
     // bootstrapped by calling `create()`. In this case, `create()` is called, which should result
     // in an exception being raised. The exception is ignored, but now `capabilities()` should
     // reflect the actual state of the API, with `no` meaning the device is unable to run the API.
-    let capabilites = await window.ai.summarizer.capabilities();
+    let capabilites = await self.ai.summarizer.capabilities();
     if (capabilites.available === 'readily' || capabilites.available === 'after-download') {
       return true;
     }
   
     try {
-      await window.ai.summarizer.create();
+      await self.ai.summarizer.create();
     } catch (e) {
         console.log(e);
     }
   
-    capabilites = await window.ai.summarizer.capabilities();
+    capabilites = await self.ai.summarizer.capabilities();
     return capabilites.available !== 'no';
   }
 
-  if (window.ai && window.ai.summarizer) {
+  if (self.ai && self.ai.summarizer) {
     if (await checkSummarizerSupport()) {
         // Check capabilities here so the user can be warned about the model download.
-        const capabilites = await window.ai.summarizer.capabilities();
+        const capabilites = await self.ai.summarizer.capabilities();
         if (capabilites.available === 'after-download') {
             statusSpan.innerText = `Hold on, Chrome is downloading the model. This can take a few minutes..`;    
         } else {
@@ -91,7 +91,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
         };
 
         // Trigger the model download.
-        summarizer = await window.ai.summarizer.create({
+        summarizer = await self.ai.summarizer.create({
             format: 'plain-text',
             type: 'tl;dr',
             length: 'long',
@@ -101,7 +101,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
         button.disabled = false;
         inputTextArea.disabled = false;
     } else {
-        const capabilites = await window.ai.summarizer.capabilities();
+        const capabilites = await self.ai.summarizer.capabilities();
         console.log(capabilites);
         statusSpan.innerText = `Your device doesn't support the Summarizer API.`;    
     }
