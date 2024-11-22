@@ -1,0 +1,156 @@
+<!--
+  Copyright 2024 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="origin-trial" content="Aiqz8ZArzAhQ2U24U9mLLJV8l16YNGsuiDqHJcUD3eCqYDbrWpb8qG3BSMXJ4OxDyS6Zw9HlsS5/ZoD0AFDAUQEAAABWeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJU3VtbWFyaXphdGlvbkFQSSIsImV4cGlyeSI6MTc1MzE0MjQwMH0=" />
+    <script type="module" src="/src/main.ts"></script>
+    <title>Summarizer</title>
+    <style>
+      *, *:before, *:after {
+        box-sizing: border-box;
+      }
+
+      body, html {
+        padding: 0;
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        font-family: "Roboto", sans-serif;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        margin: 0;
+        background-color: #607D8B;
+        color: white;
+        padding: 8px;
+        font-size: 0.8em;
+        height: 48px;
+      }
+
+      header > h1 {        
+        text-transform: uppercase;
+        margin: 0 auto;
+        max-width: 1024px;
+        width: 100%;
+      }
+
+      main {
+        padding: 8px;
+        margin: 0 auto;
+        max-width: 1024px;
+        width: 100%;
+        flex-grow: 1;
+      }
+
+      footer {
+        padding: 4px;
+        background-color: #607D8B;
+        color: #fff;
+        text-transform: uppercase;
+        font-size: 0.8em;
+      }
+
+      footer > div {
+        margin: 0 auto;
+        max-width: 1024px;
+        width: 100%;
+      }
+
+      button {
+        border-radius: 8px;
+        padding: 8px;
+        height: 32px;
+        text-transform: uppercase;
+        font-weight: 600;
+        border: none;
+        text-decoration: none;
+        background-color: #009688;
+        color: #fff;        
+      }
+
+      button:hover {
+        background-color: #00635A;;
+      }
+
+      #button-wrapper {
+        display: flex;
+        gap: 8px;
+        flex-direction: row;      
+      }
+
+      #content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      textarea {
+        height: 30vh;
+        resize: none;
+      }
+
+      #content > button {
+        align-self: flex-end;
+      }
+
+      #output {
+        anchor-name: --output-text;
+      }
+
+      #ai-spinner {
+        visibility: hidden;
+        position-anchor: --output-text;
+        top: anchor(top);
+        right: anchor(right);
+        position: absolute;
+        width: 26px;
+        height: 26px;
+        --size: 26px;
+        --mask-size: calc(var(--size) / 2);
+        inline-size: var(--size);
+        mask: radial-gradient(closest-side, #0000 calc(100% - .5px), red calc(100% + .5px)) calc(-.5* var(--size)) calc(-.5* var(--size));
+        background: linear-gradient(to top right in oklch, oklch(.54 .22 32.77), oklch(.94 .05 62.95));        
+      }
+
+      #ai-spinner.visible {
+        visibility: visible;
+        animation: 1s rotate infinite;
+      }
+
+      @keyframes rotate {
+        100% {
+          rotate: 1turn;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Summarizer</h1>
+    </header>
+    <main id="content">
+      <label for="input">Input:</label>
+      <textarea id="input" placeholder="Add your text here" disabled></textarea>
+
+      <label for="output">Summary:</label>    
+
+      <textarea id="output" disabled></textarea>
+      <div id="ai-spinner"></div>
+
+      <button id="split-it" disabled>Summarize</button>    
+    </main>
+    <footer>
+      <div><span id="status">Idle</span></div>
+    </footer>
+  </body>
+</html>
