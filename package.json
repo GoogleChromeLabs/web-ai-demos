@@ -2,10 +2,6 @@
   "name": "web-ai-demos",
   "version": "1.0.0",
   "description": "This repository contains demos related to client-side (in-browser) AI.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "",
   "license": "Apache-2.0"
 }
