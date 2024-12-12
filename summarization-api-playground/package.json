@@ -1,6 +1,6 @@
 {
   "name": "summarization-api-playground",
-  "description": "A demo of Chrome's experimental Summarization API.",
+  "description": "A demo of Chrome's experimental Summarizer API.",
   "license": "Apache-2.0",
   "private": true,
   "version": "0.0.0",
