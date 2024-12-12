@@ -1,5 +1,6 @@
 {
   "name": "summarization-api-playground",
+  "description": "A demo of Chrome's experimental Summarization API.",
   "license": "Apache-2.0",
   "private": true,
   "version": "0.0.0",
@@ -12,6 +13,9 @@
   "devDependencies": {
     "typescript": "^5.2.2",
     "vite": "^5.3.6"
+  },
+  "config": {
+    "thumbnail": "thumbnail.png"
   },
   "dependencies": {
     "@types/dom-chromium-ai": "^0.0.2"

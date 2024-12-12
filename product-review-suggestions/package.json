@@ -1,5 +1,6 @@
 {
   "name": "perf-test",
+  "description": "Demo of using Gen AI to help users write informative reviews",
   "version": "1.0.0",
   "scripts": {
     "start": "parcel src/index.html",
@@ -8,7 +9,6 @@
   },
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@mediapipe/tasks-genai": "^0.10.14"
   },
