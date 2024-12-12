@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "keywords": ["ai", "sentiment-analysis"],
   "devDependencies": {
     "parcel": "^2.12.0",
