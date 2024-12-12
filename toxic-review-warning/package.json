@@ -7,7 +7,7 @@
     "build": "parcel build --public-url=./ src/index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Maud Nalpas",
   "license": "Apache-2.0",
   "keywords": ["ai", "sentiment-analysis"],
   "devDependencies": {
