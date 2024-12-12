@@ -1,0 +1,25 @@
+{
+  "name": "ai-synonym-finder",
+  "version": "1.0.0",
+  "description": "Use built-in Prompt API to find words with similar meaning",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git#main"
+  },
+  "keywords": [
+    "ai"
+  ],
+  "config": {
+    "thumbnail": "./thumbnail.png"
+  },
+  "author": "tomayac",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/GoogleChromeLabs/web-ai-demos/issues"
+  },
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main#readme"
+}

@@ -1,14 +1,15 @@
 {
-  "name": "perf-test",
+  "name": "toxic-review-warning",
   "version": "1.0.0",
+  "description": "Demo of using AI to detect toxic reviews",
   "scripts": {
     "start": "parcel src/index.html",
     "build": "parcel build --public-url=./ src/index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "Maud Nalpas",
+  "license": "Apache-2.0",
+  "keywords": ["ai", "sentiment-analysis"],
   "devDependencies": {
     "parcel": "^2.12.0",
     "process": "^0.11.10"

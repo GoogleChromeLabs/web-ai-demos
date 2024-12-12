@@ -7,6 +7,9 @@
     "fix": "prettier --write ."
   },
   "author": "Thomas Steiner (tomac@google.com)",
+  "config": {
+    "thumbnail": "thumbnail.png"
+  },
   "license": "Apache-2.0",
   "devDependencies": {
     "http-server": "^14.1.1",
