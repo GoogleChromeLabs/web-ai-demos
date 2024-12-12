@@ -1,5 +1,5 @@
 {
-  "name": "perf-test",
+  "name": "toxic-review-warning",
   "version": "1.0.0",
   "description": "Demo of using AI to detect toxic reviews",
   "scripts": {
