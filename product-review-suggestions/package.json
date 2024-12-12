@@ -1,5 +1,5 @@
 {
-  "name": "perf-test",
+  "name": "product-review-suggestions",
   "description": "Demo of using Gen AI to help users write informative reviews",
   "version": "1.0.0",
   "scripts": {
