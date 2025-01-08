@@ -28,7 +28,7 @@ function App() {
 
   // Checks if the Prompt API is supported.
   useEffect(() => {
-    const supported = window.ai !== undefined && window.ai.languageModel !== undefined;
+    const supported = self.ai !== undefined && self.ai.languageModel !== undefined;
     setPromptApiSupported(supported);
   }, []);
 

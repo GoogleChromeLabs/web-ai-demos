@@ -47,25 +47,25 @@ const createSummarizationSession = async (
     throw new Error('AI Summarization is not supported');
   }
 
-  return window.ai.summarizer.create({ type, format, length, monitor });
+  return self.ai.summarizer.create({ type, format, length, monitor });
 }
 
 /*
  * Checks if the device supports the Summarizer API (rather than if the browser supports the API).
  * This method returns `true` when the device is capable of running the Summarizer API and `false`
  * when it is not.
- * 
+ *
  * Ideally this check would only require the code code section below:
- * 
+ *
  * ```javascript
- * let capabilites = await window.ai.summarizer.capabilities();
+ * let capabilites = await self.ai.summarizer.capabilities();
  * if (capabilites.available === 'readily' || capabilites.available === 'after-download') {
  *   return true;
  * }
  * ```
- * 
+ *
  * However, due to https://crbug.com/379074334, the API may return `no` when
- * `window.ai.summarizer.create()` was never called, so this function implements a workaround for
+ * `self.ai.summarizer.create()` was never called, so this function implements a workaround for
  * this scenario, ensuring `create()` is called at least once before returning `false`.
  */
 const checkSummarizerSupport = async (): Promise<boolean> => {
@@ -73,16 +73,16 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
   // bootstrapped by calling `create()`. In this case, `create()` is called, which should result
   // in an exception being raised. The exception is ignored, but now `capabilities()` should
   // reflect the actual state of the API, with `no` meaning the device is unable to run the API.
-  let capabilites = await window.ai.summarizer.capabilities();
+  let capabilites = await self.ai.summarizer.capabilities();
   if (capabilites.available === 'readily' || capabilites.available === 'after-download') {
     return true;
   }
 
   try {
-    await window.ai.summarizer.create();
+    await self.ai.summarizer.create();
   } catch (e) { }
 
-  capabilites = await window.ai.summarizer.capabilities();
+  capabilites = await self.ai.summarizer.capabilities();
   return capabilites.available !== 'no';
 }
 
@@ -92,7 +92,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
  * able to run it before setting up the listeners to summarize the input added to the textarea.
  */
 const initializeApplication = async () => {
-  const summarizationApiAvailable = window.ai !== undefined && window.ai.summarizer !== undefined;
+  const summarizationApiAvailable = self.ai !== undefined && self.ai.summarizer !== undefined;
   if (!summarizationApiAvailable) {
     summarizationUnavailableDialog.style.display = 'block';
     return;
