@@ -66,10 +66,15 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       }
       const stream = await session.promptStreaming(prompt);
 
+      let result = '';
+      let previousChunk = '';
       for await (const chunk of stream) {
-        fullResponse = chunk.trim();
-        p.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
-        rawResponse.innerText = fullResponse;
+        const newChunk = chunk.startsWith(previousChunk)
+            ? chunk.slice(previousChunk.length) : chunk;
+        result += newChunk;
+        p.innerHTML = DOMPurify.sanitize(marked.parse(result));
+        rawResponse.innerText = result;
+        previousChunk = chunk;
       }
     } catch (error) {
       p.textContent = `Error: ${error.message}`;

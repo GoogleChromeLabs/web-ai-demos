@@ -25,7 +25,7 @@ export default class TokenCounter {
     }
 
     /*
-     * Returns data 
+     * Returns data
      */
     isEstimated(): boolean {
         return this.languageModel === undefined;
@@ -37,10 +37,10 @@ export default class TokenCounter {
      * estimated token count when not.
      */
     static async create(): Promise<TokenCounter> {
-        if (window.ai && window.ai.languageModel) {
-            const capabilities = await window.ai.languageModel.capabilities();
+        if (self.ai && self.ai.languageModel) {
+            const capabilities = await self.ai.languageModel.capabilities();
             if (capabilities.available !== 'no') {
-                const languageModel = await window.ai.languageModel.create();
+                const languageModel = await self.ai.languageModel.create();
                 return new TokenCounter(languageModel);
             }
         }
