@@ -84,15 +84,15 @@ Each synonym may only occur once in the list.`,
       for await (const chunk of stream) {
         const newChunk = chunk.startsWith(previousChunk)
             ? chunk.slice(previousChunk.length) : chunk;
-          pre.insertAdjacentText('beforeEnd', newChunk.slice(previousLength));
-          const newContent = chunk
-            .slice(previousLength)
-            .replace(/^\s*[\-\*]\s*/, '')
-            .replace(/[^a-zA-Z\n]/g, '')
-            .replace('\n', '<li>');
-          previousLength = chunk.length;
-          doc.write(newContent);
-        }
+        pre.insertAdjacentText('beforeEnd', newChunk.slice(previousLength));
+        const newContent = chunk
+          .slice(previousLength)
+          .replace(/^\s*[\-\*]\s*/, '')
+          .replace(/[^a-zA-Z\n]/g, '')
+          .replace('\n', '<li>');
+        previousLength = chunk.length;
+        doc.write(newContent);
+      }
       doc.write('</ul></div>');
     } catch (error) {
       console.log(error.name, error.message);
