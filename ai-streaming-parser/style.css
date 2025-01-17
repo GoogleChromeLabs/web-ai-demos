@@ -1,0 +1,126 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  color-scheme: dark light;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: clamp(320px, 90%, 1000px);
+  margin: auto;
+}
+
+input {
+  font: inherit;
+  width: 30rem;
+}
+
+details {
+  margin-block-start: 5rem;
+}
+
+summary {
+  cursor: pointer;
+}
+
+code {
+  color: red;
+}
+
+pre {
+  border: solid 1px gray;
+  padding: 0.25rem;
+  position: relative;
+  white-space: pre-wrap;
+}
+
+.not-supported {
+  display: none;
+  color: black;
+  background-color: yellow;
+  padding: 0.25rem;
+}
+
+.javascript::before,
+.js::before,
+.java::before,
+.cpp::before,
+.c::before,
+.bash::before,
+.ruby::before,
+.php::before {
+  color: yellow;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: .25rem;
+}
+
+.ruby::before {
+  content: "Ruby";
+}
+
+.bash::before {
+  content: 'Bash';
+}
+.javascript::before,
+.js::before {
+  content: 'JavaScript';
+}
+
+.java::before {
+  content: 'Java';
+}
+
+.cpp::before {
+  content: 'C++';
+}
+
+.c::before {
+  content: 'C';
+}
+
+.php::before {
+  content: 'PHP';
+}
+
+output {
+  strong {
+    color: lime;
+  }
+  em {
+    color: ;
+  }
+  code {
+    color: cyan;
+    font-family: monospace-ui, monospace;
+    white-space: pre-wrap;
+  }
+  li::marker {
+    color: deeppink;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: deeppink;
+  }
+  hr {
+    color: yellow;
+  }
+}
