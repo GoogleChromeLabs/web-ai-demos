@@ -1,0 +1,71 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  color-scheme: dark light;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: clamp(320px, 90%, 1000px);
+  margin: auto;
+}
+
+fieldset:has(legend + *:empty) {
+  display: none;
+}
+
+form,
+fieldset {
+  margin-block-end: 1rem;
+}
+
+details,
+summary {
+  margin-block-end: 1rem;
+}
+
+summary,
+button {
+  cursor: pointer;
+}
+
+summary:hover {
+  color: black;
+  background-color: yellow;
+}
+
+details[open] summary {
+  background-color: yellow;
+  color: black;
+}
+
+[name='active-assistant'] {
+  display: none;
+}
+
+li {
+  white-space: pre-wrap;
+}
+
+.user {
+  color: lime;
+  font-weight: bold;
+}
+
+.assistant {
+  color: red;
+  margin-block-end: 2rem;
+}
