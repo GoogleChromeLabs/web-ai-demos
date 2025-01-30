@@ -32,7 +32,7 @@ if ('serviceWorker' in navigator) {
       console.log(modelBlob);
       successContainer.hidden = false;
       successContainer.textContent = `Model "${event.data.id}" (${formatBytes(
-        modelBlob.size
+        modelBlob.size,
       )}) downloaded and cached successfully.`;
     }
   });
@@ -56,12 +56,12 @@ const getResourceSize = async (url) => {
 };
 
 const updateUI = (bgFetch) => {
-  progress.value = bgFetch.downloaded / bgFetch.downloadTotal > 0
-    ? bgFetch.downloaded / bgFetch.downloadTotal
-    : 0;
-  label.textContent = `${formatBytes(bgFetch.downloaded)}/${formatBytes(
-    bgFetch.downloadTotal
-  )} (${((bgFetch.downloaded / bgFetch.downloadTotal) * 100).toFixed(2)}%)`;
+  progress.value =
+    bgFetch.downloadTotal > 0 ? bgFetch.downloaded / bgFetch.downloadTotal : 0;
+  label.textContent =
+    bgFetch.downloadTotal > 0
+      ? `${formatBytes(bgFetch.downloaded)}/${formatBytes(bgFetch.downloadTotal)} (${((bgFetch.downloaded / bgFetch.downloadTotal) * 100).toFixed(2)}%)`
+      : '0%';
 };
 
 const formatBytes = (bytes) => {
@@ -126,7 +126,7 @@ startButton.addEventListener('click', async () => {
     const modelBlob = await modelAlreadyDownloaded.blob();
     successContainer.hidden = false;
     successContainer.textContent = `Model "${FETCH_ID}" (${formatBytes(
-      modelBlob.size
+      modelBlob.size,
     )}) was found in cache.`;
     return modelBlob;
   }
