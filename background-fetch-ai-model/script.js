@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 const MODEL_URL = 'face_stylizer_color_sketch.task';
 const FETCH_ID = 'face_stylizer_color_sketch';
 
