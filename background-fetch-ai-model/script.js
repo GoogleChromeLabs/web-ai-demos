@@ -56,7 +56,9 @@ const getResourceSize = async (url) => {
 };
 
 const updateUI = (bgFetch) => {
-  progress.value = bgFetch.downloaded / bgFetch.downloadTotal;
+  progress.value = bgFetch.downloaded / bgFetch.downloadTotal > 0
+    ? bgFetch.downloaded / bgFetch.downloadTotal
+    : 0;
   label.textContent = `${formatBytes(bgFetch.downloaded)}/${formatBytes(
     bgFetch.downloadTotal
   )} (${((bgFetch.downloaded / bgFetch.downloadTotal) * 100).toFixed(2)}%)`;
