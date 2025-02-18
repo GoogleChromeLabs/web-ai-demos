@@ -1,0 +1,77 @@
+
+<!--
+  Copyright 2025 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+ -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="favicon.svg"
+    />
+    <link rel="manifest" href="manifest.json" />
+    <title>Background Fetch AI Model Download</title>
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      if (!isSecureContext) location.protocol = 'https:';
+    </script>
+    <script src="script.js" type="module"></script>
+  </head>
+  <body>
+    <h1>
+      <img
+        src="favicon.svg"
+        alt=""
+        width="40"
+        height="40"
+        align="top"
+      />
+      Background Fetch AI Model Download
+    </h1>
+    <p>
+      Start the download, then feel free to reload the page or close the tab
+      entirely. The download will continue in the background while you're away.
+      When you return to the page, the download progress will automatically
+      resume displaying (though it may take a second or two for updates to
+      appear). You can cancel the ongoing download anytime.
+    </p>
+    <p>
+      On mobile, you can even kill the browser and the download will keep going
+      (progress is displayed as a silent notification). Silent notifications are
+      shown in an expandable section when you swipe down from the top of your
+      screen. Look for the
+      <img
+        src="favicon.svg"
+        alt=""
+        width="16"
+        height="16"
+        align="top"
+      />
+      icon.
+    </p>
+    <p>
+      When the download succeeds, the file will be cached using the Cache API
+      and be available offline.
+    </p>
+    <div>
+      <button aria-disabled="true" class="start-button" type="button">
+        Start download
+      </button>
+      <button aria-disabled="true" class="cancel-button" type="button">
+        Cancel download
+      </button>
+    </div>
+    <div hidden class="progress">
+      <progress id="progress" value="0"></progress>
+      <label for="progress"></label>
+    </div>
+    <div hidden class="success"></div>
+    <p hidden class="error">
+      Your browser doesn't support the Background Fetch API.
+    </p>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "Background Fetch AI Model Download",
+  "short_name": "BG Fetch AI Model",
+  "start_url": "./",
+  "id": "./",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "type": "image/png",
+      "sizes": "129x129"
+    },
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "display": "standalone"
+}
