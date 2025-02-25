@@ -1,0 +1,198 @@
+<!--
+ Copyright 2025 Google LLC
+ SPDX-License-Identifier: Apache-2.0
+-->
+<div class="container-fluid" xmlns="http://www.w3.org/1999/html">
+
+  <app-page-title [title]="'Summarizer API'" [icon]="'bi-text-paragraph'">
+    <a class="btn btn-light"
+       href="https://github.com/webmachinelearning/writing-assistance-apis?tab=readme-ov-file#summarizer-api"
+       target="_blank"><i
+      class="bi bi-file-text"></i> <span class="ms-2">Explainer</span></a>
+    <a class="btn btn-light"
+       href="https://github.com/webmachinelearning/writing-assistance-apis/blob/main/index.bs#L124" target="_blank"><i
+      class="bi bi-body-text"></i> <span class="ms-2">Specifications</span></a>
+  </app-page-title>
+
+  <div class="row mb-3">
+    <div class="col-12">
+
+      <app-page-accordion
+        [requirementsStatus]="this.apiFlag.status"
+        (checkRequirementsEvent)="checkRequirements()"
+        [requirements]="[this.getRequirement()]"
+      >
+        <div debugInformation>
+          No debug information available.
+        </div>
+      </app-page-accordion>
+    </div>
+  </div>
+
+  <h2 class="display-6 mt-5"><i class="bi bi-play"></i> Playground</h2>
+  <hr>
+
+
+  <app-output
+    [status]="this.status"
+    [error]="this.error"
+    [downloadProgress]="this.loaded"
+    [outputCollapsed]="outputCollapsed"
+    [output]="this.output">
+
+  </app-output>
+
+  <div class="row mt-5">
+    <div class="col-12 col-md-6">
+      <h3 class="mt-3">Input:</h3>
+      <textarea class="form-control" rows="8" [formControl]="inputFormControl"></textarea>
+
+      <h3 class="mt-3">Context:</h3>
+      <textarea class="form-control" rows="3" [formControl]="contextFormControl"></textarea>
+
+    </div>
+    <div class="col-12 col-md-6">
+      <h4 class="mt-4">Options</h4>
+
+
+      <div class="row">
+        <div class="col-4">
+          <div class="mb-3">
+            <label for="summarizer-tone" class="form-label">Tone</label>
+            <app-search-select-dropdown id="summarizer-tone"
+                                        [options]="SummarizerTypeEnum | enumToSearchSelectDropdownOptions"
+                                        [control]="typeFormControl"
+                                        [name]="'summarizerType'"></app-search-select-dropdown>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="mb-3">
+            <label for="summarizer-format" class="form-label">Format</label>
+            <app-search-select-dropdown id="summarizer-format"
+                                        [options]="SummarizerFormatEnum | enumToSearchSelectDropdownOptions"
+                                        [control]="formatFormControl"
+                                        [name]="'summarizerFormat'"></app-search-select-dropdown>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="mb-3">
+            <label for="summarizer-length" class="form-label">Length</label>
+            <app-search-select-dropdown id="summarizer-length"
+                                        [options]="SummarizerLengthEnum | enumToSearchSelectDropdownOptions"
+                                        [control]="lengthFormControl"
+                                        [name]="'summarizerLength'"></app-search-select-dropdown>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="mb-3">
+            <label for="summarizer-expected-input-languages" class="form-label">Expected Input Languages</label>
+            <app-search-select-multiple-dropdown id="summarizer-expected-input-languages"
+                                                 [options]="LocaleEnum | enumToSearchSelectDropdownOptions"
+                                                 [control]="expectedInputLanguagesFormControl"
+                                                 [name]="'expectedInputLanguages'"></app-search-select-multiple-dropdown>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="mb-3">
+            <label for="summarizer-expected-context-languages" class="form-label">Expected Context Languages</label>
+            <app-search-select-multiple-dropdown id="summarizer-expected-context-languages"
+                                                 [options]="LocaleEnum | enumToSearchSelectDropdownOptions"
+                                                 [control]="expectedContextLanguagesFormControl"
+                                                 [name]="'expectedContextLanguages'"></app-search-select-multiple-dropdown>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="mb-3">
+            <label for="summarizer-output-language" class="form-label">Output Language</label>
+            <app-search-select-dropdown id="summarizer-output-language"
+                                        [options]="LocaleEnum | enumToSearchSelectDropdownOptions"
+                                        [control]="outputLanguageFormControl"
+                                        [name]="'outputLanguage'"></app-search-select-dropdown>
+          </div>
+
+        </div>
+        <div class="col-12">
+          <div class="mb-3">
+            <label for="summarizer-context" class="form-label">Shared Context</label>
+            <textarea class="form-control" id="summarizer-context" rows="3"
+                      [formControl]="sharedContextFormControl"></textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="d-grid mt-3">
+      <button class="btn btn-primary btn-lg" (click)="summarize()">Sumarize</button>
+    </div>
+  </div>
+
+  <h2 class="display-6 mt-5"><i class="bi bi-code-square"></i> Runnable code examples</h2>
+  <hr>
+
+  <div class="row">
+    <div class="col-12 col-xl-6">
+      <div class="card mt-3">
+        <div class="card-header">
+          <h4>Availability</h4>
+        </div>
+        <div class="card-body">
+          <h5>Code</h5>
+          <code-editor [code]="checkAvailabilityCode" [readonly]="true" [height]="'100px'"></code-editor>
+
+          <h5 class="mt-3">Result</h5>
+          <span class="code"
+                [class.code-warning]="availabilityStatus === AvailabilityStatusEnum.AfterDownload"
+                [class.code-danger]="availabilityStatus === AvailabilityStatusEnum.No"
+                [class.code-success]="availabilityStatus === AvailabilityStatusEnum.Readily"
+                [class.code-dark]="availabilityStatus === AvailabilityStatusEnum.Unknown"
+          >{{ availabilityStatus }}</span>
+
+          @if (availabilityError) {
+            <div class="alert alert-danger m-0 mt-2 mb-2">{{ availabilityError }}</div>
+          }
+
+          <div class="row mt-5">
+            <div class="col-12 d-grid">
+              <button class="btn btn-outline-primary d-block" (click)="checkAvailability()">Check availability</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="card mt-3">
+        <div class="card-header d-flex">
+          <h4 class="flex-grow-1 m-0">Execute</h4>
+
+          <div class="form-check form-switch m-0 p-0">
+            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"
+                   [formControl]="useStreamingFormControl">
+            <label class="form-check-label" for="flexSwitchCheckDefault">Streaming</label>
+          </div>
+        </div>
+        <div class="card-body">
+          <h5>Code</h5>
+          <code-editor [code]="summarizeCode" [readonly]="true" [height]="'250px'"></code-editor>
+
+          <div class="mt-3 mb-3 d-flex">
+          </div>
+          @if (status === TaskStatus.Error) {
+            <div class="alert alert-danger m-0 mb-2">{{ outputStatusMessage }}</div>
+          }
+
+          <div class="row mt-2">
+            <div class="col-12 d-grid">
+              <button class="btn btn-primary d-block" (click)="summarize()">Summarize</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+

@@ -1,0 +1,216 @@
+<!--
+ Copyright 2025 Google LLC
+ SPDX-License-Identifier: Apache-2.0
+-->
+<div class="container-fluid">
+
+  <app-page-title [title]="'Multimodal Prompt API'" [icon]="'bi-collection-play-fill'">
+    <a class="btn btn-light" href="https://github.com/webmachinelearning/prompt-api" target="_blank"><i
+      class="bi bi-file-text"></i> <span class="ms-2">Explainer</span></a>
+    <a class="btn btn-light disabled"
+       href=""
+       target="_blank"><i class="bi bi-body-text"></i> <span class="ms-2">Specifications (Not yet available)</span></a>
+  </app-page-title>
+
+  <div class="row mb-3">
+    <div class="col-12">
+
+      <app-page-accordion
+        [requirementsStatus]="this.apiFlag.status"
+        (checkRequirementsEvent)="checkRequirements()"
+        [requirements]="[this.apiFlag]"
+      >
+        <div debugInformation>
+          <h5>Activate all the flags</h5>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Flag</th>
+                <th>Value to select</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="code">chrome://flags/#optimization-guide-on-device-model</span></td>
+                <td><span class="code code-info">Enabled Bypass*</span></td>
+              </tr>
+              <tr>
+                <td><span class="code">chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</span></td>
+                <td><span class="code code-info">Enabled</span></td>
+              </tr>
+              <tr>
+                <td><span class="code">chrome://flags/#optimization-guide-debug-logs</span></td>
+                <td><span class="code code-info">Enabled</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h5 class="mt-4">Verify that Gemini Nano has been downloaded</h5>
+          <ol style="line-height: 2;">
+            <li>Navigate to <span class="code">chrome://components</span></li>
+            <li>Search for <span class="code">Optimization Guide On Device Model</span> on the page.</li>
+            <li>Click on <span class="code">Check for update</span></li>
+            <li>Ensure that it says <span class="code code-info">Up-to-date</span></li>
+          </ol>
+        </div>
+
+        <div faq>
+          <h5>It seems like the page is stuck</h5>
+          <p>After you have clicked on <button class="btn btn-sm btn-primary" (click)="execute()">Execute</button> for the first time, Chrome has to download Gemini Nano. This can take a while (5-10 minutes). While this is happening, the page can seem frozen or like nothing is happening. Give it time then try to restart your browser.</p>
+        </div>
+      </app-page-accordion>
+    </div>
+  </div>
+
+  <h2 class="display-6 mt-5"><i class="bi bi-play"></i> Playground</h2>
+  <hr>
+
+  <app-output
+    [status]="this.status"
+    [error]="this.error"
+    [downloadProgress]="this.loaded"
+    [outputCollapsed]="outputCollapsed"
+    [output]="this.output">
+
+  </app-output>
+
+  <div class="row mt-5">
+    <div class="col-12">
+      <h3>Prompt</h3>
+      <div class="form-group">
+        <textarea id="prompt" class="form-control" rows="8" [formControl]="promptFormControl"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-12">
+      <h3>Media</h3>
+
+      <div cdkDropList (cdkDropListDropped)="drop($event)">
+        @for (media of medias; track $index) {
+          <div class="card d-flex flex-row align-items-center gap-3 p-3 mb-3" style="height: 150px;max-height: 150px;"
+               cdkDrag>
+            <button class="btn"><i class="bi bi-grip-vertical"></i></button>
+
+
+            @if (media.type === 'image') {
+              <div class="p-2 d-flex flex-column align-items-center" style="height: inherit;">
+                <img style="height: 100%;" class="img-fluid rounded" [src]="getImageSrc(media)"/></div>
+              <div class="flex-grow-1">
+                <h6 class="m-0 p-0 mt-2 ms-2">{{ media.filename }}</h6>
+              </div>
+            } @else if (media.type === 'audio') {
+              <div class="flex-grow-1">
+                <audio [src]="getAudioSrc(media)" controls></audio>
+                <h6 class="m-0 p-0 mt-2 ms-2">{{ media.filename }}</h6>
+              </div>
+            }
+
+
+<!--            <div class="form-check form-switch">-->
+<!--              <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"-->
+<!--                     [(ngModel)]="media.includeInPrompt">-->
+<!--              <label class="form-check-label" for="flexSwitchCheckDefault">Pass to content?</label>-->
+<!--            </div>-->
+
+            <div>
+              <button class="btn btn-danger btn-sm" (click)="deleteMedia($index)">Delete</button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <magieno-drag-and-drop (onFileSystemHandlesDropped)="onFileSystemHandlesDropped($event)" class="d-block" style="height: 150px;">
+        <div class="d-flex flex-column h-100 w-100">
+          <div class="align-content-center flex-fill">
+
+            Click or drag and drop an <strong><i class="bi bi-music-note"></i>audio</strong> file or <strong> <i
+            class="bi bi-images "></i> image</strong> here
+          </div>
+        </div>
+      </magieno-drag-and-drop>
+
+    </div>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col-12">
+      <div class="d-grid mt-3">
+        <button class="btn btn-primary btn-lg" (click)="execute()">Execute</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-12">
+      <h2 class="display-6 mt-5"><i class="bi bi-code-square"></i> Runnable code examples</h2>
+      <hr>
+    </div>
+  </div>
+
+  <div class="row">
+<!--    <div class="col-12 col-xl-6">-->
+<!--      <div class="card mt-3">-->
+<!--        <div class="card-header">-->
+<!--          <h4>Availability</h4>-->
+<!--        </div>-->
+<!--        <div class="card-body">-->
+<!--          <h5>Code</h5>-->
+<!--          <code-editor [code]="checkAvailabilityCode" [readonly]="true" [height]="'100px'"></code-editor>-->
+
+<!--          <h5 class="mt-3">Result</h5>-->
+<!--          <span class="code"-->
+<!--                [class.code-warning]="availabilityStatus === AvailabilityStatusEnum.AfterDownload"-->
+<!--                [class.code-danger]="availabilityStatus === AvailabilityStatusEnum.No"-->
+<!--                [class.code-success]="availabilityStatus === AvailabilityStatusEnum.Readily"-->
+<!--                [class.code-dark]="availabilityStatus === AvailabilityStatusEnum.Unknown"-->
+<!--          >{{ availabilityStatus }}</span>-->
+
+<!--          @if (availabilityError) {-->
+<!--            <div class="alert alert-danger m-0 mt-2 mb-2">{{ availabilityError }}</div>-->
+<!--          }-->
+
+<!--          <div class="row mt-5">-->
+<!--            <div class="col-12 d-grid">-->
+<!--              <button class="btn btn-outline-primary d-block" (click)="checkAvailability()">Check availability</button>-->
+<!--            </div>-->
+<!--          </div>-->
+
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+    <div class="col-12 col-xl-6">
+      <div class="card mt-3">
+        <div class="card-header d-flex">
+          <h4 class="flex-grow-1 m-0">Execute</h4>
+
+          <div class="form-check form-switch m-0 p-0">
+<!--            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"-->
+<!--                   [formControl]="useStreamingFormControl">-->
+<!--            <label class="form-check-label" for="flexSwitchCheckDefault">Streaming</label>-->
+          </div>
+        </div>
+        <div class="card-body">
+          <h5>Code</h5>
+          <code-editor [code]="executeCode" [readonly]="true" [height]="'250px'"></code-editor>
+
+          <div class="mt-3 mb-3 d-flex">
+          </div>
+          @if (status === TaskStatus.Error) {
+            <div class="alert alert-danger m-0 mb-2">{{ error }}</div>
+          }
+
+          <div class="row mt-2">
+            <div class="col-12 d-grid">
+              <button class="btn btn-primary d-block" (click)="execute()">Execute</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,56 @@
+<!--
+ Copyright 2025 Google LLC
+ SPDX-License-Identifier: Apache-2.0
+-->
+<div class="sidebar flex-shrink-0 d-flex flex-column" [class.sidebar-collapsed]="!expanded">
+  <header class="d-flex pt-4 gap-2 align-items-center">
+    <img src="./built-in-ai-playground-logo.svg" alt="Built-In AI Playground Logo" class="d-block"/>
+    <h1 class="title h6 flex-grow-1">Built-In AI Playground</h1>
+  </header>
+
+  <nav class="mt-5 ms-2 me-2 flex-grow-1">
+    <ul class="list-unstyled">
+      <li [class.active]="this.currentRoute === RouteEnum.Home">
+        <a class="btn stretched-link" routerLink="/">
+          <i class="bi bi-house"></i>
+          <span>Home</span>
+        </a>
+      </li>
+      <li [class.active]="this.currentRoute === RouteEnum.TranslatorApi">
+        <a class="btn stretched-link" routerLink="/translator-api">
+          <i class="bi bi-translate"></i>
+          <span>Translator API</span>
+        </a>
+      </li>
+      <li [class.active]="this.currentRoute === RouteEnum.LanguageDetectorApi">
+        <a class="btn stretched-link" routerLink="/language-detector-api">
+          <i class="bi bi-globe"></i>
+          <span>Language Detector API</span>
+        </a>
+      </li>
+      <li [class.active]="this.currentRoute === RouteEnum.SummarizerApi">
+        <a class="btn stretched-link" routerLink="/summarizer-api">
+          <i class="bi bi-text-paragraph"></i>
+          <span>Summarizer API</span></a>
+      </li>
+      <li [class.active]="this.currentRoute === RouteEnum.WriterApi">
+        <a class="btn stretched-link" routerLink="/writer-api">
+          <i class="bi bi-pencil-square"></i>
+          <span>Writer API</span></a>
+      </li>
+      <li [class.active]="this.currentRoute === RouteEnum.RewriterApi">
+        <a class="btn stretched-link" routerLink="/rewriter-api">
+          <i class="bi bi-arrow-clockwise"></i>
+          <span>Rewriter API</span></a>
+      </li>
+      <li [class.active]="this.currentRoute === RouteEnum.PromptApi">
+        <a class="btn stretched-link" routerLink="/prompt-api">
+          <i class="bi bi-input-cursor-text"></i>
+          <span>Prompt API</span></a>
+      </li>
+
+    </ul>
+  </nav>
+
+  <button class="btn btn-sidebar p-3" (click)="toggleSidebar()"><i class="bi bi-layout-sidebar"></i></button>
+</div>

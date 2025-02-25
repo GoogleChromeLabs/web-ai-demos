@@ -1,0 +1,21 @@
+<!--
+ Copyright 2025 Google LLC
+ SPDX-License-Identifier: Apache-2.0
+-->
+<div class="card">
+  <div class="card-header"
+       [class.bg-primary-subtle]="status === TaskStatus.Executing"
+       [class.bg-success-subtle]="status === TaskStatus.Completed"
+       [class.bg-danger-subtle]="status === TaskStatus.Error">
+    <ng-content select="[header]"></ng-content>
+  </div>
+
+  <ng-content></ng-content>
+
+  <div class="card-footer"
+        [class.bg-primary-subtle]="status === TaskStatus.Executing"
+        [class.bg-success-subtle]="status === TaskStatus.Completed"
+        [class.bg-danger-subtle]="status === TaskStatus.Error">
+    <ng-content select="[footer]"></ng-content>
+  </div>
+</div>
