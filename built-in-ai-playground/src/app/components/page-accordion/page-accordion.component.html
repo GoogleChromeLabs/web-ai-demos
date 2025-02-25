@@ -1,0 +1,87 @@
+<!--
+ Copyright 2025 Google LLC
+ SPDX-License-Identifier: Apache-2.0
+-->
+<div class="accordion" id="accordionExample">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button
+        class="accordion-button collapsed d-flex gap-2"
+
+        [class.bg-success-subtle]="requirementsStatus === RequirementStatus.Pass"
+        [class.bg-danger-subtle]="requirementsStatus === RequirementStatus.Fail"
+
+        type="button" data-bs-toggle="collapse"
+        data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+        <i class="bi bi-card-checklist"></i>
+        <div class="flex-grow-1">Requirements</div>
+
+        @if(requirementsStatus === RequirementStatus.Pass) {
+          <div class="text-success">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            All requirements passed
+          </div>
+        } @else if(requirementsStatus === RequirementStatus.Fail) {
+          <div class="text-danger">
+            <i class="bi bi-x-circle-fill"></i>
+            Some requirements failed
+          </div>
+        } @else if(this.isPlatformBrowser()){
+          <div class="text-primary">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            Checking requirements
+          </div>
+        }
+      </button>
+    </h2>
+    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <p><strong>Make sure that all the requirements are green.</strong></p>
+
+        @for (requirement of requirements; track $index) {
+          <app-requirement [status]="requirement.status" [message]="requirement.message">
+            <div [innerHTML]="requirement.contentHtml"></div>
+          </app-requirement>
+        }
+
+
+        <button class="btn btn-outline-primary mt-3" (click)="checkRequirements()"><i
+          class="bi bi-arrow-clockwise"></i>
+          Check requirements
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+        <i class="bi bi-bug-fill"></i> <span class="ms-2">Debug Information</span>
+      </button>
+    </h2>
+    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <div class="mt-1">
+          <ng-content select="[debugInformation]"></ng-content>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+        <i class="bi bi-person-raised-hand"></i> <span class="ms-2">FAQs</span>
+      </button>
+    </h2>
+    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <div class="mt-1">
+          <ng-content select="[faq]"></ng-content>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

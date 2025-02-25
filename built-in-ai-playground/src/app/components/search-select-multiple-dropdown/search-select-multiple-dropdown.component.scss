@@ -1,0 +1,36 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+input {
+  &:focus-visible, &:focus {
+    outline: none;
+  }
+}
+
+.search-dropdown {
+  background-color: $gray-200;
+  border: none;
+
+  &:hover {
+    background-color: $gray-300;
+    cursor: pointer;
+  }
+}
+
+.focus {
+  color: $input-focus-color;
+  background-color: $input-focus-bg !important;
+  border-color: $input-focus-border-color;
+  outline: 0;
+  @if $enable-shadows {
+    @include box-shadow($input-box-shadow, $input-focus-box-shadow);
+  } @else {
+    // Avoid using mixin so we can pass custom focus shadow properly
+    box-shadow: $input-focus-box-shadow;
+  }
+}
+

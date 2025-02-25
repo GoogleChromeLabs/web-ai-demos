@@ -1,0 +1,36 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/* You can add global styles to this file, and also import other style files */
+
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+.code {
+  background-color: $primary-bg-subtle;
+  border: 1px solid $primary-border-subtle;
+  padding: 3px;
+  border-radius: 6px;
+
+  &.code-warning {
+    background-color: $warning-bg-subtle;
+    border: 1px solid $warning-border-subtle;
+  }
+  &.code-info {
+    background-color: $info-bg-subtle;
+    border: 1px solid $info-border-subtle;
+  }
+  &.code-success {
+    background-color: $success-bg-subtle;
+    border: 1px solid $success-border-subtle;
+  }
+  &.code-danger {
+    background-color: $danger-bg-subtle;
+    border: 1px solid $danger-border-subtle;
+  }
+  &.code-dark {
+    background-color: $dark-bg-subtle;
+    border: 1px solid $dark-border-subtle;
+  }
+}
