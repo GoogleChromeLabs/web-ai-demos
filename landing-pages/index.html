@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="/components/github-link.js" async defer></script>
+    <script src="/components/cookie-banner.js" async defer></script>
+    <title>Demo Space</title>
+    <link rel="stylesheet" href="https://unpkg.com/open-props"/>
+    <link rel="stylesheet" href="/theme.css"/>
+    <style>
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 60px;
+        }
+
+        .demo-card {
+            display: flex;
+            flex-direction: column;
+            width: 288px;
+            min-height: 300px;
+            gap: 4px;
+            border: 1px solid lightgray;
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .demo-card > div {
+            flex-grow: 1;
+        }        
+
+        .demo-card > a {
+            align-self: center;
+            color: #1a73e8;
+            background-color: white;
+            border: 2px solid #1a73e8;
+            border-radius: 24px;
+            padding: 12px 40px;
+        }
+
+        .demo-card > a:hover {
+            background-color: #1a73e8;
+            color: white;
+        }
+    </style>
+  </head>
+  <body>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-754F24EHD8"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-754F24EHD8');
+    </script>
+    <header>
+      <img src="/logo.svg" alt="logo" />
+      <h1>Web AI Demos</h1>
+    </header>
+    <main>
+
+        <h2>Built-in AI Demos</h2>
+        <div class="demo-grid">
+            <div class="demo-card">
+                <img src="images/built-in-ai-playground.png" alt="Screenshot of the Built-in AI Playground" width="288" height="162"/>
+                <h3>Built-in AI Playground</h3>
+                <div>
+                    An all-in-one Playground showcasing every Built-in AI API.
+                </div>
+                <a href="/web-ai-demos/built-in-ai-playground">Open</a>
+            </div>
+            <div class="demo-card">
+                <img src="images/prompt-api-playground.png" alt="Screenshot of the Prompt API Playground" width="288" height="162"/>
+                <h3>Prompt API Playground</h3>
+                <div>
+                    A playground demonstrating the capabilities of the <a href="https://developer.chrome.com/docs/extensions/ai/prompt-api">Prompt API</a>.
+                </div>
+                <a href="/web-ai-demos/prompt-api-playground">Open</a>
+            </div>
+            <div class="demo-card">
+                <img src="images/summarizer-api-playground.png" alt="Screenshot of the Summarizer API Playground" width="288" height="162"/>
+                <h3>Summarizer API Playground</h3>
+                <div>
+                    A playground demonstrating the capabilities of the <a href="https://developer.chrome.com/docs/ai/summarizer-api">Summarizer API</a>.
+                </div>
+                <a href="/web-ai-demos/summarization-api-playground/">Open</a>
+            </div>
+            <div class="demo-card">
+                <img src="images/writer-rewriter-api-playground.png" alt="Screenshot of the Writer/Rewriter API Playground" width="288" height="162"/>
+                <h3>Writer/Rewriter Playground</h3>
+                <div>
+                    A playground demonstrating the capabilities of the <a href="https://github.com/webmachinelearning/writing-assistance-apis">Writer and Rewriter APIs.</a>
+                </div>
+                <a href="/web-ai-demos/writer-rewriter-api-playground/">Open</a>
+            </div>
+            <div class="demo-card">
+                <img src="images/translation-language-detection-api-playground.png" alt="Screenshot of the Translator/Language Detection API Playground" width="288" height="162"/>
+                <h3>Translator/Language Detection Playground</h3>
+                <div>
+                    A playground demonstrating the capabilities of the <a href="https://developer.chrome.com/docs/ai/translator-api">Translator API</a> and <a href="https://developer.chrome.com/docs/ai/language-detection">Language Detection API</a>.
+                </div>
+                <a href="/web-ai-demos/built-in-ai-playground">Open</a>
+            </div>
+        </div>        
+    </main>
+    <cookie-banner></cookie-banner>
+  </body>
+</html>
