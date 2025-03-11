@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="https://unpkg.com/open-props"/>
     <link rel="stylesheet" href="/theme.css"/>
     <style>
+      p {
+        line-height: 1.3em;
+      }
         .demo-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -36,7 +39,7 @@
             flex-grow: 1;
         }        
 
-        .demo-card > a {
+        .demo-card > a, .button {
             align-self: center;
             color: #1a73e8;
             background-color: white;
@@ -45,9 +48,14 @@
             padding: 12px 40px;
         }
 
-        .demo-card > a:hover {
+        .demo-card > a:hover, .button:hover {
             background-color: #1a73e8;
             color: white;
+        }
+        
+        .button-box {
+          display:flex;
+          column-gap: 10px;
         }
     </style>
   </head>
@@ -61,10 +69,16 @@
     </script>
     <header>
       <img src="/logo.svg" alt="logo" />
-      <h1>Web AI Demos</h1>
+      <h1>Web AI demos</h1>
     </header>
     <main>
-        <h2>Built-in AI Demos</h2>
+      <p>Client-side AI uses models hosted on device, which means inference occurs on-device. Built-in AI is one type of client-side AI, which uses models built into the browser.</p>
+      <div class="button-box">
+        <a href="#builtin" class="button">Built-in demos</a> <a href="#clientside" class="button">Other demos</a>
+      </div>
+        <h2 id="builtin">Built-in AI demos</h2>
+        <p>Google is developing web platform APIs and browser features that work with AI models, including large language models (LLMs), built in the browser. With <a href="https://developer.chrome.com/docs/ai/built-in">built-in AI</a>, your website or web application can perform AI-powered tasks without needing to deploy or manage its own AI models.</p>
+
         <div class="demo-grid">
             <div class="demo-card">
                 <img src="images/built-in-ai-playground.png" alt="Screenshot of the Built-in AI Playground" width="288" height="162"/>
@@ -147,7 +161,8 @@
                 <a href="/web-ai-demos/ai-synonym-finder/">Open</a>
             </div>
         </div>
-        <h2>Client side AI Demos</h2>
+        <h2 id="clientside">Client-side AI demos</h2>
+        <p>You can 
         <div class="demo-grid">
             <div class="demo-card">
                 <img src="images/web-ai-toxic-review.png" alt="Screenshot Toxic Reviews" width="288" height="162"/>
