@@ -11,7 +11,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="/components/github-link.js" async defer></script>
     <script src="/components/cookie-banner.js" async defer></script>
-    <title>Demo Space</title>
+    <title>Web AI Demos</title>
     <link rel="stylesheet" href="https://unpkg.com/open-props"/>
     <link rel="stylesheet" href="/theme.css"/>
     <style>
@@ -64,7 +64,6 @@
       <h1>Web AI Demos</h1>
     </header>
     <main>
-
         <h2>Built-in AI Demos</h2>
         <div class="demo-grid">
             <div class="demo-card">
@@ -147,7 +146,26 @@
                 </div>
                 <a href="/web-ai-demos/ai-synonym-finder/">Open</a>
             </div>
-        </div>        
+        </div>
+        <h2>Client side AI Demos</h2>
+        <div class="demo-grid">
+            <div class="demo-card">
+                <img src="images/web-ai-toxic-review.png" alt="Screenshot Toxic Reviews" width="288" height="162"/>
+                <h3>Toxic Reviews Detector</h3>
+                <div>
+                    Use a client side model with <a href="https://huggingface.co/docs/transformers.js/en/index">Transformers.js</a> to detect toxic reviews and help users improve them.
+                </div>
+                <a href="/web-ai-demos/toxic-review-warning/">Open</a>
+            </div>            
+            <div class="demo-card">
+                <img src="images/web-ai-background-fetch.png" alt="Screenshot Toxic Reviews" width="288" height="162"/>
+                <h3>Background fetch AI models</h3>
+                <div>
+                    This demo uses <a href="https://web.dev/articles/background-fetch-ai/">Background fetch</a> to download the model. Once the download starts, reloading the page or even closing the tab won't stop the download. It will continue in the background so when the user returns to the page, they can pick up where they left off.
+                </div>
+                <a href="/web-ai-demos/background-fetch-ai-model/">Open</a>
+            </div>                        
+        </div>
     </main>
     <cookie-banner></cookie-banner>
   </body>
