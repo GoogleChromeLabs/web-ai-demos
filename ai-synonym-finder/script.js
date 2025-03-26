@@ -8,8 +8,6 @@ const input = document.querySelector('input');
 const output = document.querySelector('output');
 const pre = document.querySelector('pre');
 
-debugger;
-
 const getPrompt = (word) =>
   `Suggest a list of unique synonyms for the word "${word}".`;
 
