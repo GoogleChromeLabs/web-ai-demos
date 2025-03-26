@@ -94,18 +94,18 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     if (!session) {
       return;
     }
-    const { maxTokens, temperature, tokensLeft, tokensSoFar, topK } = session;
+    const { maxTokens, temperature, inputQuota, inputUsage, topK } = session;
     maxTokensInfo.textContent = new Intl.NumberFormat("en-US").format(
-      maxTokens,
+      inputQuota,
     );
     (temperatureInfo.textContent = new Intl.NumberFormat("en-US", {
       maximumSignificantDigits: 5,
     }).format(temperature)),
       (tokensLeftInfo.textContent = new Intl.NumberFormat("en-US").format(
-        tokensLeft,
+        inputQuota - inputUsage,
       ));
     tokensSoFarInfo.textContent = new Intl.NumberFormat("en-US").format(
-      tokensSoFar,
+      inputUsage,
     );
     topKInfo.textContent = new Intl.NumberFormat("en-US").format(topK);
   };
@@ -139,7 +139,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     if (!value) {
       return;
     }
-    const cost = await session.countPromptTokens(value);
+    const cost = await session.measureInputUsage(value);
     if (!cost) {
       return;
     }
@@ -209,9 +209,10 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   });
 
   if (!session) {
-    const { defaultTopK, maxTopK, defaultTemperature } =
-      await self.ai.languageModel.capabilities();
+    const { defaultTopK, maxTopK, defaultTemperature, maxTemperature } =
+      await self.ai.languageModel.params();
     sessionTemperature.value = defaultTemperature;
+    sessionTemperature.max = maxTemperature;
     sessionTopK.value = defaultTopK;
     sessionTopK.max = maxTopK;
     await updateSession();
