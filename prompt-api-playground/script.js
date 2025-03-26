@@ -94,7 +94,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     if (!session) {
       return;
     }
-    const { maxTokens, temperature, inputQuota, inputUsage, topK } = session;
+    const { temperature, inputQuota, inputUsage, topK } = session;
     maxTokensInfo.textContent = new Intl.NumberFormat("en-US").format(
       inputQuota,
     );
