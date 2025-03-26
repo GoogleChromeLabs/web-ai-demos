@@ -54,27 +54,14 @@ const createSummarizationSession = async (
  * Checks if the device supports the Summarizer API (rather than if the browser supports the API).
  * This method returns `true` when the device is capable of running the Summarizer API and `false`
  * when it is not.
- *
- * Ideally this check would only require the code code section below:
- *
- * ```javascript
- * let capabilites = await self.ai.summarizer.capabilities();
- * if (capabilites.available === 'readily' || capabilites.available === 'after-download') {
- *   return true;
- * }
- * ```
- *
- * However, due to https://crbug.com/379074334, the API may return `no` when
- * `self.ai.summarizer.create()` was never called, so this function implements a workaround for
- * this scenario, ensuring `create()` is called at least once before returning `false`.
  */
 const checkSummarizerSupport = async (): Promise<boolean> => {
   // Do a first capabilities check. If 'no' is returned, it might mean the model hasn't been
   // bootstrapped by calling `create()`. In this case, `create()` is called, which should result
   // in an exception being raised. The exception is ignored, but now `capabilities()` should
   // reflect the actual state of the API, with `no` meaning the device is unable to run the API.
-  let capabilites = await self.ai.summarizer.capabilities();
-  if (capabilites.available === 'readily' || capabilites.available === 'after-download') {
+  let availability = await self.ai.summarizer.availability();
+  if (availability === 'available' || availability === 'downloadable') {
     return true;
   }
 
@@ -82,8 +69,8 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
     await self.ai.summarizer.create();
   } catch (e) { }
 
-  capabilites = await self.ai.summarizer.capabilities();
-  return capabilites.available !== 'no';
+  availability = await self.ai.summarizer.availability();
+  return availability !== 'unavailable';
 }
 
 /*

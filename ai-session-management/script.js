@@ -39,7 +39,7 @@ const getUUIDs = () => {
 (async function init() {
   // Get the default parameters.
   const { defaultTopK: topK, defaultTemperature: temperature } =
-    await aiNamespace.languageModel.capabilities();
+    await aiNamespace.languageModel.params();
 
   const uuids = getUUIDs();
 
@@ -72,8 +72,8 @@ const getUUIDs = () => {
     };
 
     const assistant = await aiNamespace.languageModel.create(options);
-    const { maxTokens, tokensSoFar, tokensLeft } = assistant;
-    console.log(uuid, maxTokens, tokensSoFar, tokensLeft);
+    const { inputQuota, inputUsage } = assistant;
+    console.log(uuid, inputUsage, inputQuota);
 
     assistants[uuid] = { assistant, options };
 
@@ -89,8 +89,8 @@ const getUUIDs = () => {
     const conversationContainer = assistantClone.querySelector(
       '.conversation-container'
     );
-    assistantClone.querySelector('.tokens-so-far').textContent = assistant.tokensSoFar;
-    assistantClone.querySelector('.tokens-left').textContent = assistant.tokensLeft;
+    assistantClone.querySelector('.tokens-so-far').textContent = assistant.inputUsage;
+    assistantClone.querySelector('.tokens-left').textContent = assistant.inputQuota - assistant.inputUsage;
     assistantContainer.append(assistantClone);
 
     for (const initialPrompt of options.initialPrompts) {
@@ -140,7 +140,7 @@ const createAssistant = async (options = {}) => {
     const uuid = crypto.randomUUID();
     options.initialPrompts = options.initialPrompts || [];
     const assistant = await aiNamespace.languageModel.create(options);
-    assistantTemplate.content.querySelector('.tokens-left').textContent = assistant.maxTokens;
+    assistantTemplate.content.querySelector('.tokens-left').textContent = assistant.inputQuota;
     assistants[uuid] = { assistant, options };
     const uuids = getUUIDs();
     uuids.push(uuid);
@@ -215,8 +215,8 @@ promptForm.addEventListener('submit', async (e) => {
       previousChunk = chunk;
     }
     const details = conversationContainer.closest('details');
-    details.querySelector('.tokens-so-far').textContent = assistant.tokensSoFar;
-    details.querySelector('.tokens-left').textContent = assistant.tokensLeft;
+    details.querySelector('.tokens-so-far').textContent = assistant.inputUsage;
+    details.querySelector('.tokens-left').textContent = assistant.inputQuota - assistant.inputUsage;
 
     options.initialPrompts.push(
       {

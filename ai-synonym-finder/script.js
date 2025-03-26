@@ -12,8 +12,9 @@ const getPrompt = (word) =>
   `Suggest a list of unique synonyms for the word "${word}".`;
 
 (async () => {
-  const isAvailable = (await self.ai?.languageModel?.capabilities?.())?.available;
-  if (!isAvailable || isAvailable === 'no') {
+  const isAvailable = await self.ai?.languageModel?.availability?.();
+
+  if (!isAvailable || isAvailable === 'unavailable') {
     document.querySelector('div').hidden = false;
     return;
   }
