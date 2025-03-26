@@ -18,7 +18,7 @@ export default class TokenCounter {
      */
     async countTokens(input: string): Promise<number> {
         if (this.languageModel) {
-            return await this.languageModel.countPromptTokens(input);
+            return await this.languageModel.measureInputUsage(input);
         } else {
             return input.length / AVERAGE_CHARS_PER_TOKEN;
         }
@@ -38,8 +38,8 @@ export default class TokenCounter {
      */
     static async create(): Promise<TokenCounter> {
         if (self.ai && self.ai.languageModel) {
-            const capabilities = await self.ai.languageModel.capabilities();
-            if (capabilities.available !== 'no') {
+            const availability = await self.ai.languageModel.availability();
+            if (availability !== 'unavailable') {
                 const languageModel = await self.ai.languageModel.create();
                 return new TokenCounter(languageModel);
             }

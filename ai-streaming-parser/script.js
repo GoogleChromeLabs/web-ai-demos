@@ -36,12 +36,9 @@ form.addEventListener('submit', async (e) => {
   const stream = assistantClone.promptStreaming(prompt);
 
   let chunks = '';
-  let previousLength = 0;
-  let isFirstChunk = true;
 
   for await (const chunk of stream) {
-    let newContent = chunk.slice(previousLength);
-    chunks += newContent;
+    chunks += chunk;
     DOMPurify.sanitize(chunks);
     if (DOMPurify.removed.length) {
       // Immediately stop what you were doing.
@@ -54,10 +51,9 @@ form.addEventListener('submit', async (e) => {
       );
       return;
     }
-    smd.parser_write(parser, newContent);
+    smd.parser_write(parser, chunk);
     // For the unformatted raw output.
-    pre.append(newContent);
-    previousLength = chunk.length;
+    pre.append(chunk);
   }
   smd.parser_end(parser);
 });

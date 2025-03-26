@@ -39,7 +39,7 @@ const getUUIDs = () => {
 (async function init() {
   // Get the default parameters.
   const { defaultTopK: topK, defaultTemperature: temperature } =
-    await aiNamespace.languageModel.capabilities();
+    await aiNamespace.languageModel.params();
 
   const uuids = getUUIDs();
 
