@@ -4,7 +4,7 @@
  */
 
 (async () => {
-  if (!('ai' in self) || !('languageDetector' in self.ai)) {
+  if (!('LanguageDetector' in self)) {
     document.querySelector('.not-supported-message').hidden = false;
     return;
   }
@@ -16,7 +16,7 @@
   const language = document.querySelector('select');
 
   form.style.visibility = 'visible';
-  const detector = await self.ai.languageDetector.create();
+  const detector = await LanguageDetector.create();
 
   input.addEventListener('input', async () => {
     if (!input.value.trim()) {
@@ -43,7 +43,7 @@
     return displayNames.of(languageTag);
   };
 
-  if ('ai' in self && 'translator' in self.ai) {
+  if ('Translator' in self) {
     document.querySelectorAll('[hidden]:not(.not-supported-message)').forEach((el) => {
       el.removeAttribute('hidden');
     });
@@ -56,7 +56,7 @@
           output.textContent = 'Currently, only English ↔ Spanish and English ↔ Japanese are supported.';
           return;
         }
-        const translator = await self.ai.translator.create({
+        const translator = await Translator.create({
           sourceLanguage,
           targetLanguage: language.value,
         });
