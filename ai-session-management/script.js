@@ -15,6 +15,11 @@ const promptInput = document.querySelector('.prompt-input');
 
 const assistants = {};
 
+const DEFAULT_PARMS = {
+  defaultTopK: 3,
+  defaultTemperature: 1.0,
+};
+
 let controller = null;
 
 stopButton.addEventListener('click', () => {
@@ -33,10 +38,25 @@ const getUUIDs = () => {
   }
 };
 
+// The API shape of the API behind a flag in Canary uses a different namespace. While the
+// current API behind a flag in stable uses 'ai.languageModel`, the version in Canary uses
+// `LanguageModel`. This helper method abstracts that difference, and it expects that either
+// the availability of `LanguageModel` or `ai.languageModel` have been validated before being
+// called.
+async function createLanguageModel(options) {
+  if ("LanguageModel" in self) {
+    return self.LanguageModel.create(options);
+  }
+  return self.ai.languageModel.create(options);
+}
+
 (async function init() {
   // Get the default parameters.
-  const { defaultTopK: topK, defaultTemperature: temperature } =
-    await LanguageModel.params();
+  // The new API shape, currently behind a flag in Canary has a `params()` method that returs
+  // the default and maximing topK and temperature. A hardcoded value, DEFAULT_PARAMS is used
+  // for the previous API shape.
+  const { defaultTopK: topK, defaultTemperature: temperature } = "LanguageModel" in self ?
+    await LanguageModel.params() : DEFAULT_PARMS;
 
   const uuids = getUUIDs();
 
@@ -68,7 +88,7 @@ const getUUIDs = () => {
       conversationSummary: 'New conversation',
     };
 
-    const assistant = await LanguageModel.create(options);
+    const assistant = await createLanguageModel(options);
     const { inputQuota, inputUsage } = assistant;
     console.log(uuid, inputUsage, inputQuota);
 
@@ -136,7 +156,7 @@ const createAssistant = async (options = {}) => {
   try {
     const uuid = crypto.randomUUID();
     options.initialPrompts = options.initialPrompts || [];
-    const assistant = await LanguageModel.create(options);
+    const assistant = await createLanguageModel(options);
     assistantTemplate.content.querySelector('.tokens-left').textContent = assistant.inputQuota;
     assistants[uuid] = { assistant, options };
     const uuids = getUUIDs();
@@ -212,8 +232,13 @@ promptForm.addEventListener('submit', async (e) => {
       previousChunk = chunk;
     }
     const details = conversationContainer.closest('details');
-    details.querySelector('.tokens-so-far').textContent = assistant.inputUsage;
-    details.querySelector('.tokens-left').textContent = assistant.inputQuota - assistant.inputUsage;
+
+    // The new API shape in Chrome Canary renames `tokenSoFar` to `inputUsage`, `maxTokens` to `inputQuota` and removes
+    // `tokensLeft`. The code below uses whichever version is available.
+    details.querySelector('.tokens-so-far').textContent =
+        assistant.tokensSoFar || assistant.inputUsage;
+    details.querySelector('.tokens-left').textContent =
+        assistant.tokensLeft || assistant.inputQuota - assistant.inputUsage;
 
     options.initialPrompts.push(
       {
@@ -229,7 +254,7 @@ promptForm.addEventListener('submit', async (e) => {
     promptInput.value = '';
     promptInput.focus();
 
-    const summaryAssistant = await LanguageModel.create(options);
+    const summaryAssistant = await createLanguageModel(options);
     const summaryStream = summaryAssistant.promptStreaming(
       'Summarize the conversation as briefly as possible in one short sentence.'
     );
