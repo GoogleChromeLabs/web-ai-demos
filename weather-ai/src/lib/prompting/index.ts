@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Declare LanguageModal and ai as globals, to avoid the TS compilar complainig about unknown
+// Declare LanguageModal and ai as globals, to avoid the TS compiler complaining about unknown
 // objects in the global scope.
 declare global {
   interface Window {
