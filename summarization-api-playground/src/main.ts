@@ -5,6 +5,15 @@
 
 import './style.css'
 
+// Declare Summarizer and ai as globals, to avoid the TS compiler complaining about unknown
+// objects in the global scope.
+declare global {
+  interface Window {
+      Summarizer: any;
+      ai: any;
+  }
+}
+
 // The underlying model has a context of 1,024 tokens, out of which 26 are used by the internal prompt,
 // leaving about 998 tokens for the input text. Each token corresponds, roughly, to about 4 characters, so 4,000
 // is used as a limit to warn the user that the content might be too long to summarize.
@@ -47,7 +56,13 @@ const createSummarizationSession = async (
     throw new Error('AI Summarization is not supported');
   }
 
-  return Summarizer.create({ type, format, length, monitor });
+  // Try to create the summarizer with the new API shape, if that's available, otherwise use
+  // the old API shape.
+  if (self.Summarizer !== undefined) {
+    return window.Summarizer.create({ type, format, length, monitor });
+  }
+  return window.ai.summarizer.create({ type, format, length, monitor });
+
 }
 
 /*
@@ -56,21 +71,16 @@ const createSummarizationSession = async (
  * when it is not.
  */
 const checkSummarizerSupport = async (): Promise<boolean> => {
-  // Do a first capabilities check. If 'no' is returned, it might mean the model hasn't been
-  // bootstrapped by calling `create()`. In this case, `create()` is called, which should result
-  // in an exception being raised. The exception is ignored, but now `capabilities()` should
-  // reflect the actual state of the API, with `no` meaning the device is unable to run the API.
-  let availability = await Summarizer.availability();
-  if (availability === 'available' || availability === 'downloadable') {
-    return true;
+  // Checks availability against the new API shape.
+  if (self.Summarizer !== undefined) {
+    let availability = await window.Summarizer.availability();
+    return availability === 'available' || availability === 'downloadable';
   }
 
-  try {
-    await Summarizer.create();
-  } catch (e) { }
-
-  availability = await Summarizer.availability();
-  return availability !== 'unavailable';
+  // Checks availability agains the old API shape.
+  let capabilities = await window.ai.summarizer.capabilities();
+  console.log(capabilities);
+  return capabilities.available === 'readily' || capabilities.available === 'after-download';  
 }
 
 /*
@@ -79,7 +89,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
  * able to run it before setting up the listeners to summarize the input added to the textarea.
  */
 const initializeApplication = async () => {
-  const summarizationApiAvailable = self.ai !== undefined && self.ai.summarizer !== undefined;
+  const summarizationApiAvailable = (self.ai !== undefined && self.ai.summarizer !== undefined) || self.Summarizer !== undefined;
   if (!summarizationApiAvailable) {
     summarizationUnavailableDialog.style.display = 'block';
     return;
