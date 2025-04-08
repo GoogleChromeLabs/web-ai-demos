@@ -6,7 +6,7 @@
 import * as smd from 'https://cdn.jsdelivr.net/npm/streaming-markdown@0.0.17/smd.min.js';
 import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.2.0/dist/purify.es.mjs';
 
-if (!self.ai?.languageModel) {
+if (!('LanguageModel' in self)) {
   document.querySelector('.not-supported').style.display = 'block';
   document.querySelector('main').style.display = 'none';
 }
@@ -16,7 +16,7 @@ const pre = document.querySelector('pre');
 const input = document.querySelector('input');
 const output = document.querySelector('output');
 
-const assistant = await self.ai.languageModel.create();
+const assistant = await LanguageModel.create();
 
 const renderer = smd.default_renderer(output);
 const parser = smd.parser(renderer);

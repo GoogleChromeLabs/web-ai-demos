@@ -12,7 +12,7 @@ const getPrompt = (word) =>
   `Suggest a list of unique synonyms for the word "${word}".`;
 
 (async () => {
-  const isAvailable = await self.ai?.languageModel?.availability?.();
+  const isAvailable = 'LanguageModel' in self && await LanguageModel.availability();
 
   if (!isAvailable || isAvailable === 'unavailable') {
     document.querySelector('div').hidden = false;
@@ -20,7 +20,7 @@ const getPrompt = (word) =>
   }
   document.querySelector('main').hidden = false;
 
-  const languageModel = await self.ai.languageModel.create({
+  const languageModel = await LanguageModel.create({
     initialPrompts: [
       {
         role: 'system',

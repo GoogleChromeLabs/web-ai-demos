@@ -17,8 +17,8 @@ export default class BuiltinPrompting {
     }
 
     static async createPrompting(): Promise<BuiltinPrompting> {
-        if (window.ai && (await window.ai.languageModel.availability()) === 'available') {
-            let session = await window.ai.languageModel.create();
+        if ((await LanguageModel.availability()) === 'available') {
+            let session = await LanguageModel.create();
             return new BuiltinPrompting(session);
         } else {
             throw new Error("Built-in prompting not supported");

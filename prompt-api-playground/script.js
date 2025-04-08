@@ -32,7 +32,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
   let session = null;
 
-  if (!self.ai || !self.ai.languageModel) {
+  if (!('LanguageModel' in self)) {
     errorMessage.style.display = "block";
     errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> to enable it.`;
     return;
@@ -191,7 +191,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   });
 
   const updateSession = async () => {
-    session = await self.ai.languageModel.create({
+    session = await LanguageModel.create({
       temperature: Number(sessionTemperature.value),
       topK: Number(sessionTopK.value),
       systemPrompt: SYSTEM_PROMPT,
@@ -210,7 +210,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
   if (!session) {
     const { defaultTopK, maxTopK, defaultTemperature, maxTemperature } =
-      await self.ai.languageModel.params();
+      await LanguageModel.params();
     sessionTemperature.value = defaultTemperature;
     sessionTemperature.max = maxTemperature;
     sessionTopK.value = defaultTopK;

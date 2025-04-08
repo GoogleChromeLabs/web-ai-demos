@@ -13,9 +13,6 @@ const promptForm = document.querySelector('.prompt-form');
 const activeAssistantForm = document.querySelector('.active-assistant-form');
 const promptInput = document.querySelector('.prompt-input');
 
-// Make this work in web apps and in extensions.
-const aiNamespace = self.ai || chrome.aiOriginTrial || chrome.ai;
-
 const assistants = {};
 
 let controller = null;
@@ -39,7 +36,7 @@ const getUUIDs = () => {
 (async function init() {
   // Get the default parameters.
   const { defaultTopK: topK, defaultTemperature: temperature } =
-    await aiNamespace.languageModel.params();
+    await LanguageModel.params();
 
   const uuids = getUUIDs();
 
@@ -71,7 +68,7 @@ const getUUIDs = () => {
       conversationSummary: 'New conversation',
     };
 
-    const assistant = await aiNamespace.languageModel.create(options);
+    const assistant = await LanguageModel.create(options);
     const { inputQuota, inputUsage } = assistant;
     console.log(uuid, inputUsage, inputQuota);
 
@@ -139,7 +136,7 @@ const createAssistant = async (options = {}) => {
   try {
     const uuid = crypto.randomUUID();
     options.initialPrompts = options.initialPrompts || [];
-    const assistant = await aiNamespace.languageModel.create(options);
+    const assistant = await LanguageModel.create(options);
     assistantTemplate.content.querySelector('.tokens-left').textContent = assistant.inputQuota;
     assistants[uuid] = { assistant, options };
     const uuids = getUUIDs();
@@ -232,7 +229,7 @@ promptForm.addEventListener('submit', async (e) => {
     promptInput.value = '';
     promptInput.focus();
 
-    const summaryAssistant = await aiNamespace.languageModel.create(options);
+    const summaryAssistant = await LanguageModel.create(options);
     const summaryStream = summaryAssistant.promptStreaming(
       'Summarize the conversation as briefly as possible in one short sentence.'
     );

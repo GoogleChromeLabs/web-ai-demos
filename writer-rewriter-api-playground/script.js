@@ -11,7 +11,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     document.querySelector('.not-supported-message').hidden = false;
   };
 
-  if (!self.ai || !self.ai.writer || !self.ai.rewriter) {
+  if (!('Writer' in self) || !('Rewriter' in self)) {
     return showNotSupportedMessage();
   }
 
@@ -85,7 +85,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
   );
 
   const createWriter = async () => {
-    writer = await self.ai.writer.create({
+    writer = await Writer.create({
       tone: toneSelect.value,
       length: lengthSelect.value,
       format: formatSelect.value,
@@ -95,7 +95,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
   };
 
   const createRewriter = async () => {
-    rewriter = await self.ai.rewriter.create({
+    rewriter = await Rewriter.create({
       tone: rewriteToneSelect.value,
       length: rewriteLengthSelect.value,
       format: rewriteFormatSelect.value,

@@ -47,7 +47,7 @@ const createSummarizationSession = async (
     throw new Error('AI Summarization is not supported');
   }
 
-  return self.ai.summarizer.create({ type, format, length, monitor });
+  return Summarizer.create({ type, format, length, monitor });
 }
 
 /*
@@ -60,16 +60,16 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
   // bootstrapped by calling `create()`. In this case, `create()` is called, which should result
   // in an exception being raised. The exception is ignored, but now `capabilities()` should
   // reflect the actual state of the API, with `no` meaning the device is unable to run the API.
-  let availability = await self.ai.summarizer.availability();
+  let availability = await Summarizer.availability();
   if (availability === 'available' || availability === 'downloadable') {
     return true;
   }
 
   try {
-    await self.ai.summarizer.create();
+    await Summarizer.create();
   } catch (e) { }
 
-  availability = await self.ai.summarizer.availability();
+  availability = await Summarizer.availability();
   return availability !== 'unavailable';
 }
 
