@@ -21,15 +21,14 @@ function App() {
   const [location, setLocation] = useState<Location>();
   const [weatherData, setWeatherData] = useState<WeatherResponse>();
   const [weatherApiError, setWeatherApierror] = useState<string>();
-  const [weatherDescription, setWeatherDescription] = useState<string>();
+  const [weatherDescription, setWeatherDescription] = useState<string>('');
   const [weatherDescriptionDone, setWeatherDescriptionDone] = useState<boolean>();
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(true);
   const [promptApiSupported, setPromptApiSupported] = useState<boolean>(true);
 
   // Checks if the Prompt API is supported.
   useEffect(() => {
-    const supported = window.ai !== undefined && window.ai.languageModel !== undefined;
-    setPromptApiSupported(supported);
+    setPromptApiSupported(BuiltinPrompting.isBuiltinAiSupported());
   }, []);
 
   // Get the user's location from the browser.
@@ -68,10 +67,10 @@ function App() {
 
         try {
           const promptApi = await BuiltinPrompting.createPrompting();
-          if (streaming === 'true') {
+          if (streaming === null || streaming === 'true') {
               const reader = await promptApi.streamingPrompt(prompt);
               for await (const chunk of reader) {
-                setWeatherDescription(chunk);
+                setWeatherDescription(w => w + chunk);
               }
               setWeatherDescriptionDone(true);
           } else {
