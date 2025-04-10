@@ -11,7 +11,10 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     document.querySelector('.not-supported-message').hidden = false;
   };
 
-  if (!('Writer' in self) || !('Rewriter' in self)) {
+  // The API namespace the Writer and Rewriter APIs have changed in Chrome canary, the feature
+  // detection checks below validate both scenarios.
+  if (!('Writer' in self && 'Rewriter' in self) && // Test for Canary
+      (!('ai' in self && 'writer' in self.ai && 'rewriter' in self.ai))) { // Test for Stable
     return showNotSupportedMessage();
   }
 
@@ -61,7 +64,10 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     output.textContent = '';
     let fullResponse = '';
     for await (const chunk of stream) {
-      fullResponse = chunk.trim();
+      // In Chrome stable, the writer always returns the entire text, so the full response is
+      // the same as the chunk. In Canary, only the newly generated content is returned, so
+      // the new chunk is joined with the existing full response.      
+      fullResponse = 'Writer' in self ? fullResponse + chunk.trim() : chunk.trim();
       output.innerHTML = DOMPurify.sanitize(
         fullResponse /*marked.parse(fullResponse)*/
       );
@@ -85,22 +91,30 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
   );
 
   const createWriter = async () => {
-    writer = await Writer.create({
+    const options = {
       tone: toneSelect.value,
       length: lengthSelect.value,
       format: formatSelect.value,
       sharedContext: context.value.trim(),
-    });
+    };
+
+    // Handles the create of a Writer using both the previous API namespace in stable and
+    // the new one in Canary.
+    writer = await ('Writer' in self ? Writer.create(options) : ai.writer.create(options));
     console.log(writer);
   };
 
   const createRewriter = async () => {
-    rewriter = await Rewriter.create({
+    const options = {
       tone: rewriteToneSelect.value,
       length: rewriteLengthSelect.value,
       format: rewriteFormatSelect.value,
       sharedContext: context.value.trim(),
-    });
+    };
+
+    // Handles the create of a Rewriter using both the previous API namespace in stable and
+    // the new one in Canary.
+    rewriter = await ('Rewriter' in self ? Rewriter.create(options) : ai.rewriter.create(options));
     console.log(rewriter);
   };
 
@@ -124,7 +138,10 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     output.textContent = '';
     let fullResponse = '';
     for await (const chunk of stream) {
-      fullResponse = chunk.trim();
+      // In Chrome stable, the rewriter always returns the entire text, so the full response is
+      // the same as the chunk. In Canary, only the newly generated content is returned, so
+      // the new chunk is joined with the existing full response.
+      fullResponse = 'Rewriter' in self ? fullResponse + chunk.trim() : chunk.trim();
       output.innerHTML = DOMPurify.sanitize(
         fullResponse /*marked.parse(fullResponse)*/
       );
