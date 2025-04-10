@@ -4,7 +4,9 @@
  */
 
 (async () => {
-  if (!('LanguageDetector' in self)) {
+  // The Language Detector API uses the `self.LanguageDetector` namespace in Canary, but
+  // `ai.languageDetector` in Stable, so both shapes are feature detected.
+  if (!('LanguageDetector' in self) && !('ai' in self) && !('languageDetector' in self)) {
     document.querySelector('.not-supported-message').hidden = false;
     return;
   }
@@ -16,7 +18,9 @@
   const language = document.querySelector('select');
 
   form.style.visibility = 'visible';
-  const detector = await LanguageDetector.create();
+  // The code below handles creation of a language detector in either stable or canary.
+  const detector = await
+      ('LanguageDetector' in self ? LanguageDetector.create() : ai.languageDetector.create());
 
   input.addEventListener('input', async () => {
     if (!input.value.trim()) {
@@ -43,7 +47,9 @@
     return displayNames.of(languageTag);
   };
 
-  if ('Translator' in self) {
+  // The Translator API uses the `self.Translator` namespace in Canary, but
+  // `ai.translator` in Stable, so both shapes are feature detected.  
+  if ('Translator' in self || ('ai' in self && 'translator' in self.ai)) {
     document.querySelectorAll('[hidden]:not(.not-supported-message)').forEach((el) => {
       el.removeAttribute('hidden');
     });
@@ -56,10 +62,11 @@
           output.textContent = 'Currently, only English ↔ Spanish and English ↔ Japanese are supported.';
           return;
         }
-        const translator = await Translator.create({
-          sourceLanguage,
-          targetLanguage: language.value,
-        });
+        const targetLanguage = language.value;
+        // The code below handles creation of a translator in either stable or canary.        
+        const translator = await ('Translator' in self ?
+            Translator.create({ sourceLanguage, targetLanguage }) :
+            ai.translator.create({ sourceLanguage, targetLanguage }));
         output.textContent = await translator.translate(input.value.trim());
       } catch (err) {
         output.textContent = 'An error occurred. Please try again.';
