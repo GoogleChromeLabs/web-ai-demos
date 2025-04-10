@@ -10,7 +10,7 @@ const AVERAGE_CHARS_PER_TOKEN = 4;
  * dividing the length of the input by `AVERAGE_CHARS_PER_TOKEN`.
  */
 export default class TokenCounter {
-    private constructor(private languageModel?: AILanguageModel) {
+    private constructor(private languageModel?: any) {
     }
 
     /*
@@ -37,10 +37,10 @@ export default class TokenCounter {
      * estimated token count when not.
      */
     static async create(): Promise<TokenCounter> {
-        if (self.ai && self.ai.languageModel) {
-            const availability = await self.ai.languageModel.availability();
+        if (self.LanguageModel) {
+            const availability = await self.LanguageModel.availability();
             if (availability !== 'unavailable') {
-                const languageModel = await self.ai.languageModel.create();
+                const languageModel = await self.LanguageModel.create();
                 return new TokenCounter(languageModel);
             }
         }

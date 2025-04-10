@@ -6,6 +6,16 @@
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import TokenCounter from './TokenCounter';
 
+// Declare Summarizer, LanguageModel and ai as globals, to avoid the TS compiler complaining about
+// unknown objects in the global scope.
+declare global {
+    interface Window {
+        Summarizer: any,
+        LanguageModel: any,
+        ai: any,
+    }
+}
+
 const MAX_TOKENS: number = 800;
 
 const aiSpinner = document.getElementById('ai-spinner') as HTMLDivElement;
@@ -57,52 +67,46 @@ button.addEventListener('click', async () => {
 });
 
 const checkSummarizerSupport = async (): Promise<boolean> => {
-    // Do a first capabilities check. If 'no' is returned, it might mean the model hasn't been
-    // bootstrapped by calling `create()`. In this case, `create()` is called, which should result
-    // in an exception being raised. The exception is ignored, but now `capabilities()` should
-    // reflect the actual state of the API, with `no` meaning the device is unable to run the API.
-    let capabilites = await self.ai.summarizer.capabilities();
-    if (capabilites.available === 'readily' || capabilites.available === 'after-download') {
-      return true;
+    // Checks availability against the new API shape.
+    if (self.Summarizer !== undefined) {
+      let availability = await window.Summarizer.availability();
+      return availability === 'available' || availability === 'downloadable';
     }
   
-    try {
-      await self.ai.summarizer.create();
-    } catch (e) {
-        console.log(e);
-    }
-  
-    capabilites = await self.ai.summarizer.capabilities();
-    return capabilites.available !== 'no';
+    // Checks availability agains the old API shape.
+    let capabilities = await window.ai.summarizer.capabilities();
+    return capabilities.available === 'readily' || capabilities.available === 'after-download';  
   }
 
-  if (self.ai && self.ai.summarizer) {
+  if (self.Summarizer || (window.ai && window.ai.summarizer)) {
     if (await checkSummarizerSupport()) {
-        // Check capabilities here so the user can be warned about the model download.
-        const capabilites = await self.ai.summarizer.capabilities();
-        if (capabilites.available === 'after-download') {
+        // Check availaiblity of the model here so the user can be warned about the model download agains the new API
+        // shape in Chrome canary and the previous one currently in stable.
+        const capabilites = await (self.Summarizer ? self.Summarizer.availability() : self.ai.summarizer.capabilities());
+        if (capabilites.available === 'after-download' || capabilites === 'downloadable') {
             statusSpan.innerText = `Hold on, Chrome is downloading the model. This can take a few minutes..`;    
         } else {
             statusSpan.innerText = `Getting the model ready.`;
         }
 
-        const modelDownloadCallback = (e: DownloadProgressEvent) => {
+        const modelDownloadCallback = (e: any) => {
             statusSpan.innerText = `Hold on, Chrome is downloading the model. Progress: ${e.loaded} of ${e.total}.`;
         };
 
-        // Trigger the model download.
-        summarizer = await self.ai.summarizer.create({
+        const createOptions = {
             format: 'plain-text',
             type: 'tl;dr',
             length: 'long',
-            monitor: (m: AICreateMonitor) => m.addEventListener('downloadprogress', modelDownloadCallback),
-        });        
+            monitor: (m: any) => m.addEventListener('downloadprogress', modelDownloadCallback),
+        };
+
+        // Trigger the model download, using both the old and new API namespaces.
+        summarizer = await (self.Summarizer ?
+                self.Summarizer.create(createOptions) : self.ai.summarizer.create(createOptions));
         statusSpan.innerText = `Awaiting for input.`;
         button.disabled = false;
         inputTextArea.disabled = false;
     } else {
-        const capabilites = await self.ai.summarizer.capabilities();
-        console.log(capabilites);
         statusSpan.innerText = `Your device doesn't support the Summarizer API.`;    
     }
   } else {
