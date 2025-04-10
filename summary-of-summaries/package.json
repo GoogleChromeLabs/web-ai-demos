@@ -13,7 +13,6 @@
     "vite": "^5.4.10"
   },
   "dependencies": {
-    "@langchain/textsplitters": "^0.1.0",
-    "@types/dom-chromium-ai": "^0.0.2"
+    "@langchain/textsplitters": "^0.1.0"
   }
 }
