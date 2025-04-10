@@ -13,7 +13,6 @@ dotenv.config();
 functions.http('product-reviews-gemini-get-rating', async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') {
-    console.log('is OPTIONS')
     // Send response to OPTIONS requests
 
     res.set('Access-Control-Allow-Methods', 'GET');
