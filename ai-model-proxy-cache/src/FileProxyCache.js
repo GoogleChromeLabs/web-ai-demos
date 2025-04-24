@@ -18,7 +18,6 @@
  * CodePen: https://codepen.io/jasonmayes
  *********************************************************************/
 
-import MD5 from '/MD5.js';
 import FetchInChunks from '/FetchInChunks.js';
 
 let FileProxyCache = function () {
@@ -43,6 +42,17 @@ let FileProxyCache = function () {
   }
 
 
+  async function hash(message) {
+    const msgUint8 = new TextEncoder().encode(message); // encode as (utf-8) Uint8Array
+    const hashBuffer = await window.crypto.subtle.digest("SHA-256", msgUint8); // hash the message
+    const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join(""); // convert bytes to hex string
+    return hashHex;
+  }
+
+  
   async function cacheIt(blob, fileUrl) {
     try {
       const MODEL_CACHE = await caches.open(cacheName);
@@ -55,10 +65,10 @@ let FileProxyCache = function () {
         } else {
           blobShard = blob.slice(i, i + cacheShardSize, 'binary/octet-stream');
         }
-        await MODEL_CACHE.put(MD5(fileUrl) + '-' + n, new Response(blobShard));
+        await MODEL_CACHE.put(await hash(fileUrl) + '-' + n, new Response(blobShard));
         n++;
       }
-      await MODEL_CACHE.put(MD5(fileUrl), new Response(n));
+      await MODEL_CACHE.put(await hash(fileUrl), new Response(n));
       if (cacheDebug) {
         console.log('Cached: ' + fileUrl);
       }
@@ -103,8 +113,8 @@ let FileProxyCache = function () {
     }
     try {
       const MODEL_CACHE = await caches.open(cacheName);
-      const MD5_FILE_HASH = MD5(url);
-      const response = await MODEL_CACHE.match(MD5_FILE_HASH);
+      const FILE_HASH = await hash(url);
+      const response = await MODEL_CACHE.match(FILE_HASH);
       let blobParts = [];
       
       if (!response) {
@@ -117,7 +127,7 @@ let FileProxyCache = function () {
           return await fetchAndCacheFile(url, progressCallback);
         } else {
           for (let i = 0; i < n; i++) {
-            const part = await MODEL_CACHE.match(MD5_FILE_HASH + '-' + i);
+            const part = await MODEL_CACHE.match(FILE_HASH + '-' + i);
             blobParts.push(await part.blob());
           }
           
