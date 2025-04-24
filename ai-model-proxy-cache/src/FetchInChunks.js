@@ -1,4 +1,9 @@
 /**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  *
  * This utility library is a trimmed down version based on original by tomayac on Github. 
  * Grab latest from: https://github.com/tomayac/fetch-in-chunks
