@@ -60,14 +60,14 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     if (!prompt) {
       return;
     }
-    const stream = await writer.writeStreaming(prompt);
+    const stream = writer.writeStreaming(prompt);
     output.textContent = '';
     let fullResponse = '';
     for await (const chunk of stream) {
       // In Chrome stable, the writer always returns the entire text, so the full response is
       // the same as the chunk. In Canary, only the newly generated content is returned, so
-      // the new chunk is joined with the existing full response.      
-      fullResponse = 'Writer' in self ? fullResponse + chunk.trim() : chunk.trim();
+      // the new chunk is joined with the existing full response.
+      fullResponse = 'Writer' in self ? fullResponse + chunk : chunk;
       output.innerHTML = DOMPurify.sanitize(
         fullResponse /*marked.parse(fullResponse)*/
       );
