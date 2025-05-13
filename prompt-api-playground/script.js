@@ -38,7 +38,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   // cases are checked below.
   if (!('LanguageModel' in self) && !('ai' in self) && (!'languageModal' in self.ai)) {
     errorMessage.style.display = "block";
-    errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> to enable it.`;
+    errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> to enable it.`;
     return;
   }
 
@@ -113,7 +113,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     // `inputUsage` from `inputQuota`. Both APIs shapes are checked in the code below.
     maxTokensInfo.textContent = numberFormat.format(session.inputQuota || session.maxTokens);
     tokensLeftInfo.textContent =
-        numberFormat.format(session.tokensSoFar || session.inputQuota - session.inputUsage);        
+        numberFormat.format(session.tokensSoFar || session.inputQuota - session.inputUsage);
     tokensSoFarInfo.textContent = numberFormat.format(session.inputUsage || session.tokensSoFar);
   };
 
@@ -222,7 +222,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       session = await ai.languageModel.create({
         temperature: Number(sessionTemperature.value),
         topK: Number(sessionTopK.value),
-        systemPrompt: SYSTEM_PROMPT,        
+        systemPrompt: SYSTEM_PROMPT,
       });
     }
     resetUI();
