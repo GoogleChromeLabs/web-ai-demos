@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 async function describePerson() {
   const session = await LanguageModel.create({
     expectedInputs: [{ type: "image" }],
