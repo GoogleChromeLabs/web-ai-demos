@@ -1,0 +1,35 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+body {
+  font-family: helvetica, arial, sans-serif;
+  margin: 2em;
+}
+
+h1 {
+  margin-block-end: 0;
+}
+
+#logs {
+  margin-top: 1em;
+  white-space: pre-line;
+}
+
+button {
+  margin-bottom: 12px;
+}
+
+audio {
+    margin-top: 12px;
+
+  display: block;
+}
+
+@media screen and (min-width: 640px) {
+  body {
+    margin: 2em auto;
+    max-width: calc(640px - 2em);
+  }
+}
