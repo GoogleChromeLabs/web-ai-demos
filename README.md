@@ -1,4 +1,4 @@
-# Collection of client-side AI demos
+Б# Collection of client-side AI demos
 
 This repository contains demos related to client-side (in-browser) AI.
 
