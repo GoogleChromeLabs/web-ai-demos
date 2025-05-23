@@ -134,14 +134,14 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
       return;
     }
     output.textContent = 'Rewriting…';
-    const stream = await rewriter.rewriteStreaming(prompt);
+    const stream = rewriter.rewriteStreaming(prompt);
     output.textContent = '';
     let fullResponse = '';
     for await (const chunk of stream) {
       // In Chrome stable, the rewriter always returns the entire text, so the full response is
       // the same as the chunk. In Canary, only the newly generated content is returned, so
       // the new chunk is joined with the existing full response.
-      fullResponse = 'Rewriter' in self ? fullResponse + chunk.trim() : chunk.trim();
+      fullResponse = 'Rewriter' in self ? fullResponse + chunk : chunk;
       output.innerHTML = DOMPurify.sanitize(
         fullResponse /*marked.parse(fullResponse)*/
       );
