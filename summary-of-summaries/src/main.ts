@@ -63,7 +63,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
     return availability === 'available' || availability === 'downloadable';
  }
 
-  if (self.Summarizer) {
+  if (window.Summarizer) {
     if (await checkSummarizerSupport()) {
         // Check availaiblity of the model so the user can be warned about the model download.
         const availability = await self.Summarizer.availability();
