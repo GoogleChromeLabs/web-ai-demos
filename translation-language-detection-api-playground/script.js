@@ -6,7 +6,7 @@
 (async () => {
   // The Language Detector API uses the `self.LanguageDetector` namespace in Canary, but
   // `ai.languageDetector` in Stable, so both shapes are feature detected.
-  if (!('LanguageDetector' in self) && !('ai' in self) && !('languageDetector' in self)) {
+  if (!('LanguageDetector' in self) && !('ai' in self) && !('languageDetector' in self.ai)) {
     document.querySelector('.not-supported-message').hidden = false;
     return;
   }
