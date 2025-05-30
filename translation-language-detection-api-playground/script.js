@@ -6,7 +6,7 @@
 (async () => {
   // The Language Detector API uses the `self.LanguageDetector` namespace in Canary, but
   // `ai.languageDetector` in Stable, so both shapes are feature detected.
-  if (!('LanguageDetector' in self) && !('ai' in self) && !('languageDetector' in self)) {
+  if (!('LanguageDetector' in self) && !('ai' in self) && !('languageDetector' in self.ai)) {
     document.querySelector('.not-supported-message').hidden = false;
     return;
   }
@@ -48,7 +48,7 @@
   };
 
   // The Translator API uses the `self.Translator` namespace in Canary, but
-  // `ai.translator` in Stable, so both shapes are feature detected.  
+  // `ai.translator` in Stable, so both shapes are feature detected.
   if ('Translator' in self || ('ai' in self && 'translator' in self.ai)) {
     document.querySelectorAll('[hidden]:not(.not-supported-message)').forEach((el) => {
       el.removeAttribute('hidden');
@@ -63,7 +63,7 @@
           return;
         }
         const targetLanguage = language.value;
-        // The code below handles creation of a translator in either stable or canary.        
+        // The code below handles creation of a translator in either stable or canary.
         const translator = await ('Translator' in self ?
             Translator.create({ sourceLanguage, targetLanguage }) :
             ai.translator.create({ sourceLanguage, targetLanguage }));
