@@ -35,7 +35,7 @@ const output = document.querySelector('#output') as HTMLDivElement;
  * an error.
  */
 const createSummarizationSession = async (
-  type: AISummarizerType = 'tl;dr',
+  type: AISummarizerType = 'tldr',
   format: AISummarizerFormat = 'plain-text',
   length: AISummarizerLength = 'medium',
   downloadProgressListener?: (ev: DownloadProgressEvent) => void): Promise<AISummarizer> => {
