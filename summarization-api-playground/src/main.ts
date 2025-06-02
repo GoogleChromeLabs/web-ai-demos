@@ -5,25 +5,19 @@
 
 import './style.css'
 
-// Declare Summarizer and ai as globals, to avoid the TS compiler complaining about unknown
+// Declare Summarizer as a global, to avoid the TS compiler complaining about unknown
 // objects in the global scope.
 declare global {
   interface Window {
       Summarizer: any;
-      ai: any;
   }
 }
 
-// The underlying model has a context of 1,024 tokens, out of which 26 are used by the internal prompt,
-// leaving about 998 tokens for the input text. Each token corresponds, roughly, to about 4 characters, so 4,000
-// is used as a limit to warn the user that the content might be too long to summarize.
-const MAX_MODEL_CHARS = 4000;
 const inputTextArea = document.querySelector('#input') as HTMLTextAreaElement;
 const summaryTypeSelect = document.querySelector('#type') as HTMLSelectElement;
 const summaryFormatSelect = document.querySelector('#format') as HTMLSelectElement;
 const summaryLengthSelect = document.querySelector('#length') as HTMLSelectElement;
 const characterCountSpan = document.querySelector('#character-count') as HTMLSpanElement;
-const characterCountExceededSpan = document.querySelector('#character-count-exceed') as HTMLSpanElement;
 const summarizationUnsupportedDialog = document.querySelector('#summarization-unsupported') as HTMLDivElement;
 const summarizationUnavailableDialog = document.querySelector('#summarization-unavailable') as HTMLDivElement;
 const output = document.querySelector('#output') as HTMLDivElement;
@@ -41,9 +35,9 @@ const output = document.querySelector('#output') as HTMLDivElement;
  * an error.
  */
 const createSummarizationSession = async (
-  type: AISummarizerType,
-  format: AISummarizerFormat,
-  length: AISummarizerLength,
+  type: AISummarizerType = 'tl;dr',
+  format: AISummarizerFormat = 'plain-text',
+  length: AISummarizerLength = 'medium',
   downloadProgressListener?: (ev: DownloadProgressEvent) => void): Promise<AISummarizer> => {
   let monitor = undefined;
   if (downloadProgressListener) {
@@ -56,13 +50,7 @@ const createSummarizationSession = async (
     throw new Error('AI Summarization is not supported');
   }
 
-  // Try to create the summarizer with the new API shape, if that's available, otherwise use
-  // the old API shape.
-  if (self.Summarizer !== undefined) {
-    return window.Summarizer.create({ type, format, length, monitor });
-  }
-  return window.ai.summarizer.create({ type, format, length, monitor });
-
+  return window.Summarizer.create({ type, format, length, monitor });
 }
 
 /*
@@ -71,16 +59,8 @@ const createSummarizationSession = async (
  * when it is not.
  */
 const checkSummarizerSupport = async (): Promise<boolean> => {
-  // Checks availability against the new API shape.
-  if (self.Summarizer !== undefined) {
-    let availability = await window.Summarizer.availability();
-    return availability === 'available' || availability === 'downloadable';
-  }
-
-  // Checks availability agains the old API shape.
-  let capabilities = await window.ai.summarizer.capabilities();
-  console.log(capabilities);
-  return capabilities.available === 'readily' || capabilities.available === 'after-download';  
+  let availability = await window.Summarizer.availability();
+  return availability === 'available' || availability === 'downloadable';
 }
 
 /*
@@ -89,7 +69,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
  * able to run it before setting up the listeners to summarize the input added to the textarea.
  */
 const initializeApplication = async () => {
-  const summarizationApiAvailable = (self.ai !== undefined && self.ai.summarizer !== undefined) || self.Summarizer !== undefined;
+  const summarizationApiAvailable = self.Summarizer !== undefined;
   if (!summarizationApiAvailable) {
     summarizationUnavailableDialog.style.display = 'block';
     return;
@@ -113,6 +93,8 @@ const initializeApplication = async () => {
         summaryFormatSelect.value as AISummarizerFormat,
         summaryLengthSelect.value as AISummarizerLength,
       );
+      let inputUsage = await session.measureInputUsage(inputTextArea.value);
+      characterCountSpan.textContent = `${inputUsage.toFixed()} of ${session.inputQuota}`;
       let summary = await session.summarize(inputTextArea.value);
       session.destroy();
       output.textContent = summary;
@@ -124,14 +106,6 @@ const initializeApplication = async () => {
   summaryLengthSelect.addEventListener('change', scheduleSummarization);
 
   inputTextArea.addEventListener('input', () => {
-    characterCountSpan.textContent = inputTextArea.value.length.toFixed();
-    if (inputTextArea.value.length > MAX_MODEL_CHARS) {
-      characterCountSpan.classList.add('tokens-exceeded');
-      characterCountExceededSpan.classList.remove('hidden');
-    } else {
-      characterCountSpan.classList.remove('tokens-exceeded');
-      characterCountExceededSpan.classList.add('hidden');
-    }
     scheduleSummarization();
   });
 }
