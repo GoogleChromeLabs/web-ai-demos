@@ -8,11 +8,18 @@ button.onclick = async (event) => {
     const session = await LanguageModel.create({
       expectedInputs: [{ type: "image" }],
     });
-    const userDrawnImage = await createImageBitmap(canvas);
+    const prompt =
+      "Give a helpful artistic critique of how well the second image matches the first:";
+
     const stream = session.promptStreaming([
-      "Give a helpful artistic critique of how well the second image matches the first:",
-      { type: "image", content: referenceImage },
-      { type: "image", content: userDrawnImage },
+      {
+        role: "user",
+        content: [
+          { type: "text", value: prompt },
+          { type: "image", value: referenceImage },
+          { type: "image", value: canvas },
+        ],
+      },
     ]);
     for await (const chunk of stream) {
       logs.innerHTML += chunk;

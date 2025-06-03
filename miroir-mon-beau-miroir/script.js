@@ -7,11 +7,18 @@ async function describePerson() {
   const session = await LanguageModel.create({
     expectedInputs: [{ type: "image" }],
   });
-  const content = await createImageBitmap(video);
   const prompt =
     "Using 'you,' humorously describe the person in this image. Emphasize the absurdity of their pose and expression.";
 
-  const response = await session.prompt([prompt, { type: "image", content }]);
+  const response = await session.prompt([
+    {
+      role: "user",
+      content: [
+        { type: "text", value: prompt },
+        { type: "image", value: video },
+      ],
+    },
+  ]);
   speechSynthesis.speak(new SpeechSynthesisUtterance(response));
 
   const params = new URLSearchParams(window.location.search);

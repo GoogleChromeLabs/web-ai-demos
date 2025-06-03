@@ -50,9 +50,7 @@ inputFile.oninput = async (event) => {
 };
 
 async function transcribe(blob) {
-  const audioCtx = new AudioContext();
   const arrayBuffer = await blob.arrayBuffer();
-  const content = await audioCtx.decodeAudioData(arrayBuffer);
 
   const params = await LanguageModel.params();
   const session = await LanguageModel.create({
@@ -62,8 +60,13 @@ async function transcribe(blob) {
   });
 
   const stream = session.promptStreaming([
-    { type: "audio", content },
-    " transcribe this short audio.",
+    {
+      role: "user",
+      content: [
+        { type: "text", value: "transcribe this audio" },
+        { type: "audio", value: arrayBuffer },
+      ],
+    },
   ]);
   for await (const chunk of stream) {
     logs.innerHTML += `${chunk}`;
