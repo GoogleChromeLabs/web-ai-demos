@@ -8,12 +8,12 @@ import { initializeApp } from 'firebase/app';
 import { getAI, getGenerativeModel, GoogleAIBackend } from 'firebase/ai';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyCI_e1wo0T-SUbjKJU0LzI1kGOYvEDTnSE',
-  authDomain: 'vertexaiinfirebase-test.firebaseapp.com',
-  projectId: 'vertexaiinfirebase-test',
-  storageBucket: 'vertexaiinfirebase-test.firebasestorage.app',
-  messagingSenderId: '857620473716',
-  appId: '1:857620473716:web:8c803ada68ede9b2bb6e21',
+  apiKey: process.env.FIREBASE_API_KEY',
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
 };
 
 // Initialize FirebaseApp
