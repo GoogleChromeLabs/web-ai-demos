@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^6.3.2"
+    "vite": "^6.3.4"
   },
   "dependencies": {
     "firebase": "^11.7.1-eap-ai-hybridinference.c16cbf1a3"
