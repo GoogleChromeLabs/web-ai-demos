@@ -141,7 +141,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
       // In Chrome stable, the rewriter always returns the entire text, so the full response is
       // the same as the chunk. In Canary, only the newly generated content is returned, so
       // the new chunk is joined with the existing full response.
-      fullResponse = 'Rewriter' in self ? fullResponse + chunk.trim() : chunk.trim();
+      fullResponse = 'Rewriter' in self ? fullResponse + chunk : chunk;
       output.innerHTML = DOMPurify.sanitize(
         fullResponse /*marked.parse(fullResponse)*/
       );
