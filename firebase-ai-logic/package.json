@@ -12,6 +12,6 @@
     "vite": "^6.3.2"
   },
   "dependencies": {
-    "firebase": "^11.7.1-eap-ai-hybridinference.c16cbf1a3"
+    "firebase": "^11.7.1-eap-ai-hybridinference.58d92df33"
   }
 }
