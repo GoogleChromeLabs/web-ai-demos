@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --base /web-ai-demos/firebase-ai-logic/",
     "preview": "vite preview"
   },
   "devDependencies": {
