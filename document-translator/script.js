@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import './pdf.min.mjs';
+
+const {pdfjsLib} = globalThis;
+pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
+
 const [button1, button2] = Array.from(document.querySelectorAll('button'));
 const output = document.querySelector('output');
 const strong = document.querySelector('strong');
@@ -22,14 +27,19 @@ button1.addEventListener('click', async () => {
       const [handle] = await showOpenFilePicker({
         types: [
           {
-            description: 'Image files',
+            description: 'Image or PDF files',
             accept: {
               'image/*': ['.png', '.gif', '.jpeg', '.jpg', '.webp', '.avif'],
+              'application/pdf': ['.pdf'],
             },
           },
         ],
       });
       file = await handle.getFile();
+      if (file.type === 'application/pdf') {
+        const pdfBytes = new Uint8Array(await file.arrayBuffer());
+        file = await convertFirstPageToPngBlob(pdfBytes);
+      }
     } catch (err) {
       console.error(err.name, err.message);
     }
@@ -102,3 +112,21 @@ button2.addEventListener('click', async () => {
   await button1.click();
   useExample = false;
 });
+
+const convertFirstPageToPngBlob = async (pdfData) => {
+  const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+  const pdf = await loadingTask.promise;
+  const page = await pdf.getPage(1);
+  const scale = 2;
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const context = canvas.getContext('2d');
+  await page.render({ canvasContext: context, viewport }).promise;
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(blob);
+    }, 'image/png');
+  });
+};
