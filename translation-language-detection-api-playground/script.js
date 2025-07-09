@@ -58,11 +58,18 @@
       e.preventDefault();
       try {
         const sourceLanguage = (await detector.detect(input.value.trim()))[0].detectedLanguage;
-        if (!['en', 'ja', 'es'].includes(sourceLanguage)) {
-          output.textContent = 'Currently, only English ↔ Spanish and English ↔ Japanese are supported.';
+        const targetLanguage = language.value;
+
+        // use availability for the Translator API
+        const unavailable = await ('Translator' in self? Translator.availability({ sourceLanguage, targetLanguage }) === 'unavailable'
+            : ai.translator.availability({ sourceLanguage, targetLanguage }) === 'no');
+                       
+        if (unavailable) {
+          const displaySourceLanguage = languageTagToHumanReadable(sourceLanguage, 'en') || ''; 
+          const displayTargetLanguage = languageTagToHumanReadable(targetLanguage, 'en') || ''; 
+          output.textContent = `${displaySourceLanguage} - ${displayTargetLanguage} pair is not supported.`;
           return;
         }
-        const targetLanguage = language.value;
         // The code below handles creation of a translator in either stable or canary.
         const translator = await ('Translator' in self ?
             Translator.create({ sourceLanguage, targetLanguage }) :
