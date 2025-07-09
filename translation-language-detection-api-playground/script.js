@@ -4,9 +4,8 @@
  */
 
 (async () => {
-  // The Language Detector API uses the `self.LanguageDetector` namespace in Canary, but
-  // `ai.languageDetector` in Stable, so both shapes are feature detected.
-  if (!('LanguageDetector' in self) && !('ai' in self) && !('languageDetector' in self.ai)) {
+  // The Language Detector API uses the `self.LanguageDetector` namespace.
+  if (!('LanguageDetector' in self)) {
     document.querySelector('.not-supported-message').hidden = false;
     return;
   }
@@ -19,8 +18,7 @@
 
   form.style.visibility = 'visible';
   // The code below handles creation of a language detector in either stable or canary.
-  const detector = await
-      ('LanguageDetector' in self ? LanguageDetector.create() : ai.languageDetector.create());
+  const detector = await LanguageDetector.create();
 
   input.addEventListener('input', async () => {
     if (!input.value.trim()) {
@@ -47,9 +45,8 @@
     return displayNames.of(languageTag);
   };
 
-  // The Translator API uses the `self.Translator` namespace in Canary, but
-  // `ai.translator` in Stable, so both shapes are feature detected.
-  if ('Translator' in self || ('ai' in self && 'translator' in self.ai)) {
+  // The Translator API uses the `self.Translator` namespace in Canary and Stable.
+  if ('Translator' in self) {
     document.querySelectorAll('[hidden]:not(.not-supported-message)').forEach((el) => {
       el.removeAttribute('hidden');
     });
@@ -61,19 +58,17 @@
         const targetLanguage = language.value;
 
         // use availability for the Translator API
-        const unavailable = await ('Translator' in self? Translator.availability({ sourceLanguage, targetLanguage }) === 'unavailable'
-            : ai.translator.availability({ sourceLanguage, targetLanguage }) === 'no');
+        const availability = await Translator.availability({ sourceLanguage, targetLanguage });        
+        const isUnavailable = availability !== 'available';
                        
-        if (unavailable) {
+        if (isUnavailable) {
           const displaySourceLanguage = languageTagToHumanReadable(sourceLanguage, 'en') || ''; 
           const displayTargetLanguage = languageTagToHumanReadable(targetLanguage, 'en') || ''; 
           output.textContent = `${displaySourceLanguage} - ${displayTargetLanguage} pair is not supported.`;
           return;
         }
         // The code below handles creation of a translator in either stable or canary.
-        const translator = await ('Translator' in self ?
-            Translator.create({ sourceLanguage, targetLanguage }) :
-            ai.translator.create({ sourceLanguage, targetLanguage }));
+        const translator = await Translator.create({ sourceLanguage, targetLanguage });
         output.textContent = await translator.translate(input.value.trim());
       } catch (err) {
         output.textContent = 'An error occurred. Please try again.';
