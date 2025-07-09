@@ -22,10 +22,10 @@ button.onclick = async (event) => {
       },
     ]);
     for await (const chunk of stream) {
-      logs.innerHTML += chunk;
+      logs.append(chunk);
     }
   } catch (error) {
-    logs.innerHTML += `Error: ${error}`;
+    logs.append(`Error: ${error}`);
   }
 };
 

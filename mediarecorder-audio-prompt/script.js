@@ -31,7 +31,7 @@ button.onclick = async () => {
   } catch (error) {
     log(error);
   } finally {
-    logs.innerHTML += `<hr>`;
+    logs.append(`<hr>`);
     audioStream?.getTracks().forEach((track) => track.stop());
   }
 };
@@ -45,7 +45,7 @@ inputFile.oninput = async (event) => {
   } catch (error) {
     log(error);
   } finally {
-    logs.innerHTML += `<hr>`;
+    logs.append(`<hr>`);
   }
 };
 
@@ -69,10 +69,10 @@ async function transcribe(blob) {
     },
   ]);
   for await (const chunk of stream) {
-    logs.innerHTML += `${chunk}`;
+    logs.append(chunk);
   }
 }
 
 function log(text) {
-  logs.innerHTML += `${text}\r\n`;
+  logs.append(`${text}\r\n`);
 }
