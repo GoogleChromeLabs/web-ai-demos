@@ -15,7 +15,7 @@ const translationParagraph = document.querySelector('.translation');
 const img = document.querySelector('img');
 
 let useExample = false;
-let detectedLanguage = false;
+let detectedLanguage = undefined;
 
 openButton.addEventListener('click', async () => {
   output.innerHTML = '';
@@ -131,7 +131,7 @@ translateButton.addEventListener('click', async () => {
   }
 });
 
-exampleButton.addEventListener('click', async () => {
+exampleButton.addEventListener('click', () => {
   useExample = true;
   openButton.click();
 });
