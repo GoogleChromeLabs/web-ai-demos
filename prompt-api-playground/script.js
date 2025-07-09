@@ -216,7 +216,12 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       session = await LanguageModel.create({
         temperature: Number(sessionTemperature.value),
         topK: Number(sessionTopK.value),
-        systemPrompt: SYSTEM_PROMPT,
+        initialPrompts: [
+          {
+            role: 'system',
+            content: SYSTEM_PROMPT,
+          }
+        ],
       });
     } else if (self.ai.languageModel) {
       session = await ai.languageModel.create({
