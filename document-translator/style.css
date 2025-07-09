@@ -1,0 +1,42 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  color-scheme: dark light;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: clamp(320px, 90%, 1000px);
+  margin: auto;
+}
+
+h1, h2 {
+  color: red;
+}
+
+output,
+p,
+strong {
+  display: block;
+  white-space: pre-wrap;
+}
+
+img {
+  display: block;
+  margin-block: 1rem;
+  max-height: 200px;
+  width: auto;
+}

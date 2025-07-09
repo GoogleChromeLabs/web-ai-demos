@@ -35,13 +35,14 @@ const output = document.querySelector('#output') as HTMLDivElement;
  * an error.
  */
 const createSummarizationSession = async (
-  type: AISummarizerType = 'tldr',
-  format: AISummarizerFormat = 'plain-text',
-  length: AISummarizerLength = 'medium',
-  downloadProgressListener?: (ev: DownloadProgressEvent) => void): Promise<AISummarizer> => {
+  type: SummarizerType = 'tldr',
+  format: SummarizerFormat = 'plain-text',
+  length: SummarizerLength = 'medium',
+  downloadProgressListener?: (ev: ProgressEvent) => void): Promise<Summarizer> => {
+
   let monitor = undefined;
   if (downloadProgressListener) {
-      monitor = (m: AICreateMonitor) => {
+      monitor = (m: CreateMonitor) => {
           m.addEventListener('downloadprogress', downloadProgressListener);
       };
   }
@@ -89,9 +90,9 @@ const initializeApplication = async () => {
     timeout = setTimeout(async () => {
       output.textContent = 'Generating summary...';
       let session = await createSummarizationSession(
-        summaryTypeSelect.value as AISummarizerType,
-        summaryFormatSelect.value as AISummarizerFormat,
-        summaryLengthSelect.value as AISummarizerLength,
+        summaryTypeSelect.value as SummarizerType,
+        summaryFormatSelect.value as SummarizerFormat,
+        summaryLengthSelect.value as SummarizerLength,
       );
       let inputUsage = await session.measureInputUsage(inputTextArea.value);
       characterCountSpan.textContent = `${inputUsage.toFixed()} of ${session.inputQuota}`;
