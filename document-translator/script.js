@@ -8,18 +8,21 @@ import './pdf.min.mjs';
 const {pdfjsLib} = globalThis;
 pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
 
-const [button1, button2] = Array.from(document.querySelectorAll('button'));
+const [openButton, exampleButton, languageButton, translateButton] = Array.from(document.querySelectorAll('button'));
 const output = document.querySelector('output');
-const strong = document.querySelector('strong');
-const p = document.querySelector('p');
+const detectedLanguageParagraph = document.querySelector('.detected-language');
+const translationParagraph = document.querySelector('.translation');
 const img = document.querySelector('img');
 
 let useExample = false;
+let detectedLanguage = false;
 
-button1.addEventListener('click', async () => {
+openButton.addEventListener('click', async () => {
   output.innerHTML = '';
-  p.innerHTML = '';
-  strong.innerHTML = '';
+  translationParagraph.innerHTML = '';
+  detectedLanguageParagraph.innerHTML = '';
+  detectedLanguage = false;
+  img.src = '';
 
   let file;
   if (!useExample) {
@@ -44,10 +47,15 @@ button1.addEventListener('click', async () => {
       console.error(err.name, err.message);
     }
   } else {
+    useExample = false;
     file = await fetch('specimen.png').then(response => response.blob());
   }
+  const blobURL = URL.createObjectURL(file);
+  img.src = blobURL;
+  setTimeout(() => {
+    URL.revokeObjectURL(blobURL);
+  }, 0);
 
-  img.src = URL.createObjectURL(file);
   try {
     const session = await LanguageModel.create({
       expectedInputs: [{ type: 'image' }, { type: 'text' }],
@@ -70,8 +78,16 @@ button1.addEventListener('click', async () => {
   } catch (err) {
     console.error(err.name, err.message);
   }
+});
 
-  let detectedLanguage;
+languageButton.addEventListener('click', async () => {
+  if (!output.innerText.length) {
+    return;
+  }
+
+  detectedLanguage = false;
+  detectedLanguageParagraph.innerHTML = '';
+
   try {
     const languageDetector = await LanguageDetector.create();
     ({ detectedLanguage } = (
@@ -80,10 +96,18 @@ button1.addEventListener('click', async () => {
     const displayLanguage = new Intl.DisplayNames(['en'], {
       type: 'language',
     }).of(detectedLanguage);
-    strong.textContent = displayLanguage;
+    detectedLanguageParagraph.textContent = displayLanguage;
   } catch (err) {
     console.error(err.name, err.message);
   }
+});
+
+translateButton.addEventListener('click', async () => {
+  if (!detectedLanguage || detectedLanguage === 'en') {
+    return;
+  }
+
+  translationParagraph.innerHTML = '';
 
   try {
     const translator = await Translator.create({
@@ -93,24 +117,23 @@ button1.addEventListener('click', async () => {
     const paragraphs = output.innerText.split('\n');
     for (const paragraph of paragraphs) {
       if (!paragraph) {
-        p.append('\n');
+        translationParagraph.append('\n');
         continue;
       }
       const translateStream = translator.translateStreaming(paragraph);
       for await (const chunk of translateStream) {
-        p.append(chunk);
+        translationParagraph.append(chunk);
       }
-      p.append('\n');
+      translationParagraph.append('\n');
     }
   } catch (err) {
     console.error(err.name, err.message);
   }
 });
 
-button2.addEventListener('click', async () => {
+exampleButton.addEventListener('click', async () => {
   useExample = true;
-  await button1.click();
-  useExample = false;
+  openButton.click();
 });
 
 const convertFirstPageToPngBlob = async (pdfData) => {

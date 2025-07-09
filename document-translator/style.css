@@ -28,7 +28,8 @@ h1, h2 {
 }
 
 output,
-p {
+p,
+strong {
   display: block;
   white-space: pre-wrap;
 }
