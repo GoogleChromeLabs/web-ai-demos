@@ -55,12 +55,12 @@
         const sourceLanguage = (await detector.detect(input.value.trim()))[0].detectedLanguage;
         const targetLanguage = language.value;
 
-        const availability = await Translator.availability({ sourceLanguage, targetLanguage });        
-        const isUnavailable = availability !== 'available';
-                       
+        const availability = await Translator.availability({ sourceLanguage, targetLanguage });
+        const isUnavailable = availability === 'unavailable';
+
         if (isUnavailable) {
-          const displaySourceLanguage = languageTagToHumanReadable(sourceLanguage, 'en') || ''; 
-          const displayTargetLanguage = languageTagToHumanReadable(targetLanguage, 'en') || ''; 
+          const displaySourceLanguage = languageTagToHumanReadable(sourceLanguage, 'en') || '';
+          const displayTargetLanguage = languageTagToHumanReadable(targetLanguage, 'en') || '';
           output.textContent = `${displaySourceLanguage} - ${displayTargetLanguage} pair is not supported.`;
           return;
         }
