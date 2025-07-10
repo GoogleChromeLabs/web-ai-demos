@@ -17,7 +17,6 @@
   const language = document.querySelector('select');
 
   form.style.visibility = 'visible';
-  // The code below handles creation of a language detector in either stable or canary.
   const detector = await LanguageDetector.create();
 
   input.addEventListener('input', async () => {
@@ -45,7 +44,6 @@
     return displayNames.of(languageTag);
   };
 
-  // The Translator API uses the `self.Translator` namespace in Canary and Stable.
   if ('Translator' in self) {
     document.querySelectorAll('[hidden]:not(.not-supported-message)').forEach((el) => {
       el.removeAttribute('hidden');
@@ -57,7 +55,6 @@
         const sourceLanguage = (await detector.detect(input.value.trim()))[0].detectedLanguage;
         const targetLanguage = language.value;
 
-        // use availability for the Translator API
         const availability = await Translator.availability({ sourceLanguage, targetLanguage });        
         const isUnavailable = availability !== 'available';
                        
@@ -67,7 +64,6 @@
           output.textContent = `${displaySourceLanguage} - ${displayTargetLanguage} pair is not supported.`;
           return;
         }
-        // The code below handles creation of a translator in either stable or canary.
         const translator = await Translator.create({ sourceLanguage, targetLanguage });
         output.textContent = await translator.translate(input.value.trim());
       } catch (err) {
