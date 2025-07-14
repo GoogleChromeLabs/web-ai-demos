@@ -26,10 +26,13 @@ const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, {
   mode: 'prefer_on_device',
   model: 'gemini-2.5-flash',
+  // Temporarily removing until b/428712667 gets fixed.
+  /*
   onDeviceParams: {
     temperature: 0.8,
     topK: 10,
   },
+  */
 });
 
 const [pre1, pre2] = Array.from(document.querySelectorAll('pre'));
