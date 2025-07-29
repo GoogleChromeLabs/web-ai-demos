@@ -73,8 +73,7 @@ footer {
   border-top: 2px solid #1967D2;
   border-left: 2px solid #1967D2;
   transition-duration: 1s;
-  transition-property: border-top, border-left, border-bottom, border-right,
-    box-shadow;
+  transition-property: border-top, border-left, border-bottom, border-right, box-shadow;
 }
 
 .button-style:hover {
