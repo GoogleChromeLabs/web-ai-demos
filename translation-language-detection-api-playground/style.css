@@ -72,11 +72,12 @@ footer {
   border-right: 2px solid #1967D2;
   border-top: 2px solid #1967D2;
   border-left: 2px solid #1967D2;
-  transition-duration: 1s;
-  transition-property: border-top, border-left, border-bottom, border-right, box-shadow;
+  transition-duration: 0.5s;
+  transition-property: border-top, border-left, border-bottom, border-right, box-shadow,color;
 }
 
 .button-style:hover {
+  color: #34A853;
   border-top: 2px solid #1967D2;
   border-left: 2px solid #1967D2;
   border-bottom: 2px solid rgba(52, 168, 83, 1);
