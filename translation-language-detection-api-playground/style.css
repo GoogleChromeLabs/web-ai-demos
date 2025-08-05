@@ -60,3 +60,29 @@ button {
 footer {
   margin-block: 1rem;
 }
+
+.button-style {
+  padding: 1rem 2rem;
+  font-weight: 700;
+  background: rgb(255, 255, 255);
+  color: #1967D2;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  border-bottom: 2px solid #1967D2;
+  border-right: 2px solid #1967D2;
+  border-top: 2px solid #1967D2;
+  border-left: 2px solid #1967D2;
+  transition-duration: 0.5s;
+  transition-property: border-top, border-left, border-bottom, border-right, box-shadow, color;
+}
+
+.button-style:hover {
+  color: #34A853;
+  border-top: 2px solid #1967D2;
+  border-left: 2px solid #1967D2;
+  border-bottom: 2px solid rgba(52, 168, 83, 1);
+  border-right: 2px solid rgba(52, 168, 83, 1);
+  box-shadow: rgba(66, 133, 244, 1) 5px 5px, rgba(234, 67, 53, 1) 10px 10px,
+    rgba(251, 188, 4, 1) 15px 15px;
+}
+
