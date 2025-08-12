@@ -28,8 +28,6 @@ const button = popover.querySelector('button');
   let correctedInput;
   let currentCorrection;
 
-  const wordBoundingRects = [];
-
   // Draw the legends.
   const preTrimStartLength = legend.textContent.length;
   const postTrimStartLength = legend.textContent.trimStart().length;
@@ -62,18 +60,17 @@ const button = popover.querySelector('button');
   let proofreader;
   if (!proofreaderAPISupported) {
     document.querySelector('.error').hidden = false;
-    // return;
-  } else {
-    // Create `Proofreader` instance.
-    proofreader = await self.Proofreader.create({
-      includeCorrectionTypes: true,
-      includeCorrectionExplanations: true,
-    });
   }
 
   form.querySelector('button').disabled = false;
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Use existing proofreader instance or create new instance.
+    proofreader = proofreader || await self.Proofreader.create({
+      includeCorrectionTypes: true,
+      includeCorrectionExplanations: true,
+    });
 
     // Remove previous highlights, only keep the legend highlights.
     for (const errorType of errorTypes) {
