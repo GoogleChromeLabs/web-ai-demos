@@ -36,7 +36,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   // The API changed shape between the version behind a flag in Chrome stable and the version in
   // Chrome canary. The namespace changed from `ai.languageModel` to `LanguageModel`, so both
   // cases are checked below.
-   if (!('LanguageModel' in self) && (!('ai' in self) || !('languageModel' in self.ai))) {
+   if (!('LanguageModel' in self)) {
     errorMessage.style.display = "block";
     errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> to enable it.`;
     return;
