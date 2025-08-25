@@ -38,16 +38,10 @@ const getUUIDs = () => {
   }
 };
 
-// The API shape of the API behind a flag in Canary uses a different namespace. While the
-// current API behind a flag in stable uses 'ai.languageModel`, the version in Canary uses
-// `LanguageModel`. This helper method abstracts that difference, and it expects that either
-// the availability of `LanguageModel` or `ai.languageModel` have been validated before being
-// called.
 async function createLanguageModel(options) {
   if ("LanguageModel" in self) {
-    return self.LanguageModel.create(options);
+    return await self.LanguageModel.create(options);
   }
-  return self.ai.languageModel.create(options);
 }
 
 (async function init() {

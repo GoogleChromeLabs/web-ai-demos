@@ -33,10 +33,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
   let session = null;
 
-  // The API changed shape between the version behind a flag in Chrome stable and the version in
-  // Chrome canary. The namespace changed from `ai.languageModel` to `LanguageModel`, so both
-  // cases are checked below.
-  if (!('LanguageModel' in self) && !('ai' in self) && (!'languageModal' in self.ai)) {
+  if (!('LanguageModel' in self)) {
     errorMessage.style.display = "block";
     errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> to enable it.`;
     return;
@@ -209,9 +206,6 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   });
 
   const updateSession = async () => {
-    // The namespace changed from `ai.languageModel` to `LanguageModel`, so the method bellow tries
-    // to create the model using the `LanguageModel` namespace and then `ai.languageModel`. It's
-    // expected that the availability of either was checked at this point.
     if (self.LanguageModel) {
       session = await LanguageModel.create({
         temperature: Number(sessionTemperature.value),
@@ -222,12 +216,6 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
             content: SYSTEM_PROMPT,
           }
         ],
-      });
-    } else if (self.ai.languageModel) {
-      session = await ai.languageModel.create({
-        temperature: Number(sessionTemperature.value),
-        topK: Number(sessionTopK.value),
-        systemPrompt: SYSTEM_PROMPT,
       });
     }
     resetUI();

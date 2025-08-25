@@ -11,10 +11,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     document.querySelector('.not-supported-message').hidden = false;
   };
 
-  // The API namespace the Writer and Rewriter APIs have changed in Chrome canary, the feature
-  // detection checks below validate both scenarios.
-  if (!('Writer' in self && 'Rewriter' in self) && // Test for Canary
-      (!('ai' in self && 'writer' in self.ai && 'rewriter' in self.ai))) { // Test for Stable
+  if (!('Writer' in self && 'Rewriter' in self)) { // Test for Stable
     return showNotSupportedMessage();
   }
 
@@ -100,7 +97,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
 
     // Handles the create of a Writer using both the previous API namespace in stable and
     // the new one in Canary.
-    writer = await ('Writer' in self ? Writer.create(options) : ai.writer.create(options));
+    writer = await Writer.create(options);
     console.log(writer);
   };
 
@@ -114,7 +111,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
 
     // Handles the create of a Rewriter using both the previous API namespace in stable and
     // the new one in Canary.
-    rewriter = await ('Rewriter' in self ? Rewriter.create(options) : ai.rewriter.create(options));
+    rewriter = await Rewriter.create(options);
     console.log(rewriter);
   };
 
