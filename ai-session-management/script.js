@@ -75,7 +75,6 @@ async function createLanguageModel(options) {
     })(uuid);
 
     const options = storedOptions || {
-      systemPrompt: '',
       initialPrompts: [],
       topK,
       temperature,
