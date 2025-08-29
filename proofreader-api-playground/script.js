@@ -6,6 +6,7 @@
 const input = document.querySelector('[contenteditable]');
 const output = document.querySelector('output');
 const form = document.querySelector('form');
+const submit = document.querySelector('[type="submit"]');
 const legend = document.querySelector('span').firstChild;
 const popover = document.querySelector('[popover]');
 const button = popover.querySelector('button');
@@ -53,7 +54,7 @@ const button = popover.querySelector('button');
     document.addEventListener('click', (event) => {
       const mouseX = event.clientX;
       const mouseY = event.clientY;
-      console.log(CSS.highlights.highlightsFromPoint(mouseX, mouseY));
+      // console.log(CSS.highlights.highlightsFromPoint(mouseX, mouseY));
     });
   }
 
@@ -70,6 +71,8 @@ const button = popover.querySelector('button');
     proofreader = proofreader || await self.Proofreader.create({
       includeCorrectionTypes: true,
       includeCorrectionExplanations: true,
+      expectedInputLanguagues: ['en'],
+      correctionExplanationLanguage: 'en',
     });
 
     // Remove previous highlights, only keep the legend highlights.
@@ -103,6 +106,9 @@ const button = popover.querySelector('button');
       const range = new Range();
       range.setStart(textNode, correction.startIndex);
       range.setEnd(textNode, correction.endIndex);
+      if (!correction.type) {
+        correction.type = 'spelling';
+      }
       errorHighlights[correction.type].add(range);
     }
 
@@ -152,8 +158,12 @@ const button = popover.querySelector('button');
     highlightRange.setStart(text, 0);
     highlightRange.setEnd(text, heading.length);
     errorHighlights[type].add(highlightRange);
-    popover.querySelector('.correction').textContent = correction;
-    popover.querySelector('.explanation').textContent = explanation;
+    popover.querySelector('.correction').textContent = correction || '[Remove word]';
+    if (explanation) {
+      popover.querySelector('.explanation').textContent = explanation;
+    } else {
+      popover.querySelector('*:has(.explanation)').style.display = 'none';
+    }
     popover.style.top = `${Math.round(top)}px`;
     popover.style.left = `${Math.round(left)}px`;
     form.querySelectorAll('button').forEach((button) => (button.tabIndex = -1));
@@ -188,6 +198,7 @@ const button = popover.querySelector('button');
       startIndex
     )}${correction}${input.textContent.substring(endIndex)}`;
     popover.hidePopover();
+    submit.click();
   });
 
   input.addEventListener('keyup', (e) => {
