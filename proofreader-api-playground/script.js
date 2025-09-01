@@ -68,12 +68,14 @@ const button = popover.querySelector('button');
     e.preventDefault();
 
     // Use existing proofreader instance or create new instance.
-    proofreader = proofreader || await self.Proofreader.create({
-      includeCorrectionTypes: true,
-      includeCorrectionExplanations: true,
-      expectedInputLanguagues: ['en'],
-      correctionExplanationLanguage: 'en',
-    });
+    if (proofreaderAPISupported) {
+      proofreader = proofreader || await self.Proofreader.create({
+        includeCorrectionTypes: true,
+        includeCorrectionExplanations: true,
+        expectedInputLanguagues: ['en'],
+        correctionExplanationLanguage: 'en',
+      });
+    }
 
     // Remove previous highlights, only keep the legend highlights.
     for (const errorType of errorTypes) {
