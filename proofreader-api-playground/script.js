@@ -54,7 +54,8 @@ const button = popover.querySelector('button');
     document.addEventListener('click', (event) => {
       const mouseX = event.clientX;
       const mouseY = event.clientY;
-      // console.log(CSS.highlights.highlightsFromPoint(mouseX, mouseY));
+      // ToDo: Make the error clicking logic based on CSS Highlights.
+      console.log(CSS.highlights.highlightsFromPoint(mouseX, mouseY));
     });
   }
 
@@ -106,9 +107,7 @@ const button = popover.querySelector('button');
       const range = new Range();
       range.setStart(textNode, correction.startIndex);
       range.setEnd(textNode, correction.endIndex);
-      if (!correction.type) {
-        correction.type = 'spelling';
-      }
+      correction.type ||= 'spelling';
       errorHighlights[correction.type].add(range);
     }
 

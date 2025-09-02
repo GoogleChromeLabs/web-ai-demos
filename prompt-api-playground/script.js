@@ -233,10 +233,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   if (!session) {
     let { defaultTopK, maxTopK, defaultTemperature, maxTemperature } = "LanguageModel" in self ?
       await LanguageModel.params() : {defaultTopK: 3, maxTopK: 128, defaultTemperature: 1, maxTemperature: 2};
-    // https://crbug.com/441711146
-    if (!defaultTopK) {
-      defaultTopK = 3;
-    }
+    defaultTopK ||= 3;  // https://crbug.com/441711146
     sessionTemperature.value = defaultTemperature;
     sessionTemperature.max = maxTemperature;
     sessionTopK.value = defaultTopK;
