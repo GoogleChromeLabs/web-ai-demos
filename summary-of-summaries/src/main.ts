@@ -16,7 +16,8 @@ declare global {
 const aiSpinner = document.getElementById('ai-spinner') as HTMLDivElement;
 const inputTextArea = document.getElementById('input') as HTMLTextAreaElement;
 const outputTextArea = document.getElementById('output') as HTMLTextAreaElement;
-const button = document.getElementById('split-it') as HTMLButtonElement;
+const setupButton = document.getElementById('setup') as HTMLButtonElement;
+const splitItButton = document.getElementById('split-it') as HTMLButtonElement;
 const statusSpan = document.getElementById('status') as HTMLSpanElement;
 
 let splitter;
@@ -43,8 +44,8 @@ async function recursiveSummarizer(parts: string[]) {
     return recursiveSummarizer(summaries);
 }
 
-button.addEventListener('click', async () => {
-    button.disabled = true;
+splitItButton.addEventListener('click', async () => {
+    splitItButton.disabled = true;
     inputTextArea.disabled = true;
     aiSpinner.classList.add('visible');
     const splits = await splitter!.splitText(inputTextArea.value);
@@ -53,7 +54,7 @@ button.addEventListener('click', async () => {
     outputTextArea.value = summary;
     aiSpinner.classList.remove('visible');
     statusSpan.innerText = 'Done!';
-    button.disabled = false;
+    splitItButton.disabled = false;
     inputTextArea.disabled = false;
 });
 
@@ -63,6 +64,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
     return availability === 'available' || availability === 'downloadable';
  }
 
+setupButton.addEventListener('click', async () => {
   if (window.Summarizer) {
     if (await checkSummarizerSupport()) {
         // Check availaiblity of the model so the user can be warned about the model download.
@@ -79,7 +81,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
 
         const createOptions = {
             format: 'plain-text',
-            type: 'tl;dr',
+            type: 'tldr',
             length: 'long',
             monitor: (m: any) => m.addEventListener('downloadprogress', modelDownloadCallback),
         };
@@ -96,7 +98,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
             chunkOverlap: 200,
         });                
         statusSpan.innerText = `Awaiting for input.`;
-        button.disabled = false;
+        splitItButton.disabled = false;
         inputTextArea.disabled = false;
     } else {
         statusSpan.innerText = `Your device doesn't support the Summarizer API.`;    
@@ -104,3 +106,4 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
   } else {
     statusSpan.innerText = `Your browser doesn't support the Summarizer API.`;    
   }
+ });
