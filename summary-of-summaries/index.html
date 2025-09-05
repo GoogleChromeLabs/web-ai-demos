@@ -82,6 +82,10 @@
         background-color: #00635A;;
       }
 
+      button:disabled {
+        background-color: #CCCCCC;
+      }
+
       #button-wrapper {
         display: flex;
         gap: 8px;
@@ -137,6 +141,7 @@
   <body>
     <header>
       <h1>Summarizer</h1>
+      <button id="setup">Setup</button>
     </header>
     <main id="content">
       <label for="input">Input:</label>
