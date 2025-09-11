@@ -17,8 +17,6 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
 
   const writeForm = document.querySelector('.write-form');
   const rewriteForm = document.querySelector('.rewrite-form');
-  const writeButton = document.querySelector('.write-button');
-  const rewriteButton = document.querySelector('.rewrite-button');
   const contextInput = document.querySelector('input');
   const copyButton = document.querySelector('.copy-button');
   const output = document.querySelector('output');
@@ -73,20 +71,6 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     rewriteForm.hidden = false;
   };
 
-  [toneSelect, formatSelect, lengthSelect, contextInput].forEach((select) => {
-    select.addEventListener('change', async () => {
-      await createWriter();
-    });
-  });
-
-  [rewriteToneSelect, rewriteFormatSelect, rewriteLengthSelect].forEach(
-    (select) => {
-      select.addEventListener('change', async () => {
-        await createRewriter();
-      });
-    }
-  );
-
   const createWriter = async () => {
     const options = {
       tone: toneSelect.value,
@@ -95,8 +79,6 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
       sharedContext: context.value.trim(),
     };
 
-    // Handles the create of a Writer using both the previous API namespace in stable and
-    // the new one in Canary.
     writer = await Writer.create(options);
     console.log(writer);
   };
@@ -109,17 +91,13 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
       sharedContext: context.value.trim(),
     };
 
-    // Handles the create of a Rewriter using both the previous API namespace in stable and
-    // the new one in Canary.
     rewriter = await Rewriter.create(options);
     console.log(rewriter);
   };
 
-  await createWriter();
-  await createRewriter();
-
   writeForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    await createWriter();
     await write();
   });
 
@@ -152,6 +130,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
 
   rewriteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    await createRewriter();
     await rewrite();
   });
 
