@@ -118,3 +118,7 @@ button {
   text-decoration-line: underline;
   text-decoration-style: wavy;
 }
+
+footer {
+  margin-block: 1rem;
+}

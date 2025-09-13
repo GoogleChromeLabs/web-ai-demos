@@ -60,9 +60,7 @@ const button = popover.querySelector('button');
   }
 
   let proofreader;
-  if (!proofreaderAPISupported) {
-    document.querySelector('.error').hidden = false;
-  }
+  document.querySelector('.error').hidden = proofreaderAPISupported;
 
   form.querySelector('button').disabled = false;
   form.addEventListener('submit', async (e) => {

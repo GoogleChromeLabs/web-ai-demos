@@ -62,3 +62,7 @@ button:hover:not([aria-disabled='true']) {
 summary {
   cursor: pointer;
 }
+
+footer {
+  margin-block: 1rem;
+}
