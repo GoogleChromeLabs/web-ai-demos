@@ -125,12 +125,12 @@ function App() {
         {!promptApiSupported &&
           <Alert
             severity='error'
-          >Your browser doesn't support the Prompt API. If you're on Chrome, join the <Link href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</Link> and enable it.</Alert>
+          >Your browser doesn't support the Prompt API. If you're on Chrome, join the <Link href=" https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</Link> and enable it.</Alert>
         }
         {promptApiSupported &&
           <Alert
             severity='info'
-          >Be the first to test new AI APIs. Your feedback is invaluable to our development process. Join our <Link href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</Link> today.</Alert>
+          >Be the first to test new AI APIs. Your feedback is invaluable to our development process. Join our <Link href=" https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</Link> today.</Alert>
         }
       </Card>
       </Box>

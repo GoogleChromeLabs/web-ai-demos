@@ -33,12 +33,9 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
   let session = null;
 
-  // The API changed shape between the version behind a flag in Chrome stable and the version in
-  // Chrome canary. The namespace changed from `ai.languageModel` to `LanguageModel`, so both
-  // cases are checked below.
-  if (!('LanguageModel' in self) && !('ai' in self) && (!'languageModal' in self.ai)) {
+  if (!('LanguageModel' in self)) {
     errorMessage.style.display = "block";
-    errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> to enable it.`;
+    errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> to enable it.`;
     return;
   }
 
@@ -113,7 +110,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     // `inputUsage` from `inputQuota`. Both APIs shapes are checked in the code below.
     maxTokensInfo.textContent = numberFormat.format(session.inputQuota || session.maxTokens);
     tokensLeftInfo.textContent =
-        numberFormat.format(session.tokensSoFar || session.inputQuota - session.inputUsage);        
+        numberFormat.format(session.tokensSoFar || session.inputQuota - session.inputUsage);
     tokensSoFarInfo.textContent = numberFormat.format(session.inputUsage || session.tokensSoFar);
   };
 
@@ -209,20 +206,16 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   });
 
   const updateSession = async () => {
-    // The namespace changed from `ai.languageModel` to `LanguageModel`, so the method bellow tries
-    // to create the model using the `LanguageModel` namespace and then `ai.languageModel`. It's
-    // expected that the availability of either was checked at this point.
     if (self.LanguageModel) {
       session = await LanguageModel.create({
         temperature: Number(sessionTemperature.value),
         topK: Number(sessionTopK.value),
-        systemPrompt: SYSTEM_PROMPT,
-      });
-    } else if (self.ai.languageModel) {
-      session = await ai.languageModel.create({
-        temperature: Number(sessionTemperature.value),
-        topK: Number(sessionTopK.value),
-        systemPrompt: SYSTEM_PROMPT,        
+        initialPrompts: [
+          {
+            role: 'system',
+            content: SYSTEM_PROMPT,
+          }
+        ],
       });
     }
     resetUI();
@@ -238,11 +231,9 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   });
 
   if (!session) {
-    // The new API shape introduces a new `params()` function that returns metadata from the model, including
-    // its default and maximum values for top-K and temperature. For the previous shape, the values are set
-    // manually.
-    const { defaultTopK, maxTopK, defaultTemperature, maxTemperature } = "LanguageModel" in self ?
-      await LanguageModel.params() : {defaultTopK: 3, maxTopK: 8, defaultTemperature: 1.0, maxTemperature: 2.0};
+    let { defaultTopK, maxTopK, defaultTemperature, maxTemperature } = "LanguageModel" in self ?
+      await LanguageModel.params() : {defaultTopK: 3, maxTopK: 128, defaultTemperature: 1, maxTemperature: 2};
+    defaultTopK ||= 3;  // https://crbug.com/441711146
     sessionTemperature.value = defaultTemperature;
     sessionTemperature.max = maxTemperature;
     sessionTopK.value = defaultTopK;

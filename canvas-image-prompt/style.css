@@ -1,0 +1,52 @@
+/**
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+body {
+  font-family: helvetica, arial, sans-serif;
+  margin: 2em;
+}
+
+h1 {
+  margin-block-end: 0;
+}
+
+#logs {
+  margin-top: 1em;
+  white-space: pre-line;
+}
+
+button {
+  margin-bottom: 12px;
+}
+
+div {
+  display: flex;
+  justify-content: center;
+  min-width: 608px;
+}
+
+img,
+canvas {
+  background-color: white;
+  border-radius: 12px;
+  border: 4px solid black;
+  width: 50%;
+  margin: 5px;
+}
+
+button {
+  text-transform: uppercase;
+  margin: 0 auto;
+  display: block;
+  margin-top: 24px;
+  padding: 12px 24px;
+}
+
+@media screen and (min-width: 640px) {
+  body {
+    margin: 2em auto;
+    max-width: calc(640px - 2em);
+  }
+}

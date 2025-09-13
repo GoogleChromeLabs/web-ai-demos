@@ -14,28 +14,13 @@ const getPrompt = (word) =>
 (async () => {
   let isAvailable = false;
 
-  // The Prompt API currently has a different shape in Chrome stable and canary, with the flags
-  // enabled. In Chrome stable, the namespace for the API is `ai.languageModel` and the method
-  // to check for availability is `ai.languageModel.capabilities()`, and the method returns a
-  // capabilities object that contains a field `available`, which the values can be `yes`,
-  // `no`, and `after-download`. In the new API shape, the namespace is just `LanguageModel`,
-  // and the availability can be verified with the `availability` method, which returns
-  // `available`, `unavailable` or `downloadable`. the implementation below covers both
-  // scenarios.
   if ('LanguageModel' in self ) {
     const availability = await LanguageModel.availability();
     console.log(availability);
     if (availability !== 'unavailable') {
       isAvailable = true;
     }
-  } else if ('ai' in self && 'languageModel' in ai) {
-    const capabilities = await ai.languageModel.capabilities();
-    console.log(capabilities);
-    if (capabilities.available !== 'no') {
-      isAvailable = true;
-    }
-  } 
-
+  }
   console.log(isAvailable)
 
   if (!isAvailable) {
@@ -86,8 +71,7 @@ Each synonym may only occur once in the list.`,
 
   // Creates the model using either the new API shape available in Canary or the previous shape
   // available in Chrome stable.
-  const languageModel = 'LanguageModel' in self ?
-      await LanguageModel.create(createOptions) : await ai.languageModel.create(createOptions);
+  const languageModel = await LanguageModel.create(createOptions);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

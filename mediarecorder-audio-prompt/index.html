@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2025 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎥</text></svg>"
+    />
+    <!-- AIPromptAPIMultimodalInput origin token expiring Mar 24, 2026 -->
+    <meta
+      http-equiv="origin-trial"
+      content="AoXwZGsUZlGEyuueX5nR6tujynrCfWhNWQnZcHTy3AZkXtCMULt/UJs6+/1Bp5jVw7Ue96Tcyf1IO8IRUMimAgcAAABeeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvbXB0QVBJTXVsdGltb2RhbElucHV0IiwiZXhwaXJ5IjoxNzc0MzEwNDAwfQ=="
+    />
+
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" type="module"></script>
+  </head>
+  <body>
+    <h1>🎥 MediaRecorder + Audio Prompt API</h1>
+    <ol>
+      <li>
+        <label>
+          Record myself for 5s and transcribe:
+          <button id="button">Record</button>
+        </label>
+      </li>
+      <li>
+        <label>
+          Select a file to transcribe:
+          <input type="file" id="inputFile" />
+          <audio id="audioElement" controls></audio>
+        </label>
+      </li>
+    </ol>
+    <hr />
+    <pre id="logs"></pre>
+  </body>
+</html>

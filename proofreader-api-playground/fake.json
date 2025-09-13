@@ -1,0 +1,76 @@
+{
+  "correctedInput": "This is a random text with a few classic, common, and typical typos and grammar issues. The Proofreader API hopefully finds them all. Knocking on wood and fingers crossed.",
+  "corrections": [
+    {
+      "startIndex": 5,
+      "endIndex": 8,
+      "correction": "is",
+      "type": "grammar",
+      "explanation": "The singular 'This' requires 'is' instead of 'are'."
+    },
+    {
+      "startIndex": 11,
+      "endIndex": 17,
+      "correction": "random",
+      "type": "spelling",
+      "explanation": "'radnom' is a misspelling of 'random'."
+    },
+    {
+      "startIndex": 40,
+      "endIndex": 43,
+      "correction": "c, c",
+      "type": "punctuation",
+      "explanation": "A comma is needed between 'classic' and 'common' for clarity."
+    },
+    {
+      "startIndex": 54,
+      "endIndex": 61,
+      "correction": "typical",
+      "type": "spelling",
+      "explanation": "'typicla' is a misspelling of 'typical'."
+    },
+    {
+      "startIndex": 62,
+      "endIndex": 67,
+      "correction": "typos",
+      "type": "spelling",
+      "explanation": "'typso' is a misspelling of 'typos'."
+    },
+    {
+      "startIndex": 80,
+      "endIndex": 85,
+      "correction": "issues",
+      "type": "spelling",
+      "explanation": "'issus' is a misspelling of 'issues'."
+    },
+    {
+      "startIndex": 87,
+      "endIndex": 90,
+      "correction": "The",
+      "type": "capitalization",
+      "explanation": "'the' should be capitalized after a period."
+    },
+    {
+      "startIndex": 107,
+      "endIndex": 115,
+      "correction": "hopefully",
+      "type": "spelling",
+      "explanation": "'hopefuly' is a misspelling of 'hopefully'."
+    },
+    {
+      "startIndex": 141,
+      "endIndex": 143,
+      "correction": "on",
+      "type": "preposition",
+      "explanation": "The preposition 'at' should be 'on'."
+    },
+
+    {
+      "startIndex": 151,
+      "endIndex": 154,
+      "correction": "d fingers c",
+      "type": "missing-words",
+      "explanation": "There was the word 'fingers' missing."
+    }
+  ]
+}

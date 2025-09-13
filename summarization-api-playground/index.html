@@ -23,7 +23,7 @@
         <fieldset>
           <legend>Prompt</legend>
           <textarea id="input"></textarea>
-          <div>Character Count: <span id="character-count">0</span><span id="character-count-exceed" class="hidden"> (may exceed maximum token limit supported by the API.)</span></div>
+          <div>Token Usage: <span id="character-count"></span></div>
         </fieldset>
         <fieldset>
           <legend>Settings</legend>
@@ -31,7 +31,7 @@
             <label for="type">Summary Type:</label>
             <select id="type">
               <option value="key-points" selected>Key Points</option>
-              <option value="tl;dr">TL;DR</option>
+              <option value="tldr">TL;DR</option>
               <option value="teaser">Teaser</option>
               <option value="headline">Headline</option>
             </select>
@@ -58,13 +58,13 @@
         </div>
     </main>
     <footer>
-      Be the first to test new AI APIs. Your feedback is invaluable to our development process. Join our <a href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> today.
+      Be the first to test new AI APIs. Your feedback is invaluable to our development process. Join our <a href=" https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> today.
     </footer>
     <div class="dialog" id="summarization-unavailable">
-      <div>Your browser doesn't support the Summarization API. If you're on Chrome, join the <a href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> and enable it.</div>
+      <div>Your browser doesn't support the Summarization API. If you're on Chrome, join the <a href=" https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> and enable it.</div>
     </div>
     <div class="dialog" id="summarization-unsupported">
-      <div>The Summarization API is available, but your device is unable to run it. Check device requirements in the <a href=" https://developer.chrome.com/docs/ai/built-in#get_an_early_preview">Early Preview Program</a> documentation.</div>
+      <div>The Summarization API is available, but your device is unable to run it. Check device requirements in the <a href=" https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> documentation.</div>
     </div>
   </body>
 </html>

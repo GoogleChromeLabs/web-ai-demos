@@ -11,17 +11,12 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     document.querySelector('.not-supported-message').hidden = false;
   };
 
-  // The API namespace the Writer and Rewriter APIs have changed in Chrome canary, the feature
-  // detection checks below validate both scenarios.
-  if (!('Writer' in self && 'Rewriter' in self) && // Test for Canary
-      (!('ai' in self && 'writer' in self.ai && 'rewriter' in self.ai))) { // Test for Stable
+  if (!('Writer' in self && 'Rewriter' in self)) { // Test for Stable
     return showNotSupportedMessage();
   }
 
   const writeForm = document.querySelector('.write-form');
   const rewriteForm = document.querySelector('.rewrite-form');
-  const writeButton = document.querySelector('.write-button');
-  const rewriteButton = document.querySelector('.rewrite-button');
   const contextInput = document.querySelector('input');
   const copyButton = document.querySelector('.copy-button');
   const output = document.querySelector('output');
@@ -60,14 +55,14 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     if (!prompt) {
       return;
     }
-    const stream = await writer.writeStreaming(prompt);
+    const stream = writer.writeStreaming(prompt);
     output.textContent = '';
     let fullResponse = '';
     for await (const chunk of stream) {
       // In Chrome stable, the writer always returns the entire text, so the full response is
       // the same as the chunk. In Canary, only the newly generated content is returned, so
-      // the new chunk is joined with the existing full response.      
-      fullResponse = 'Writer' in self ? fullResponse + chunk.trim() : chunk.trim();
+      // the new chunk is joined with the existing full response.
+      fullResponse = 'Writer' in self ? fullResponse + chunk : chunk;
       output.innerHTML = DOMPurify.sanitize(
         fullResponse /*marked.parse(fullResponse)*/
       );
@@ -75,20 +70,6 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     copyButton.hidden = false;
     rewriteForm.hidden = false;
   };
-
-  [toneSelect, formatSelect, lengthSelect, contextInput].forEach((select) => {
-    select.addEventListener('change', async () => {
-      await createWriter();
-    });
-  });
-
-  [rewriteToneSelect, rewriteFormatSelect, rewriteLengthSelect].forEach(
-    (select) => {
-      select.addEventListener('change', async () => {
-        await createRewriter();
-      });
-    }
-  );
 
   const createWriter = async () => {
     const options = {
@@ -98,9 +79,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
       sharedContext: context.value.trim(),
     };
 
-    // Handles the create of a Writer using both the previous API namespace in stable and
-    // the new one in Canary.
-    writer = await ('Writer' in self ? Writer.create(options) : ai.writer.create(options));
+    writer = await Writer.create(options);
     console.log(writer);
   };
 
@@ -112,17 +91,13 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
       sharedContext: context.value.trim(),
     };
 
-    // Handles the create of a Rewriter using both the previous API namespace in stable and
-    // the new one in Canary.
-    rewriter = await ('Rewriter' in self ? Rewriter.create(options) : ai.rewriter.create(options));
+    rewriter = await Rewriter.create(options);
     console.log(rewriter);
   };
 
-  await createWriter();
-  await createRewriter();
-
   writeForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    await createWriter();
     await write();
   });
 
@@ -141,7 +116,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
       // In Chrome stable, the rewriter always returns the entire text, so the full response is
       // the same as the chunk. In Canary, only the newly generated content is returned, so
       // the new chunk is joined with the existing full response.
-      fullResponse = 'Rewriter' in self ? fullResponse + chunk.trim() : chunk.trim();
+      fullResponse = 'Rewriter' in self ? fullResponse + chunk : chunk;
       output.innerHTML = DOMPurify.sanitize(
         fullResponse /*marked.parse(fullResponse)*/
       );
@@ -155,6 +130,7 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
 
   rewriteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    await createRewriter();
     await rewrite();
   });
 

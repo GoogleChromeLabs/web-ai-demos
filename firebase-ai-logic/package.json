@@ -1,0 +1,17 @@
+{
+  "name": "firebase-ai-logic",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --base /web-ai-demos/firebase-ai-logic/",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.0.3"
+  },
+  "dependencies": {
+    "firebase": "11.7.1-eap-ai-hybridinference.58d92df33"
+  }
+}
