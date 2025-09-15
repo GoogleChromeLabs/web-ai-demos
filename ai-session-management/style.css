@@ -69,3 +69,7 @@ li {
   color: red;
   margin-block-end: 2rem;
 }
+
+footer {
+  margin-block: 1rem;
+}
