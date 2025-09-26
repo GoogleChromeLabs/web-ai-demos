@@ -29,7 +29,7 @@ form {
   flex-direction: column;
 }
 
-label {
+label.legend {
   font-weight: bold;
 }
 
@@ -84,7 +84,7 @@ button {
 }
 
 ::highlight(spelling) {
-  text-decoration-color: light-dark(purple, yellow) ;
+  text-decoration-color: light-dark(purple, yellow);
   text-decoration-line: underline;
   text-decoration-style: wavy;
 }

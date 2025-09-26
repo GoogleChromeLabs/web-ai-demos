@@ -10,6 +10,13 @@ const submit = document.querySelector('[type="submit"]');
 const legend = document.querySelector('span').firstChild;
 const popover = document.querySelector('[popover]');
 const button = popover.querySelector('button');
+const activityIndicator = document.querySelector('.activity-indicator');
+const includeCorrectionTypesCheckbox = document.querySelector(
+  '#include-correction-types'
+);
+const includeCorrectionExplanationsCheckbox = document.querySelector(
+  '#include-correction-explanations'
+);
 
 (async () => {
   // Feature detection.
@@ -28,6 +35,18 @@ const button = popover.querySelector('button');
   let corrections;
   let correctedInput;
   let currentCorrection;
+
+  let proofreader;
+
+  [
+    includeCorrectionExplanationsCheckbox,
+    includeCorrectionTypesCheckbox,
+  ].forEach((checkbox) => {
+    checkbox.addEventListener('change', () => {
+      proofreader = null;
+      submit.click();
+    });
+  });
 
   // Draw the legends.
   const preTrimStartLength = legend.textContent.length;
@@ -59,21 +78,24 @@ const button = popover.querySelector('button');
     });
   }
 
-  let proofreader;
   document.querySelector('.error').hidden = proofreaderAPISupported;
 
   form.querySelector('button').disabled = false;
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
+    activityIndicator.textContent = '⏳ Proofreading...';
     // Use existing proofreader instance or create new instance.
     if (proofreaderAPISupported) {
-      proofreader = proofreader || await self.Proofreader.create({
-        includeCorrectionTypes: true,
-        includeCorrectionExplanations: true,
-        expectedInputLanguagues: ['en'],
-        correctionExplanationLanguage: 'en',
-      });
+      proofreader =
+        proofreader ||
+        (await self.Proofreader.create({
+          includeCorrectionTypes: includeCorrectionTypesCheckbox.checked,
+          includeCorrectionExplanations:
+            includeCorrectionExplanationsCheckbox.checked,
+          expectedInputLanguagues: ['en'],
+          correctionExplanationLanguage: 'en',
+        }));
     }
 
     // Remove previous highlights, only keep the legend highlights.
@@ -96,8 +118,11 @@ const button = popover.querySelector('button');
       ));
     } else {
       // Use fake data.
-      ({ correctedInput, corrections } = await (await fetch('fake.json')).json());
+      ({ correctedInput, corrections } = await (
+        await fetch('fake.json')
+      ).json());
     }
+    activityIndicator.textContent = '';
     if (!corrections) {
       corrections = [];
     }
@@ -157,7 +182,8 @@ const button = popover.querySelector('button');
     highlightRange.setStart(text, 0);
     highlightRange.setEnd(text, heading.length);
     errorHighlights[type].add(highlightRange);
-    popover.querySelector('.correction').textContent = correction || '[Remove word]';
+    popover.querySelector('.correction').textContent =
+      correction || '[Remove word]';
     if (explanation) {
       popover.querySelector('.explanation').textContent = explanation;
     } else {
