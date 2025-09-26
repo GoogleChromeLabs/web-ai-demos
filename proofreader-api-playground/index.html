@@ -2,13 +2,16 @@
   Copyright 2025 Google LLC
   SPDX-License-Identifier: Apache-2.0
  -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
-    <meta http-equiv="origin-trial" content="AlTsndqq95JpJiuNYyfn5+1O9qFyQJjL36Fna+RrhgNahpqK1zDCI6IRuYOlP/yu+1XFizuq5XyHKsxnOpdG0wYAAABUeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvb2ZyZWFkZXJBUEkiLCJleHBpcnkiOjE3NzkxNDg4MDB9">
+    <meta
+      http-equiv="origin-trial"
+      content="AlTsndqq95JpJiuNYyfn5+1O9qFyQJjL36Fna+RrhgNahpqK1zDCI6IRuYOlP/yu+1XFizuq5XyHKsxnOpdG0wYAAABUeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvb2ZyZWFkZXJBUEkiLCJleHBpcnkiOjE3NzkxNDg4MDB9"
+    />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✍️</text></svg>"
@@ -28,17 +31,31 @@
     </p>
     <h2>Input text</h2>
     <p>
-      <label for="examples">Legend:</label>
+      <label class="legend" for="examples">Legend:</label>
       <!-- prettier-ignore -->
       <span id="examples">
-        Spelling Punctuation Capitalization Preposition Missing&nbsp;words Grammar
-      </span>
+				Spelling Punctuation Capitalization Preposition Missing&nbsp;words Grammar
+			</span>
     </p>
     <form>
       <!-- prettier-ignore -->
-      <div contenteditable="plaintext-only" spellcheck="false" tabindex="0"
-           >This are a radnom text with a few classic common, and typicla typso and grammar issus. the Proofreader API hopefuly finds them all. Knocking at wood and crossed.</div>
+      <div contenteditable="plaintext-only"
+			     spellcheck="false"
+			     tabindex="0"
+			>This are a radnom text with a few classic common, and typicla typso and grammar issus. the Proofreader API hopefuly finds them all. Knocking at wood and crossed.</div>
+
+      <label
+        ><input type="checkbox" id="include-correction-types" /> Include
+        correction types</label
+      >
+      <label hidden
+        ><input type="checkbox" id="include-correction-explanations" disabled />
+        Include correction explanations</label
+      >
+
       <button disabled type="submit">✍️ Proofread</button>
+
+      <span class="activity-indicator"></span>
     </form>
     <h2>Corrected text</h2>
     <output></output>
@@ -48,7 +65,9 @@
         <strong>Correction:</strong>
         <button type="button" class="correction"></button>
       </div>
-      <div><strong>Explanation:</strong> <span class="explanation"></span></div>
+      <div hidden>
+        <strong>Explanation:</strong> <span class="explanation"></span>
+      </div>
     </div>
     <footer>
       Made by
