@@ -30,6 +30,7 @@ const legendContainer = document.querySelector('p:has(.legend)');
     preposition: null,
     'missing-words': null,
     grammar: null,
+     // Fallback for when `includeCorrectionTypes` is `false`.
     other: null,
   };
   const errorTypes = Object.keys(errorHighlights);
