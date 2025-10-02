@@ -17,6 +17,7 @@ const includeCorrectionTypesCheckbox = document.querySelector(
 const includeCorrectionExplanationsCheckbox = document.querySelector(
   '#include-correction-explanations'
 );
+const legendContainer = document.querySelector('p:has(.legend)');
 
 (async () => {
   // Feature detection.
@@ -29,6 +30,7 @@ const includeCorrectionExplanationsCheckbox = document.querySelector(
     preposition: null,
     'missing-words': null,
     grammar: null,
+    other: null,
   };
   const errorTypes = Object.keys(errorHighlights);
 
@@ -43,6 +45,9 @@ const includeCorrectionExplanationsCheckbox = document.querySelector(
     includeCorrectionTypesCheckbox,
   ].forEach((checkbox) => {
     checkbox.addEventListener('change', () => {
+      legendContainer.style.visibility = includeCorrectionTypesCheckbox.checked
+        ? 'visible'
+        : 'hidden';
       proofreader = null;
       submit.click();
     });
@@ -132,7 +137,7 @@ const includeCorrectionExplanationsCheckbox = document.querySelector(
       const range = new Range();
       range.setStart(textNode, correction.startIndex);
       range.setEnd(textNode, correction.endIndex);
-      correction.type ||= 'spelling';
+      correction.type ||= 'other';
       errorHighlights[correction.type].add(range);
     }
 
