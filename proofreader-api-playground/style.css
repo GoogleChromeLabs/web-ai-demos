@@ -29,6 +29,10 @@ form {
   flex-direction: column;
 }
 
+p:has(.legend) {
+  visibility: hidden;
+}
+
 label.legend {
   font-weight: bold;
 }
@@ -115,6 +119,12 @@ button {
 
 ::highlight(grammar) {
   text-decoration-color: light-dark(blue, lightblue);
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+}
+
+::highlight(other) {
+  text-decoration-color: light-dark(gray, lightgray);
   text-decoration-line: underline;
   text-decoration-style: wavy;
 }
