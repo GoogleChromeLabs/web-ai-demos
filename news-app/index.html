@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tagesschau Aktuell</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>Tagesschau Aktuell</header>
+
+    <div class="page-container">
+      <main>
+        <div id="news-container">
+          <div id="loading" data-translate>Lade Nachrichten...</div>
+        </div>
+      </main>
+
+      <div class="sidebar-wrapper">
+        <aside id="reading-log" class="sidebar">
+          <h2 data-translate>Leseliste (Aktuelle Sitzung)</h2>
+          <ul id="reading-log-list"></ul>
+        </aside>
+        <aside id="recommendations-container" class="sidebar">
+          <h2 data-translate>KI-Empfehlungen</h2>
+          <progress
+            hidden
+            id="progress"
+            value="0"
+            style="width: 100%"
+          ></progress>
+          <label for="progress" data-translate>Modelldownload...</label>
+          <div id="recommend-status" data-translate>
+            Lesen Sie mindestens 3 Artikel, um Empfehlungen zu erhalten.
+          </div>
+          <ul id="recommendations-list"></ul>
+          <button id="recommend-button" disabled data-translate>
+            Empfehlungen generieren
+          </button>
+        </aside>
+      </div>
+    </div>
+
+    <dialog id="article-modal" class="modal-overlay">
+      <div class="modal-container">
+        <button
+          id="modal-close"
+          class="modal-close-button"
+          aria-label="Schließen"
+        >
+          &times;
+        </button>
+        <div id="modal-content" class="modal-content"></div>
+      </div>
+    </dialog>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>

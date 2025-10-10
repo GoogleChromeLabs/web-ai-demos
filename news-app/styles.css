@@ -1,0 +1,343 @@
+:root {
+  --primary-color: #003366;
+  --secondary-color: #ffffff;
+  --text-color: #333333;
+  --border-color: #eeeeee;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --font-family:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+body {
+  font-family: var(--font-family);
+  margin: 0;
+  background-color: #f4f4f9;
+  color: var(--text-color);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+header {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+main {
+  flex-grow: 1;
+}
+
+#news-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Sidebar Styling */
+.sidebar {
+  padding: 1rem;
+  background-color: var(--secondary-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--shadow-color);
+  margin-top: 1.5rem;
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+#reading-log-list,
+#recommendations-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#reading-log-list {
+  max-height: 250px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+#reading-log-list li,
+#recommendations-list li {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#reading-log-list li:last-child,
+#recommendations-list li:last-child {
+  border-bottom: none;
+}
+
+#reading-log-list a {
+  text-decoration: none;
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+#reading-log-list a:hover {
+  text-decoration: underline;
+}
+
+.recommendation-item a {
+  font-weight: bold;
+  color: var(--primary-color);
+  cursor: pointer;
+}
+.recommendation-item p {
+  font-size: 0.9em;
+  color: #555;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+}
+
+.empty-log-message {
+  color: #777;
+  font-style: italic;
+}
+
+#recommendations-container {
+  margin-top: 1.5rem;
+}
+
+#recommend-button {
+  width: 100%;
+  padding: 0.8rem;
+  font-weight: bold;
+  font-size: 1rem;
+  background-color: #007a5e;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+#recommend-button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+#recommend-status {
+  font-style: italic;
+  color: #555;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+progress[hidden] ~ label {
+  display: none;
+}
+
+/* Desktop Layout with Sidebar */
+@media (min-width: 992px) {
+  .page-container {
+    flex-direction: row;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+  .sidebar-wrapper {
+    width: 320px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 1.5rem;
+  }
+  .sidebar {
+    margin-top: 0;
+  }
+}
+
+.news-card {
+  background-color: var(--secondary-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--shadow-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease-in-out;
+}
+
+.news-card:hover {
+  transform: translateY(-5px);
+}
+.news-card__image-container {
+  width: 100%;
+  padding-top: 56.25%;
+  position: relative;
+  background-color: var(--border-color);
+}
+.news-card__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border-color);
+}
+.news-card__type-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 51, 102, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.8em;
+  text-transform: capitalize;
+}
+.news-card__content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+.news-card__topline {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.news-card__title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0 0 0.5rem 0;
+}
+.news-card__date {
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 1rem;
+}
+.news-card__teaser {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+.news-card__button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+  text-decoration: none;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: bold;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+.news-card__button:hover {
+  background-color: #0055a4;
+}
+#loading,
+#error {
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 2rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s,
+    visibility 0.3s;
+  z-index: 1000;
+}
+.modal-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+.modal-container {
+  background: var(--secondary-color);
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  transform: translateY(-50px);
+  transition: transform 0.3s;
+}
+.modal-overlay.visible .modal-container {
+  transform: translateY(0);
+}
+.modal-close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #888;
+}
+.modal-content p,
+.modal-content div {
+  line-height: 1.6;
+}
+.modal-content h1,
+.modal-content h2,
+.modal-content h3 {
+  font-size: 1.5rem;
+}
+.content-box {
+  border: 1px solid var(--border-color);
+  background-color: #f9f9f9;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 5px;
+}
+.content-box h4 {
+  margin-top: 0;
+}
+
+.busy-indicator {
+  animation: slide-ease 2.5s ease-in-out infinite;
+}
+
+@keyframes slide-ease {
+  0% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  100% {
+    transform: translateX(0px);
+  }
+}
