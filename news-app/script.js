@@ -384,8 +384,7 @@ function displayError(message) {
   newsContainer.innerHTML = `<div id="error">${message}</div>`;
 }
 
-function articleClick(event) {
-  console.log(event);
+function articleClick(event) {  
   const clickableItem = event.target.closest('[data-details-url]');
   if (clickableItem) {
     const articleInfo = {
