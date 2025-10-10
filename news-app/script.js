@@ -16,10 +16,31 @@ const READING_LOG_KEY = 'tagesschauReadingLog';
 let languageModelSession = null;
 let sessionCreationTriggered = false;
 let displayedArticles = []; // Cache for all currently shown articles
+let translator = null;
+let shouldTranslate = false;
 
 // --- Core News App Functions ---
 
 async function main() {
+  const searchParams = new URLSearchParams(location.search);
+  if (searchParams.has('hl')) {
+    const targetLanguage = searchParams.get('hl');
+    try {
+      translator = await Translator.create({
+        sourceLanguage: 'de',
+        targetLanguage,
+      });
+      shouldTranslate = true;
+      const translatables = document.querySelectorAll('[data-translate]');
+      translatables.forEach(async (element) => {
+        element.textContent = await translator.translate(element.textContent);
+      });
+      document.documentElement.lang = targetLanguage;
+    } catch (error) {
+      console.error('Translation failed:', error);
+    }
+  }
+
   updateReadingLogDisplay();
   await fetchNews();
 }
@@ -52,12 +73,13 @@ async function fetchNews() {
     } catch (fallbackError) {
       // This block is executed only if BOTH the primary and fallback attempts have failed.
       console.error('Fallback API fetch also failed:', fallbackError);
-      displayError('Nachrichten-Feed konnte nicht geladen werden.');
+      const text = 'Nachrichten-Feed konnte nicht geladen werden.';
+      displayError(shouldTranslate ? await translator.translate(text) : text);
     }
   }
 }
 
-function displayNews(newsItems) {
+async function displayNews(newsItems) {
   newsContainer.innerHTML = '';
 
   const filteredNews = newsItems.filter(
@@ -66,11 +88,14 @@ function displayNews(newsItems) {
   displayedArticles = filteredNews; // Store articles for later use by the recommender
 
   if (filteredNews.length === 0) {
-    displayError('Keine Artikel mit Vorschau gefunden.');
+    const text = 'Keine Artikel mit Vorschau gefunden.';
+    displayError(shouldTranslate ? await translator.translate(text) : text);
     return;
   }
 
-  filteredNews.forEach((article) => {
+  const text = 'Weiterlesen';
+  const readMore = shouldTranslate ? await translator.translate(text) : text;
+  filteredNews.forEach(async (article) => {
     article.title = article.title.replace(/"/g, '&quot;');
     article.firstSentence = article.firstSentence.replace(/"/g, '&quot;');
     const imageUrl = article.teaserImage?.imageVariants?.['16x9-640'] || '';
@@ -79,38 +104,41 @@ function displayNews(newsItems) {
       try {
         const date = new Date(article.date);
         formattedDate =
-          date.toLocaleString('de-DE', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          }) + ' Uhr';
+          date.toLocaleString(
+            shouldTranslate ? translator.targetLanguage : 'de-DE',
+            {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }
+          ) + ' Uhr';
       } catch (e) {
-        console.warn('Datum konnte nicht verarbeitet werden:', article.date);
+        console.warn('Date could not be formatted:', article.date);
       }
     }
 
     const card = document.createElement('article');
     card.className = 'news-card';
-
+    const altText = article.teaserImage?.alttext || article.title;
     card.innerHTML = `
       <div class="news-card__image-container">
-        <img src="${imageUrl}" alt="${article.teaserImage?.alttext || article.title}" loading="lazy" class="news-card__image">
+        <img src="${imageUrl}" alt="${shouldTranslate ? await translator.translate(altText) : altText}" loading="lazy" class="news-card__image">
         <span class="news-card__type-badge">${article.type || 'News'}</span>
       </div>
       <div class="news-card__content">
-        ${article.topline ? `<h3 class="news-card__topline">${article.topline}</h3>` : ''}
-        <h2 class="news-card__title">${article.title}</h2>
+        ${article.topline ? `<h3 class="news-card__topline">${shouldTranslate ? await translator.translate(article.topline) : article.topline}</h3>` : ''}
+        <h2 class="news-card__title">${shouldTranslate ? await translator.translate(article.title) : article.title}</h2>
         <p class="news-card__date">${formattedDate}</p>
-        <p class="news-card__teaser">${article.firstSentence}</p>
+        <p class="news-card__teaser">${shouldTranslate ? await translator.translate(article.firstSentence) : article.firstSentence}</p>
         <button class="news-card__button"
             data-details-url="${article.details}"
             data-id="${article.sophoraId}"
             data-title="${article.title}"
             data-first-sentence="${article.firstSentence}"
         >
-          Weiterlesen
+          ${readMore}
         </button>
       </div>`;
     newsContainer.appendChild(card);
@@ -118,33 +146,44 @@ function displayNews(newsItems) {
 }
 
 async function fetchArticleDetails(url) {
-  showModal('<div id="loading">Lade Artikel...</div>');
+  const text = 'Lade Artikel...';
+  showModal(
+    `<div id="loading">${shouldTranslate ? await translator.translate(text) : text}</div>`
+  );
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const articleData = await response.json();
-
+    console.log(articleData);
     let fullArticleHtml = '';
     if (articleData.content && Array.isArray(articleData.content)) {
-      articleData.content.forEach((contentBlock) => {
+      articleData.content.forEach(async (contentBlock) => {
         if (contentBlock.value) {
           fullArticleHtml += `<p>${contentBlock.value}</p>`;
         } else if (contentBlock.box && contentBlock.box.text) {
-          fullArticleHtml += `<div class="content-box"><h4>${contentBlock.box.title || ''}</h4><div>${contentBlock.box.text}</div></div>`;
+          fullArticleHtml += `<div class="content-box"><h4>${shouldTranslate ? await translator.translate(contentBlock.box.title) : contentBlock.box.title || ''}</h4><div>${contentBlock.box.text}</div></div>`;
         }
       });
     }
 
+    let text = 'Ohne Titel';
+    text = shouldTranslate ? await translator.translate(text) : text;
+    let otherText =
+      'Der vollständige Artikelinhalt konnte nicht geladen werden.';
+    otherText = shouldTranslate
+      ? await translator.translate(otherText)
+      : otherText;
     const finalModalHTML = `
-      <h1>${articleData.title || 'Ohne Titel'}</h1>
-      <p><strong>${articleData.topline || ''}</strong></p>
+      <h1>${articleData.title ? (shouldTranslate ? await translator.translate(articleData.title) : articleData.title) : text}</h1>
+      <p><strong>${articleData.topline ? (shouldTranslate ? await translator.translate(articleData.topline) : articleData.topline) : ''}</strong></p>
       <hr>
-      <div>${fullArticleHtml || '<p>Der vollständige Artikelinhalt konnte nicht geladen werden.</p>'}</div>`;
+      <div>${fullArticleHtml ? (shouldTranslate ? await translator.translate(fullArticleHtml) : fullArticleHtml) : `<p>${otherText}</p>`}</div>`;
     modalContent.innerHTML = finalModalHTML;
   } catch (error) {
     console.error('Failed to fetch article details:', error);
-    modalContent.innerHTML =
-      '<div id="error">Entschuldigung, der vollständige Artikel konnte nicht geladen werden.</div>';
+    const text =
+      'Entschuldigung, der vollständige Artikel konnte nicht geladen werden.';
+    modalContent.innerHTML = `<div id="error">${shouldTranslate ? await translator.translate(text) : text}</div>`;
   }
 }
 
@@ -161,35 +200,58 @@ function logArticleRead(articleInfo) {
   }
 }
 
-function updateReadingLogDisplay() {
+async function updateReadingLogDisplay() {
   const log = JSON.parse(sessionStorage.getItem(READING_LOG_KEY) || '[]');
   if (log.length === 0) {
-    readingLogList.innerHTML =
-      '<li><span class="empty-log-message">Sie haben noch keine Artikel gelesen.</span></li>';
+    const text = 'Sie haben noch keine Artikel gelesen.';
+    readingLogList.innerHTML = `<li><span class="empty-log-message">${shouldTranslate ? await translator.translate(text) : text}</span></li>`;
+
     recommendButton.disabled = true;
-    recommendStatus.textContent =
-      'Lesen Sie mindestens 3 Artikel, um Empfehlungen zu erhalten.';
+    {
+      const text =
+        'Lesen Sie mindestens 3 Artikel, um Empfehlungen zu erhalten.';
+      recommendStatus.textContent = shouldTranslate
+        ? await translator.translate(text)
+        : text;
+    }
     return;
   }
 
-  readingLogList.innerHTML = log
-    .map(
-      (item) => `
+  // --- Start of Fix ---
+
+  // 1. Create an array of promises. Each promise will resolve to an HTML string.
+  const logItemPromises = log.map(async (item) => {
+    const translatedTitle = shouldTranslate
+      ? await translator.translate(item.title)
+      : item.title;
+    return `
         <li>
-          <a data-details-url="${item.url}" data-id="${item.id}" data-title="${item.title}" data-first-sentence="${item.firstSentence}">${item.title}</a>
-        </li>`
-    )
-    .join('');
+          <a data-details-url="${item.url}" data-id="${item.id}" data-title="${item.title}" data-first-sentence="${item.firstSentence}">${translatedTitle}</a>
+        </li>`;
+  });
+
+  // 2. Wait for all the translation promises to resolve.
+  const logHtmlItems = await Promise.all(logItemPromises);
+
+  // 3. Join the resulting array of HTML strings and update the DOM.
+  readingLogList.innerHTML = logHtmlItems.join('');
+
+  // --- End of Fix ---
 
   if (log.length >= 3) {
     recommendButton.disabled = false;
-    recommendStatus.textContent = 'Bereit für Empfehlungen!';
+    const text = 'Bereit für Empfehlungen!';
+    recommendStatus.textContent = shouldTranslate
+      ? await translator.translate(text)
+      : text;
   } else {
     recommendButton.disabled = true;
-    recommendStatus.textContent = `Lesen Sie noch ${3 - log.length} Artikel.`;
+    const text = `Lesen Sie noch ${3 - log.length} Artikel.`;
+    recommendStatus.textContent = shouldTranslate
+      ? await translator.translate(text)
+      : text;
   }
 }
-
 // --- Language Model (AI Recommendation) Functions ---
 
 const createSession = async (options = {}) => {
@@ -199,13 +261,11 @@ const createSession = async (options = {}) => {
 
   try {
     if (!('LanguageModel' in self)) {
-      throw new Error(
-        'Die Prompt API wird von Ihrem Browser nicht unterstützt. Bitte aktivieren Sie chrome://flags/#prompt-api in Chrome 127+.'
-      );
+      throw new Error('The Prompt API is not supported by your browser.');
     }
     const availability = await LanguageModel.availability();
     if (availability === 'unavailable') {
-      throw new Error('Das Sprachmodell ist auf diesem Gerät nicht verfügbar.');
+      throw new Error('The large language model is not available.');
     }
 
     let modelNewlyDownloaded = availability !== 'available';
@@ -236,7 +296,10 @@ const createSession = async (options = {}) => {
 
 async function getRecommendations() {
   recommendButton.disabled = true;
-  recommendStatus.textContent = 'Analysiere Artikel...';
+  const text = 'Analysiere Artikel...';
+  recommendStatus.textContent = shouldTranslate
+    ? await translator.translate(text)
+    : text;
   recommendationsList.innerHTML = '';
 
   const readArticlesLog = JSON.parse(
@@ -254,8 +317,10 @@ async function getRecommendations() {
     );
 
     if (unreadArticles.length < 3) {
-      recommendStatus.textContent =
-        'Nicht genügend ungelesene Artikel für Empfehlungen.';
+      const text = 'Nicht genügend ungelesene Artikel für Empfehlungen.';
+      recommendStatus.textContent = shouldTranslate
+        ? await translator.translate(text)
+        : text;
       recommendButton.disabled = false;
       return;
     }
@@ -317,17 +382,27 @@ async function getRecommendations() {
 }`;
 
     // 5. Create session and prompt
-    recommendStatus.textContent = 'Initialisiere KI-Sitzung (kann dauern)...';
-    languageModelSession = await createSession({
-      initialPrompts: [{ role: 'system', content: systemPromptContent }],
-      expectedInputs: [{ type: 'text', languages: ['en'] }],
-      expectedOutputs: [{ type: 'text', languages: ['en'] }],
-    });
-    console.log('System prompt:', {
-      initialPrompts: [{ role: 'system', content: systemPromptContent }],
-    });
-    console.log('User prompt:', userPromptContent);
-    recommendStatus.textContent = 'Generiere Empfehlungen...';
+    {
+      const text = 'Initialisiere KI-Sitzung (kann dauern)...';
+      recommendStatus.textContent = shouldTranslate
+        ? await translator.translate(text)
+        : text;
+      languageModelSession = await createSession({
+        initialPrompts: [{ role: 'system', content: systemPromptContent }],
+        expectedInputs: [{ type: 'text', languages: ['en'] }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
+      });
+      console.log('System prompt:', {
+        initialPrompts: [{ role: 'system', content: systemPromptContent }],
+      });
+      console.log('User prompt:', userPromptContent);
+    }
+    {
+      const text = 'Generiere Empfehlungen...';
+      recommendStatus.textContent = shouldTranslate
+        ? await translator.translate(text)
+        : text;
+    }
     recommendStatus.classList.add('busy-indicator');
     const stream = languageModelSession.promptStreaming(userPromptContent, {
       responseConstraint: { schema },
@@ -343,33 +418,62 @@ async function getRecommendations() {
 
     // 6. Display results
     displayRecommendations(recommendations, unreadArticles);
-    recommendStatus.textContent = 'Hier sind Ihre Empfehlungen:';
+    const text = 'Hier sind Ihre Empfehlungen:';
+    recommendStatus.textContent = shouldTranslate
+      ? await translator.translate(text)
+      : text;
   } catch (error) {
     console.error('Recommendation failed:', error);
-    recommendStatus.textContent = 'Fehler bei der Empfehlung.';
-    recommendationsList.innerHTML = `<li>Fehler: ${error.message}</li>`;
+    const text = 'Fehler bei der Empfehlung.';
+    recommendStatus.textContent = shouldTranslate
+      ? await translator.translate(text)
+      : text;
+    recommendationsList.innerHTML = `<li>${error.message}</li>`;
   } finally {
     if (readArticlesLog.length >= 3) recommendButton.disabled = false;
   }
 }
 
-function displayRecommendations(recommendations, unreadArticles) {
+async function displayRecommendations(recommendations, unreadArticles) {
   console.log('Recommendations:', recommendations);
-  recommendationsList.innerHTML = recommendations
-    .map((rec) => {
-      const originalArticle = unreadArticles.find(
-        (item) => item.sophoraId === rec.id
-      );
-      if (!originalArticle) return '';
-      return `
-        <li class="recommendation-item">
-          <a data-details-url="${originalArticle.details}" data-id="${originalArticle.sophoraId}" data-title="${originalArticle.title.replace(/"/g, '&quot;')}" data-first-sentence="${originalArticle.firstSentence.replace(/"/g, '&quot;')}}">
-            ${originalArticle.title}
-          </a>
-          <p>Begründung: ${rec.rationale}</p>
-        </li>`;
-    })
-    .join('');
+
+  // 1. .map() creates an array of promises, one for each recommendation.
+  const recommendationPromises = recommendations.map(async (rec) => {
+    const originalArticle = unreadArticles.find(
+      (item) => item.sophoraId === rec.id
+    );
+
+    // If an article isn't found, resolve the promise with an empty string.
+    if (!originalArticle) return '';
+
+    // Await the translation for the 'reason' text if needed.
+    let text = 'Begründung:';
+    text = shouldTranslate ? await translator.translate(text) : text;
+
+    // Await the translations for title and rationale.
+    const translatedTitle = shouldTranslate
+      ? await translator.translate(originalArticle.title)
+      : originalArticle.title;
+    const translatedRationale = shouldTranslate
+      ? await translator.translate(rec.rationale)
+      : rec.rationale;
+
+    // Return the final HTML string for this list item.
+    return `
+      <li class="recommendation-item">
+        <a data-details-url="${originalArticle.details}" data-id="${originalArticle.sophoraId}" data-title="${originalArticle.title.replace(/"/g, '&quot;')}" data-first-sentence="${originalArticle.firstSentence.replace(/"/g, '&quot;')}}">
+          ${translatedTitle}
+        </a>
+        <p>${text} ${translatedRationale}</p>
+      </li>`;
+  });
+
+  // 2. Wait for ALL the promises in the array to resolve.
+  // The result is an array of the resolved values (our HTML strings).
+  const recommendationHtmlItems = await Promise.all(recommendationPromises);
+
+  // 3. Now join the resolved HTML strings and set the innerHTML.
+  recommendationsList.innerHTML = recommendationHtmlItems.join('');
 }
 
 // --- UI Helper Functions ---
@@ -384,7 +488,7 @@ function displayError(message) {
   newsContainer.innerHTML = `<div id="error">${message}</div>`;
 }
 
-function articleClick(event) {  
+function articleClick(event) {
   const clickableItem = event.target.closest('[data-details-url]');
   if (clickableItem) {
     const articleInfo = {
