@@ -658,7 +658,7 @@
           let systemPromptContent =
             'Du bist ein Nachrichten-Redakteur. Deine Aufgabe ist es, aus der folgenden Liste verfügbarer Artikel, passende Empfehlungen für einen Nutzer zu generieren, basierend auf bisher gelesenen Artikeln. Gib für jede Empfehlung eine sehr kurze Begründung an, bezugnehmend auf die bereits gelesenen Artikel. Die verfügbaren Artikel sind:\n\n';
           unreadArticles.forEach((article) => {
-            systemPromptContent += `---\nTitel: ${article.title}\nTeaser: ${article.firstSentence}\nID: ${article.sophoraId}\n---\n\n`;           
+            systemPromptContent += `---\nTitel: ${article.title}\nTeaser: ${article.firstSentence}\nID: ${article.sophoraId}\n---\n\n`;
           });
 
           // 3. Create the dynamic JSON Schema based on UNREAD articles
@@ -791,7 +791,12 @@
             firstSentence: clickableItem.dataset.firstSentence,
             url: clickableItem.dataset.detailsUrl,
           };
-          if (articleInfo.id && articleInfo.title && articleInfo.firstSentence && articleInfo.url) {
+          if (
+            articleInfo.id &&
+            articleInfo.title &&
+            articleInfo.firstSentence &&
+            articleInfo.url
+          ) {
             fetchArticleDetails(articleInfo.url);
             logArticleRead(articleInfo);
           }
