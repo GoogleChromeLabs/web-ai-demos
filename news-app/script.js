@@ -23,8 +23,7 @@ let translatedHTML = false;
 // --- Core News App Functions ---
 
 async function translateHTML() {
-  if (translatedHTML) {
-    console.log('click');
+  if (translatedHTML) {    
     document.removeEventListener('click', translateHTML);
     return;
   }
