@@ -58,6 +58,43 @@ async function translateHTML() {
 
 document.addEventListener('click', translateHTML);
 
+async function maybeTranslate(text) {
+  return !shouldTranslate ? text : await translator.translate(text);
+}
+
+async function getBreakingNewsSVG() {
+  return URL.createObjectURL(
+    new Blob(
+      [
+        `<svg viewBox="0 0 450 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .breaking-news-text {
+        font-family: system-ui, sans-serif;
+        font-size: 30px;
+        font-weight: 900;
+        text-anchor: middle;
+        fill: white;
+        stroke: black;
+        stroke-width: 5;
+        stroke-linejoin: round;
+        paint-order: stroke;
+        letter-spacing: -1px;
+      }
+    </style>
+  </defs>  
+  <text class="breaking-news-text" x="50%" y="95">
+    ${await maybeTranslate('Eilmeldung')}
+  </text>  
+</svg>`,
+      ],
+      {
+        type: 'image/svg+xml',
+      }
+    )
+  );
+}
+
 async function main() {
   await translateHTML();
   updateReadingLogDisplay();
@@ -93,7 +130,7 @@ async function fetchNews() {
       // This block is executed only if BOTH the primary and fallback attempts have failed.
       console.error('Fallback API fetch also failed:', fallbackError);
       const text = 'Nachrichten-Feed konnte nicht geladen werden.';
-      displayError(shouldTranslate ? await translator.translate(text) : text);
+      displayError(await maybeTranslate(text));
     }
   }
 }
@@ -108,13 +145,13 @@ async function displayNews(newsItems) {
 
   if (filteredNews.length === 0) {
     const text = 'Keine Artikel mit Vorschau gefunden.';
-    displayError(shouldTranslate ? await translator.translate(text) : text);
+    displayError(await maybeTranslate(text));
     return;
   }
 
   const text = 'Weiterlesen';
-  const readMore = shouldTranslate ? await translator.translate(text) : text;
-  filteredNews.forEach((article) => {
+  const readMore = await maybeTranslate(text);
+  filteredNews.forEach(async (article) => {
     article.title = article.title.replace(/"/g, '&quot;');
     article.firstSentence = article.firstSentence.replace(/"/g, '&quot;');
     const imageUrl = article.teaserImage?.imageVariants?.['16x9-640'] || '';
@@ -122,17 +159,16 @@ async function displayNews(newsItems) {
     if (article.date) {
       try {
         const date = new Date(article.date);
-        formattedDate =
-          date.toLocaleString(
-            shouldTranslate ? translator.targetLanguage : 'de-DE',
-            {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            }
-          ) + ' Uhr';
+        formattedDate = date.toLocaleString(
+          shouldTranslate ? translator.targetLanguage : 'de-DE',
+          {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          }
+        );
       } catch (e) {
         console.warn('Date could not be formatted:', article.date);
       }
@@ -143,14 +179,14 @@ async function displayNews(newsItems) {
     const altText = article.teaserImage?.alttext || article.title;
     card.innerHTML = `
       <div class="news-card__image-container">
-        <img src="${imageUrl}" alt="${shouldTranslate ? await translator.translate(altText) : altText}" loading="lazy" class="news-card__image">
+        <img src="${imageUrl || (await getBreakingNewsSVG())}" alt="${await maybeTranslate(altText)}" loading="lazy" class="news-card__image">
         <span class="news-card__type-badge">${article.type || 'News'}</span>
       </div>
       <div class="news-card__content">
-        ${article.topline ? `<h3 class="news-card__topline">${shouldTranslate ? await translator.translate(article.topline) : article.topline}</h3>` : ''}
-        <h2 class="news-card__title">${shouldTranslate ? await translator.translate(article.title) : article.title}</h2>
+        ${article.topline ? `<h3 class="news-card__topline">${await maybeTranslate(article.topline)}</h3>` : ''}
+        <h2 class="news-card__title">${await maybeTranslate(article.title)}</h2>
         <p class="news-card__date">${formattedDate}</p>
-        <p class="news-card__teaser">${shouldTranslate ? await translator.translate(article.firstSentence) : article.firstSentence}</p>
+        <p class="news-card__teaser">${await maybeTranslate(article.firstSentence)}</p>
         <button class="news-card__button"
             data-details-url="${article.details}"
             data-id="${article.sophoraId}"
@@ -166,9 +202,7 @@ async function displayNews(newsItems) {
 
 async function fetchArticleDetails(url) {
   const text = 'Lade Artikel...';
-  showModal(
-    `<div id="loading">${shouldTranslate ? await translator.translate(text) : text}</div>`
-  );
+  showModal(`<div id="loading">${await maybeTranslate(text)}</div>`);
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -180,29 +214,27 @@ async function fetchArticleDetails(url) {
         if (contentBlock.value) {
           fullArticleHtml += `<p>${contentBlock.value}</p>`;
         } else if (contentBlock.box && contentBlock.box.text) {
-          fullArticleHtml += `<div class="content-box"><h4>${shouldTranslate ? await translator.translate(contentBlock.box.title) : contentBlock.box.title || ''}</h4><div>${contentBlock.box.text}</div></div>`;
+          fullArticleHtml += `<div class="content-box"><h4>${contentBlock.box.title || ''}</h4><div>${contentBlock.box.text}</div></div>`;
         }
       });
     }
 
     let text = 'Ohne Titel';
-    text = shouldTranslate ? await translator.translate(text) : text;
+    text = await maybeTranslate(text);
     let otherText =
       'Der vollständige Artikelinhalt konnte nicht geladen werden.';
-    otherText = shouldTranslate
-      ? await translator.translate(otherText)
-      : otherText;
+    otherText = await maybeTranslate(otherText);
     const finalModalHTML = `
-      <h1>${articleData.title ? (shouldTranslate ? await translator.translate(articleData.title) : articleData.title) : text}</h1>
-      <p><strong>${articleData.topline ? (shouldTranslate ? await translator.translate(articleData.topline) : articleData.topline) : ''}</strong></p>
+      <h1>${articleData.title ? await maybeTranslate(articleData.title) : text}</h1>
+      <p><strong>${articleData.topline ? await maybeTranslate(articleData.topline) : ''}</strong></p>
       <hr>
-      <div>${fullArticleHtml ? (shouldTranslate ? await translator.translate(fullArticleHtml) : fullArticleHtml) : `<p>${otherText}</p>`}</div>`;
+      <div>${fullArticleHtml ? await maybeTranslate(fullArticleHtml) : `<p>${otherText}</p>`}</div>`;
     modalContent.innerHTML = finalModalHTML;
   } catch (error) {
     console.error('Failed to fetch article details:', error);
     const text =
       'Entschuldigung, der vollständige Artikel konnte nicht geladen werden.';
-    modalContent.innerHTML = `<div id="error">${shouldTranslate ? await translator.translate(text) : text}</div>`;
+    modalContent.innerHTML = `<div id="error">${await maybeTranslate(text)}</div>`;
   }
 }
 
@@ -223,15 +255,13 @@ async function updateReadingLogDisplay() {
   const log = JSON.parse(sessionStorage.getItem(READING_LOG_KEY) || '[]');
   if (log.length === 0) {
     const text = 'Sie haben noch keine Artikel gelesen.';
-    readingLogList.innerHTML = `<li><span class="empty-log-message">${shouldTranslate ? await translator.translate(text) : text}</span></li>`;
+    readingLogList.innerHTML = `<li><span class="empty-log-message">${await maybeTranslate(text)}</span></li>`;
 
     recommendButton.disabled = true;
     {
       const text =
         'Lesen Sie mindestens 3 Artikel, um Empfehlungen zu erhalten.';
-      recommendStatus.textContent = shouldTranslate
-        ? await translator.translate(text)
-        : text;
+      recommendStatus.textContent = await maybeTranslate(text);
     }
     return;
   }
@@ -240,9 +270,7 @@ async function updateReadingLogDisplay() {
 
   // 1. Create an array of promises. Each promise will resolve to an HTML string.
   const logItemPromises = log.map(async (item) => {
-    const translatedTitle = shouldTranslate
-      ? await translator.translate(item.title)
-      : item.title;
+    const translatedTitle = await maybeTranslate(item.title);
     return `
         <li>
           <a data-details-url="${item.url}" data-id="${item.id}" data-title="${item.title}" data-first-sentence="${item.firstSentence}">${translatedTitle}</a>
@@ -260,15 +288,11 @@ async function updateReadingLogDisplay() {
   if (log.length >= 3) {
     recommendButton.disabled = false;
     const text = 'Bereit für Empfehlungen!';
-    recommendStatus.textContent = shouldTranslate
-      ? await translator.translate(text)
-      : text;
+    recommendStatus.textContent = await maybeTranslate(text);
   } else {
     recommendButton.disabled = true;
     const text = `Lesen Sie noch ${3 - log.length} Artikel.`;
-    recommendStatus.textContent = shouldTranslate
-      ? await translator.translate(text)
-      : text;
+    recommendStatus.textContent = await maybeTranslate(text);
   }
 }
 // --- Language Model (AI Recommendation) Functions ---
@@ -316,9 +340,7 @@ const createSession = async (options = {}) => {
 async function getRecommendations() {
   recommendButton.disabled = true;
   const text = 'Analysiere Artikel...';
-  recommendStatus.textContent = shouldTranslate
-    ? await translator.translate(text)
-    : text;
+  recommendStatus.textContent = await maybeTranslate(text);
   recommendationsList.innerHTML = '';
 
   const readArticlesLog = JSON.parse(
@@ -337,9 +359,7 @@ async function getRecommendations() {
 
     if (unreadArticles.length < 3) {
       const text = 'Nicht genügend ungelesene Artikel für Empfehlungen.';
-      recommendStatus.textContent = shouldTranslate
-        ? await translator.translate(text)
-        : text;
+      recommendStatus.textContent = await maybeTranslate(text);
       recommendButton.disabled = false;
       return;
     }
@@ -403,9 +423,7 @@ async function getRecommendations() {
     // 5. Create session and prompt
     {
       const text = 'Initialisiere KI-Sitzung (kann dauern)...';
-      recommendStatus.textContent = shouldTranslate
-        ? await translator.translate(text)
-        : text;
+      recommendStatus.textContent = await maybeTranslate(text);
       languageModelSession = await createSession({
         initialPrompts: [{ role: 'system', content: systemPromptContent }],
         expectedInputs: [{ type: 'text', languages: ['en'] }],
@@ -418,9 +436,7 @@ async function getRecommendations() {
     }
     {
       const text = 'Generiere Empfehlungen...';
-      recommendStatus.textContent = shouldTranslate
-        ? await translator.translate(text)
-        : text;
+      recommendStatus.textContent = await maybeTranslate(text);
     }
     recommendStatus.classList.add('busy-indicator');
     const stream = languageModelSession.promptStreaming(userPromptContent, {
@@ -438,15 +454,11 @@ async function getRecommendations() {
     // 6. Display results
     displayRecommendations(recommendations, unreadArticles);
     const text = 'Hier sind Ihre Empfehlungen:';
-    recommendStatus.textContent = shouldTranslate
-      ? await translator.translate(text)
-      : text;
+    recommendStatus.textContent = await maybeTranslate(text);
   } catch (error) {
     console.error('Recommendation failed:', error);
     const text = 'Fehler bei der Empfehlung.';
-    recommendStatus.textContent = shouldTranslate
-      ? await translator.translate(text)
-      : text;
+    recommendStatus.textContent = await maybeTranslate(text);
     recommendationsList.innerHTML = `<li>${error.message}</li>`;
   } finally {
     if (readArticlesLog.length >= 3) recommendButton.disabled = false;
@@ -467,15 +479,11 @@ async function displayRecommendations(recommendations, unreadArticles) {
 
     // Await the translation for the 'reason' text if needed.
     let text = 'Begründung:';
-    text = shouldTranslate ? await translator.translate(text) : text;
+    text = await maybeTranslate(text);
 
     // Await the translations for title and rationale.
-    const translatedTitle = shouldTranslate
-      ? await translator.translate(originalArticle.title)
-      : originalArticle.title;
-    const translatedRationale = shouldTranslate
-      ? await translator.translate(rec.rationale)
-      : rec.rationale;
+    const translatedTitle = await maybeTranslate(originalArticle.title);
+    const translatedRationale = await maybeTranslate(rec.rationale);
 
     // Return the final HTML string for this list item.
     return `
