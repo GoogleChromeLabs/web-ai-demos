@@ -114,7 +114,7 @@ async function displayNews(newsItems) {
 
   const text = 'Weiterlesen';
   const readMore = shouldTranslate ? await translator.translate(text) : text;
-  filteredNews.forEach(async (article) => {
+  filteredNews.forEach((article) => {
     article.title = article.title.replace(/"/g, '&quot;');
     article.firstSentence = article.firstSentence.replace(/"/g, '&quot;');
     const imageUrl = article.teaserImage?.imageVariants?.['16x9-640'] || '';
