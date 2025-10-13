@@ -18,10 +18,16 @@ let sessionCreationTriggered = false;
 let displayedArticles = []; // Cache for all currently shown articles
 let translator = null;
 let shouldTranslate = false;
+let translatedHTML = false;
 
 // --- Core News App Functions ---
 
-async function main() {
+async function translateHTML() {
+  if (translatedHTML) {
+    console.log('click');
+    document.removeEventListener('click', translateHTML);
+    return;
+  }
   const searchParams = new URLSearchParams(location.search);
   if (searchParams.has('hl')) {
     const targetLanguage = searchParams.get('hl');
@@ -33,14 +39,27 @@ async function main() {
       shouldTranslate = true;
       const translatables = document.querySelectorAll('[data-translate]');
       translatables.forEach(async (element) => {
+        if (element.ariaLabel) {
+          element.setAttribute(
+            'aria-label',
+            await translator.translate(element.ariaLabel)
+          );
+          return;
+        }
         element.textContent = await translator.translate(element.textContent);
       });
       document.documentElement.lang = targetLanguage;
+      translatedHTML = true;
     } catch (error) {
       console.error('Translation failed:', error);
     }
   }
+}
 
+document.addEventListener('click', translateHTML);
+
+async function main() {
+  await translateHTML();
   updateReadingLogDisplay();
   await fetchNews();
 }
