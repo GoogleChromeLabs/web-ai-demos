@@ -306,6 +306,11 @@ progress[hidden] ~ label {
   cursor: pointer;
   color: #888;
 }
+.modal-content button {
+  width: max-content;
+  display: block;
+  margin-block: 1rem;
+}
 .modal-content p,
 .modal-content div {
   line-height: 1.6;

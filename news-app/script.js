@@ -30,14 +30,6 @@ async function translateHTML() {
   const searchParams = new URLSearchParams(location.search);
   if (searchParams.has('hl')) {
     const targetLanguage = searchParams.get('hl');
-    if (
-      (await Translator.availability({
-        sourceLanguage: 'de',
-        targetLanguage,
-      })) !== 'unavailable'
-    ) {
-      shouldTranslate = true;
-    }
     try {
       translator = await Translator.create({
         sourceLanguage: 'de',
@@ -58,15 +50,61 @@ async function translateHTML() {
       document.documentElement.lang = targetLanguage;
       translatedHTML = true;
     } catch (error) {
+      if (error.name === 'NotAllowedError') {
+        showTranslationModal('de', targetLanguage);
+      }
       console.error('Translation failed:', error);
     }
   }
 }
 
+function showTranslationModal(sourceLanguage, targetLanguage) {
+  const translationModal = document.getElementById('translation-modal');
+  const translationProgress = translationModal.querySelector('progress');
+  translationProgress.hidden = false;
+  translationModal.addEventListener('close', () => {
+    document.body.classList.remove('modal-open');
+    translationModal.classList.remove('visible');
+  });
+  translationModal
+    .querySelector('.modal-close-button')
+    .addEventListener('click', () => {
+      translationModal.close();
+    });
+  translationModal
+    .querySelector('.translation-button')
+    .addEventListener('click', async () => {
+      await Translator.create({
+        sourceLanguage,
+        targetLanguage,
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => {
+            translationProgress.value = e.loaded;
+          });
+        },
+      });
+      document.body.classList.remove('modal-open');
+      translationModal.classList.remove('visible');
+      translationModal.close();
+      await main();
+    });
+  document.body.classList.add('modal-open');
+  translationModal.classList.add('visible');
+  translationModal.showModal();
+}
+
 document.addEventListener('click', translateHTML);
 
 async function maybeTranslate(text) {
-  return !shouldTranslate ? text : translator.translate(text);
+  if (!shouldTranslate) {
+    return text;
+  }
+  try {
+    return translator.translate(text);
+  } catch (error) {
+    console.error('Translation failed:', error);
+    return text;
+  }
 }
 
 async function getBreakingNewsSVG() {
@@ -89,10 +127,10 @@ async function getBreakingNewsSVG() {
         letter-spacing: -1px;
       }
     </style>
-  </defs>  
+  </defs>
   <text class="breaking-news-text" x="50%" y="95">
     ${await maybeTranslate('Eilmeldung')}
-  </text>  
+  </text>
 </svg>`,
       ],
       {
@@ -512,8 +550,8 @@ async function displayRecommendations(recommendations, unreadArticles) {
 
 // --- UI Helper Functions ---
 function showModal(content = '') {
-  document.body.classList.add('modal-open');
   modalContent.innerHTML = content;
+  document.body.classList.add('modal-open');
   modal.classList.add('visible');
   modal.showModal();
 }

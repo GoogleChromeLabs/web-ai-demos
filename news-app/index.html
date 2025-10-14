@@ -55,6 +55,21 @@
       </div>
     </dialog>
 
+    <dialog lang="en" id="translation-modal" class="modal-overlay">
+      <div class="modal-container">
+        <button class="modal-close-button" aria-label="Close dialog">
+          &times;
+        </button>
+        <div class="modal-content">
+          <button type="button" class="translation-button news-card__button">
+            Download translation model
+          </button>
+          <progress hidden id="progress-translation" value="0"></progress>
+          <label for="progress-translation">Download progress</label>
+        </div>
+      </div>
+    </dialog>
+
     <script type="module" src="script.js"></script>
   </body>
 </html>
