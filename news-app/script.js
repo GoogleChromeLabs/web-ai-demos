@@ -23,13 +23,21 @@ let translatedHTML = false;
 // --- Core News App Functions ---
 
 async function translateHTML() {
-  if (translatedHTML) {    
+  if (translatedHTML) {
     document.removeEventListener('click', translateHTML);
     return;
   }
   const searchParams = new URLSearchParams(location.search);
   if (searchParams.has('hl')) {
     const targetLanguage = searchParams.get('hl');
+    if (
+      (await Translator.availability({
+        sourceLanguage: 'de',
+        targetLanguage,
+      })) !== 'unavailable'
+    ) {
+      shouldTranslate = true;
+    }
     try {
       translator = await Translator.create({
         sourceLanguage: 'de',
@@ -58,7 +66,7 @@ async function translateHTML() {
 document.addEventListener('click', translateHTML);
 
 async function maybeTranslate(text) {
-  return !shouldTranslate ? text : await translator.translate(text);
+  return !shouldTranslate ? text : translator.translate(text);
 }
 
 async function getBreakingNewsSVG() {
@@ -96,7 +104,7 @@ async function getBreakingNewsSVG() {
 
 async function main() {
   await translateHTML();
-  updateReadingLogDisplay();
+  await updateReadingLogDisplay();
   await fetchNews();
 }
 
@@ -168,8 +176,8 @@ async function displayNews(newsItems) {
             minute: '2-digit',
           }
         );
-      } catch (e) {
-        console.warn('Date could not be formatted:', article.date);
+      } catch (error) {
+        console.warn('Date could not be formatted:', article.date, error);
       }
     }
 
@@ -209,7 +217,7 @@ async function fetchArticleDetails(url) {
     console.log(articleData);
     let fullArticleHtml = '';
     if (articleData.content && Array.isArray(articleData.content)) {
-      articleData.content.forEach(async (contentBlock) => {
+      articleData.content.forEach((contentBlock) => {
         if (contentBlock.value) {
           fullArticleHtml += `<p>${contentBlock.value}</p>`;
         } else if (contentBlock.box && contentBlock.box.text) {
@@ -310,7 +318,7 @@ const createSession = async (options = {}) => {
       throw new Error('The large language model is not available.');
     }
 
-    let modelNewlyDownloaded = availability !== 'available';
+    const modelNewlyDownloaded = availability !== 'available';
     if (modelNewlyDownloaded) progress.hidden = false;
 
     sessionCreationTriggered = true;
