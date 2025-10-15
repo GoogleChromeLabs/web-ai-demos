@@ -58,9 +58,20 @@ async function translateHTML() {
   }
 }
 
+function languageTagToHumanReadable(languageTag, targetLanguage) {
+  const displayNames = new Intl.DisplayNames([targetLanguage], {
+    type: 'language',
+  });
+  return displayNames.of(languageTag);
+}
+
 function showTranslationModal(sourceLanguage, targetLanguage) {
   const translationModal = document.getElementById('translation-modal');
   const translationProgress = translationModal.querySelector('progress');
+  const source = translationModal.querySelector('.source');
+  const target = translationModal.querySelector('.target');
+  source.textContent = languageTagToHumanReadable(sourceLanguage, 'en');
+  target.textContent = languageTagToHumanReadable(targetLanguage, 'en');
   translationProgress.hidden = false;
   translationModal.addEventListener('close', () => {
     document.body.classList.remove('modal-open');
