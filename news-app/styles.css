@@ -48,6 +48,11 @@ main {
   gap: 1.5rem;
 }
 
+#language-switcher {
+  width: max-content;
+  margin-block: 1rem;
+}
+
 /* Sidebar Styling */
 .sidebar {
   padding: 1rem;
@@ -159,7 +164,6 @@ progress[hidden] ~ label {
   .sidebar-wrapper {
     width: 320px;
     flex-shrink: 0;
-    position: sticky;
     top: 1.5rem;
   }
   .sidebar {
