@@ -100,7 +100,8 @@ async function maybeTranslate(text) {
     return text;
   }
   try {
-    return translator.translate(text);
+    const result = await translator.translate(text);
+    return result;
   } catch (error) {
     console.error('Translation failed:', error);
     return text;
