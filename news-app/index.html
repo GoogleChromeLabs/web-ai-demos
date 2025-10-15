@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tagesschau Aktuell</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>Tagesschau Aktuell</header>
+
+    <div class="page-container">
+      <main>
+        <div id="news-container">
+          <div id="loading" data-translate>Lade Nachrichten...</div>
+        </div>
+      </main>
+
+      <div class="sidebar-wrapper">
+        <aside id="reading-log" class="sidebar">
+          <h2 data-translate>Leseliste (Aktuelle Sitzung)</h2>
+          <ul id="reading-log-list"></ul>
+        </aside>
+        <aside id="recommendations-container" class="sidebar">
+          <h2 data-translate>KI-Empfehlungen</h2>
+          <progress
+            hidden
+            id="progress"
+            value="0"
+            style="width: 100%"
+          ></progress>
+          <label for="progress" data-translate>Modelldownload...</label>
+          <div id="recommend-status" data-translate>
+            Lesen Sie mindestens 3 Artikel, um Empfehlungen zu erhalten.
+          </div>
+          <ul id="recommendations-list"></ul>
+          <button id="recommend-button" disabled data-translate>
+            Empfehlungen generieren
+          </button>
+        </aside>
+      </div>
+    </div>
+
+    <dialog id="article-modal" class="modal-overlay">
+      <div class="modal-container">
+        <button
+          id="modal-close"
+          data-translate
+          class="modal-close-button"
+          aria-label="Dialog schließen"
+        >
+          &times;
+        </button>
+        <div id="modal-content" class="modal-content"></div>
+      </div>
+    </dialog>
+
+    <dialog lang="en" id="translation-modal" class="modal-overlay">
+      <div class="modal-container">
+        <button class="modal-close-button" aria-label="Close dialog">
+          &times;
+        </button>
+        <div class="modal-content">
+          <button type="button" class="translation-button news-card__button">
+            Download translation model from <span class="source"></span> to
+            <span class="target"></span>
+          </button>
+          <progress hidden id="progress-translation" value="0"></progress>
+          <label for="progress-translation">Download progress</label>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
