@@ -4,14 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "npm run dev",
     "dev": "vite",
     "build": "vite build --base /web-ai-demos/firebase-ai-logic/",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^7.0.3"
+    "vite": "^7.2.1"
   },
   "dependencies": {
-    "firebase": "11.7.1-eap-ai-hybridinference.58d92df33"
+    "firebase": "12.5.0"
   }
 }
