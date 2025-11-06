@@ -37,16 +37,16 @@ const model = getGenerativeModel(ai, {
 
 const [pre1, pre2] = Array.from(document.querySelectorAll('pre'));
 const [span1, span2] = Array.from(document.querySelectorAll('span'));
-const getSource = async () =>
-  'LanguageModel' in self &&
-  (await LanguageModel.availability()) === 'available'
-    ? 'Built-in AI'
-    : 'Cloud AI';
+
+const getInferenceSource = (response) => {
+  console.log(response);
+  return response.inferenceSource === 'in_cloud' ? 'Cloud AI' : 'Built-in AI';
+};
 
 (async () => {
   document.querySelector('button').addEventListener('click', async () => {
     pre1.innerHTML = '';
-    span1.innerHTML = await getSource();
+    span1.innerHTML = '';
 
     // Send a text only prompt to the model [Documentation]
     const prompt = 'Tell me a short joke';
@@ -58,7 +58,7 @@ const getSource = async () =>
         const chunkText = chunk.text();
         pre1.append(chunkText);
       }
-
+      span1.textContent = getInferenceSource(await result.response);
       console.log('Aggregated response: ', await result.response);
     } catch (err) {
       console.error(err.name, err.message);
@@ -81,7 +81,7 @@ const getSource = async () =>
 
   fileInputEl.addEventListener('change', async () => {
     pre2.innerHTML = '';
-    span2.innerHTML = await getSource();
+    span2.innerHTML = '';
 
     // Provide a text prompt to include with the image
     const prompt = 'Write a poem on this picture';
@@ -96,6 +96,7 @@ const getSource = async () =>
         const chunkText = chunk.text();
         pre2.append(chunkText);
       }
+      span2.textContent = getInferenceSource(await result.response);
       console.log('Aggregated response: ', await result.response);
     } catch (err) {
       console.error(err.name, err.message);
