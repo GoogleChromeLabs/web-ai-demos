@@ -1,0 +1,54 @@
+:root {
+  color-scheme: dark light;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 1024px;
+  margin: auto;  
+}
+
+progress[hidden] ~ label {
+  display: none;
+}
+
+form {
+  padding: 0.5rem;
+  margin-block: 1rem;
+  background-color: color-mix(in srgb, Canvas, CanvasText 5%);
+}
+
+figure {
+  margin-inline-start: 0;
+}
+
+figcaption {
+  font-style: italic;
+}
+
+img {
+  display: block;
+  width: 240px;
+  height: auto;
+  margin-block: 1rem;
+  background: #fff;
+}
+
+input {
+  field-sizing: content;
+}
+
+output {
+  display: block;
+  margin-block: 1rem;
+  white-space: pre-wrap;
+  width: 30rem;
+  min-height: 10rem;
+  height: fit-content;
+  border: solid 1px CanvasText;
+}
+
+.open-button {
+  display: block;
+  margin-block: 1rem;
+}
