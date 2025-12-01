@@ -155,9 +155,12 @@ for (const image of images) {
           ],
         },
       ]);
+      let altText = '';
       for await (const chunk of stream) {
         output.append(chunk);
+        altText += chunk;
       }
+      img.alt = altText;
     } catch (err) {
       output.textContent = err.message;
     }
