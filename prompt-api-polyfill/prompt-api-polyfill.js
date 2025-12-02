@@ -15,6 +15,8 @@ import {
   InferenceMode,
 } from 'https://esm.run/firebase/ai';
 
+import './async-iterator-polyfill.js'; // Still needed for Safari 26.2.
+
 (() => {
   if ('LanguageModel' in window) {
     return;
