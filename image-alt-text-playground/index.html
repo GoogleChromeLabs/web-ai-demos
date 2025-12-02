@@ -1,0 +1,50 @@
+<!doctype html>
+<head>
+  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta
+    http-equiv="origin-trial"
+    content="AlTsndqq95JpJiuNYyfn5+1O9qFyQJjL36Fna+RrhgNahpqK1zDCI6IRuYOlP/yu+1XFizuq5XyHKsxnOpdG0wYAAABUeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvb2ZyZWFkZXJBUEkiLCJleHBpcnkiOjE3NzkxNDg4MDB9"
+  />
+  <link
+    rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>"
+  />
+  <title>Image alt text playground</title>
+  <script type="module" src="script.js"></script>
+</head>
+<body>
+  <h1>Image alt text playground</h1>
+
+  <p>
+    Try describing these images with AI using generic prompts like
+    <em>"What's in this image"</em> and tailored prompts that make use of known
+    features of the image like <em>"Describe the bird in this picture"</em>.
+  </p>
+  <p>Also try adding qualifiers like <em>"for a blind person"</em>.</p>
+
+  <div>
+    <progress hidden id="progress" value="0"></progress>
+    <label for="progress">Model download progress</label>
+  </div>
+
+  <template>
+    <form>
+      <figure>
+        <img
+          src=""
+          alt="The alternative text will be created by AI using the following prompt."
+        />
+        <figcaption></figcaption>
+      </figure>
+      <label>
+        Prompt:
+        <input type="search" autocomplete="off" />
+        <button>Submit</button>
+      </label>
+      <output></output>
+    </form>
+  </template>
+</body>
