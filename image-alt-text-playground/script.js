@@ -1,3 +1,7 @@
+if (!('showOpenFilePicker' in window)) {
+  await import('https://cdn.jsdelivr.net/npm/show-open-file-picker/polyfill.js');
+}
+
 const progress = document.querySelector('progress');
 
 let sessionCreationTriggered = false;
