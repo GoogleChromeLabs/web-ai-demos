@@ -1,5 +1,6 @@
 <img src="gemini.webp" width="500" height="281" alt="Gemini logo" />
 <audio controls src="jfk.wav"></audio>
+<button id="stopButton">Stop</button>
 
 <script type="module">
   import firebaseConfig from './.env.json' with { type: 'json' };
@@ -12,6 +13,18 @@
 
   if (!('LanguageModel' in window)) {
     await import('./prompt-api-polyfill.js');
+  }
+
+  const controller = new AbortController();
+  stopButton.onclick = () => controller.abort();
+  const session = await LanguageModel.create();
+  try {
+    const stream = session.promptStreaming('Write me a very long poem', {
+      signal: controller.signal,
+    });
+    for await (const chunk of stream) console.log(chunk);
+  } catch {
+    // Do nothing.
   }
 
   const languageModel = await LanguageModel.create({

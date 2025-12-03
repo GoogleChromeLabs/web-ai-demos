@@ -302,11 +302,30 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         });
       }
 
+      const signal = options.signal;
+
       return new ReadableStream({
         async start(controller) {
-          if (options.signal?.aborted) {
-            controller.error(new DOMException('Aborted', 'AbortError'));
+          const abortError = new DOMException('Aborted', 'AbortError');
+
+          // If already aborted before the stream starts, error the stream.
+          if (signal?.aborted) {
+            controller.error(abortError);
             return;
+          }
+
+          let aborted = false;
+          const onAbort = () => {
+            aborted = true;
+            try {
+              controller.error(abortError);
+            } catch {
+              // Controller might already be closed/errored; ignore.
+            }
+          };
+
+          if (signal) {
+            signal.addEventListener('abort', onAbort);
           }
 
           try {
@@ -327,20 +346,40 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             let fullResponseText = '';
 
             for await (const chunk of result.stream) {
+              if (aborted) {
+                // Try to cancel the underlying iterator; ignore any abort-related errors.
+                if (typeof result.stream.return === 'function') {
+                  try {
+                    await result.stream.return();
+                  } catch (e) {
+                    // Ignore cancellation errors (including AbortError).
+                  }
+                }
+                return;
+              }
               const chunkText = chunk.text();
               fullResponseText += chunkText;
               controller.enqueue(chunkText);
             }
 
-            _this.#history.push(userContent);
-            _this.#history.push({
-              role: 'model',
-              parts: [{ text: fullResponseText }],
-            });
+            if (!aborted) {
+              _this.#history.push(userContent);
+              _this.#history.push({
+                role: 'model',
+                parts: [{ text: fullResponseText }],
+              });
 
-            controller.close();
+              controller.close();
+            }
           } catch (error) {
-            controller.error(error);
+            // If we aborted, we've already signaled an AbortError; otherwise surface the error.
+            if (!aborted) {
+              controller.error(error);
+            }
+          } finally {
+            if (signal) {
+              signal.removeEventListener('abort', onAbort);
+            }
           }
         },
       });
