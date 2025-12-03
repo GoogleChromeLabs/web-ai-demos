@@ -2,15 +2,15 @@
 <audio controls src="jfk.wav"></audio>
 
 <script type="module">
+  import firebaseConfig from './.env.json' with { type: 'json' };
+  window.FIREBASE_CONFIG = firebaseConfig;
+
   const image = document.querySelector('img');
   const audio = await fetch(document.querySelector('audio').src).then(
     (response) => response.blob()
   );
 
   if (!('LanguageModel' in window)) {
-    window.FIREBASE_CONFIG = await fetch('.env.json').then((response) =>
-      response.json()
-    );
     await import('./prompt-api-polyfill.js');
   }
 
