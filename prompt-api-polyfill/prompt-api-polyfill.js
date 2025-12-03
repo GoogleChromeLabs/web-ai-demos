@@ -74,17 +74,19 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     #model;
     #history;
     #options;
+    #inCloudParams;
     #destroyed;
     #inputUsage;
     #topK;
     #temperature;
     #onquotaoverflow;
 
-    constructor(model, initialHistory, options = {}) {
+    constructor(model, initialHistory, options = {}, inCloudParams) {
       super();
       this.#model = model;
       this.#history = initialHistory || [];
       this.#options = options;
+      this.#inCloudParams = inCloudParams;
       this.#destroyed = false;
       this.#inputUsage = 0;
 
@@ -146,22 +148,17 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         },
       };
 
-      if (options.responseConstraint) {
-        const vertexSchema = convertJsonSchemaToVertexSchema(
-          options.responseConstraint
-        );
-        inCloudParams.generationConfig.responseMimeType = 'application/json';
-        inCloudParams.generationConfig.responseSchema = vertexSchema;
-      }
-
       let initialHistory = [];
       let systemInstruction = undefined;
 
-      if (options.initialPrompts && Array.isArray(options.initialPrompts)) {
-        const systemPrompts = options.initialPrompts.filter(
+      if (
+        resolvedOptions.initialPrompts &&
+        Array.isArray(resolvedOptions.initialPrompts)
+      ) {
+        const systemPrompts = resolvedOptions.initialPrompts.filter(
           (p) => p.role === 'system'
         );
-        const conversationPrompts = options.initialPrompts.filter(
+        const conversationPrompts = resolvedOptions.initialPrompts.filter(
           (p) => p.role !== 'system'
         );
 
@@ -170,8 +167,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         }
         // Await the conversion of history items (in case of images in history)
         initialHistory = await convertToFirebaseHistory(conversationPrompts);
-      } else if (options.systemPrompt) {
-        systemInstruction = options.systemPrompt;
       }
 
       if (systemInstruction) {
@@ -180,7 +175,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       const model = getGenerativeModel(ai, {
         mode: InferenceMode.ONLY_IN_CLOUD,
-        inCloudParams: inCloudParams,
+        inCloudParams,
       });
 
       // If a monitor callback is provided, simulate simple downloadprogress events
@@ -211,7 +206,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         }
       }
 
-      return new LanguageModel(model, initialHistory, resolvedOptions);
+      return new LanguageModel(
+        model,
+        initialHistory,
+        resolvedOptions,
+        inCloudParams
+      );
     }
 
     // Instance Methods
@@ -221,10 +221,15 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         throw new DOMException('Session is destroyed', 'InvalidStateError');
       // Clone private history
       const historyCopy = JSON.parse(JSON.stringify(this.#history));
-      return new LanguageModel(this.#model, historyCopy, {
-        ...this.#options,
-        ...options,
-      });
+      return new LanguageModel(
+        this.#model,
+        historyCopy,
+        {
+          ...this.#options,
+          ...options,
+        },
+        this.#inCloudParams
+      );
     }
 
     destroy() {
@@ -237,6 +242,19 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         throw new DOMException('Session is destroyed', 'InvalidStateError');
       if (options.signal?.aborted)
         throw new DOMException('Aborted', 'AbortError');
+
+      if (options.responseConstraint) {
+        const vertexSchema = convertJsonSchemaToVertexSchema(
+          options.responseConstraint
+        );
+        this.#inCloudParams.generationConfig.responseMimeType =
+          'application/json';
+        this.#inCloudParams.generationConfig.responseSchema = vertexSchema;
+        this.#model = getGenerativeModel(ai, {
+          mode: InferenceMode.ONLY_IN_CLOUD,
+          inCloudParams: this.#inCloudParams,
+        });
+      }
 
       // Process Input (Async conversion of Blob/Canvas/AudioBuffer)
       const parts = await this.#processInput(input);
@@ -270,6 +288,19 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         throw new DOMException('Session is destroyed', 'InvalidStateError');
 
       const _this = this; // Capture 'this' to access private fields in callback
+
+      if (options.responseConstraint) {
+        const vertexSchema = convertJsonSchemaToVertexSchema(
+          options.responseConstraint
+        );
+        this.#inCloudParams.generationConfig.responseMimeType =
+          'application/json';
+        this.#inCloudParams.generationConfig.responseSchema = vertexSchema;
+        this.#model = getGenerativeModel(ai, {
+          mode: InferenceMode.ONLY_IN_CLOUD,
+          inCloudParams: this.#inCloudParams,
+        });
+      }
 
       return new ReadableStream({
         async start(controller) {
