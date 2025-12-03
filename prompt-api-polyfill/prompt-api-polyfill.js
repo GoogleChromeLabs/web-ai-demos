@@ -261,8 +261,11 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const userContent = { role: 'user', parts: parts };
 
       try {
-        this.#updateUsage(parts);
-        if (this.#inputUsage > this.inputQuota)
+        // Estimate usage before request to fire quota events if needed
+        const { totalTokens } = await this.#model.countTokens({
+          contents: [{ role: 'user', parts }],
+        });
+        if (this.#inputUsage + totalTokens > this.inputQuota)
           this.dispatchEvent(new Event('quotaoverflow'));
 
         const requestContents = [...this.#history, userContent];
@@ -270,6 +273,11 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         const result = await this.#model.generateContent({
           contents: requestContents,
         });
+
+        // Exact usage update from Backend response
+        if (result.response.usageMetadata?.totalTokenCount) {
+          this.#inputUsage = result.response.usageMetadata.totalTokenCount;
+        }
 
         const responseText = result.response.text();
 
@@ -333,9 +341,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const parts = await _this.#processInput(input);
             const userContent = { role: 'user', parts: parts };
 
-            _this.#updateUsage(parts);
-            if (_this.#inputUsage > _this.inputQuota)
-              _this.dispatchEvent(new Event('quotaoverflow'));
+            // Estimate usage before request to fire quota events if needed
+            const { totalTokens } = await _this.#model.countTokens({
+              contents: [{ role: 'user', parts }],
+            });
+            if (_this.#inputUsage + totalTokens > this.inputQuota)
+              this.dispatchEvent(new Event('quotaoverflow'));
 
             const requestContents = [..._this.#history, userContent];
 
@@ -356,6 +367,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
                   }
                 }
                 return;
+              }
+              if (chunk.usageMetadata?.totalTokenCount) {
+                _this.#inputUsage += chunk.usageMetadata.totalTokenCount;
               }
               const chunkText = chunk.text();
               fullResponseText += chunkText;
@@ -394,7 +408,16 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const parts = await this.#processInput(input);
       const content = { role: 'user', parts: parts };
 
-      this.#updateUsage(parts);
+      try {
+        // Try to get accurate count first
+        const { totalTokens } = await this.#model.countTokens({
+          contents: [...this.#history, content],
+        });
+        this.#inputUsage = totalTokens;
+      } catch {
+        // Do nothing.
+      }
+
       this.#history.push(content);
 
       if (this.#inputUsage > this.inputQuota) {
@@ -449,13 +472,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       }
 
       return [{ text: JSON.stringify(input) }];
-    }
-
-    #updateUsage(parts) {
-      for (const p of parts) {
-        if (p.text) this.#inputUsage += p.text.length / 4;
-        if (p.inlineData) this.#inputUsage += 258;
-      }
     }
   }
 
