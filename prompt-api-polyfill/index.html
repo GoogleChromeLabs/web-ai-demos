@@ -31,15 +31,15 @@
     topK: 1,
     temperature: 0,
     expectedInputs: [
-      { type: 'text', languages: ['de'] },
+      { type: 'text', languages: ['en'] },
       { type: 'image' },
       { type: 'audio' },
     ],
-    expectedOutputs: [{ type: 'text', languages: ['de'] }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
     signal: new AbortController().signal,
     initialPrompts: [
       { role: 'system', content: 'foo' },
-      { role: 'assistant', content: 'foo', prefix: true },
+      { role: 'assistant', content: 'foo' },
     ],
     monitor(m) {
       m.addEventListener('downloadprogress', (e) => {
@@ -55,7 +55,7 @@
     topK: 1,
     temperature: 0,
     expectedInputs: [{ type: 'image' }],
-    expectedOutputs: [{ type: 'text', languages: ['de'] }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
   });
   console.log(languageModelAvailability2);
 
@@ -63,7 +63,7 @@
     topK: 1,
     temperature: 0,
     expectedInputs: [{ type: 'audio' }],
-    expectedOutputs: [{ type: 'text', languages: ['de'] }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
   });
   console.log(languageModelAvailability3);
 
