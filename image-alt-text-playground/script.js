@@ -47,8 +47,6 @@ const createSession = async (options = {}) => {
 
     sessionCreationTriggered = false;
     return llmSession;
-  } catch (error) {
-    throw error;
   } finally {
     progress.hidden = true;
     progress.value = 0;

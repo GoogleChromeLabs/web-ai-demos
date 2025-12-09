@@ -36,7 +36,7 @@ function resetMenu() {
 }
 
 
-function handleMenuClick(e) { 
+function handleMenuClick() { 
   switch (this.innerText) {
     case 'Define word':
       promptText = 'What does jasonholder mean? Explain with some examples.';
