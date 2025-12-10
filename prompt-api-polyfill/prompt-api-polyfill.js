@@ -301,6 +301,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     promptStreaming(input, options = {}) {
       if (this.#destroyed)
         throw new DOMException('Session is destroyed', 'InvalidStateError');
+      if (options.signal?.aborted)
+        throw new DOMException('Aborted', 'AbortError');
 
       const _this = this; // Capture 'this' to access private fields in callback
 
