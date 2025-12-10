@@ -19,7 +19,10 @@ const createSession = async (options = {}) => {
       throw new Error('LanguageModel is not supported.');
     }
 
-    const availability = await LanguageModel.availability();
+    const availability = await LanguageModel.availability({
+      expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }],
+      expectedOutputs: [{ type: 'text', languages: ['en'] }],
+    });
     if (availability === 'unavailable') {
       throw new Error('LanguageModel is not available.');
     }
