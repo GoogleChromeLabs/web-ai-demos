@@ -171,15 +171,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
         if (systemPrompts.length > 0) {
           systemInstruction = systemPrompts.map((p) => p.content).join('\n');
+          inCloudParams.systemInstruction = systemInstruction;
         }
         // Await the conversion of history items (in case of images in history)
-        initialHistory = await convertToFirebaseHistory(conversationPrompts);
+        initialHistory = await convertToFirebaseHistory(conversationPrompts);        
       }
-
-      if (systemInstruction) {
-        inCloudParams.systemInstruction = systemInstruction;
-      }
-
+      
       const model = getGenerativeModel(ai, {
         mode: InferenceMode.ONLY_IN_CLOUD,
         inCloudParams,
