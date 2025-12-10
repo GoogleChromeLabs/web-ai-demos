@@ -125,10 +125,11 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
     static async params() {
       return {
+        // Values from https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-flash-lite#:~:text=%2C%20audio/webm-,Parameter%20defaults,-tune.
         defaultTemperature: 1.0,
-        defaultTopK: 3,
+        defaultTopK: 64,
         maxTemperature: 2.0,
-        maxTopK: 40,
+        maxTopK: 64, // Fixed
       };
     }
 
