@@ -133,7 +133,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     static async create(options = {}) {
-      const availability = await LanguageModel.availability();
+      const availability = await LanguageModel.availability();      
       // This will be relevant when the implementation is backed by a local
       // model that needs downloading and simulates the Prompt API's behavior.
       if (availability === 'downloadable' || availability === 'downloading') {
@@ -205,6 +205,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             loaded: 1,
             total: 1,
           });
+          // The `ProgressEvent`'s `currentTarget`, `srcElement` and `target`
+          // properties are `EventTarget`, not `CreateMonitor`, when using the
+          // polyfill. Hopefully developers won't rely on these properties.
           monitorTarget.dispatchEvent(startEvent);
           monitorTarget.dispatchEvent(endEvent);
         } catch (e) {
