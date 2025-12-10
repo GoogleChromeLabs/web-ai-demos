@@ -133,6 +133,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     static async create(options = {}) {
+      const availability = await LanguageModel.availability();
+      // This will be relevant when the implementation is backed by a local
+      // model that needs downloading and simulates the Prompt API's behavior.
+      if (availability === 'downloadable' || availability === 'downloading') {
+        throw new DOMException('Requires a user gesture when availability is "downloading" or "downloadable".', 'NotAllowedError');
+      }
       const defaults = {
         temperature: 1.0,
         topK: 3,
