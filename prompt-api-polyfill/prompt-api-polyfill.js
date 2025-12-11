@@ -492,7 +492,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         });
         return totalTokens;
       } catch (e) {
-        return 100;
+        // The API can't reject, so just return 0 if we don't know.
+        return 0;
       }
     }
 
