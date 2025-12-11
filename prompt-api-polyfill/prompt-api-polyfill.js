@@ -120,7 +120,51 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     static async availability(options = {}) {
+      await LanguageModel.#validateOptions(options);
       return 'available';
+    }
+
+    static async #validateOptions(options = {}) {
+      const { maxTemperature, maxTopK } = await LanguageModel.params();
+
+      const hasTemperature = Object.prototype.hasOwnProperty.call(
+        options,
+        'temperature'
+      );
+      const hasTopK = Object.prototype.hasOwnProperty.call(options, 'topK');
+
+      if (hasTemperature !== hasTopK) {
+        throw new DOMException(
+          'Initializing a new session must either specify both topK and temperature, or neither of them.',
+          'NotSupportedError'
+        );
+      }
+
+      // If neither temperature nor topK are provided, nothing to validate.
+      if (!hasTemperature && !hasTopK) {
+        return;
+      }
+
+      const { temperature, topK } = options;
+
+      if (
+        typeof temperature !== 'number' ||
+        Number.isNaN(temperature) ||
+        typeof topK !== 'number' ||
+        Number.isNaN(topK)
+      ) {
+        throw new DOMException(
+          'The provided temperature and topK must be numbers.',
+          'NotSupportedError'
+        );
+      }
+
+      if (temperature < 0 || temperature > maxTemperature || topK > maxTopK) {
+        throw new DOMException(
+          'The provided temperature or topK is outside the supported range.',
+          'NotSupportedError'
+        );
+      }
     }
 
     static async params() {
@@ -134,11 +178,14 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     static async create(options = {}) {
-      const availability = await LanguageModel.availability();      
+      const availability = await LanguageModel.availability(options);
       // This will be relevant when the implementation is backed by a local
       // model that needs downloading and simulates the Prompt API's behavior.
       if (availability === 'downloadable' || availability === 'downloading') {
-        throw new DOMException('Requires a user gesture when availability is "downloading" or "downloadable".', 'NotAllowedError');
+        throw new DOMException(
+          'Requires a user gesture when availability is "downloading" or "downloadable".',
+          'NotAllowedError'
+        );
       }
       const defaults = {
         temperature: 1.0,
@@ -174,9 +221,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           inCloudParams.systemInstruction = systemInstruction;
         }
         // Await the conversion of history items (in case of images in history)
-        initialHistory = await convertToFirebaseHistory(conversationPrompts);        
+        initialHistory = await convertToFirebaseHistory(conversationPrompts);
       }
-      
+
       const model = getGenerativeModel(ai, {
         mode: InferenceMode.ONLY_IN_CLOUD,
         inCloudParams,
