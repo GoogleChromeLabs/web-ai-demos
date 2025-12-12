@@ -36,13 +36,10 @@ canvas.height = referenceImage.height;
 
 let isPainting = false;
 
-const ctx = canvas.getContext("2d");
-ctx.fillStyle = "white";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
+const ctx = canvas.getContext("2d", { alpha: false });
 ctx.lineWidth = 4;
 ctx.lineCap = "round";
-ctx.strokeStyle = "black";
-
+ctx.strokeStyle = "white";
 
 const draw = ({ clientX, clientY }) => {
   if (isPainting) {
