@@ -1,14 +1,17 @@
 # Prompt API Polyfill (Firebase AI Logic backend)
 
-This package provides a browser polyfill for the [Prompt API `LanguageModel`](https://github.com/webmachinelearning/prompt-api) backed by **Firebase AI Logic**.
+This package provides a browser polyfill for the
+[Prompt API `LanguageModel`](https://github.com/webmachinelearning/prompt-api)
+backed by **Firebase AI Logic**.
 
 When loaded in the browser, it defines a global:
 
 ```js
-window.LanguageModel
+window.LanguageModel;
 ```
 
-so you can use the Prompt API shape even in environments where it is not yet natively available.
+so you can use the Prompt API shape even in environments where it is not yet
+natively available.
 
 - Back end: Firebase AI Logic
 - Default model: `gemini-2.5-flash-lite` (configurable via `modelName`)
@@ -25,13 +28,16 @@ npm install prompt-api-polyfill
 
 ## Quick start
 
-1. **Create a Firebase project with Generative AI enabled** (see Configuration below).
+1. **Create a Firebase project with Generative AI enabled** (see Configuration
+   below).
 2. **Provide your Firebase config** on `window.FIREBASE_CONFIG`.
 3. **Import the polyfill** so it can attach `window.LanguageModel`.
 
 ### Example (using a JSON config file)
 
-Create a `.env.json` file (see [Configuring `dot_env.json` / `.env.json`](#configuring-dot_envjson--envjson)) and then use it from a browser entry point:
+Create a `.env.json` file (see
+[Configuring `dot_env.json` / `.env.json`](#configuring-dot_envjson--envjson))
+and then use it from a browser entry point:
 
 ```html
 <script type="module">
@@ -51,11 +57,13 @@ Create a `.env.json` file (see [Configuring `dot_env.json` / `.env.json`](#confi
 </script>
 ```
 
-> **Note**: The polyfill attaches `LanguageModel` to `window` as a side effect. There are no named exports.
+> **Note**: The polyfill attaches `LanguageModel` to `window` as a side effect.
+> There are no named exports.
 
 ### Example based on `index.html` in this repo
 
-The included `index.html` demonstrates the full surface area of the polyfill, including:
+The included `index.html` demonstrates the full surface area of the polyfill,
+including:
 
 - `LanguageModel.create()` with options
 - `prompt()` and `promptStreaming()`
@@ -105,11 +113,12 @@ This repo ships with a template file:
   "apiKey": "",
   "projectId": "",
   "appId": "",
-  "modelName": ""
+  "modelName": "",
 }
 ```
 
-You should treat `dot_env.json` as a **template** and create a real `.env.json` that is **not committed** with your secrets.
+You should treat `dot_env.json` as a **template** and create a real `.env.json`
+that is **not committed** with your secrets.
 
 ### 1. Create `.env.json`
 
@@ -132,18 +141,15 @@ Then open `.env.json` and fill in the values from your Firebase project:
 
 ### 2. Field-by-field explanation
 
-- `apiKey`
-  Your **Firebase Web API key**. You can find this in the Firebase Console under:
-  *Project settings → General → Your apps → Web app*.
+- `apiKey` Your **Firebase Web API key**. You can find this in the Firebase
+  Console under: _Project settings → General → Your apps → Web app_.
 
-- `projectId`
-  The **GCP / Firebase project ID**, e.g. `my-ai-project`.
+- `projectId` The **GCP / Firebase project ID**, e.g. `my-ai-project`.
 
-- `appId`
-  The **Firebase Web app ID**, e.g. `1:1234567890:web:abcdef123456`.
+- `appId` The **Firebase Web app ID**, e.g. `1:1234567890:web:abcdef123456`.
 
-- `modelName` (optional)
-  The Gemini model ID to use. If omitted, the polyfill defaults to:
+- `modelName` (optional) The Gemini model ID to use. If omitted, the polyfill
+  defaults to:
 
   ```json
   "modelName": "gemini-2.5-flash-lite"
@@ -158,11 +164,14 @@ These fields are passed directly to:
 
 and `modelName` is used to select which Gemini model to call.
 
-> **Important:** Do **not** commit a real `.env.json` with production credentials to source control. Use `dot_env.json` as the committed template and keep `.env.json` local.
+> **Important:** Do **not** commit a real `.env.json` with production
+> credentials to source control. Use `dot_env.json` as the committed template
+> and keep `.env.json` local.
 
 ### 3. Wiring the config into the polyfill
 
-Once `.env.json` is filled out, you can import it and expose it to the polyfill exactly like in `index.html`:
+Once `.env.json` is filled out, you can import it and expose it to the polyfill
+exactly like in `index.html`:
 
 ```js
 import firebaseConfig from './.env.json' with { type: 'json' };
@@ -174,13 +183,15 @@ if (!('LanguageModel' in window)) {
 }
 ```
 
-From this point on, `LanguageModel.create()` will use your Firebase configuration.
+From this point on, `LanguageModel.create()` will use your Firebase
+configuration.
 
 ---
 
 ## API surface (brief overview)
 
-Once the polyfill is loaded and `window.LanguageModel` is available, you can use it roughly as described by the Prompt API proposal.
+Once the polyfill is loaded and `window.LanguageModel` is available, you can use
+it roughly as described by the Prompt API proposal.
 
 ### Availability & parameters
 
@@ -196,9 +207,7 @@ console.log(params); // Defaults for the cloud model
 
 ```js
 const model = await LanguageModel.create({
-  initialPrompts: [
-    { role: 'system', content: 'You are a helpful assistant.' },
-  ],
+  initialPrompts: [{ role: 'system', content: 'You are a helpful assistant.' }],
 });
 ```
 
@@ -244,7 +253,8 @@ For a complete, end-to-end example, see the `index.html` file in this directory.
 
 ## Running the demo locally
 
-1. Install dependencies and this package (if using the npm-installed version in another project):
+1. Install dependencies and this package (if using the npm-installed version in
+   another project):
 
    ```bash
    npm install
@@ -263,7 +273,8 @@ For a complete, end-to-end example, see the `index.html` file in this directory.
    npm start
    ```
 
-You should see network requests to the Vertex AI / Firebase AI backend and streaming responses logged in the console.
+You should see network requests to the Vertex AI / Firebase AI backend and
+streaming responses logged in the console.
 
 ## License
 
