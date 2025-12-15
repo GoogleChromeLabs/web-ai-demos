@@ -1,0 +1,43 @@
+{
+  "name": "prompt-api-polyfill",
+  "version": "0.1.0",
+  "description": "Polyfill for the Prompt API (`LanguageModel`) backed by Firebase AI Logic.",
+  "type": "module",
+  "main": "./prompt-api-polyfill.js",
+  "module": "./prompt-api-polyfill.js",
+  "browser": "./prompt-api-polyfill.js",
+  "exports": {
+    ".": "./prompt-api-polyfill.js"
+  },
+  "files": [
+    "async-iterator-polyfill.js",
+    "json-schema-converter.js",
+    "multimodal-converter.js",
+    "prompt-api-polyfill.js",
+    "dot_env.json"
+  ],
+  "sideEffects": true,
+  "keywords": [
+    "prompt-api",
+    "language-model",
+    "polyfill",
+    "firebase",
+    "web-ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git",
+    "directory": "prompt-api-polyfill"
+  },
+  "bugs": {
+    "url": "https://github.com/GoogleChromeLabs/web-ai-demos/issues"
+  },
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos#readme",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "npx http-server"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
