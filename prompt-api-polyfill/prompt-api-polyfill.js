@@ -493,6 +493,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         return totalTokens;
       } catch (e) {
         // The API can't reject, so just return 0 if we don't know.
+        console.warn('The underlying API call failed, quota usage (0) is not reported accurately.');
         return 0;
       }
     }
