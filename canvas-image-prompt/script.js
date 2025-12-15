@@ -29,32 +29,33 @@ button.onclick = async (event) => {
   }
 };
 
-/* Canvas */
+referenceImage.onload = async () => {
+  canvas.width = referenceImage.width;
+  canvas.height = referenceImage.height;
 
-canvas.width = referenceImage.width;
-canvas.height = referenceImage.height;
+  let isPainting = false;
 
-let isPainting = false;
+  const ctx = canvas.getContext("2d", { alpha: false });
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "white";
 
-const ctx = canvas.getContext("2d", { alpha: false });
-ctx.lineWidth = 4;
-ctx.lineCap = "round";
-ctx.strokeStyle = "white";
+  const draw = ({ clientX, clientY }) => {
+    if (isPainting) {
+      ctx.lineTo(clientX - canvas.offsetLeft, clientY - canvas.offsetTop);
+      ctx.stroke();
+    }
+  };
 
-const draw = ({ clientX, clientY }) => {
-  if (isPainting) {
-    ctx.lineTo(clientX - canvas.offsetLeft, clientY - canvas.offsetTop);
-    ctx.stroke();
-  }
-};
+  canvas.addEventListener("mousedown", () => {
+    isPainting = true;
+  });
 
-canvas.addEventListener("mousedown", () => {
-  isPainting = true;
-});
+  canvas.addEventListener("mouseup", () => {
+    isPainting = false;
+    ctx.beginPath();
+  });
 
-canvas.addEventListener("mouseup", () => {
-  isPainting = false;
-  ctx.beginPath();
-});
-
-canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mousemove", draw);
+}
+referenceImage.src = "monalisa.jpg";
