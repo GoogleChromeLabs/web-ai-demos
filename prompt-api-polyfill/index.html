@@ -182,7 +182,9 @@
 
   languageModel.onquotaoverflow = quotaOverflowListener1;
   languageModel.addEventListener('quotaoverflow', quotaOverflowListener2);
-  await languageModel.prompt('foo'.repeat(10_000_000));
+  await languageModel
+    .prompt('foo'.repeat(10_000_000))
+    .catch((error) => console.error(error));
 
   console.log(languageModel.topK, languageModel.temperature);
 

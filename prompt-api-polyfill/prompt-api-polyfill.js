@@ -493,7 +493,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         return totalTokens;
       } catch (e) {
         // The API can't reject, so just return 0 if we don't know.
-        console.warn('The underlying API call failed, quota usage (0) is not reported accurately.');
+        console.warn(
+          'The underlying API call failed, quota usage (0) is not reported accurately.'
+        );
         return 0;
       }
     }
@@ -510,6 +512,11 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           for (const msg of input) {
             if (typeof msg.content === 'string') {
               combinedParts.push({ text: msg.content });
+              if (msg.prefix) {
+                console.warn(
+                  "The `prefix` flag isn't supported and was ignored."
+                );
+              }
             } else if (Array.isArray(msg.content)) {
               for (const c of msg.content) {
                 if (c.type === 'text') combinedParts.push({ text: c.value });
@@ -525,7 +532,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           }
           return combinedParts;
         }
-
         return input.map((s) => ({ text: String(s) }));
       }
 
