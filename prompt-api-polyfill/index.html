@@ -171,12 +171,18 @@
 
   console.log(languageModel.inputUsage, languageModel.inputQuota);
 
-  const quotaOverflowListener = (e) => {
+  const quotaOverflowListener1 = (e) => {
     console.log(e);
   };
-  languageModel.onquotaoverflow = quotaOverflowListener;
-  languageModel.addEventListener('quotaoverflow', quotaOverflowListener);
-  languageModel.removeEventListener('quotaoverflow', quotaOverflowListener);
+
+  const quotaOverflowListener2 = (e) => {
+    languageModel.removeEventListener('quotaoverflow', quotaOverflowListener2);
+    console.log(e);
+  };
+
+  languageModel.onquotaoverflow = quotaOverflowListener1;
+  languageModel.addEventListener('quotaoverflow', quotaOverflowListener2);
+  await languageModel.prompt('foo'.repeat(10_000_000));
 
   console.log(languageModel.topK, languageModel.temperature);
 
