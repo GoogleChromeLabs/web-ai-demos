@@ -216,9 +216,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           (p) => p.role !== 'system'
         );
 
-        if (systemPrompts.length > 0) {
-          systemInstruction = systemPrompts.map((p) => p.content).join('\n');
-          inCloudParams.systemInstruction = systemInstruction;
+        if (systemPrompts.length > 0) {          
+          inCloudParams.systemInstruction = systemPrompts.map((p) => p.content).join('\n');
         }
         // Await the conversion of history items (in case of images in history)
         initialHistory = await convertToFirebaseHistory(conversationPrompts);
