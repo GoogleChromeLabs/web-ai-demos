@@ -29,7 +29,7 @@ button.onclick = async (event) => {
   }
 };
 
-referenceImage.onload = async () => {
+referenceImage.onload = () => {
   canvas.width = referenceImage.width;
   canvas.height = referenceImage.height;
 
