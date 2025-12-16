@@ -6,7 +6,9 @@ import { Schema } from 'https://esm.run/firebase/ai';
  * @returns {Schema} - The Firebase Vertex AI Schema instance.
  */
 export function convertJsonSchemaToVertexSchema(jsonSchema) {
-  if (!jsonSchema) return undefined;
+  if (!jsonSchema) {
+    return undefined;
+  }
 
   // Extract common base parameters supported by all Schema types
   const baseParams = {

@@ -22,7 +22,9 @@
     const stream = session.promptStreaming('Write me a very long poem', {
       signal: controller.signal,
     });
-    for await (const chunk of stream) console.log(chunk);
+    for await (const chunk of stream) {
+      console.log(chunk);
+    }
   } catch {
     // Do nothing.
   }
