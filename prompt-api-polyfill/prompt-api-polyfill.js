@@ -112,11 +112,13 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     set onquotaoverflow(handler) {
-      if (this.#onquotaoverflow)
+      if (this.#onquotaoverflow) {
         this.removeEventListener('quotaoverflow', this.#onquotaoverflow);
+      }
       this.#onquotaoverflow = handler;
-      if (typeof handler === 'function')
+      if (typeof handler === 'function') {
         this.addEventListener('quotaoverflow', handler);
+      }
     }
 
     static async availability(options = {}) {
@@ -272,8 +274,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     // Instance Methods
 
     async clone(options = {}) {
-      if (this.#destroyed)
+      if (this.#destroyed) {
         throw new DOMException('Session is destroyed', 'InvalidStateError');
+      }
       // Clone private history
       const historyCopy = JSON.parse(JSON.stringify(this.#history));
       return new LanguageModel(
@@ -293,10 +296,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     async prompt(input, options = {}) {
-      if (this.#destroyed)
+      if (this.#destroyed) {
         throw new DOMException('Session is destroyed', 'InvalidStateError');
-      if (options.signal?.aborted)
+      }
+      if (options.signal?.aborted) {
         throw new DOMException('Aborted', 'AbortError');
+      }
 
       if (options.responseConstraint) {
         const vertexSchema = convertJsonSchemaToVertexSchema(
@@ -320,8 +325,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         const { totalTokens } = await this.#model.countTokens({
           contents: [{ role: 'user', parts }],
         });
-        if (this.#inputUsage + totalTokens > this.inputQuota)
+        if (this.#inputUsage + totalTokens > this.inputQuota) {
           this.dispatchEvent(new Event('quotaoverflow'));
+        }
 
         const requestContents = [...this.#history, userContent];
 
@@ -347,10 +353,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     promptStreaming(input, options = {}) {
-      if (this.#destroyed)
+      if (this.#destroyed) {
         throw new DOMException('Session is destroyed', 'InvalidStateError');
-      if (options.signal?.aborted)
+      }
+      if (options.signal?.aborted) {
         throw new DOMException('Aborted', 'AbortError');
+      }
 
       const _this = this; // Capture 'this' to access private fields in callback
 
@@ -402,8 +410,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const { totalTokens } = await _this.#model.countTokens({
               contents: [{ role: 'user', parts }],
             });
-            if (_this.#inputUsage + totalTokens > this.inputQuota)
+            if (_this.#inputUsage + totalTokens > this.inputQuota) {
               this.dispatchEvent(new Event('quotaoverflow'));
+            }
 
             const requestContents = [..._this.#history, userContent];
 
@@ -457,10 +466,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     async append(input, options = {}) {
-      if (this.#destroyed)
+      if (this.#destroyed) {
         throw new DOMException('Session is destroyed', 'InvalidStateError');
-      if (options.signal?.aborted)
+      }
+      if (options.signal?.aborted) {
         throw new DOMException('Aborted', 'AbortError');
+      }
 
       const parts = await this.#processInput(input);
       const content = { role: 'user', parts: parts };
@@ -483,8 +494,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     async measureInputUsage(input) {
-      if (this.#destroyed)
+      if (this.#destroyed) {
         throw new DOMException('Session is destroyed', 'InvalidStateError');
+      }
 
       try {
         const parts = await this.#processInput(input);
@@ -520,8 +532,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
               }
             } else if (Array.isArray(msg.content)) {
               for (const c of msg.content) {
-                if (c.type === 'text') combinedParts.push({ text: c.value });
-                else {
+                if (c.type === 'text') {
+                  combinedParts.push({ text: c.value });
+                } else {
                   const part = await MultimodalConverter.convert(
                     c.type,
                     c.value
