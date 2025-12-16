@@ -188,64 +188,11 @@ configuration.
 
 ---
 
-## API surface (brief overview)
+## API surface
 
 Once the polyfill is loaded and `window.LanguageModel` is available, you can use
-it roughly as described by the Prompt API proposal.
-
-### Availability & parameters
-
-```js
-const availability = await LanguageModel.availability();
-const params = await LanguageModel.params();
-
-console.log(availability); // Always 'available'
-console.log(params); // Defaults for the cloud model
-```
-
-### Creating a session
-
-```js
-const model = await LanguageModel.create({
-  initialPrompts: [{ role: 'system', content: 'You are a helpful assistant.' }],
-});
-```
-
-### Simple prompt
-
-```js
-const answer = await model.prompt('Hello!');
-console.log(answer);
-```
-
-### Streaming prompt
-
-```js
-const controller = new AbortController();
-
-try {
-  for await (const chunk of model.promptStreaming('Streamed response', {
-    signal: controller.signal,
-  })) {
-    console.log(chunk);
-  }
-} catch (error) {
-  // Handle AbortError or backend errors
-}
-```
-
-### Multimodal input
-
-```js
-const image = document.querySelector('img');
-
-const result = await model.prompt([
-  { role: 'assistant', content: 'Describe this image:' },
-  { role: 'user', content: [{ type: 'image', value: image }] },
-]);
-
-console.log(result);
-```
+it as described in the
+[Prompt API documentation](https://developer.chrome.com/docs/ai/prompt-api).
 
 For a complete, end-to-end example, see the `index.html` file in this directory.
 
