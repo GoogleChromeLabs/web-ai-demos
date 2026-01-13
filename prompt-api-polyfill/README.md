@@ -79,14 +79,6 @@ npm install prompt-api-polyfill
 </script>
 ```
 
-Alternatively, pass the key via options:
-
-```js
-const session = await LanguageModel.create({
-  apiKey: "YOUR_GEMINI_CONFIG"
-});
-```
-
 ---
 
 ## Configuration
