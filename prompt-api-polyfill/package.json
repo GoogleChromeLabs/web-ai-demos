@@ -39,6 +39,7 @@
     "start": "npx http-server"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "prettier-plugin-curly": "^0.4.1"
   }
 }
