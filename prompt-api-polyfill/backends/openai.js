@@ -18,11 +18,78 @@ export default class OpenAIBackend extends PolyfillBackend {
     async createSession(options, inCloudParams) {
         // OpenAI doesn't have a "session" object like Gemini, so we return a context object
         // tailored for our generate methods.
-        return {
+        const modelContext = {
             model: options.modelName || this.defaultModel,
             temperature: inCloudParams.generationConfig?.temperature,
             top_p: 1.0, // Default to 1.0 as topK is not directly supported the same way
             systemInstruction: inCloudParams.systemInstruction
+        };
+
+        const config = inCloudParams.generationConfig || {};
+        if (config.responseSchema) {
+            const { schema, wrapped } = this.#fixSchemaForOpenAI(config.responseSchema);
+            modelContext.response_format = {
+                type: 'json_schema',
+                json_schema: {
+                    name: 'response',
+                    strict: true,
+                    schema: schema,
+                },
+            };
+            modelContext.response_wrapped = wrapped;
+        } else if (config.responseMimeType === 'application/json') {
+            modelContext.response_format = { type: 'json_object' };
+        }
+
+        return modelContext;
+    }
+
+    /**
+     * OpenAI Structured Outputs require:
+     * 1. All fields in objects to be marked as 'required'.
+     * 2. Objects to have 'additionalProperties: false'.
+     * 3. The root must be an 'object'.
+     */
+    #fixSchemaForOpenAI(schema) {
+        if (typeof schema !== 'object' || schema === null) return { schema, wrapped: false };
+
+        const processNode = (node) => {
+            if (node.type === 'object') {
+                if (node.properties) {
+                    node.additionalProperties = false;
+                    node.required = Object.keys(node.properties);
+                    for (const key in node.properties) {
+                        processNode(node.properties[key]);
+                    }
+                } else {
+                    node.additionalProperties = false;
+                    node.required = [];
+                }
+            } else if (node.type === 'array' && node.items) {
+                processNode(node.items);
+            }
+            return node;
+        };
+
+        // Deep clone to avoid side effects
+        const cloned = JSON.parse(JSON.stringify(schema));
+
+        if (cloned.type !== 'object') {
+            // Wrap in object as OpenAI requires object root
+            return {
+                wrapped: true,
+                schema: {
+                    type: 'object',
+                    properties: { value: cloned },
+                    required: ['value'],
+                    additionalProperties: false
+                }
+            };
+        }
+
+        return {
+            wrapped: false,
+            schema: processNode(cloned)
         };
     }
 
@@ -61,6 +128,13 @@ export default class OpenAIBackend extends PolyfillBackend {
         const { hasAudio } = this.#validateContent(messages);
         const model = this.#routeModel(modelContext, hasAudio);
 
+        if (model === 'gpt-4o-audio-preview' && modelContext.response_format) {
+            throw new DOMException(
+                "OpenAI audio model ('gpt-4o-audio-preview') does not support structured outputs (responseConstraint).",
+                'NotSupportedError'
+            );
+        }
+
         const options = {
             model: model,
             messages: messages,
@@ -70,11 +144,27 @@ export default class OpenAIBackend extends PolyfillBackend {
             options.temperature = modelContext.temperature;
         }
 
+        if (modelContext.response_format) {
+            options.response_format = modelContext.response_format;
+        }
+
         try {
             const response = await this.openai.chat.completions.create(options);
 
             const choice = response.choices[0];
-            const text = choice.message.content;
+            let text = choice.message.content;
+
+            if (modelContext.response_wrapped && text) {
+                try {
+                    const parsed = JSON.parse(text);
+                    if (parsed && typeof parsed === 'object' && 'value' in parsed) {
+                        text = JSON.stringify(parsed.value);
+                    }
+                } catch (e) {
+                    // Ignore parsing error, return raw text
+                }
+            }
+
             const usage = response.usage?.total_tokens || 0;
 
             return { text, usage };
@@ -89,6 +179,13 @@ export default class OpenAIBackend extends PolyfillBackend {
         const { hasAudio } = this.#validateContent(messages);
         const model = this.#routeModel(modelContext, hasAudio);
 
+        if (model === 'gpt-4o-audio-preview' && modelContext.response_format) {
+            throw new DOMException(
+                "OpenAI audio model ('gpt-4o-audio-preview') does not support structured outputs (responseConstraint).",
+                'NotSupportedError'
+            );
+        }
+
         const options = {
             model: model,
             messages: messages,
@@ -99,14 +196,21 @@ export default class OpenAIBackend extends PolyfillBackend {
             options.temperature = modelContext.temperature;
         }
 
+        if (modelContext.response_format) {
+            options.response_format = modelContext.response_format;
+        }
+
         try {
             const stream = await this.openai.chat.completions.create(options);
 
             // Convert OpenAI stream to an AsyncIterable that yields chunks 
             return (async function* () {
+                let firstChunk = true;
                 for await (const chunk of stream) {
-                    const text = chunk.choices[0]?.delta?.content;
+                    let text = chunk.choices[0]?.delta?.content;
                     if (text) {
+                        // Note: Unwrapping a wrapped object in a stream is complex.
+                        // For now, streaming wrapped results will yield the full JSON including the wrapper.
                         yield {
                             text: () => text,
                             usageMetadata: { totalTokenCount: 0 }
