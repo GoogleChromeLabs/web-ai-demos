@@ -3,6 +3,7 @@
  * Backends:
  * - Firebase AI Logic (via `firebase/ai`)
  * - Google Gemini API (via `@google/generative-ai`)
+ * - OpenAI API (via `openai`)
  *
  * Spec: https://github.com/webmachinelearning/prompt-api/blob/main/README.md
  *
@@ -11,6 +12,7 @@
  * 2. Configure the backend:
  *    - For Firebase: Define `window.FIREBASE_CONFIG`.
  *    - For Gemini: Define `window.GEMINI_CONFIG`.
+ *    - For OpenAI: Define `window.OPENAI_CONFIG`.
  */
 
 import './async-iterator-polyfill.js';
@@ -107,7 +109,33 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
     static async availability(options = {}) {
       await LanguageModel.#validateOptions(options);
+
+      const backendClass = await LanguageModel.#getBackendClass();
+
+      // OpenAI specific: check for mixed modalities
+      if (backendClass?.name === 'OpenAIBackend' && options.expectedInputs) {
+        const hasAudio = options.expectedInputs.some(input => input.type === 'audio');
+        const hasImage = options.expectedInputs.some(input => input.type === 'image');
+        if (hasAudio && hasImage) {
+          return 'unavailable';
+        }
+      }
+
       return 'available';
+    }
+
+    static async #getBackendClass() {
+      if (window.FIREBASE_CONFIG) {
+        const { default: FirebaseBackend } = await import('./backends/firebase.js');
+        return FirebaseBackend;
+      } else if (window.GEMINI_CONFIG && window.GEMINI_CONFIG.apiKey) {
+        const { default: GeminiBackend } = await import('./backends/gemini.js');
+        return GeminiBackend;
+      } else if (window.OPENAI_CONFIG && window.OPENAI_CONFIG.apiKey) {
+        const { default: OpenAIBackend } = await import('./backends/openai.js');
+        return OpenAIBackend;
+      }
+      return null;
     }
 
     static async #validateOptions(options = {}) {
@@ -173,20 +201,17 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       }
 
       // --- Backend Selection Logic ---
+      const BackendClass = await LanguageModel.#getBackendClass();
       let backend;
-      if (window.FIREBASE_CONFIG) {
-        // Import Firebase backend
-        const { default: FirebaseBackend } = await import(
-          './backends/firebase.js'
-        );
-        backend = new FirebaseBackend(window.FIREBASE_CONFIG);
-      } else if (window.GEMINI_CONFIG && window.GEMINI_CONFIG.apiKey) {
-        // Import Gemini backend
-        const { default: GeminiBackend } = await import('./backends/gemini.js');
-        backend = new GeminiBackend(window.GEMINI_CONFIG.apiKey);
+      if (BackendClass?.name === 'FirebaseBackend') {
+        backend = new BackendClass(window.FIREBASE_CONFIG);
+      } else if (BackendClass?.name === 'GeminiBackend') {
+        backend = new BackendClass(window.GEMINI_CONFIG.apiKey);
+      } else if (BackendClass?.name === 'OpenAIBackend') {
+        backend = new BackendClass(window.OPENAI_CONFIG);
       } else {
         throw new DOMException(
-          'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG or window.GEMINI_CONFIG.',
+          'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
           'NotSupportedError'
         );
       }

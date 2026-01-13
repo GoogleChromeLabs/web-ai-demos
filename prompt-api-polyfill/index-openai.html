@@ -1,0 +1,215 @@
+<img src="gemini.webp" width="500" height="281" alt="Gemini logo" />
+<audio controls src="jfk.wav"></audio>
+<button id="stopButton">Stop</button>
+
+<script type="module">
+  import openaiConfig from './.env-openai.json' with { type: 'json' };
+  window.OPENAI_CONFIG = openaiConfig;
+
+  const image = document.querySelector('img');
+  const audio = await fetch(document.querySelector('audio').src).then(
+    (response) => response.blob()
+  );
+
+  if (!('LanguageModel' in window)) {
+    await import('./prompt-api-polyfill.js');
+  }
+
+  const controller = new AbortController();
+  stopButton.onclick = () => controller.abort();
+  const session = await LanguageModel.create();
+  try {
+    const stream = session.promptStreaming('Write me a very long poem', {
+      signal: controller.signal,
+    });
+    for await (const chunk of stream) console.log(chunk);
+  } catch {
+    // Do nothing.
+  }
+
+  const audioSession = await LanguageModel.create({
+    topK: 1,
+    temperature: 0,
+    expectedInputs: [
+      { type: 'text', languages: ['en'] },
+      { type: 'audio' },
+    ],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+  });
+
+  const imageSession = await LanguageModel.create({
+    topK: 1,
+    temperature: 0,
+    expectedInputs: [
+      { type: 'text', languages: ['en'] },
+      { type: 'image' },
+    ],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+  });
+
+  const mixedAvailability = await LanguageModel.availability({
+    expectedInputs: [{ type: 'image' }, { type: 'audio' }]
+  });
+  console.log('Mixed availability (should be unavailable):', mixedAvailability);
+
+  const languageModelAvailability1 = await LanguageModel.availability();
+  console.log(languageModelAvailability1);
+
+  const languageModelAvailability2 = await LanguageModel.availability({
+    topK: 1,
+    temperature: 0,
+    expectedInputs: [{ type: 'image' }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+  });
+  console.log(languageModelAvailability2);
+
+  const languageModelAvailability3 = await LanguageModel.availability({
+    topK: 1,
+    temperature: 0,
+    expectedInputs: [{ type: 'audio' }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+  });
+  console.log(languageModelAvailability3);
+
+  const languageModelParams = await LanguageModel.params();
+  console.log(
+    languageModelParams.defaultTopK,
+    languageModelParams.maxTopK,
+    languageModelParams.defaultTemperature,
+    languageModelParams.maxTemperature
+  );
+
+  const schema = {
+    type: 'object',
+    required: ['name'],
+    additionalProperties: false,
+    properties: {
+      name: {
+        type: 'string',
+      },
+    },
+  };
+
+  const assistantResult1 = await audioSession.prompt('foo', {
+    signal: new AbortController().signal,
+    responseConstraint: schema,
+    omitResponseConstraintInput: true,
+  });
+  console.log(assistantResult1);
+
+  const assistantResult2 = await audioSession.prompt([
+    { role: 'assistant', content: 'foo', prefix: true },
+  ]);
+  console.log(assistantResult2);
+
+  const assistantResult3 = await imageSession.prompt([
+    { role: 'assistant', content: 'foo' },
+    { role: 'user', content: [{ type: 'image', value: image }] },
+  ]);
+  console.log(assistantResult3);
+
+  for await (const chunk of audioSession.promptStreaming('foo', {
+    signal: new AbortController().signal,
+    responseConstraint: schema,
+    omitResponseConstraintInput: true,
+  })) {
+    console.log(chunk);
+  }
+
+  for await (const chunk of audioSession.promptStreaming(
+    [{ role: 'assistant', content: 'foo' }],
+    {
+      signal: new AbortController().signal,
+    }
+  )) {
+    console.log(chunk);
+  }
+
+  for await (const chunk of audioSession.promptStreaming(
+    [
+      { role: 'assistant', content: 'foo' },
+      { role: 'user', content: [{ type: 'audio', value: audio }] },
+    ],
+    { signal: new AbortController().signal }
+  )) {
+    console.log(chunk);
+  }
+
+  for await (const chunk of imageSession.promptStreaming(
+    [
+      { role: 'assistant', content: 'foo' },
+      { role: 'user', content: [{ type: 'image', value: image }] },
+    ],
+    { signal: new AbortController().signal }
+  )) {
+    console.log(chunk);
+  }
+
+
+  await audioSession.append('foo');
+  await audioSession.append([{ role: 'assistant', content: 'foo' }]);
+  await audioSession.append('foo', { signal: new AbortController().signal });
+  await audioSession.append([{ role: 'assistant', content: 'foo' }], {
+    signal: new AbortController().signal,
+  });
+
+  const languageModelInputUsage1 = await audioSession.measureInputUsage(
+    'foo',
+    {
+      signal: new AbortController().signal,
+    }
+  );
+  console.log(languageModelInputUsage1);
+
+  const languageModelInputUsage2 = await audioSession.measureInputUsage(
+    [
+      {
+        role: 'assistant',
+        content: 'foo',
+      },
+    ],
+    {
+      signal: new AbortController().signal,
+    }
+  );
+  console.log(languageModelInputUsage2);
+
+  const languageModelInputUsage3 = await audioSession.measureInputUsage(
+    [
+      { role: 'assistant', content: 'foo' },
+      { role: 'user', content: 'bar' },
+    ],
+    { signal: new AbortController().signal }
+  );
+  console.log(languageModelInputUsage3);
+
+  console.log(audioSession.inputUsage, audioSession.inputQuota);
+
+  const quotaOverflowListener1 = (e) => {
+    console.log(e);
+  };
+
+  const quotaOverflowListener2 = (e) => {
+    audioSession.removeEventListener('quotaoverflow', quotaOverflowListener2);
+    console.log(e);
+  };
+
+  audioSession.onquotaoverflow = quotaOverflowListener1;
+  audioSession.addEventListener('quotaoverflow', quotaOverflowListener2);
+  await audioSession
+    .prompt('foo'.repeat(10_000_000))
+    .catch((error) => console.error(error));
+
+  console.log(audioSession.topK, audioSession.temperature);
+
+  const languageModelClone1 = await audioSession.clone();
+  console.log(languageModelClone1);
+
+  const languageModelClone2 = await audioSession.clone({
+    signal: new AbortController().signal,
+  });
+  console.log(languageModelClone2);
+
+  audioSession.destroy();
+  imageSession.destroy();
+</script>
