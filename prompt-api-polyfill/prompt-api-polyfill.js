@@ -10,7 +10,7 @@
  * 1. Include this script in your HTML type="module".
  * 2. Configure the backend:
  *    - For Firebase: Define `window.FIREBASE_CONFIG`.
- *    - For Gemini: Define `window.GEMINI_CONFIG` (or pass `apiKey` in `LanguageModel.create(options)`).
+ *    - For Gemini: Define `window.GEMINI_CONFIG`.
  */
 
 import './async-iterator-polyfill.js';
@@ -180,18 +180,15 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           './backends/firebase.js'
         );
         backend = new FirebaseBackend(window.FIREBASE_CONFIG);
-      } else if (window.GEMINI_CONFIG && window.GEMINI_CONFIG.apiKey || options.apiKey) {
+      } else if (window.GEMINI_CONFIG && window.GEMINI_CONFIG.apiKey) {
         // Import Gemini backend
         const { default: GeminiBackend } = await import('./backends/gemini.js');
-        backend = new GeminiBackend(window.GEMINI_CONFIG.apiKey || options.apiKey);
+        backend = new GeminiBackend(window.GEMINI_CONFIG.apiKey);
       } else {
-        // Fallback: Default to Gemini (and load its module) even if key missing,
-        // it will probably fail but that's consistent with previous logic.
-        console.warn(
-          'Prompt API Polyfill: No backend configuration found (FIREBASE_CONFIG or GEMINI_CONFIG). Defaulting to Gemini.'
+        throw new DOMException(
+          'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG or window.GEMINI_CONFIG.',
+          'NotSupportedError'
         );
-        const { default: GeminiBackend } = await import('./backends/gemini.js');
-        backend = new GeminiBackend('');
       }
 
       const defaults = {
@@ -549,6 +546,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
   // Attach to window
   window.LanguageModel = LanguageModel;
   console.log(
-    'Polyfill: window.LanguageModel is now backed by Firebase AI Logic / Gemini API.'
+    'Polyfill: window.LanguageModel is now backed by the Prompt API polyfill.'
   );
 })();

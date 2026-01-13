@@ -25,7 +25,7 @@ natively available.
 
 ### 2. Google Gemini API
 - **Uses**: `@google/generative-ai` SDK.
-- **Config**: Requires `window.GEMINI_CONFIG` or `options.apiKey`.
+- **Config**: Requires `window.GEMINI_CONFIG`.
 - **Default Model**: `gemini-2.0-flash-lite-preview-02-05`.
 
 ---
