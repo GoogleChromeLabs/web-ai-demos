@@ -3,8 +3,8 @@
 <button id="stopButton">Stop</button>
 
 <script type="module">
-  import firebaseConfig from './.env-firebase.json' with { type: 'json' };
-  window.FIREBASE_CONFIG = firebaseConfig;
+  import geminiConfig from './.env-gemini.json' with { type: 'json' };
+  window.GEMINI_CONFIG = geminiConfig;
 
   const image = document.querySelector('img');
   const audio = await fetch(document.querySelector('audio').src).then(

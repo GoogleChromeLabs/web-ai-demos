@@ -1,22 +1,19 @@
 /**
  * Polyfill for the Prompt API (`LanguageModel`)
- * Backend: Firebase AI Logic
+ * Backends:
+ * - Firebase AI Logic (via `firebase/ai`)
+ * - Google Gemini API (via `@google/generative-ai`)
+ *
  * Spec: https://github.com/webmachinelearning/prompt-api/blob/main/README.md
  *
- * * Instructions:
+ * Instructions:
  * 1. Include this script in your HTML type="module".
- * 2. Define window.FIREBASE_CONFIG with your Firebase configuration object BEFORE importing this.
+ * 2. Configure the backend:
+ *    - For Firebase: Define `window.FIREBASE_CONFIG`.
+ *    - For Gemini: Define `window.GEMINI_CONFIG` (or pass `apiKey` in `LanguageModel.create(options)`).
  */
 
-import { initializeApp } from 'https://esm.run/firebase/app';
-import {
-  getAI,
-  getGenerativeModel,
-  GoogleAIBackend,
-  InferenceMode,
-} from 'https://esm.run/firebase/ai';
-
-import './async-iterator-polyfill.js'; // Still needed for Safari 26.2.
+import './async-iterator-polyfill.js';
 import MultimodalConverter from './multimodal-converter.js';
 import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
@@ -25,21 +22,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     return;
   }
 
-  const firebaseConfig = window.FIREBASE_CONFIG;
-  if (!firebaseConfig) {
-    console.error(
-      'Firebase Prompt API Polyfill: Missing configuration. Please set window.FIREBASE_CONFIG.'
-    );
-    return;
-  }
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const ai = getAI(app, { backend: new GoogleAIBackend() });
-  const MODEL_NAME = firebaseConfig.modelName || 'gemini-2.5-flash-lite';
-
-  // Helper to convert initial History
-  async function convertToFirebaseHistory(prompts) {
+  // --- Helper to convert initial History ---
+  async function convertToHistory(prompts) {
     const history = [];
     for (const p of prompts) {
       const role = p.role === 'assistant' ? 'model' : 'user';
@@ -71,6 +55,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
    * Main LanguageModel Class
    */
   class LanguageModel extends EventTarget {
+    #backend;
     #model;
     #history;
     #options;
@@ -81,8 +66,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     #temperature;
     #onquotaoverflow;
 
-    constructor(model, initialHistory, options = {}, inCloudParams) {
+    constructor(backend, model, initialHistory, options = {}, inCloudParams) {
       super();
+      this.#backend = backend;
       this.#model = model;
       this.#history = initialHistory || [];
       this.#options = options;
@@ -179,14 +165,35 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
     static async create(options = {}) {
       const availability = await LanguageModel.availability(options);
-      // This will be relevant when the implementation is backed by a local
-      // model that needs downloading and simulates the Prompt API's behavior.
       if (availability === 'downloadable' || availability === 'downloading') {
         throw new DOMException(
           'Requires a user gesture when availability is "downloading" or "downloadable".',
           'NotAllowedError'
         );
       }
+
+      // --- Backend Selection Logic ---
+      let backend;
+      if (window.FIREBASE_CONFIG) {
+        // Import Firebase backend
+        const { default: FirebaseBackend } = await import(
+          './backends/firebase.js'
+        );
+        backend = new FirebaseBackend(window.FIREBASE_CONFIG);
+      } else if (window.GEMINI_CONFIG && window.GEMINI_CONFIG.apiKey || options.apiKey) {
+        // Import Gemini backend
+        const { default: GeminiBackend } = await import('./backends/gemini.js');
+        backend = new GeminiBackend(window.GEMINI_CONFIG.apiKey || options.apiKey);
+      } else {
+        // Fallback: Default to Gemini (and load its module) even if key missing,
+        // it will probably fail but that's consistent with previous logic.
+        console.warn(
+          'Prompt API Polyfill: No backend configuration found (FIREBASE_CONFIG or GEMINI_CONFIG). Defaulting to Gemini.'
+        );
+        const { default: GeminiBackend } = await import('./backends/gemini.js');
+        backend = new GeminiBackend('');
+      }
+
       const defaults = {
         temperature: 1.0,
         topK: 3,
@@ -195,7 +202,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const resolvedOptions = { ...defaults, ...options };
 
       const inCloudParams = {
-        model: MODEL_NAME,
+        model: backend.modelName,
         generationConfig: {
           temperature: resolvedOptions.temperature,
           topK: resolvedOptions.topK,
@@ -203,7 +210,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       };
 
       let initialHistory = [];
-      let systemInstruction = undefined;
 
       if (
         resolvedOptions.initialPrompts &&
@@ -222,26 +228,21 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             .join('\n');
         }
         // Await the conversion of history items (in case of images in history)
-        initialHistory = await convertToFirebaseHistory(conversationPrompts);
+        initialHistory = await convertToHistory(conversationPrompts);
       }
 
-      const model = getGenerativeModel(ai, {
-        mode: InferenceMode.ONLY_IN_CLOUD,
-        inCloudParams,
-      });
+      const model = await backend.createSession(resolvedOptions, inCloudParams);
 
       // If a monitor callback is provided, simulate simple downloadprogress events
       if (typeof resolvedOptions.monitor === 'function') {
         const monitorTarget = new EventTarget();
 
-        // Let the caller attach listeners
         try {
           resolvedOptions.monitor(monitorTarget);
         } catch (e) {
           console.error('Error in monitor callback:', e);
         }
 
-        // Fire two fake downloadprogress events: first with loaded = 0, then loaded = 1
         try {
           const startEvent = new ProgressEvent('downloadprogress', {
             loaded: 0,
@@ -251,9 +252,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             loaded: 1,
             total: 1,
           });
-          // The `ProgressEvent`'s `currentTarget`, `srcElement` and `target`
-          // properties are `EventTarget`, not `CreateMonitor`, when using the
-          // polyfill. Hopefully developers won't rely on these properties.
           monitorTarget.dispatchEvent(startEvent);
           monitorTarget.dispatchEvent(endEvent);
         } catch (e) {
@@ -262,6 +260,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       }
 
       return new LanguageModel(
+        backend,
         model,
         initialHistory,
         resolvedOptions,
@@ -274,16 +273,27 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     async clone(options = {}) {
       if (this.#destroyed)
         throw new DOMException('Session is destroyed', 'InvalidStateError');
-      // Clone private history
+
       const historyCopy = JSON.parse(JSON.stringify(this.#history));
+      const mergedOptions = { ...this.#options, ...options };
+      const mergedInCloudParams = { ...this.#inCloudParams };
+
+      if (options.temperature !== undefined)
+        mergedInCloudParams.generationConfig.temperature = options.temperature;
+      if (options.topK !== undefined)
+        mergedInCloudParams.generationConfig.topK = options.topK;
+
+      const newModel = await this.#backend.createSession(
+        mergedOptions,
+        mergedInCloudParams
+      );
+
       return new LanguageModel(
-        this.#model,
+        this.#backend,
+        newModel,
         historyCopy,
-        {
-          ...this.#options,
-          ...options,
-        },
-        this.#inCloudParams
+        mergedOptions,
+        mergedInCloudParams
       );
     }
 
@@ -299,16 +309,19 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         throw new DOMException('Aborted', 'AbortError');
 
       if (options.responseConstraint) {
-        const vertexSchema = convertJsonSchemaToVertexSchema(
+        // Update Schema
+        const schema = convertJsonSchemaToVertexSchema(
           options.responseConstraint
         );
         this.#inCloudParams.generationConfig.responseMimeType =
           'application/json';
-        this.#inCloudParams.generationConfig.responseSchema = vertexSchema;
-        this.#model = getGenerativeModel(ai, {
-          mode: InferenceMode.ONLY_IN_CLOUD,
-          inCloudParams: this.#inCloudParams,
-        });
+        this.#inCloudParams.generationConfig.responseSchema = schema;
+
+        // Re-create model with new config/schema
+        this.#model = await this.#backend.createSession(
+          this.#options,
+          this.#inCloudParams
+        );
       }
 
       // Process Input (Async conversion of Blob/Canvas/AudioBuffer)
@@ -316,32 +329,31 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const userContent = { role: 'user', parts: parts };
 
       try {
-        // Estimate usage before request to fire quota events if needed
-        const { totalTokens } = await this.#model.countTokens({
-          contents: [{ role: 'user', parts }],
-        });
+        // Estimate usage
+        const totalTokens = await this.#backend.countTokens(this.#model, [
+          { role: 'user', parts },
+        ]);
+
         if (this.#inputUsage + totalTokens > this.inputQuota)
           this.dispatchEvent(new Event('quotaoverflow'));
 
         const requestContents = [...this.#history, userContent];
 
-        const result = await this.#model.generateContent({
-          contents: requestContents,
-        });
+        const { text, usage } = await this.#backend.generateContent(
+          this.#model,
+          requestContents
+        );
 
-        // Exact usage update from Backend response
-        if (result.response.usageMetadata?.totalTokenCount) {
-          this.#inputUsage = result.response.usageMetadata.totalTokenCount;
+        if (usage) {
+          this.#inputUsage = usage;
         }
 
-        const responseText = result.response.text();
-
         this.#history.push(userContent);
-        this.#history.push({ role: 'model', parts: [{ text: responseText }] });
+        this.#history.push({ role: 'model', parts: [{ text }] });
 
-        return responseText;
+        return text;
       } catch (error) {
-        console.error('Firebase AI Logic Error:', error);
+        console.error('Prompt API Polyfill Error:', error);
         throw error;
       }
     }
@@ -354,26 +366,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       const _this = this; // Capture 'this' to access private fields in callback
 
-      if (options.responseConstraint) {
-        const vertexSchema = convertJsonSchemaToVertexSchema(
-          options.responseConstraint
-        );
-        this.#inCloudParams.generationConfig.responseMimeType =
-          'application/json';
-        this.#inCloudParams.generationConfig.responseSchema = vertexSchema;
-        this.#model = getGenerativeModel(ai, {
-          mode: InferenceMode.ONLY_IN_CLOUD,
-          inCloudParams: this.#inCloudParams,
-        });
-      }
-
       const signal = options.signal;
 
       return new ReadableStream({
         async start(controller) {
           const abortError = new DOMException('Aborted', 'AbortError');
 
-          // If already aborted before the stream starts, error the stream.
           if (signal?.aborted) {
             controller.error(abortError);
             return;
@@ -385,7 +383,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             try {
               controller.error(abortError);
             } catch {
-              // Controller might already be closed/errored; ignore.
+              // Ignore
             }
           };
 
@@ -394,42 +392,52 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           }
 
           try {
-            // Access private methods/fields via captured _this
+            if (options.responseConstraint) {
+              const schema = convertJsonSchemaToVertexSchema(
+                options.responseConstraint
+              );
+              _this.#inCloudParams.generationConfig.responseMimeType =
+                'application/json';
+              _this.#inCloudParams.generationConfig.responseSchema = schema;
+              _this.#model = await _this.#backend.createSession(
+                _this.#options,
+                _this.#inCloudParams
+              );
+            }
+
             const parts = await _this.#processInput(input);
             const userContent = { role: 'user', parts: parts };
 
-            // Estimate usage before request to fire quota events if needed
-            const { totalTokens } = await _this.#model.countTokens({
-              contents: [{ role: 'user', parts }],
-            });
-            if (_this.#inputUsage + totalTokens > this.inputQuota)
-              this.dispatchEvent(new Event('quotaoverflow'));
+            const totalTokens = await _this.#backend.countTokens(_this.#model, [
+              { role: 'user', parts },
+            ]);
+
+            if (_this.#inputUsage + totalTokens > _this.inputQuota)
+              _this.dispatchEvent(new Event('quotaoverflow'));
 
             const requestContents = [..._this.#history, userContent];
 
-            const result = await _this.#model.generateContentStream({
-              contents: requestContents,
-            });
+            const stream = await _this.#backend.generateContentStream(
+              _this.#model,
+              requestContents
+            );
 
             let fullResponseText = '';
 
-            for await (const chunk of result.stream) {
+            for await (const chunk of stream) {
               if (aborted) {
-                // Try to cancel the underlying iterator; ignore any abort-related errors.
-                if (typeof result.stream.return === 'function') {
-                  try {
-                    await result.stream.return();
-                  } catch (e) {
-                    // Ignore cancellation errors (including AbortError).
-                  }
-                }
+                // Try to cancel if supported
+                if (typeof stream.return === 'function') await stream.return();
                 return;
               }
-              if (chunk.usageMetadata?.totalTokenCount) {
-                _this.#inputUsage += chunk.usageMetadata.totalTokenCount;
-              }
+
               const chunkText = chunk.text();
               fullResponseText += chunkText;
+
+              if (chunk.usageMetadata?.totalTokenCount) {
+                _this.#inputUsage = chunk.usageMetadata.totalTokenCount;
+              }
+
               controller.enqueue(chunkText);
             }
 
@@ -443,7 +451,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
               controller.close();
             }
           } catch (error) {
-            // If we aborted, we've already signaled an AbortError; otherwise surface the error.
             if (!aborted) {
               controller.error(error);
             }
@@ -466,10 +473,10 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const content = { role: 'user', parts: parts };
 
       try {
-        // Try to get accurate count first
-        const { totalTokens } = await this.#model.countTokens({
-          contents: [...this.#history, content],
-        });
+        const totalTokens = await this.#backend.countTokens(this.#model, [
+          ...this.#history,
+          content,
+        ]);
         this.#inputUsage = totalTokens;
       } catch {
         // Do nothing.
@@ -488,12 +495,11 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       try {
         const parts = await this.#processInput(input);
-        const { totalTokens } = await this.#model.countTokens({
-          contents: [{ role: 'user', parts }],
-        });
-        return totalTokens;
+        const totalTokens = await this.#backend.countTokens(this.#model, [
+          { role: 'user', parts },
+        ]);
+        return totalTokens || 0;
       } catch (e) {
-        // The API can't reject, so just return 0 if we don't know.
         console.warn(
           'The underlying API call failed, quota usage (0) is not reported accurately.'
         );
@@ -543,6 +549,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
   // Attach to window
   window.LanguageModel = LanguageModel;
   console.log(
-    'Polyfill: window.LanguageModel is now backed by Firebase AI Logic.'
+    'Polyfill: window.LanguageModel is now backed by Firebase AI Logic / Gemini API.'
   );
 })();
