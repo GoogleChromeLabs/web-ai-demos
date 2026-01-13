@@ -46,15 +46,18 @@ export default class MultimodalConverter {
     }
 
     // AudioBuffer -> WAV
-    if (source instanceof AudioBuffer) {
+    if (typeof AudioBuffer !== 'undefined' && source instanceof AudioBuffer) {
       const wavBuffer = this.audioBufferToWav(source);
       const base64 = this.arrayBufferToBase64(wavBuffer);
       return { inlineData: { data: base64, mimeType: 'audio/wav' } };
     }
 
     // BufferSource -> Assume it's already an audio file (mp3/wav)
-    if (ArrayBuffer.isView(source) || source instanceof ArrayBuffer) {
-      const buffer = source instanceof ArrayBuffer ? source : source.buffer;
+    const isArrayBuffer = source instanceof ArrayBuffer || (source && source.constructor && source.constructor.name === 'ArrayBuffer');
+    const isView = ArrayBuffer.isView(source) || (source && source.buffer && (source.buffer instanceof ArrayBuffer || source.buffer.constructor.name === 'ArrayBuffer'));
+
+    if (isArrayBuffer || isView) {
+      const buffer = isArrayBuffer ? source : source.buffer;
       return {
         inlineData: {
           data: this.arrayBufferToBase64(buffer),

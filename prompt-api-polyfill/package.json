@@ -35,10 +35,16 @@
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill/README.md",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "npx http-server"
+    "start": "npx http-server",
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@firebase/ai": "^2.6.1",
+    "ajv": "^8.17.1",
+    "firebase": "^12.7.0",
     "http-server": "^14.1.1",
-    "prettier-plugin-curly": "^0.4.1"
+    "jsdom": "^27.4.0",
+    "prettier-plugin-curly": "^0.4.1",
+    "vitest": "^4.0.17"
   }
 }

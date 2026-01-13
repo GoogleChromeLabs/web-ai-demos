@@ -410,8 +410,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const { totalTokens } = await _this.#model.countTokens({
               contents: [{ role: 'user', parts }],
             });
-            if (_this.#inputUsage + totalTokens > this.inputQuota) {
-              this.dispatchEvent(new Event('quotaoverflow'));
+            if (_this.#inputUsage + totalTokens > _this.inputQuota) {
+              _this.dispatchEvent(new Event('quotaoverflow'));
             }
 
             const requestContents = [..._this.#history, userContent];
@@ -435,7 +435,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
                 return;
               }
               if (chunk.usageMetadata?.totalTokenCount) {
-                _this.#inputUsage += chunk.usageMetadata.totalTokenCount;
+                _this.#inputUsage = chunk.usageMetadata.totalTokenCount;
               }
               const chunkText = chunk.text();
               fullResponseText += chunkText;
@@ -478,11 +478,12 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       try {
         // Try to get accurate count first
+        const contentsToCount = [...this.#history, content];
         const { totalTokens } = await this.#model.countTokens({
-          contents: [...this.#history, content],
+          contents: contentsToCount,
         });
         this.#inputUsage = totalTokens;
-      } catch {
+      } catch (e) {
         // Do nothing.
       }
 
