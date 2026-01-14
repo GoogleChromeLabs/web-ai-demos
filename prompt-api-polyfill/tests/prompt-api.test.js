@@ -1,22 +1,55 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import Ajv from 'ajv';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const firebaseConfig = JSON.parse(
-    readFileSync(join(process.cwd(), '.env.json'), 'utf8')
+// Dynamically discover all backends
+const backendsDir = join(process.cwd(), 'backends');
+const backendFiles = readdirSync(backendsDir).filter(file =>
+    file.endsWith('.js') && file !== 'base.js' && file !== 'defaults.js'
 );
+
+const allPossibleConfigs = backendFiles.map(file => {
+    const name = file.replace('.js', '');
+    return {
+        name,
+        configKey: `${name.toUpperCase()}_CONFIG`,
+        file: `.env-${name}.json`
+    };
+});
+
+const activeBackends = allPossibleConfigs.filter(backend => {
+    const configPath = join(process.cwd(), backend.file);
+    if (existsSync(configPath)) return true;
+    return false;
+}).map(backend => {
+    const configPath = join(process.cwd(), backend.file);
+    let config;
+    if (existsSync(configPath)) {
+        config = JSON.parse(readFileSync(configPath, 'utf8'));
+    } else {
+        config = JSON.parse(readFileSync(join(process.cwd(), '.env.json'), 'utf8'));
+    }
+    return { ...backend, config };
+});
 
 const ajv = new Ajv();
 
-describe('Prompt API Polyfill', () => {
+describe.each(activeBackends)('Prompt API Polyfill ($name Backend)', (backend) => {
     beforeAll(async () => {
         // Set up the environment for the polyfill
         global.window = global;
-        window.FIREBASE_CONFIG = firebaseConfig;
 
-        // Load the polyfill
-        // Note: Since it's an IIFE that attaches to window, we just import it for side effects.
+        // Clear all potential backend configs
+        allPossibleConfigs.forEach(b => {
+            delete window[b.configKey];
+        });
+
+        // Set the current config
+        window[backend.configKey] = backend.config;
+
+        // Load the polyfill (IIFE attaches to window)
+        // We re-import to ensure it's loaded for the current backend context.
         await import('../prompt-api-polyfill.js');
     });
 

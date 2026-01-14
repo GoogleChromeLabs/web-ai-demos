@@ -41,10 +41,12 @@
   },
   "devDependencies": {
     "@firebase/ai": "^2.6.1",
+    "@google/generative-ai": "^0.24.1",
     "ajv": "^8.17.1",
     "firebase": "^12.7.0",
     "http-server": "^14.1.1",
     "jsdom": "^27.4.0",
+    "openai": "^6.16.0",
     "prettier-plugin-curly": "^0.4.1",
     "vitest": "^4.0.17"
   }

@@ -8,6 +8,8 @@ export default defineConfig({
         alias: {
             'https://esm.run/firebase/app': 'firebase/app',
             'https://esm.run/firebase/ai': '@firebase/ai',
+            'https://esm.run/@google/generative-ai': '@google/generative-ai',
+            'https://esm.run/openai': 'openai',
         },
     },
 });

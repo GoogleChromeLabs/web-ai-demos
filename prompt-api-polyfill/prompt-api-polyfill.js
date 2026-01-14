@@ -184,9 +184,13 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         // Import Gemini backend
         const { default: GeminiBackend } = await import('./backends/gemini.js');
         backend = new GeminiBackend(window.GEMINI_CONFIG);
+      } else if (window.OPENAI_CONFIG) {
+        // Import OpenAI backend
+        const { default: OpenAIBackend } = await import('./backends/openai.js');
+        backend = new OpenAIBackend(window.OPENAI_CONFIG);
       } else {
         throw new DOMException(
-          'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG or window.GEMINI_CONFIG.',
+          'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
           'NotSupportedError'
         );
       }
@@ -282,10 +286,14 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       // Re-create the backend for the clone since it now holds state (#model)
       let newBackend;
-      if (this.#backend instanceof (await import('./backends/firebase.js')).default) {
+      if (window.FIREBASE_CONFIG) {
         newBackend = new (await import('./backends/firebase.js')).default(window.FIREBASE_CONFIG);
-      } else {
+      } else if (window.GEMINI_CONFIG) {
         newBackend = new (await import('./backends/gemini.js')).default(window.GEMINI_CONFIG);
+      } else if (window.OPENAI_CONFIG) {
+        newBackend = new (await import('./backends/openai.js')).default(window.OPENAI_CONFIG);
+      } else {
+        throw new DOMException('Prompt API Polyfill: No backend configuration found during clone.', 'NotSupportedError');
       }
       const newModel = newBackend.createSession(
         mergedOptions,
@@ -322,7 +330,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         this.#inCloudParams.generationConfig.responseSchema = schema;
 
         // Re-create model with new config/schema (stored in backend)
-        this.#model = this.#backend.createSession(
+        this.#model = await this.#backend.createSession(
           this.#options,
           this.#inCloudParams
         );
@@ -402,7 +410,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
               _this.#inCloudParams.generationConfig.responseMimeType =
                 'application/json';
               _this.#inCloudParams.generationConfig.responseSchema = schema;
-              _this.#model = _this.#backend.createSession(
+              _this.#model = await _this.#backend.createSession(
                 _this.#options,
                 _this.#inCloudParams
               );
@@ -412,9 +420,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const userContent = { role: 'user', parts: parts };
 
             // Estimate usage before request to fire quota events if needed
-            const { totalTokens } = await _this.#model.countTokens({
-              contents: [{ role: 'user', parts }],
-            });
+            const totalTokens = await _this.#backend.countTokens([
+              { role: 'user', parts },
+            ]);
             if (_this.#inputUsage + totalTokens > _this.inputQuota) {
               _this.dispatchEvent(new Event('quotaoverflow'));
             }
@@ -480,9 +488,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       try {
         // Try to get accurate count first
         const contentsToCount = [...this.#history, content];
-        const { totalTokens } = await this.#model.countTokens({
-          contents: contentsToCount,
-        });
+        const totalTokens = await this.#backend.countTokens(contentsToCount);
         this.#inputUsage = totalTokens;
       } catch (e) {
         // Do nothing.
@@ -526,9 +532,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             if (typeof msg.content === 'string') {
               combinedParts.push({ text: msg.content });
               if (msg.prefix) {
-                console.warn(
-                  "The `prefix` flag isn't supported and was ignored."
-                );
               }
             } else if (Array.isArray(msg.content)) {
               for (const c of msg.content) {

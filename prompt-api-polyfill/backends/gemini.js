@@ -13,7 +13,7 @@ export default class GeminiBackend extends PolyfillBackend {
         this.genAI = new GoogleGenerativeAI(config.apiKey);
     }
 
-    async createSession(options, inCloudParams) {
+    createSession(options, inCloudParams) {
         const modelParams = {
             model: options.modelName || this.modelName,
             generationConfig: inCloudParams.generationConfig,
@@ -30,7 +30,7 @@ export default class GeminiBackend extends PolyfillBackend {
         // Gemini SDK expects { role, parts: [...] } which matches our internal structure
         const result = await this.#model.generateContent({ contents });
         const response = await result.response;
-        const usage = response.usageMetadata?.totalTokenCount || 0;
+        const usage = response.usageMetadata?.promptTokenCount || 0;
         return { text: response.text(), usage };
     }
 
