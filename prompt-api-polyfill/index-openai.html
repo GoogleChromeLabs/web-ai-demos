@@ -92,8 +92,6 @@
 
   const assistantResult1 = await audioSession.prompt('foo', {
     signal: new AbortController().signal,
-    responseConstraint: schema,
-    omitResponseConstraintInput: true,
   });
   console.log(assistantResult1);
 
@@ -110,8 +108,6 @@
 
   for await (const chunk of audioSession.promptStreaming('foo', {
     signal: new AbortController().signal,
-    responseConstraint: schema,
-    omitResponseConstraintInput: true,
   })) {
     console.log(chunk);
   }

@@ -1,25 +1,27 @@
 import OpenAI from 'https://esm.run/openai';
 import PolyfillBackend from './base.js';
+import { DEFAULT_MODELS } from './defaults.js';
 
 /**
  * OpenAI API Backend
  */
 export default class OpenAIBackend extends PolyfillBackend {
     constructor(config) {
-        super();
+        super(config.modelName || DEFAULT_MODELS.openai);
         this.config = config;
         this.openai = new OpenAI({
             apiKey: config.apiKey,
             dangerouslyAllowBrowser: true // Required for client-side usage
         });
-        this.defaultModel = config.modelName || 'gpt-4o';
     }
+
+    #model;
 
     async createSession(options, inCloudParams) {
         // OpenAI doesn't have a "session" object like Gemini, so we return a context object
         // tailored for our generate methods.
-        const modelContext = {
-            model: options.modelName || this.defaultModel,
+        this.#model = {
+            model: options.modelName || this.modelName,
             temperature: inCloudParams.generationConfig?.temperature,
             top_p: 1.0, // Default to 1.0 as topK is not directly supported the same way
             systemInstruction: inCloudParams.systemInstruction
@@ -28,7 +30,7 @@ export default class OpenAIBackend extends PolyfillBackend {
         const config = inCloudParams.generationConfig || {};
         if (config.responseSchema) {
             const { schema, wrapped } = this.#fixSchemaForOpenAI(config.responseSchema);
-            modelContext.response_format = {
+            this.#model.response_format = {
                 type: 'json_schema',
                 json_schema: {
                     name: 'response',
@@ -36,12 +38,12 @@ export default class OpenAIBackend extends PolyfillBackend {
                     schema: schema,
                 },
             };
-            modelContext.response_wrapped = wrapped;
+            this.#model.response_wrapped = wrapped;
         } else if (config.responseMimeType === 'application/json') {
-            modelContext.response_format = { type: 'json_object' };
+            this.#model.response_format = { type: 'json_object' };
         }
 
-        return modelContext;
+        return this.#model;
     }
 
     /**
@@ -113,22 +115,22 @@ export default class OpenAIBackend extends PolyfillBackend {
         return { hasImage, hasAudio };
     }
 
-    #routeModel(modelContext, hasAudio) {
+    #routeModel(hasAudio) {
         // If the user explicitly provided a model in the session options, respect it.
         // Otherwise, pick based on content.
-        if (modelContext.model !== this.defaultModel) {
-            return modelContext.model;
+        if (this.#model.model !== this.modelName) {
+            return this.#model.model;
         }
 
-        return hasAudio ? 'gpt-4o-audio-preview' : 'gpt-4o';
+        return hasAudio ? `${this.modelName}-audio-preview` : this.modelName;
     }
 
-    async generateContent(modelContext, contents) {
-        const { messages } = this.#convertContentsToInput(contents, modelContext.systemInstruction);
+    async generateContent(contents) {
+        const { messages } = this.#convertContentsToInput(contents, this.#model.systemInstruction);
         const { hasAudio } = this.#validateContent(messages);
-        const model = this.#routeModel(modelContext, hasAudio);
+        const model = this.#routeModel(hasAudio);
 
-        if (model === 'gpt-4o-audio-preview' && modelContext.response_format) {
+        if (model === `${this.modelName}-audio-preview` && this.#model.response_format) {
             throw new DOMException(
                 "OpenAI audio model ('gpt-4o-audio-preview') does not support structured outputs (responseConstraint).",
                 'NotSupportedError'
@@ -140,12 +142,12 @@ export default class OpenAIBackend extends PolyfillBackend {
             messages: messages,
         };
 
-        if (modelContext.temperature > 0) {
-            options.temperature = modelContext.temperature;
+        if (this.#model.temperature > 0) {
+            options.temperature = this.#model.temperature;
         }
 
-        if (modelContext.response_format) {
-            options.response_format = modelContext.response_format;
+        if (this.#model.response_format) {
+            options.response_format = this.#model.response_format;
         }
 
         try {
@@ -154,7 +156,7 @@ export default class OpenAIBackend extends PolyfillBackend {
             const choice = response.choices[0];
             let text = choice.message.content;
 
-            if (modelContext.response_wrapped && text) {
+            if (this.#model.response_wrapped && text) {
                 try {
                     const parsed = JSON.parse(text);
                     if (parsed && typeof parsed === 'object' && 'value' in parsed) {
@@ -174,12 +176,12 @@ export default class OpenAIBackend extends PolyfillBackend {
         }
     }
 
-    async generateContentStream(modelContext, contents) {
-        const { messages } = this.#convertContentsToInput(contents, modelContext.systemInstruction);
+    async generateContentStream(contents) {
+        const { messages } = this.#convertContentsToInput(contents, this.#model.systemInstruction);
         const { hasAudio } = this.#validateContent(messages);
-        const model = this.#routeModel(modelContext, hasAudio);
+        const model = this.#routeModel(hasAudio);
 
-        if (model === 'gpt-4o-audio-preview' && modelContext.response_format) {
+        if (model === `${this.modelName}-audio-preview` && this.#model.response_format) {
             throw new DOMException(
                 "OpenAI audio model ('gpt-4o-audio-preview') does not support structured outputs (responseConstraint).",
                 'NotSupportedError'
@@ -192,12 +194,12 @@ export default class OpenAIBackend extends PolyfillBackend {
             stream: true,
         };
 
-        if (modelContext.temperature > 0) {
-            options.temperature = modelContext.temperature;
+        if (this.#model.temperature > 0) {
+            options.temperature = this.#model.temperature;
         }
 
-        if (modelContext.response_format) {
-            options.response_format = modelContext.response_format;
+        if (this.#model.response_format) {
+            options.response_format = this.#model.response_format;
         }
 
         try {
@@ -225,14 +227,14 @@ export default class OpenAIBackend extends PolyfillBackend {
         }
     }
 
-    async countTokens(modelContext, contents) {
+    async countTokens(contents) {
         // OpenAI does not provide a public API endpoint for counting tokens before generation.
         // Implementing countTokens strictly requires a tokenizer like `tiktoken`.
         // For this initial implementation, we use a character-based approximation (e.g., text.length / 4)
         // to avoid adding heavy WASM dependencies (`tiktoken`) to the polyfill.
         let totalText = "";
-        if (modelContext.systemInstruction) {
-            totalText += modelContext.systemInstruction;
+        if (this.#model.systemInstruction) {
+            totalText += this.#model.systemInstruction;
         }
 
         for (const content of contents) {
