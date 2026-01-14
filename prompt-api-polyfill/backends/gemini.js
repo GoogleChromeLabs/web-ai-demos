@@ -1,12 +1,13 @@
 import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
 import PolyfillBackend from './base.js';
+import { DEFAULT_MODELS } from './defaults.js';
 
 /**
  * Google Gemini API Backend
  */
 export default class GeminiBackend extends PolyfillBackend {
     constructor(config) {
-        super(config.modelName || 'gemini-2.0-flash-lite-preview-02-05');
+        super(config.modelName || DEFAULT_MODELS.gemini);
         this.genAI = new GoogleGenerativeAI(config.apiKey);
     }
 

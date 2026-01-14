@@ -6,13 +6,14 @@ import {
     InferenceMode,
 } from 'https://esm.run/firebase/ai';
 import PolyfillBackend from './base.js';
+import { DEFAULT_MODELS } from './defaults.js';
 
 /**
  * Firebase AI Logic Backend
  */
 export default class FirebaseBackend extends PolyfillBackend {
     constructor(config) {
-        super(config.modelName || 'gemini-2.5-flash-lite');
+        super(config.modelName || DEFAULT_MODELS.firebase);
         this.ai = getAI(initializeApp(config), { backend: new GoogleAIBackend() });
     }
 
