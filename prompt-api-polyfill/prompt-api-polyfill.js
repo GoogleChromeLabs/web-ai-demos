@@ -280,13 +280,20 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       if (options.topK !== undefined)
         mergedInCloudParams.generationConfig.topK = options.topK;
 
-      const newModel = this.#backend.createSession(
+      // Re-create the backend for the clone since it now holds state (#model)
+      let newBackend;
+      if (this.#backend instanceof (await import('./backends/firebase.js')).default) {
+        newBackend = new (await import('./backends/firebase.js')).default(window.FIREBASE_CONFIG);
+      } else {
+        newBackend = new (await import('./backends/gemini.js')).default(window.GEMINI_CONFIG);
+      }
+      const newModel = newBackend.createSession(
         mergedOptions,
         mergedInCloudParams
       );
 
       return new LanguageModel(
-        this.#backend,
+        newBackend,
         newModel,
         historyCopy,
         mergedOptions,
@@ -314,7 +321,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           'application/json';
         this.#inCloudParams.generationConfig.responseSchema = schema;
 
-        // Re-create model with new config/schema
+        // Re-create model with new config/schema (stored in backend)
         this.#model = this.#backend.createSession(
           this.#options,
           this.#inCloudParams
@@ -327,7 +334,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       try {
         // Estimate usage
-        const totalTokens = await this.#backend.countTokens(this.#model, [
+        const totalTokens = await this.#backend.countTokens([
           { role: 'user', parts },
         ]);
 
@@ -337,7 +344,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         const requestContents = [...this.#history, userContent];
 
         const { text, usage } = await this.#backend.generateContent(
-          this.#model,
           requestContents
         );
 
@@ -405,7 +411,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const parts = await _this.#processInput(input);
             const userContent = { role: 'user', parts: parts };
 
-            const totalTokens = await _this.#backend.countTokens(_this.#model, [
+            const totalTokens = await _this.#backend.countTokens([
               { role: 'user', parts },
             ]);
 
@@ -415,7 +421,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const requestContents = [..._this.#history, userContent];
 
             const stream = await _this.#backend.generateContentStream(
-              _this.#model,
               requestContents
             );
 
@@ -470,7 +475,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const content = { role: 'user', parts: parts };
 
       try {
-        const totalTokens = await this.#backend.countTokens(this.#model, [
+        const totalTokens = await this.#backend.countTokens([
           ...this.#history,
           content,
         ]);
@@ -492,7 +497,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       try {
         const parts = await this.#processInput(input);
-        const totalTokens = await this.#backend.countTokens(this.#model, [
+        const totalTokens = await this.#backend.countTokens([
           { role: 'user', parts },
         ]);
         return totalTokens || 0;

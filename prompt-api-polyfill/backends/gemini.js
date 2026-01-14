@@ -6,12 +6,14 @@ import { DEFAULT_MODELS } from './defaults.js';
  * Google Gemini API Backend
  */
 export default class GeminiBackend extends PolyfillBackend {
+    #model;
+
     constructor(config) {
         super(config.modelName || DEFAULT_MODELS.gemini);
         this.genAI = new GoogleGenerativeAI(config.apiKey);
     }
 
-    createSession(options, inCloudParams) {
+    async createSession(options, inCloudParams) {
         const modelParams = {
             model: options.modelName || this.modelName,
             generationConfig: inCloudParams.generationConfig,
@@ -20,25 +22,25 @@ export default class GeminiBackend extends PolyfillBackend {
         // Clean undefined systemInstruction
         if (!modelParams.systemInstruction) delete modelParams.systemInstruction;
 
-        const model = this.genAI.getGenerativeModel(modelParams);
-        return model;
+        this.#model = this.genAI.getGenerativeModel(modelParams);
+        return this.#model;
     }
 
-    async generateContent(model, contents) {
+    async generateContent(contents) {
         // Gemini SDK expects { role, parts: [...] } which matches our internal structure
-        const result = await model.generateContent({ contents });
+        const result = await this.#model.generateContent({ contents });
         const response = await result.response;
         const usage = response.usageMetadata?.totalTokenCount || 0;
         return { text: response.text(), usage };
     }
 
-    async generateContentStream(model, contents) {
-        const result = await model.generateContentStream({ contents });
+    async generateContentStream(contents) {
+        const result = await this.#model.generateContentStream({ contents });
         return result.stream;
     }
 
-    async countTokens(model, contents) {
-        const { totalTokens } = await model.countTokens({ contents });
+    async countTokens(contents) {
+        const { totalTokens } = await this.#model.countTokens({ contents });
         return totalTokens;
     }
 }
