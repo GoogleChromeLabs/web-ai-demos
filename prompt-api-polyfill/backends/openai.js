@@ -17,7 +17,7 @@ export default class OpenAIBackend extends PolyfillBackend {
 
     #model;
 
-    async createSession(options, inCloudParams) {
+    createSession(options, inCloudParams) {
         // OpenAI doesn't have a "session" object like Gemini, so we return a context object
         // tailored for our generate methods.
         this.#model = {
@@ -167,7 +167,7 @@ export default class OpenAIBackend extends PolyfillBackend {
                 }
             }
 
-            const usage = response.usage?.total_tokens || 0;
+            const usage = response.usage?.prompt_tokens || 0;
 
             return { text, usage };
         } catch (error) {
@@ -233,17 +233,20 @@ export default class OpenAIBackend extends PolyfillBackend {
         // For this initial implementation, we use a character-based approximation (e.g., text.length / 4)
         // to avoid adding heavy WASM dependencies (`tiktoken`) to the polyfill.
         let totalText = "";
-        if (this.#model.systemInstruction) {
+        if (this.#model && this.#model.systemInstruction) {
             totalText += this.#model.systemInstruction;
         }
 
-        for (const content of contents) {
-            for (const part of content.parts) {
-                if (part.text) {
-                    totalText += part.text;
-                } else if (part.inlineData) {
-                    // Approximate image token cost (e.g., ~1000 chars worth)
-                    totalText += " ".repeat(1000);
+        if (Array.isArray(contents)) {
+            for (const content of contents) {
+                if (!content.parts) continue;
+                for (const part of content.parts) {
+                    if (part.text) {
+                        totalText += part.text;
+                    } else if (part.inlineData) {
+                        // Approximate image token cost (e.g., ~1000 chars worth)
+                        totalText += " ".repeat(1000);
+                    }
                 }
             }
         }
