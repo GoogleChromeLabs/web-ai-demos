@@ -203,12 +203,20 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       // --- Backend Selection Logic ---
       const BackendClass = await LanguageModel.#getBackendClass();
       let backend;
-      if (BackendClass?.name === 'FirebaseBackend') {
-        backend = new BackendClass(window.FIREBASE_CONFIG);
-      } else if (BackendClass?.name === 'GeminiBackend') {
-        backend = new BackendClass(window.GEMINI_CONFIG.apiKey);
-      } else if (BackendClass?.name === 'OpenAIBackend') {
-        backend = new BackendClass(window.OPENAI_CONFIG);
+      if (window.FIREBASE_CONFIG) {
+        // Import Firebase backend
+        const { default: FirebaseBackend } = await import(
+          './backends/firebase.js'
+        );
+        backend = new FirebaseBackend(window.FIREBASE_CONFIG);
+      } else if (window.GEMINI_CONFIG) {
+        // Import Gemini backend
+        const { default: GeminiBackend } = await import('./backends/gemini.js');
+        backend = new GeminiBackend(window.GEMINI_CONFIG);
+      } else if (window.OPENAI_CONFIG) {
+        // Import OpenAI backend
+        const { default: OpenAIBackend } = await import('./backends/openai.js');
+        backend = new OpenAIBackend(window.OPENAI_CONFIG);
       } else {
         throw new DOMException(
           'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
@@ -253,7 +261,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         initialHistory = await convertToHistory(conversationPrompts);
       }
 
-      const model = await backend.createSession(resolvedOptions, inCloudParams);
+      const model = backend.createSession(resolvedOptions, inCloudParams);
 
       // If a monitor callback is provided, simulate simple downloadprogress events
       if (typeof resolvedOptions.monitor === 'function') {
@@ -305,13 +313,20 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       if (options.topK !== undefined)
         mergedInCloudParams.generationConfig.topK = options.topK;
 
-      const newModel = await this.#backend.createSession(
+      // Re-create the backend for the clone since it now holds state (#model)
+      let newBackend;
+      if (this.#backend instanceof (await import('./backends/firebase.js')).default) {
+        newBackend = new (await import('./backends/firebase.js')).default(window.FIREBASE_CONFIG);
+      } else {
+        newBackend = new (await import('./backends/gemini.js')).default(window.GEMINI_CONFIG);
+      }
+      const newModel = newBackend.createSession(
         mergedOptions,
         mergedInCloudParams
       );
 
       return new LanguageModel(
-        this.#backend,
+        newBackend,
         newModel,
         historyCopy,
         mergedOptions,
@@ -339,8 +354,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           'application/json';
         this.#inCloudParams.generationConfig.responseSchema = schema;
 
-        // Re-create model with new config/schema
-        this.#model = await this.#backend.createSession(
+        // Re-create model with new config/schema (stored in backend)
+        this.#model = this.#backend.createSession(
           this.#options,
           this.#inCloudParams
         );
@@ -352,7 +367,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       try {
         // Estimate usage
-        const totalTokens = await this.#backend.countTokens(this.#model, [
+        const totalTokens = await this.#backend.countTokens([
           { role: 'user', parts },
         ]);
 
@@ -362,7 +377,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         const requestContents = [...this.#history, userContent];
 
         const { text, usage } = await this.#backend.generateContent(
-          this.#model,
           requestContents
         );
 
@@ -421,7 +435,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
               _this.#inCloudParams.generationConfig.responseMimeType =
                 'application/json';
               _this.#inCloudParams.generationConfig.responseSchema = schema;
-              _this.#model = await _this.#backend.createSession(
+              _this.#model = _this.#backend.createSession(
                 _this.#options,
                 _this.#inCloudParams
               );
@@ -430,7 +444,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const parts = await _this.#processInput(input);
             const userContent = { role: 'user', parts: parts };
 
-            const totalTokens = await _this.#backend.countTokens(_this.#model, [
+            const totalTokens = await _this.#backend.countTokens([
               { role: 'user', parts },
             ]);
 
@@ -440,7 +454,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const requestContents = [..._this.#history, userContent];
 
             const stream = await _this.#backend.generateContentStream(
-              _this.#model,
               requestContents
             );
 
@@ -495,7 +508,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const content = { role: 'user', parts: parts };
 
       try {
-        const totalTokens = await this.#backend.countTokens(this.#model, [
+        const totalTokens = await this.#backend.countTokens([
           ...this.#history,
           content,
         ]);
@@ -517,7 +530,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       try {
         const parts = await this.#processInput(input);
-        const totalTokens = await this.#backend.countTokens(this.#model, [
+        const totalTokens = await this.#backend.countTokens([
           { role: 'user', parts },
         ]);
         return totalTokens || 0;

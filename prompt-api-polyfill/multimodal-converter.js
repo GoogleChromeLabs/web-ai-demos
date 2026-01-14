@@ -1,7 +1,11 @@
 export default class MultimodalConverter {
   static async convert(type, value) {
-    if (type === 'image') return this.processImage(value);
-    if (type === 'audio') return this.processAudio(value);
+    if (type === 'image') {
+      return this.processImage(value);
+    }
+    if (type === 'audio') {
+      return this.processAudio(value);
+    }
     throw new DOMException(
       `Unsupported media type: ${type}`,
       'NotSupportedError'
@@ -21,8 +25,11 @@ export default class MultimodalConverter {
       // Basic sniffing for PNG/JPEG magic bytes
       const u8 = new Uint8Array(buffer);
       let mimeType = 'image/png'; // Default
-      if (u8[0] === 0xff && u8[1] === 0xd8) mimeType = 'image/jpeg';
-      else if (u8[0] === 0x89 && u8[1] === 0x50) mimeType = 'image/png';
+      if (u8[0] === 0xff && u8[1] === 0xd8) {
+        mimeType = 'image/jpeg';
+      } else if (u8[0] === 0x89 && u8[1] === 0x50) {
+        mimeType = 'image/png';
+      }
 
       return { inlineData: { data: base64, mimeType } };
     }
@@ -65,14 +72,16 @@ export default class MultimodalConverter {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (reader.error) reject(reader.error);
-        else
+        if (reader.error) {
+          reject(reader.error);
+        } else {
           resolve({
             inlineData: {
               data: reader.result.split(',')[1],
               mimeType: blob.type,
             },
           });
+        }
       };
       reader.readAsDataURL(blob);
     });
