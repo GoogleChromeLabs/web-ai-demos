@@ -228,7 +228,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         initialHistory = await convertToHistory(conversationPrompts);
       }
 
-      const model = await backend.createSession(resolvedOptions, inCloudParams);
+      const model = backend.createSession(resolvedOptions, inCloudParams);
 
       // If a monitor callback is provided, simulate simple downloadprogress events
       if (typeof resolvedOptions.monitor === 'function') {
@@ -280,7 +280,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       if (options.topK !== undefined)
         mergedInCloudParams.generationConfig.topK = options.topK;
 
-      const newModel = await this.#backend.createSession(
+      const newModel = this.#backend.createSession(
         mergedOptions,
         mergedInCloudParams
       );
@@ -315,7 +315,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         this.#inCloudParams.generationConfig.responseSchema = schema;
 
         // Re-create model with new config/schema
-        this.#model = await this.#backend.createSession(
+        this.#model = this.#backend.createSession(
           this.#options,
           this.#inCloudParams
         );
@@ -396,7 +396,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
               _this.#inCloudParams.generationConfig.responseMimeType =
                 'application/json';
               _this.#inCloudParams.generationConfig.responseSchema = schema;
-              _this.#model = await _this.#backend.createSession(
+              _this.#model = _this.#backend.createSession(
                 _this.#options,
                 _this.#inCloudParams
               );
