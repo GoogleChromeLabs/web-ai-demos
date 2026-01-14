@@ -13,13 +13,11 @@ import PolyfillBackend from './base.js';
 export default class FirebaseBackend extends PolyfillBackend {
     constructor(config) {
         super();
-        this.config = config;
-        this.app = initializeApp(config);
-        this.ai = getAI(this.app, { backend: new GoogleAIBackend() });
+        this.ai = getAI(initializeApp(config), { backend: new GoogleAIBackend() });
         this.modelName = config.modelName || 'gemini-2.5-flash-lite';
     }
 
-    async createSession(options, inCloudParams) {
+    createSession(_options, inCloudParams) {
         const model = getGenerativeModel(this.ai, {
             mode: InferenceMode.ONLY_IN_CLOUD,
             inCloudParams,
