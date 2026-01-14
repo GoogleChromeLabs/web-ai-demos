@@ -180,10 +180,10 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           './backends/firebase.js'
         );
         backend = new FirebaseBackend(window.FIREBASE_CONFIG);
-      } else if (window.GEMINI_CONFIG && window.GEMINI_CONFIG.apiKey) {
+      } else if (window.GEMINI_CONFIG) {
         // Import Gemini backend
         const { default: GeminiBackend } = await import('./backends/gemini.js');
-        backend = new GeminiBackend(window.GEMINI_CONFIG.apiKey);
+        backend = new GeminiBackend(window.GEMINI_CONFIG);
       } else {
         throw new DOMException(
           'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG or window.GEMINI_CONFIG.',

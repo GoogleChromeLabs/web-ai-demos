@@ -12,9 +12,8 @@ import PolyfillBackend from './base.js';
  */
 export default class FirebaseBackend extends PolyfillBackend {
     constructor(config) {
-        super();
+        super(config.modelName || 'gemini-2.5-flash-lite');
         this.ai = getAI(initializeApp(config), { backend: new GoogleAIBackend() });
-        this.modelName = config.modelName || 'gemini-2.5-flash-lite';
     }
 
     createSession(_options, inCloudParams) {

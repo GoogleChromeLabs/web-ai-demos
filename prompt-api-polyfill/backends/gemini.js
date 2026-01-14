@@ -5,15 +5,12 @@ import PolyfillBackend from './base.js';
  * Google Gemini API Backend
  */
 export default class GeminiBackend extends PolyfillBackend {
-    constructor(apiKey) {
-        super();
-        this.apiKey = apiKey;
-        this.genAI = new GoogleGenerativeAI(apiKey);
-        // Default to a known stable model if not specified, though caller might override
-        this.modelName = 'gemini-2.0-flash-lite-preview-02-05';
+    constructor(config) {
+        super(config.modelName || 'gemini-2.0-flash-lite-preview-02-05');
+        this.genAI = new GoogleGenerativeAI(config.apiKey);
     }
 
-    async createSession(options, inCloudParams) {
+    createSession(options, inCloudParams) {
         const modelParams = {
             model: options.modelName || this.modelName,
             generationConfig: inCloudParams.generationConfig,

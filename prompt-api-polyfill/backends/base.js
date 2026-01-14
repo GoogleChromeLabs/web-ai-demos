@@ -3,12 +3,19 @@
  */
 export default class PolyfillBackend {
     /**
+     * @param {string} modelName - The name of the model.
+     */
+    constructor(modelName) {
+        this.modelName = modelName;
+    }
+
+    /**
      * Creates a model session.
      * @param {Object} options - LanguageModel options.
      * @param {Object} inCloudParams - Backend-specific params (like generationConfig).
-     * @returns {Promise<any>} The backend-specific model instance.
+     * @returns {any} The backend-specific model instance.
      */
-    async createSession(options, inCloudParams) {
+    createSession(options, inCloudParams) {
         throw new Error('Not implemented');
     }
 
