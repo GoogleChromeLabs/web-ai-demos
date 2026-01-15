@@ -132,7 +132,7 @@ export default class OpenAIBackend extends PolyfillBackend {
 
         if (model === `${this.modelName}-audio-preview` && this.#model.response_format) {
             throw new DOMException(
-                "OpenAI audio model ('gpt-4o-audio-preview') does not support structured outputs (responseConstraint).",
+                `OpenAI audio model ('${model}') does not support structured outputs (responseConstraint).`,
                 'NotSupportedError'
             );
         }
@@ -162,7 +162,7 @@ export default class OpenAIBackend extends PolyfillBackend {
                     if (parsed && typeof parsed === 'object' && 'value' in parsed) {
                         text = JSON.stringify(parsed.value);
                     }
-                } catch (e) {
+                } catch {
                     // Ignore parsing error, return raw text
                 }
             }
@@ -183,7 +183,7 @@ export default class OpenAIBackend extends PolyfillBackend {
 
         if (model === `${this.modelName}-audio-preview` && this.#model.response_format) {
             throw new DOMException(
-                "OpenAI audio model ('gpt-4o-audio-preview') does not support structured outputs (responseConstraint).",
+                `OpenAI audio model ('${model}') does not support structured outputs (responseConstraint).`,
                 'NotSupportedError'
             );
         }
