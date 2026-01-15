@@ -18,7 +18,7 @@ import MultimodalConverter from './multimodal-converter.js';
 import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
 (() => {
-  if ('LanguageModel' in window) {
+  if ('LanguageModel' in window && !window.__FORCE_PROMPT_API_POLYFILL__) {
     return;
   }
 
@@ -184,10 +184,10 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         // Import Gemini backend
         const { default: GeminiBackend } = await import('./backends/gemini.js');
         backend = new GeminiBackend(window.GEMINI_CONFIG);
-      } else if (window.OPENAI_CONFIG) {
-        // Import OpenAI backend
-        const { default: OpenAIBackend } = await import('./backends/openai.js');
-        backend = new OpenAIBackend(window.OPENAI_CONFIG);
+        /* } else if (window.OPENAI_CONFIG) {
+          // Import OpenAI backend
+          const { default: OpenAIBackend } = await import('./backends/openai.js');
+          backend = new OpenAIBackend(window.OPENAI_CONFIG); */
       } else {
         throw new DOMException(
           'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
@@ -290,8 +290,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         newBackend = new (await import('./backends/firebase.js')).default(window.FIREBASE_CONFIG);
       } else if (window.GEMINI_CONFIG) {
         newBackend = new (await import('./backends/gemini.js')).default(window.GEMINI_CONFIG);
-      } else if (window.OPENAI_CONFIG) {
-        newBackend = new (await import('./backends/openai.js')).default(window.OPENAI_CONFIG);
+        /* } else if (window.OPENAI_CONFIG) {
+          newBackend = new (await import('./backends/openai.js')).default(window.OPENAI_CONFIG); */
       } else {
         throw new DOMException('Prompt API Polyfill: No backend configuration found during clone.', 'NotSupportedError');
       }
@@ -554,6 +554,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       return [{ text: JSON.stringify(input) }];
     }
   }
+
+  LanguageModel.__isPolyfill = true;
 
   // Attach to window
   window.LanguageModel = LanguageModel;

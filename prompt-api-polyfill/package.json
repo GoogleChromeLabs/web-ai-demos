@@ -37,16 +37,19 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "npx http-server",
-    "test": "vitest run"
+    "test:browser": "node scripts/list-backends.js && vitest run -c vitest.browser.config.js .browser.test.js"
   },
   "devDependencies": {
     "@firebase/ai": "^2.6.1",
     "@google/generative-ai": "^0.24.1",
+    "@vitest/browser": "^4.0.17",
+    "@vitest/browser-playwright": "^4.0.17",
     "ajv": "^8.17.1",
     "firebase": "^12.7.0",
     "http-server": "^14.1.1",
     "jsdom": "^27.4.0",
     "openai": "^6.16.0",
+    "playwright": "^1.57.0",
     "prettier-plugin-curly": "^0.4.1",
     "vitest": "^4.0.17"
   }

@@ -239,6 +239,29 @@ For a complete, end-to-end example, see the `index.html` file in this directory.
 
 You should see network requests to the backends logs.
 
+---
+
+## Testing
+
+The project includes a comprehensive test suite that runs in both Node.js (simulated DOM) and real Browsers.
+
+### Running Node.js Tests
+Uses `jsdom` for fast logic verification.
+```bash
+npm test
+```
+
+### Running Browser Tests
+Uses `playwright` to run tests in a real Chromium instance. This is the recommended way to verify environmental fidelity and multimodal support.
+```bash
+npm run test:browser
+```
+
+To see the browser and DevTools while testing, you can modify `vitest.browser.config.js` to set `headless: false`.
+
+---
+
 ## License
+
 
 Apache 2.0
