@@ -1,8 +1,11 @@
-# Prompt API Polyfill (Firebase AI Logic backend)
+# Prompt API Polyfill
 
 This package provides a browser polyfill for the
-[Prompt API `LanguageModel`](https://github.com/webmachinelearning/prompt-api)
-backed by **Firebase AI Logic**.
+[Prompt API `LanguageModel`](https://github.com/webmachinelearning/prompt-api),
+supporting dynamic backends:
+
+- **Firebase AI Logic**
+- **Google Gemini API**
 
 When loaded in the browser, it defines a global:
 
@@ -13,8 +16,17 @@ window.LanguageModel;
 so you can use the Prompt API shape even in environments where it is not yet
 natively available.
 
-- Back end: Firebase AI Logic
-- Default model: `gemini-2.5-flash-lite` (configurable via `modelName`)
+## Supported Backends
+
+### 1. Firebase AI Logic (Default)
+- **Uses**: `firebase/ai` SDK.
+- **Config**: Requires `window.FIREBASE_CONFIG`.
+- **Default Model**: `gemini-2.5-flash-lite`.
+
+### 2. Google Gemini API
+- **Uses**: `@google/generative-ai` SDK.
+- **Config**: Requires `window.GEMINI_CONFIG`.
+- **Default Model**: `gemini-2.0-flash-lite-preview-02-05`.
 
 ---
 
@@ -28,37 +40,54 @@ npm install prompt-api-polyfill
 
 ## Quick start
 
-1. **Create a Firebase project with Generative AI enabled** (see Configuration
-   below).
+### Backed by Firebase
+
+1. **Create a Firebase project with Generative AI enabled**.
 2. **Provide your Firebase config** on `window.FIREBASE_CONFIG`.
-3. **Import the polyfill** so it can attach `window.LanguageModel`.
-
-### Example (using a JSON config file)
-
-Create a `.env.json` file (see
-[Configuring `dot_env.json` / `.env.json`](#configuring-dot_envjson--envjson))
-and then use it from a browser entry point:
+3. **Import the polyfill**.
 
 ```html
 <script type="module">
   import firebaseConfig from './.env.json' with { type: 'json' };
-
-  // Make the config available to the polyfill
   window.FIREBASE_CONFIG = firebaseConfig;
 
-  // Only load the polyfill if LanguageModel is not available natively
   if (!('LanguageModel' in window)) {
     await import('prompt-api-polyfill');
   }
 
   const session = await LanguageModel.create();
-  const text = await session.prompt('Say hello from the polyfill!');
-  console.log(text);
 </script>
 ```
 
-> **Note**: The polyfill attaches `LanguageModel` to `window` as a side effect.
-> There are no named exports.
+### Backed by Gemini API
+
+1. **Get a Gemini API Key** from [Google AI Studio](https://aistudio.google.com/).
+2. **Provide your API Key** on `window.GEMINI_CONFIG`.
+3. **Import the polyfill**.
+
+```html
+<script type="module">
+  // NOTE: Do not expose real keys in production source code!
+  window.GEMINI_CONFIG = "YOUR_GEMINI_CONFIG";
+
+  if (!('LanguageModel' in window)) {
+    await import('prompt-api-polyfill');
+  }
+
+  // Uses Gemini backend because GEMINI_CONFIG is present
+  const session = await LanguageModel.create();
+</script>
+```
+
+---
+
+## Configuration
+
+### Example (using a JSON config file)
+
+Create a `.env.json` file (see
+[Configuring `dot_env.json` / `.env.json`](#configuring-dot_envjson--envjson))
+and then use it from a browser entry point.
 
 ### Example based on `index.html` in this repo
 
@@ -76,8 +105,14 @@ A simplified version of how it is wired up:
 
 ```html
 <script type="module">
-  import firebaseConfig from './.env.json' with { type: 'json' };
-  window.FIREBASE_CONFIG = firebaseConfig;
+  import config from './.env.json' with { type: 'json' };
+  
+  // Decide backend based on config content
+  if (config.apiKey && !config.projectId) {
+     window.GEMINI_CONFIG = config.apiKey;
+  } else {
+     window.FIREBASE_CONFIG = config;
+  }
 
   // Load the polyfill only when necessary
   if (!('LanguageModel' in window)) {
@@ -110,10 +145,13 @@ This repo ships with a template file:
 ```jsonc
 // dot_env.json
 {
-  "apiKey": "",
+  // For Firebase:
   "projectId": "",
   "appId": "",
   "modelName": "",
+  
+  // For Firebase OR Gemini:
+  "apiKey": "" 
 }
 ```
 
@@ -128,8 +166,9 @@ Copy the template:
 cp dot_env.json .env.json
 ```
 
-Then open `.env.json` and fill in the values from your Firebase project:
+Then open `.env.json` and fill in the values.
 
+**For Firebase:**
 ```json
 {
   "apiKey": "YOUR_FIREBASE_WEB_API_KEY",
@@ -139,30 +178,25 @@ Then open `.env.json` and fill in the values from your Firebase project:
 }
 ```
 
+**For Gemini:**
+```json
+{
+  "apiKey": "YOUR_GEMINI_CONFIG",
+  "modelName": "gemini-2.0-flash-lite-preview-02-05" 
+}
+```
+
 ### 2. Field-by-field explanation
 
-- `apiKey` Your **Firebase Web API key**. You can find this in the Firebase
-  Console under: _Project settings → General → Your apps → Web app_.
+- `apiKey`: 
+  - **Firebase**: Your Firebase Web API key.
+  - **Gemini**: Your Gemini API Key.
+  
+- `projectId` / `appId`: **Firebase only**.
 
-- `projectId` The **GCP / Firebase project ID**, e.g. `my-ai-project`.
-
-- `appId` The **Firebase Web app ID**, e.g. `1:1234567890:web:abcdef123456`.
-
-- `modelName` (optional) The Gemini model ID to use. If omitted, the polyfill
-  defaults to:
-
-  ```json
-  "modelName": "gemini-2.5-flash-lite"
-  ```
-
-  You can substitute another supported Gemini model here if desired.
-
-These fields are passed directly to:
-
-- `initializeApp(firebaseConfig)` from Firebase
-- `getAI(app, { backend: new GoogleAIBackend() })` from the Firebase AI SDK
-
-and `modelName` is used to select which Gemini model to call.
+- `modelName` (optional): The model ID to use. 
+  - Default Firebase: `gemini-2.5-flash-lite`
+  - Default Gemini: `gemini-2.0-flash-lite-preview-02-05`
 
 > **Important:** Do **not** commit a real `.env.json` with production
 > credentials to source control. Use `dot_env.json` as the committed template
@@ -170,21 +204,8 @@ and `modelName` is used to select which Gemini model to call.
 
 ### 3. Wiring the config into the polyfill
 
-Once `.env.json` is filled out, you can import it and expose it to the polyfill
-exactly like in `index.html`:
-
-```js
-import firebaseConfig from './.env.json' with { type: 'json' };
-
-window.FIREBASE_CONFIG = firebaseConfig;
-
-if (!('LanguageModel' in window)) {
-  await import('prompt-api-polyfill');
-}
-```
-
-From this point on, `LanguageModel.create()` will use your Firebase
-configuration.
+Once `.env.json` is filled out, you can import it and expose it to the polyfill.
+See the [Quick start](#quick-start) examples above.
 
 ---
 
@@ -200,28 +221,23 @@ For a complete, end-to-end example, see the `index.html` file in this directory.
 
 ## Running the demo locally
 
-1. Install dependencies and this package (if using the npm-installed version in
-   another project):
+1. Install dependencies:
 
    ```bash
    npm install
    ```
 
 2. Copy and fill in your config:
-
    ```bash
    cp dot_env.json .env.json
-   # then edit .env.json with your Firebase and model settings
    ```
 
 3. Serve `index.html`:
-
    ```bash
    npm start
    ```
 
-You should see network requests to the Vertex AI / Firebase AI backend and
-streaming responses logged in the console.
+You should see network requests to the backends logs.
 
 ## License
 
