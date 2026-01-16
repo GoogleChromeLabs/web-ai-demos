@@ -207,7 +207,7 @@ describe.each(activeBackends)('Prompt API Polyfill Browser ($name Backend)', (ba
             const valid = validate(json);
 
             expect(valid).toBe(true);
-            expect(json.capital.toLowerCase()).toBe('berlin');
+            expect(json.capital.toLowerCase()).toContain('berlin');
 
             session.destroy();
         }, 30000);

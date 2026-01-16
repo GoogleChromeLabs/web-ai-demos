@@ -142,8 +142,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     static async #getBackendClass() {
-      const info = LanguageModel.#getBackendInfo();
-      return (await import(info.path)).default;
+      const info = LanguageModel.#getBackendInfo();      
+      return (await import(/* @vite-ignore */ info.path)).default;
     }
 
     static async #validateOptions(options = {}) {
