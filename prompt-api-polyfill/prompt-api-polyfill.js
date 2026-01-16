@@ -141,16 +141,16 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
           return { ...b, configValue: config };
         }
       }
-      return null;
+      throw new DOMException(
+        'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
+        'NotSupportedError'
+      );
     }
 
     static async #getBackendClass() {
       const info = await LanguageModel.#getBackendInfo();
-      if (info) {
-        const { default: BackendClass } = await import(info.path);
-        return BackendClass;
-      }
-      return null;
+      const { default: BackendClass } = await import(info.path);
+      return BackendClass;
     }
 
     static async #validateOptions(options = {}) {
@@ -217,12 +217,6 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       // --- Backend Selection Logic ---
       const info = await LanguageModel.#getBackendInfo();
-      if (!info) {
-        throw new DOMException(
-          'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
-          'NotSupportedError'
-        );
-      }
 
       const BackendClass = await LanguageModel.#getBackendClass();
       const backend = new BackendClass(info.configValue);
