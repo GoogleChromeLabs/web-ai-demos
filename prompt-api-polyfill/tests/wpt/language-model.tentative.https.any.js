@@ -11,8 +11,7 @@ setTimeout(() => {
 promise_test(async t => {
   assert_true('LanguageModel' in self, "LanguageModel should be available in global scope");
 
-  const params = await LanguageModel.params();
-  console.log(params);
+  const params = await LanguageModel.params();  
   assert_true(params.maxTopK > 0, 'maxTopK should be greater than 0');
   assert_true(params.maxTemperature > 0, 'maxTemperature should be greater than 0');
   assert_true(params.defaultTemperature >= 0, 'defaultTemperature should be greater than or equal to 0');
