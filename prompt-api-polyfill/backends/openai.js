@@ -17,7 +17,7 @@ export default class OpenAIBackend extends PolyfillBackend {
         });
     }
 
-    static async availability(options = {}) {
+    static availability(options = {}) {
         if (options.expectedInputs) {
             const hasAudio = options.expectedInputs.some(input => input.type === 'audio');
             const hasImage = options.expectedInputs.some(input => input.type === 'image');

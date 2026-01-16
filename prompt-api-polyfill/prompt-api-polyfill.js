@@ -113,7 +113,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const backendClass = await LanguageModel.#getBackendClass();
 
       if (backendClass) {
-        return await backendClass.availability(options);
+        return backendClass.availability(options);
       }
 
       return 'available';

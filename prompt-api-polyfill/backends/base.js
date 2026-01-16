@@ -14,9 +14,9 @@ export default class PolyfillBackend {
     /**
      * Checks if the backend is available given the options.
      * @param {Object} options - LanguageModel options.
-     * @returns {Promise<string>} 'available', 'unavailable', 'downloadable', or 'downloading'.
+     * @returns {string} 'available', 'unavailable', 'downloadable', or 'downloading'.
      */
-    static async availability(options) {
+    static availability(options) {
         return 'available';
     }
 
