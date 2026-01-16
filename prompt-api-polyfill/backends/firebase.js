@@ -29,7 +29,7 @@ export default class FirebaseBackend extends PolyfillBackend {
 
     async generateContent(contents) {
         const result = await this.#model.generateContent({ contents });
-        const usage = result.response.usageMetadata?.totalTokenCount || 0;
+        const usage = result.response.usageMetadata?.promptTokenCount || 0;
         return { text: result.response.text(), usage };
     }
 

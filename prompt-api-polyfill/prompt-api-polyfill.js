@@ -20,7 +20,7 @@ import MultimodalConverter from './multimodal-converter.js';
 import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
 (() => {
-  if ('LanguageModel' in window) {
+  if ('LanguageModel' in window && !window.__FORCE_PROMPT_API_POLYFILL__) {
     return;
   }
 
@@ -143,7 +143,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
     static async #getBackendClass() {
       const info = LanguageModel.#getBackendInfo();
-      return (await import(info.path)).default;
+      return (await import(/* @vite-ignore */ info.path)).default;
     }
 
     static async #validateOptions(options = {}) {
@@ -431,12 +431,13 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             const parts = await _this.#processInput(input);
             const userContent = { role: 'user', parts: parts };
 
+            // Estimate usage before request to fire quota events if needed
             const totalTokens = await _this.#backend.countTokens([
               { role: 'user', parts },
             ]);
-
-            if (_this.#inputUsage + totalTokens > _this.inputQuota)
+            if (_this.#inputUsage + totalTokens > _this.inputQuota) {
               _this.dispatchEvent(new Event('quotaoverflow'));
+            }
 
             const requestContents = [..._this.#history, userContent];
 
@@ -452,7 +453,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
                 if (typeof stream.return === 'function') await stream.return();
                 return;
               }
-
+              if (chunk.usageMetadata?.totalTokenCount) {
+                _this.#inputUsage = chunk.usageMetadata.totalTokenCount;
+              }
               const chunkText = chunk.text();
               fullResponseText += chunkText;
 
@@ -495,10 +498,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       const content = { role: 'user', parts: parts };
 
       try {
-        const totalTokens = await this.#backend.countTokens([
-          ...this.#history,
-          content,
-        ]);
+        // Try to get accurate count first
+        const contentsToCount = [...this.#history, content];
+        const totalTokens = await this.#backend.countTokens(contentsToCount);
         this.#inputUsage = totalTokens;
       } catch {
         // Do nothing.
@@ -567,6 +569,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       return [{ text: JSON.stringify(input) }];
     }
   }
+
+  LanguageModel.__isPolyfill = true;
 
   // Attach to window
   window.LanguageModel = LanguageModel;
