@@ -12,10 +12,19 @@ export default class PolyfillBackend {
     }
 
     /**
+     * Checks if the backend is available given the options.
+     * @param {Object} options - LanguageModel options.
+     * @returns {string} 'available', 'unavailable', 'downloadable', or 'downloading'.
+     */
+    static availability(options) {
+        return 'available';
+    }
+
+    /**
      * Creates a model session and stores it.
      * @param {Object} options - LanguageModel options.
-     * @param {Object} inCloudParams - Backend-specific params (like generationConfig).
-     * @returns {any} The backend-specific model instance.
+     * @param {Object} inCloudParams - Parameters for the cloud model.
+     * @returns {any} The created session object.
      */
     createSession(options, inCloudParams) {
         throw new Error('Not implemented');

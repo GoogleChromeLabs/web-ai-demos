@@ -1,2 +1,2 @@
 tests/active-backends.json
-.env*.json
+.env*-*.json
