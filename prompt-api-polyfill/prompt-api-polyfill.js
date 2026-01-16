@@ -119,16 +119,36 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       return 'available';
     }
 
+    static #backends = [
+      {
+        config: 'FIREBASE_CONFIG',
+        path: './backends/firebase.js',
+      },
+      {
+        config: 'GEMINI_CONFIG',
+        path: './backends/gemini.js',
+      },
+      {
+        config: 'OPENAI_CONFIG',
+        path: './backends/openai.js',
+      },
+    ];
+
+    static async #getBackendInfo() {
+      for (const b of LanguageModel.#backends) {
+        const config = window[b.config];
+        if (config && config.apiKey) {
+          return { ...b, configValue: config };
+        }
+      }
+      return null;
+    }
+
     static async #getBackendClass() {
-      if (window.FIREBASE_CONFIG) {
-        const { default: FirebaseBackend } = await import('./backends/firebase.js');
-        return FirebaseBackend;
-      } else if (window.GEMINI_CONFIG && window.GEMINI_CONFIG.apiKey) {
-        const { default: GeminiBackend } = await import('./backends/gemini.js');
-        return GeminiBackend;
-      } else if (window.OPENAI_CONFIG && window.OPENAI_CONFIG.apiKey) {
-        const { default: OpenAIBackend } = await import('./backends/openai.js');
-        return OpenAIBackend;
+      const info = await LanguageModel.#getBackendInfo();
+      if (info) {
+        const { default: BackendClass } = await import(info.path);
+        return BackendClass;
       }
       return null;
     }
@@ -196,28 +216,16 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       }
 
       // --- Backend Selection Logic ---
-      const BackendClass = await LanguageModel.#getBackendClass();
-      let backend;
-      if (window.FIREBASE_CONFIG) {
-        // Import Firebase backend
-        const { default: FirebaseBackend } = await import(
-          './backends/firebase.js'
-        );
-        backend = new FirebaseBackend(window.FIREBASE_CONFIG);
-      } else if (window.GEMINI_CONFIG) {
-        // Import Gemini backend
-        const { default: GeminiBackend } = await import('./backends/gemini.js');
-        backend = new GeminiBackend(window.GEMINI_CONFIG);
-      } else if (window.OPENAI_CONFIG) {
-        // Import OpenAI backend
-        const { default: OpenAIBackend } = await import('./backends/openai.js');
-        backend = new OpenAIBackend(window.OPENAI_CONFIG);
-      } else {
+      const info = await LanguageModel.#getBackendInfo();
+      if (!info) {
         throw new DOMException(
           'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
           'NotSupportedError'
         );
       }
+
+      const BackendClass = await LanguageModel.#getBackendClass();
+      const backend = new BackendClass(info.configValue);
 
       const defaults = {
         temperature: 1.0,
@@ -309,12 +317,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         mergedInCloudParams.generationConfig.topK = options.topK;
 
       // Re-create the backend for the clone since it now holds state (#model)
-      let newBackend;
-      if (this.#backend instanceof (await import('./backends/firebase.js')).default) {
-        newBackend = new (await import('./backends/firebase.js')).default(window.FIREBASE_CONFIG);
-      } else {
-        newBackend = new (await import('./backends/gemini.js')).default(window.GEMINI_CONFIG);
-      }
+      const BackendClass = await LanguageModel.#getBackendClass();
+      const info = await LanguageModel.#getBackendInfo();
+      const newBackend = new BackendClass(info.configValue);
       const newModel = newBackend.createSession(
         mergedOptions,
         mergedInCloudParams
