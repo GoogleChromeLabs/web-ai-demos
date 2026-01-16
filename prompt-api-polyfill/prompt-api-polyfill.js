@@ -109,14 +109,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
     static async availability(options = {}) {
       await LanguageModel.#validateOptions(options);
-
       const backendClass = await LanguageModel.#getBackendClass();
-
-      if (backendClass) {
-        return backendClass.availability(options);
-      }
-
-      return 'available';
+      return backendClass.availability(options);
     }
 
     static #backends = [
