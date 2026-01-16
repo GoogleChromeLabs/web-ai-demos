@@ -143,8 +143,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
     static async #getBackendClass() {
       const info = LanguageModel.#getBackendInfo();
-      const { default: BackendClass } = await import(info.path);
-      return BackendClass;
+      return (await import(info.path)).default;
     }
 
     static async #validateOptions(options = {}) {
