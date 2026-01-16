@@ -11,7 +11,7 @@ const ajv = new Ajv();
 describe.each(activeBackends)('Prompt API Polyfill Browser ($name Backend)', (backend) => {
     beforeAll(async () => {
         // Clear all potential backend configs
-        const allPossibleConfigs = ['FIREBASE_CONFIG', 'GEMINI_CONFIG', 'DEFAULT_CONFIG'];
+        const allPossibleConfigs = ['FIREBASE_CONFIG', 'GEMINI_CONFIG', 'OPENAI_CONFIG'];
         allPossibleConfigs.forEach(key => {
             delete window[key];
         });
@@ -38,8 +38,16 @@ describe.each(activeBackends)('Prompt API Polyfill Browser ($name Backend)', (ba
         });
 
         it('LanguageModel.create() should create a session', async () => {
-            const session = await window.LanguageModel.create();
+            const { defaultTemperature, defaultTopK, maxTemperature, maxTopK } = await window.LanguageModel.params();
+            const session = await window.LanguageModel.create({
+                temperature: defaultTemperature,
+                topK: defaultTopK,
+            });
+            expect(defaultTemperature).toBeLessThanOrEqual(maxTemperature);
+            expect(defaultTopK).toBeLessThanOrEqual(maxTopK);
             expect(session).toBeInstanceOf(window.LanguageModel);
+            expect(session.topK).toBe(defaultTopK);
+            expect(session.temperature).toBe(defaultTemperature);
             session.destroy();
         });
 
@@ -100,14 +108,17 @@ describe.each(activeBackends)('Prompt API Polyfill Browser ($name Backend)', (ba
             try {
                 const response = await fetch('/gemini.webp');
                 const imageBlob = await response.blob();
-                const imageBuffer = await imageBlob.arrayBuffer();
+                const imageUrl = URL.createObjectURL(imageBlob);
+                const image = new Image();
+                image.src = imageUrl;
+                await image.decode();
 
                 const aiResponse = await multimodalSession.prompt([
                     {
                         role: 'user',
                         content: [
                             { type: 'text', value: 'What does the text in this image say?' },
-                            { type: 'image', value: imageBuffer }
+                            { type: 'image', value: image }
                         ]
                     }
                 ]);
