@@ -6,6 +6,7 @@ supporting dynamic backends:
 
 - **Firebase AI Logic**
 - **Google Gemini API**
+- **OpenAI API**
 
 When loaded in the browser, it defines a global:
 
@@ -21,12 +22,17 @@ natively available.
 ### 1. Firebase AI Logic (Default)
 - **Uses**: `firebase/ai` SDK.
 - **Config**: Requires `window.FIREBASE_CONFIG`.
-- **Default Model**: `gemini-2.5-flash-lite`.
+- **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
 
 ### 2. Google Gemini API
 - **Uses**: `@google/generative-ai` SDK.
 - **Config**: Requires `window.GEMINI_CONFIG`.
-- **Default Model**: `gemini-2.0-flash-lite-preview-02-05`.
+- **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
+
+### 3. OpenAI API
+- **Uses**: `openai` SDK.
+- **Config**: Requires `window.OPENAI_CONFIG`.
+- **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
 
 ---
 
@@ -79,6 +85,26 @@ npm install prompt-api-polyfill
 </script>
 ```
 
+### Backed by OpenAI API
+
+1. **Get an OpenAI API Key** from the [OpenAI Platform](https://platform.openai.com/).
+2. **Provide your API Key** on `window.OPENAI_CONFIG`.
+3. **Import the polyfill**.
+
+```html
+<script type="module">
+  // NOTE: Do not expose real keys in production source code!
+  window.OPENAI_CONFIG = { apiKey: "YOUR_OPENAI_API_KEY" };
+
+  if (!('LanguageModel' in window)) {
+    await import('prompt-api-polyfill');
+  }
+
+  // Uses OpenAI backend because OPENAI_CONFIG is present
+  const session = await LanguageModel.create();
+</script>
+```
+
 ---
 
 ## Configuration
@@ -109,7 +135,11 @@ A simplified version of how it is wired up:
   
   // Decide backend based on config content
   if (config.apiKey && !config.projectId) {
-     window.GEMINI_CONFIG = config.apiKey;
+     if (config.modelName?.startsWith('gpt-')) {
+       window.OPENAI_CONFIG = config;
+     } else {
+       window.GEMINI_CONFIG = config.apiKey;
+     }
   } else {
      window.FIREBASE_CONFIG = config;
   }
@@ -150,7 +180,7 @@ This repo ships with a template file:
   "appId": "",
   "modelName": "",
   
-  // For Firebase OR Gemini:
+  // For Firebase OR Gemini OR OpenAI:
   "apiKey": "" 
 }
 ```
@@ -174,7 +204,7 @@ Then open `.env.json` and fill in the values.
   "apiKey": "YOUR_FIREBASE_WEB_API_KEY",
   "projectId": "your-gcp-project-id",
   "appId": "YOUR_FIREBASE_APP_ID",
-  "modelName": "gemini-2.5-flash-lite"
+  "modelName": "choose-model-for-firebase"
 }
 ```
 
@@ -182,7 +212,15 @@ Then open `.env.json` and fill in the values.
 ```json
 {
   "apiKey": "YOUR_GEMINI_CONFIG",
-  "modelName": "gemini-2.0-flash-lite-preview-02-05" 
+  "modelName": "choose-model-for-gemini" 
+}
+```
+
+**For OpenAI:**
+```json
+{
+  "apiKey": "YOUR_OPENAI_API_KEY",
+  "modelName": "choose-model-for-openai" 
 }
 ```
 
@@ -191,12 +229,13 @@ Then open `.env.json` and fill in the values.
 - `apiKey`: 
   - **Firebase**: Your Firebase Web API key.
   - **Gemini**: Your Gemini API Key.
+  - **OpenAI**: Your OpenAI API Key.
   
 - `projectId` / `appId`: **Firebase only**.
 
-- `modelName` (optional): The model ID to use. 
-  - Default Firebase: `gemini-2.5-flash-lite`
-  - Default Gemini: `gemini-2.0-flash-lite-preview-02-05`
+- `modelName` (optional): The model ID to use. If not provided,
+  the polyfill uses the defaults defined in
+  [`backends/defaults.js`](file:///Users/tsteiner/Documents/javascript/web-ai-demos/prompt-api-polyfill/backends/defaults.js).
 
 > **Important:** Do **not** commit a real `.env.json` with production
 > credentials to source control. Use `dot_env.json` as the committed template
