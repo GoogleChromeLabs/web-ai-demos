@@ -128,7 +128,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       },
     ];
 
-    static async #getBackendInfo() {
+    static #getBackendInfo() {
       for (const b of LanguageModel.#backends) {
         const config = window[b.config];
         if (config && config.apiKey) {
@@ -142,7 +142,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
     }
 
     static async #getBackendClass() {
-      const info = await LanguageModel.#getBackendInfo();
+      const info = LanguageModel.#getBackendInfo();
       const { default: BackendClass } = await import(info.path);
       return BackendClass;
     }
@@ -210,7 +210,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       }
 
       // --- Backend Selection Logic ---
-      const info = await LanguageModel.#getBackendInfo();
+      const info = LanguageModel.#getBackendInfo();
 
       const BackendClass = await LanguageModel.#getBackendClass();
       const backend = new BackendClass(info.configValue);
@@ -306,7 +306,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       // Re-create the backend for the clone since it now holds state (#model)
       const BackendClass = await LanguageModel.#getBackendClass();
-      const info = await LanguageModel.#getBackendInfo();
+      const info = LanguageModel.#getBackendInfo();
       const newBackend = new BackendClass(info.configValue);
       const newModel = newBackend.createSession(
         mergedOptions,
