@@ -6,6 +6,8 @@ import { DEFAULT_MODELS } from './defaults.js';
  * OpenAI API Backend
  */
 export default class OpenAIBackend extends PolyfillBackend {
+    #model;
+
     constructor(config) {
         super(config.modelName || DEFAULT_MODELS.openai);
         this.config = config;
@@ -24,9 +26,7 @@ export default class OpenAIBackend extends PolyfillBackend {
             }
         }
         return 'available';
-    }
-
-    #model;
+    }   
 
     createSession(options, inCloudParams) {
         // OpenAI doesn't have a "session" object like Gemini, so we return a context object
