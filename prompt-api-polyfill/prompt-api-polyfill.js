@@ -342,7 +342,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         this.#inCloudParams.generationConfig.responseSchema = schema;
 
         // Re-create model with new config/schema (stored in backend)
-        this.#model = await this.#backend.createSession(
+        this.#model = this.#backend.createSession(
           this.#options,
           this.#inCloudParams
         );
@@ -502,7 +502,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         const contentsToCount = [...this.#history, content];
         const totalTokens = await this.#backend.countTokens(contentsToCount);
         this.#inputUsage = totalTokens;
-      } catch (e) {
+      } catch {
         // Do nothing.
       }
 
@@ -544,6 +544,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
             if (typeof msg.content === 'string') {
               combinedParts.push({ text: msg.content });
               if (msg.prefix) {
+                console.warn(
+                  "The `prefix` flag isn't supported and was ignored."
+                );
               }
             } else if (Array.isArray(msg.content)) {
               for (const c of msg.content) {
