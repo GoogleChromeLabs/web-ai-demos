@@ -3,6 +3,7 @@
  * Backends:
  * - Firebase AI Logic (via `firebase/ai`)
  * - Google Gemini API (via `@google/generative-ai`)
+ * - OpenAI API (via `openai`)
  *
  * Spec: https://github.com/webmachinelearning/prompt-api/blob/main/README.md
  *
@@ -11,6 +12,7 @@
  * 2. Configure the backend:
  *    - For Firebase: Define `window.FIREBASE_CONFIG`.
  *    - For Gemini: Define `window.GEMINI_CONFIG`.
+ *    - For OpenAI: Define `window.OPENAI_CONFIG`.
  */
 
 import './async-iterator-polyfill.js';
@@ -107,7 +109,41 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
     static async availability(options = {}) {
       await LanguageModel.#validateOptions(options);
-      return 'available';
+      const backendClass = await LanguageModel.#getBackendClass();
+      return backendClass.availability(options);
+    }
+
+    static #backends = [
+      {
+        config: 'FIREBASE_CONFIG',
+        path: './backends/firebase.js',
+      },
+      {
+        config: 'GEMINI_CONFIG',
+        path: './backends/gemini.js',
+      },
+      {
+        config: 'OPENAI_CONFIG',
+        path: './backends/openai.js',
+      },
+    ];
+
+    static #getBackendInfo() {
+      for (const b of LanguageModel.#backends) {
+        const config = window[b.config];
+        if (config && config.apiKey) {
+          return { ...b, configValue: config };
+        }
+      }
+      throw new DOMException(
+        'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
+        'NotSupportedError'
+      );
+    }
+
+    static async #getBackendClass() {
+      const info = LanguageModel.#getBackendInfo();
+      return (await import(info.path)).default;
     }
 
     static async #validateOptions(options = {}) {
@@ -173,23 +209,10 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
       }
 
       // --- Backend Selection Logic ---
-      let backend;
-      if (window.FIREBASE_CONFIG) {
-        // Import Firebase backend
-        const { default: FirebaseBackend } = await import(
-          './backends/firebase.js'
-        );
-        backend = new FirebaseBackend(window.FIREBASE_CONFIG);
-      } else if (window.GEMINI_CONFIG) {
-        // Import Gemini backend
-        const { default: GeminiBackend } = await import('./backends/gemini.js');
-        backend = new GeminiBackend(window.GEMINI_CONFIG);
-      } else {
-        throw new DOMException(
-          'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG or window.GEMINI_CONFIG.',
-          'NotSupportedError'
-        );
-      }
+      const info = LanguageModel.#getBackendInfo();
+
+      const BackendClass = await LanguageModel.#getBackendClass();
+      const backend = new BackendClass(info.configValue);
 
       const defaults = {
         temperature: 1.0,
@@ -281,12 +304,9 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
         mergedInCloudParams.generationConfig.topK = options.topK;
 
       // Re-create the backend for the clone since it now holds state (#model)
-      let newBackend;
-      if (this.#backend instanceof (await import('./backends/firebase.js')).default) {
-        newBackend = new (await import('./backends/firebase.js')).default(window.FIREBASE_CONFIG);
-      } else {
-        newBackend = new (await import('./backends/gemini.js')).default(window.GEMINI_CONFIG);
-      }
+      const BackendClass = await LanguageModel.#getBackendClass();
+      const info = LanguageModel.#getBackendInfo();
+      const newBackend = new BackendClass(info.configValue);
       const newModel = newBackend.createSession(
         mergedOptions,
         mergedInCloudParams
