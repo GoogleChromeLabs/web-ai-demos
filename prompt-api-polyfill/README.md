@@ -20,18 +20,21 @@ natively available.
 ## Supported Backends
 
 ### Firebase AI Logic
+
 - **Uses**: `firebase/ai` SDK.
-- **Config**: Requires `window.FIREBASE_CONFIG`.
+- **Select by setting**: `window.FIREBASE_CONFIG`.
 - **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
 
 ### Google Gemini API
+
 - **Uses**: `@google/generative-ai` SDK.
-- **Config**: Requires `window.GEMINI_CONFIG`.
+- **Select by setting**: `window.GEMINI_CONFIG`.
 - **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
 
 ### OpenAI API
+
 - **Uses**: `openai` SDK.
-- **Config**: Requires `window.OPENAI_CONFIG`.
+- **Select by setting**: `window.OPENAI_CONFIG`.
 - **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
 
 ---
@@ -55,6 +58,8 @@ npm install prompt-api-polyfill
 ```html
 <script type="module">
   import firebaseConfig from './.env.json' with { type: 'json' };
+
+  // Set FIREBASE_CONFIG to select the Firebase backend
   window.FIREBASE_CONFIG = firebaseConfig;
 
   if (!('LanguageModel' in window)) {
@@ -74,13 +79,13 @@ npm install prompt-api-polyfill
 ```html
 <script type="module">
   // NOTE: Do not expose real keys in production source code!
-  window.GEMINI_CONFIG = "YOUR_GEMINI_CONFIG";
+  // Set GEMINI_CONFIG to select the Gemini backend
+  window.GEMINI_CONFIG = { apiKey: "YOUR_GEMINI_API_KEY" };
 
   if (!('LanguageModel' in window)) {
     await import('prompt-api-polyfill');
   }
 
-  // Uses Gemini backend because GEMINI_CONFIG is present
   const session = await LanguageModel.create();
 </script>
 ```
@@ -94,13 +99,13 @@ npm install prompt-api-polyfill
 ```html
 <script type="module">
   // NOTE: Do not expose real keys in production source code!
+  // Set OPENAI_CONFIG to select the OpenAI backend
   window.OPENAI_CONFIG = { apiKey: "YOUR_OPENAI_API_KEY" };
 
   if (!('LanguageModel' in window)) {
     await import('prompt-api-polyfill');
   }
 
-  // Uses OpenAI backend because OPENAI_CONFIG is present
   const session = await LanguageModel.create();
 </script>
 ```
@@ -131,18 +136,8 @@ A simplified version of how it is wired up:
 
 ```html
 <script type="module">
-  import config from './.env.json' with { type: 'json' };
-  
-  // Decide backend based on config content
-  if (config.apiKey && !config.projectId) {
-     if (config.modelName?.startsWith('gpt-')) {
-       window.OPENAI_CONFIG = config;
-     } else {
-       window.GEMINI_CONFIG = config.apiKey;
-     }
-  } else {
-     window.FIREBASE_CONFIG = config;
-  }
+  // Set GEMINI_CONFIG to select the Gemini backend
+  window.GEMINI_CONFIG = { apiKey: 'YOUR_GEMINI_API_KEY' };
 
   // Load the polyfill only when necessary
   if (!('LanguageModel' in window)) {
@@ -188,7 +183,7 @@ This repo ships with a template file:
 You should treat `dot_env.json` as a **template** and create a real `.env.json`
 that is **not committed** with your secrets.
 
-### 1. Create `.env.json`
+### Create `.env.json`
 
 Copy the template:
 
@@ -224,7 +219,7 @@ Then open `.env.json` and fill in the values.
 }
 ```
 
-### 2. Field-by-field explanation
+### Field-by-field explanation
 
 - `apiKey`: 
   - **Firebase**: Your Firebase Web API key.
@@ -241,7 +236,7 @@ Then open `.env.json` and fill in the values.
 > credentials to source control. Use `dot_env.json` as the committed template
 > and keep `.env.json` local.
 
-### 3. Wiring the config into the polyfill
+### Wiring the config into the polyfill
 
 Once `.env.json` is filled out, you can import it and expose it to the polyfill.
 See the [Quick start](#quick-start) examples above.
@@ -282,15 +277,10 @@ You should see network requests to the backends logs.
 
 ## Testing
 
-The project includes a comprehensive test suite that runs in both Node.js (simulated DOM) and real Browsers.
-
-### Running Node.js Tests
-Uses `jsdom` for fast logic verification.
-```bash
-npm test
-```
+The project includes a comprehensive test suite that runs in a headless browser.
 
 ### Running Browser Tests
+
 Uses `playwright` to run tests in a real Chromium instance. This is the recommended way to verify environmental fidelity and multimodal support.
 ```bash
 npm run test:browser
@@ -301,6 +291,5 @@ To see the browser and DevTools while testing, you can modify `vitest.browser.co
 ---
 
 ## License
-
 
 Apache 2.0
