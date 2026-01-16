@@ -112,13 +112,8 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
       const backendClass = await LanguageModel.#getBackendClass();
 
-      // OpenAI specific: check for mixed modalities
-      if (backendClass?.name === 'OpenAIBackend' && options.expectedInputs) {
-        const hasAudio = options.expectedInputs.some(input => input.type === 'audio');
-        const hasImage = options.expectedInputs.some(input => input.type === 'image');
-        if (hasAudio && hasImage) {
-          return 'unavailable';
-        }
+      if (backendClass) {
+        return await backendClass.availability(options);
       }
 
       return 'available';
