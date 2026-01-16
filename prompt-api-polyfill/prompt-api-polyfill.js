@@ -422,7 +422,7 @@ import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
               _this.#inCloudParams.generationConfig.responseMimeType =
                 'application/json';
               _this.#inCloudParams.generationConfig.responseSchema = schema;
-              _this.#model = await _this.#backend.createSession(
+              _this.#model = _this.#backend.createSession(
                 _this.#options,
                 _this.#inCloudParams
               );
