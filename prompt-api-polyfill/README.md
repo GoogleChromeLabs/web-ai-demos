@@ -19,17 +19,17 @@ natively available.
 
 ## Supported Backends
 
-### 1. Firebase AI Logic (Default)
+### Firebase AI Logic
 - **Uses**: `firebase/ai` SDK.
 - **Config**: Requires `window.FIREBASE_CONFIG`.
 - **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
 
-### 2. Google Gemini API
+### Google Gemini API
 - **Uses**: `@google/generative-ai` SDK.
 - **Config**: Requires `window.GEMINI_CONFIG`.
 - **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
 
-### 3. OpenAI API
+### OpenAI API
 - **Uses**: `openai` SDK.
 - **Config**: Requires `window.OPENAI_CONFIG`.
 - **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
