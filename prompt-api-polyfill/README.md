@@ -235,7 +235,7 @@ Then open `.env.json` and fill in the values.
 
 - `modelName` (optional): The model ID to use. If not provided,
   the polyfill uses the defaults defined in
-  [`backends/defaults.js`](file:///Users/tsteiner/Documents/javascript/web-ai-demos/prompt-api-polyfill/backends/defaults.js).
+  [`backends/defaults.js`](backends/defaults.js).
 
 > **Important:** Do **not** commit a real `.env.json` with production
 > credentials to source control. Use `dot_env.json` as the committed template
