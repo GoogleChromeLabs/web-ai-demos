@@ -156,12 +156,29 @@ describe.each(activeBackends)('Prompt API Polyfill Browser ($name Backend)', (ba
             expect(usage).toBeGreaterThan(0);
         });
 
-        it('session.clone() should create a new session', async () => {
-            const cloned = await session.clone();
-            expect(cloned).toBeInstanceOf(window.LanguageModel);
-            expect(cloned.temperature).toBe(session.temperature);
-            cloned.destroy();
-        });
+        it('session.clone() should create a new session and preserve history', async () => {
+            const originalSession = await window.LanguageModel.create({
+                temperature: 0,
+                topK: 1,
+            });
+            try {
+                // Establish history
+                await originalSession.prompt('My secret name is "Prompty McPromptface".');
+
+                // Clone it
+                const cloned = await originalSession.clone();
+                expect(cloned).toBeInstanceOf(window.LanguageModel);
+                expect(cloned.temperature).toBe(originalSession.temperature);
+
+                // Verify history in clone
+                const response = await cloned.prompt('What is my secret name?');
+                expect(response.toLowerCase()).toContain('prompty');
+
+                cloned.destroy();
+            } finally {
+                originalSession.destroy();
+            }
+        }, 60000);
     });
 
     describe('Structured Output', () => {
