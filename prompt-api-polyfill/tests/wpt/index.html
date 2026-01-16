@@ -13,7 +13,12 @@
     src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testdriver-vendor.js"></script>
   <script
     src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/page-visibility/resources/window_state_context.js"></script>
-  <script src="language-model.tentative.https.any.js"></script>
+  <script type="module">
+    if (!('LanguageModel' in window)) {
+      await import('/prompt-api-polyfill.js');
+    }
+  </script>
+  <script type="module" src="language-model.tentative.https.any.js"></script>
 </body>
 
 </html>
