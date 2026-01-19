@@ -20,8 +20,14 @@ export default class MultimodalConverter {
 
     // BufferSource (ArrayBuffer/View) -> Sniff or Default
     if (ArrayBuffer.isView(source) || source instanceof ArrayBuffer) {
-      const u8 = source instanceof ArrayBuffer ? new Uint8Array(source) : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
-      const buffer = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+      const u8 =
+        source instanceof ArrayBuffer
+          ? new Uint8Array(source)
+          : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
+      const buffer = u8.buffer.slice(
+        u8.byteOffset,
+        u8.byteOffset + u8.byteLength
+      );
       const base64 = this.arrayBufferToBase64(buffer);
       const mimeType = this.#sniffImageMimeType(u8) || 'image/png';
 
@@ -35,7 +41,9 @@ export default class MultimodalConverter {
 
   static #sniffImageMimeType(u8) {
     const len = u8.length;
-    if (len < 4) return null;
+    if (len < 4) {
+      return null;
+    }
 
     // JPEG: FF D8 FF
     if (u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) {
@@ -95,25 +103,37 @@ export default class MultimodalConverter {
 
     // ISOBMFF (AVIF / HEIC / HEIF)
     // "ftyp" at offset 4
-    if (
-      u8[4] === 0x66 &&
-      u8[5] === 0x74 &&
-      u8[6] === 0x79 &&
-      u8[7] === 0x70
-    ) {
+    if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) {
       const type = String.fromCharCode(u8[8], u8[9], u8[10], u8[11]);
-      if (type === 'avif' || type === 'avis') return 'image/avif';
-      if (type === 'heic' || type === 'heix' || type === 'hevc' || type === 'hevx') return 'image/heic';
-      if (type === 'mif1' || type === 'msf1') return 'image/heif';
+      if (type === 'avif' || type === 'avis') {
+        return 'image/avif';
+      }
+      if (
+        type === 'heic' ||
+        type === 'heix' ||
+        type === 'hevc' ||
+        type === 'hevx'
+      ) {
+        return 'image/heic';
+      }
+      if (type === 'mif1' || type === 'msf1') {
+        return 'image/heif';
+      }
     }
 
     // JPEG XL: FF 0A or container bits
-    if (u8[0] === 0xff && u8[1] === 0x0a) return 'image/jxl';
+    if (u8[0] === 0xff && u8[1] === 0x0a) {
+      return 'image/jxl';
+    }
     // Container: 00 00 00 0c 4a 58 4c 20 0d 0a 87 0a (JXL )
-    if (u8[0] === 0x00 && u8[4] === 0x4a && u8[5] === 0x58 && u8[6] === 0x4c) return 'image/jxl';
+    if (u8[0] === 0x00 && u8[4] === 0x4a && u8[5] === 0x58 && u8[6] === 0x4c) {
+      return 'image/jxl';
+    }
 
     // JPEG 2000
-    if (u8[0] === 0x00 && u8[4] === 0x6a && u8[5] === 0x50 && u8[6] === 0x20) return 'image/jp2';
+    if (u8[0] === 0x00 && u8[4] === 0x6a && u8[5] === 0x50 && u8[6] === 0x20) {
+      return 'image/jp2';
+    }
 
     // SVG: Check for <svg or <?xml (heuristics)
     const preview = String.fromCharCode(...u8.slice(0, 100)).toLowerCase();
@@ -138,8 +158,17 @@ export default class MultimodalConverter {
     }
 
     // BufferSource -> Assume it's already an audio file (mp3/wav)
-    const isArrayBuffer = source instanceof ArrayBuffer || (source && source.constructor && source.constructor.name === 'ArrayBuffer');
-    const isView = ArrayBuffer.isView(source) || (source && source.buffer && (source.buffer instanceof ArrayBuffer || source.buffer.constructor.name === 'ArrayBuffer'));
+    const isArrayBuffer =
+      source instanceof ArrayBuffer ||
+      (source &&
+        source.constructor &&
+        source.constructor.name === 'ArrayBuffer');
+    const isView =
+      ArrayBuffer.isView(source) ||
+      (source &&
+        source.buffer &&
+        (source.buffer instanceof ArrayBuffer ||
+          source.buffer.constructor.name === 'ArrayBuffer'));
 
     if (isArrayBuffer || isView) {
       const buffer = isArrayBuffer ? source : source.buffer;

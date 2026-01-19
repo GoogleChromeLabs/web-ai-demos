@@ -22,7 +22,9 @@
     const stream = session.promptStreaming('Write me a very long poem', {
       signal: controller.signal,
     });
-    for await (const chunk of stream) console.log(chunk);
+    for await (const chunk of stream) {
+      console.log(chunk);
+    }
   } catch {
     // Do nothing.
   }
@@ -30,25 +32,19 @@
   const audioSession = await LanguageModel.create({
     topK: 1,
     temperature: 0,
-    expectedInputs: [
-      { type: 'text', languages: ['en'] },
-      { type: 'audio' },
-    ],
+    expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'audio' }],
     expectedOutputs: [{ type: 'text', languages: ['en'] }],
   });
 
   const imageSession = await LanguageModel.create({
     topK: 1,
     temperature: 0,
-    expectedInputs: [
-      { type: 'text', languages: ['en'] },
-      { type: 'image' },
-    ],
+    expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }],
     expectedOutputs: [{ type: 'text', languages: ['en'] }],
   });
 
   const mixedAvailability = await LanguageModel.availability({
-    expectedInputs: [{ type: 'image' }, { type: 'audio' }]
+    expectedInputs: [{ type: 'image' }, { type: 'audio' }],
   });
   console.log('Mixed availability (should be unavailable):', mixedAvailability);
 
@@ -141,7 +137,6 @@
     console.log(chunk);
   }
 
-
   await audioSession.append('foo');
   await audioSession.append([{ role: 'assistant', content: 'foo' }]);
   await audioSession.append('foo', { signal: new AbortController().signal });
@@ -149,12 +144,9 @@
     signal: new AbortController().signal,
   });
 
-  const languageModelInputUsage1 = await audioSession.measureInputUsage(
-    'foo',
-    {
-      signal: new AbortController().signal,
-    }
-  );
+  const languageModelInputUsage1 = await audioSession.measureInputUsage('foo', {
+    signal: new AbortController().signal,
+  });
   console.log(languageModelInputUsage1);
 
   const languageModelInputUsage2 = await audioSession.measureInputUsage(

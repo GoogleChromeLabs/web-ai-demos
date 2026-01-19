@@ -37,7 +37,8 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "npx http-server",
-    "test:browser": "node scripts/list-backends.js && vitest run -c vitest.browser.config.js .browser.test.js"
+    "test:browser": "node scripts/list-backends.js && vitest run -c vitest.browser.config.js .browser.test.js",
+    "fix": "npx prettier --write ."
   },
   "devDependencies": {
     "@firebase/ai": "^2.6.1",

@@ -1,26 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<title>Language Model API</title>
+  <title>Language Model API</title>
 
-<body>
-  <script src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testharness.js"></script>
-  <script
-    src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testharnessreport.js"></script>
-  <script src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testdriver.js"></script>
-  <script
-    src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testdriver-vendor.js"></script>
-  <script
-    src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/page-visibility/resources/window_state_context.js"></script>
-  <script type="module">
-    import geminiConfig from '/.env-gemini.json' with { type: 'json' };
-    window.GEMINI_CONFIG = geminiConfig;
+  <body>
+    <script src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testharness.js"></script>
+    <script src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testharnessreport.js"></script>
+    <script src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testdriver.js"></script>
+    <script src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/resources/testdriver-vendor.js"></script>
+    <script src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/page-visibility/resources/window_state_context.js"></script>
+    <script type="module">
+      import geminiConfig from '/.env-gemini.json' with { type: 'json' };
+      window.GEMINI_CONFIG = geminiConfig;
 
-    if (!('LanguageModel' in window)) {
-      await import('/prompt-api-polyfill.js');
-    }
+      if (!('LanguageModel' in window)) {
+        await import('/prompt-api-polyfill.js');
+      }
 
-    await import('./language-model.tentative.https.any.js')
-  </script>
-
-</body>
+      await import('./language-model.tentative.https.any.js');
+    </script>
+  </body>
 </html>

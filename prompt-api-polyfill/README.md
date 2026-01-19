@@ -23,19 +23,22 @@ natively available.
 
 - **Uses**: `firebase/ai` SDK.
 - **Select by setting**: `window.FIREBASE_CONFIG`.
-- **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
+- **Model**: Uses default if not specified (see
+  [`backends/defaults.js`](backends/defaults.js)).
 
 ### Google Gemini API
 
 - **Uses**: `@google/generative-ai` SDK.
 - **Select by setting**: `window.GEMINI_CONFIG`.
-- **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
+- **Model**: Uses default if not specified (see
+  [`backends/defaults.js`](backends/defaults.js)).
 
 ### OpenAI API
 
 - **Uses**: `openai` SDK.
 - **Select by setting**: `window.OPENAI_CONFIG`.
-- **Model**: Uses default if not specified (see [`backends/defaults.js`](backends/defaults.js)).
+- **Model**: Uses default if not specified (see
+  [`backends/defaults.js`](backends/defaults.js)).
 
 ---
 
@@ -72,7 +75,8 @@ npm install prompt-api-polyfill
 
 ### Backed by Gemini API
 
-1. **Get a Gemini API Key** from [Google AI Studio](https://aistudio.google.com/).
+1. **Get a Gemini API Key** from
+   [Google AI Studio](https://aistudio.google.com/).
 2. **Provide your API Key** on `window.GEMINI_CONFIG`.
 3. **Import the polyfill**.
 
@@ -80,7 +84,7 @@ npm install prompt-api-polyfill
 <script type="module">
   // NOTE: Do not expose real keys in production source code!
   // Set GEMINI_CONFIG to select the Gemini backend
-  window.GEMINI_CONFIG = { apiKey: "YOUR_GEMINI_API_KEY" };
+  window.GEMINI_CONFIG = { apiKey: 'YOUR_GEMINI_API_KEY' };
 
   if (!('LanguageModel' in window)) {
     await import('prompt-api-polyfill');
@@ -92,7 +96,8 @@ npm install prompt-api-polyfill
 
 ### Backed by OpenAI API
 
-1. **Get an OpenAI API Key** from the [OpenAI Platform](https://platform.openai.com/).
+1. **Get an OpenAI API Key** from the
+   [OpenAI Platform](https://platform.openai.com/).
 2. **Provide your API Key** on `window.OPENAI_CONFIG`.
 3. **Import the polyfill**.
 
@@ -100,7 +105,7 @@ npm install prompt-api-polyfill
 <script type="module">
   // NOTE: Do not expose real keys in production source code!
   // Set OPENAI_CONFIG to select the OpenAI backend
-  window.OPENAI_CONFIG = { apiKey: "YOUR_OPENAI_API_KEY" };
+  window.OPENAI_CONFIG = { apiKey: 'YOUR_OPENAI_API_KEY' };
 
   if (!('LanguageModel' in window)) {
     await import('prompt-api-polyfill');
@@ -174,9 +179,9 @@ This repo ships with a template file:
   "projectId": "",
   "appId": "",
   "modelName": "",
-  
+
   // For Firebase OR Gemini OR OpenAI:
-  "apiKey": "" 
+  "apiKey": "",
 }
 ```
 
@@ -194,6 +199,7 @@ cp dot_env.json .env.json
 Then open `.env.json` and fill in the values.
 
 **For Firebase:**
+
 ```json
 {
   "apiKey": "YOUR_FIREBASE_WEB_API_KEY",
@@ -204,33 +210,33 @@ Then open `.env.json` and fill in the values.
 ```
 
 **For Gemini:**
+
 ```json
 {
   "apiKey": "YOUR_GEMINI_CONFIG",
-  "modelName": "choose-model-for-gemini" 
+  "modelName": "choose-model-for-gemini"
 }
 ```
 
 **For OpenAI:**
+
 ```json
 {
   "apiKey": "YOUR_OPENAI_API_KEY",
-  "modelName": "choose-model-for-openai" 
+  "modelName": "choose-model-for-openai"
 }
 ```
 
 ### Field-by-field explanation
 
-- `apiKey`: 
+- `apiKey`:
   - **Firebase**: Your Firebase Web API key.
   - **Gemini**: Your Gemini API Key.
   - **OpenAI**: Your OpenAI API Key.
-  
 - `projectId` / `appId`: **Firebase only**.
 
-- `modelName` (optional): The model ID to use. If not provided,
-  the polyfill uses the defaults defined in
-  [`backends/defaults.js`](backends/defaults.js).
+- `modelName` (optional): The model ID to use. If not provided, the polyfill
+  uses the defaults defined in [`backends/defaults.js`](backends/defaults.js).
 
 > **Important:** Do **not** commit a real `.env.json` with production
 > credentials to source control. Use `dot_env.json` as the committed template
@@ -262,6 +268,7 @@ For a complete, end-to-end example, see the `index.html` file in this directory.
    ```
 
 2. Copy and fill in your config:
+
    ```bash
    cp dot_env.json .env.json
    ```
@@ -281,12 +288,15 @@ The project includes a comprehensive test suite that runs in a headless browser.
 
 ### Running Browser Tests
 
-Uses `playwright` to run tests in a real Chromium instance. This is the recommended way to verify environmental fidelity and multimodal support.
+Uses `playwright` to run tests in a real Chromium instance. This is the
+recommended way to verify environmental fidelity and multimodal support.
+
 ```bash
 npm run test:browser
 ```
 
-To see the browser and DevTools while testing, you can modify `vitest.browser.config.js` to set `headless: false`.
+To see the browser and DevTools while testing, you can modify
+`vitest.browser.config.js` to set `headless: false`.
 
 ---
 
