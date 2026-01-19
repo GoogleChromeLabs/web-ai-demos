@@ -32,10 +32,7 @@ async function convertToHistory(prompts) {
         if (item.type === 'text') {
           parts.push({ text: item.value || item.text || '' });
         } else {
-          const part = await MultimodalConverter.convert(
-            item.type,
-            item.value
-          );
+          const part = await MultimodalConverter.convert(item.type, item.value);
           parts.push(part);
         }
       }
@@ -95,11 +92,13 @@ export class LanguageModel extends EventTarget {
   }
 
   set onquotaoverflow(handler) {
-    if (this.#onquotaoverflow)
+    if (this.#onquotaoverflow) {
       this.removeEventListener('quotaoverflow', this.#onquotaoverflow);
+    }
     this.#onquotaoverflow = handler;
-    if (typeof handler === 'function')
+    if (typeof handler === 'function') {
       this.addEventListener('quotaoverflow', handler);
+    }
   }
 
   static async availability(options = {}) {
@@ -286,17 +285,20 @@ export class LanguageModel extends EventTarget {
   // Instance Methods
 
   async clone(options = {}) {
-    if (this.#destroyed)
+    if (this.#destroyed) {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
+    }
 
     const historyCopy = JSON.parse(JSON.stringify(this.#history));
     const mergedOptions = { ...this.#options, ...options };
     const mergedInCloudParams = { ...this.#inCloudParams };
 
-    if (options.temperature !== undefined)
+    if (options.temperature !== undefined) {
       mergedInCloudParams.generationConfig.temperature = options.temperature;
-    if (options.topK !== undefined)
+    }
+    if (options.topK !== undefined) {
       mergedInCloudParams.generationConfig.topK = options.topK;
+    }
 
     // Re-create the backend for the clone since it now holds state (#model)
     const BackendClass = await LanguageModel.#getBackendClass();
@@ -322,10 +324,12 @@ export class LanguageModel extends EventTarget {
   }
 
   async prompt(input, options = {}) {
-    if (this.#destroyed)
+    if (this.#destroyed) {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
-    if (options.signal?.aborted)
+    }
+    if (options.signal?.aborted) {
       throw new DOMException('Aborted', 'AbortError');
+    }
 
     if (options.responseConstraint) {
       // Update Schema
@@ -353,14 +357,14 @@ export class LanguageModel extends EventTarget {
         { role: 'user', parts },
       ]);
 
-      if (this.#inputUsage + totalTokens > this.inputQuota)
+      if (this.#inputUsage + totalTokens > this.inputQuota) {
         this.dispatchEvent(new Event('quotaoverflow'));
+      }
 
       const requestContents = [...this.#history, userContent];
 
-      const { text, usage } = await this.#backend.generateContent(
-        requestContents
-      );
+      const { text, usage } =
+        await this.#backend.generateContent(requestContents);
 
       if (usage) {
         this.#inputUsage = usage;
@@ -377,10 +381,12 @@ export class LanguageModel extends EventTarget {
   }
 
   promptStreaming(input, options = {}) {
-    if (this.#destroyed)
+    if (this.#destroyed) {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
-    if (options.signal?.aborted)
+    }
+    if (options.signal?.aborted) {
       throw new DOMException('Aborted', 'AbortError');
+    }
 
     const _this = this; // Capture 'this' to access private fields in callback
 
@@ -430,21 +436,23 @@ export class LanguageModel extends EventTarget {
             { role: 'user', parts },
           ]);
 
-          if (_this.#inputUsage + totalTokens > _this.inputQuota)
+          if (_this.#inputUsage + totalTokens > _this.inputQuota) {
             _this.dispatchEvent(new Event('quotaoverflow'));
+          }
 
           const requestContents = [..._this.#history, userContent];
 
-          const stream = await _this.#backend.generateContentStream(
-            requestContents
-          );
+          const stream =
+            await _this.#backend.generateContentStream(requestContents);
 
           let fullResponseText = '';
 
           for await (const chunk of stream) {
             if (aborted) {
               // Try to cancel if supported
-              if (typeof stream.return === 'function') await stream.return();
+              if (typeof stream.return === 'function') {
+                await stream.return();
+              }
               return;
             }
 
@@ -481,10 +489,12 @@ export class LanguageModel extends EventTarget {
   }
 
   async append(input, options = {}) {
-    if (this.#destroyed)
+    if (this.#destroyed) {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
-    if (options.signal?.aborted)
+    }
+    if (options.signal?.aborted) {
       throw new DOMException('Aborted', 'AbortError');
+    }
 
     const parts = await this.#processInput(input);
     const content = { role: 'user', parts: parts };
@@ -507,8 +517,9 @@ export class LanguageModel extends EventTarget {
   }
 
   async measureInputUsage(input) {
-    if (this.#destroyed)
+    if (this.#destroyed) {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
+    }
 
     try {
       const parts = await this.#processInput(input);
@@ -543,12 +554,10 @@ export class LanguageModel extends EventTarget {
             }
           } else if (Array.isArray(msg.content)) {
             for (const c of msg.content) {
-              if (c.type === 'text') combinedParts.push({ text: c.value });
-              else {
-                const part = await MultimodalConverter.convert(
-                  c.type,
-                  c.value
-                );
+              if (c.type === 'text') {
+                combinedParts.push({ text: c.value });
+              } else {
+                const part = await MultimodalConverter.convert(c.type, c.value);
                 combinedParts.push(part);
               }
             }
