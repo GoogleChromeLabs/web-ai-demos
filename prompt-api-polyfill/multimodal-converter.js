@@ -20,16 +20,10 @@ export default class MultimodalConverter {
 
     // BufferSource (ArrayBuffer/View) -> Sniff or Default
     if (ArrayBuffer.isView(source) || source instanceof ArrayBuffer) {
-      const buffer = source instanceof ArrayBuffer ? source : source.buffer;
+      const u8 = source instanceof ArrayBuffer ? new Uint8Array(source) : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
+      const buffer = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
       const base64 = this.arrayBufferToBase64(buffer);
-      // Basic sniffing for PNG/JPEG magic bytes
-      const u8 = new Uint8Array(buffer);
-      let mimeType = 'image/png'; // Default
-      if (u8[0] === 0xff && u8[1] === 0xd8) {
-        mimeType = 'image/jpeg';
-      } else if (u8[0] === 0x89 && u8[1] === 0x50) {
-        mimeType = 'image/png';
-      }
+      const mimeType = this.#sniffImageMimeType(u8) || 'image/png';
 
       return { inlineData: { data: base64, mimeType } };
     }
@@ -37,6 +31,97 @@ export default class MultimodalConverter {
     // ImageBitmapSource (Canvas, Image, VideoFrame, etc.)
     // We draw to a canvas to standardize to PNG
     return this.canvasSourceToInlineData(source);
+  }
+
+  static #sniffImageMimeType(u8) {
+    const len = u8.length;
+    if (len < 4) return null;
+
+    // JPEG: FF D8 FF
+    if (u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) {
+      return 'image/jpeg';
+    }
+
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (
+      u8[0] === 0x89 &&
+      u8[1] === 0x50 &&
+      u8[2] === 0x4e &&
+      u8[3] === 0x47 &&
+      u8[4] === 0x0d &&
+      u8[5] === 0x0a &&
+      u8[6] === 0x1a &&
+      u8[7] === 0x0a
+    ) {
+      return 'image/png';
+    }
+
+    // GIF: GIF87a / GIF89a
+    if (u8[0] === 0x47 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x38) {
+      return 'image/gif';
+    }
+
+    // WebP: RIFF (offset 0) + WEBP (offset 8)
+    if (
+      u8[0] === 0x52 &&
+      u8[1] === 0x49 &&
+      u8[2] === 0x46 &&
+      u8[3] === 0x46 &&
+      u8[8] === 0x57 &&
+      u8[9] === 0x45 &&
+      u8[10] === 0x42 &&
+      u8[11] === 0x50
+    ) {
+      return 'image/webp';
+    }
+
+    // BMP: BM
+    if (u8[0] === 0x42 && u8[1] === 0x4d) {
+      return 'image/bmp';
+    }
+
+    // ICO: 00 00 01 00
+    if (u8[0] === 0x00 && u8[1] === 0x00 && u8[2] === 0x01 && u8[3] === 0x00) {
+      return 'image/x-icon';
+    }
+
+    // TIFF: II* (LE) / MM* (BE)
+    if (
+      (u8[0] === 0x49 && u8[1] === 0x49 && u8[2] === 0x2a) ||
+      (u8[0] === 0x4d && u8[1] === 0x4d && u8[2] === 0x2a)
+    ) {
+      return 'image/tiff';
+    }
+
+    // ISOBMFF (AVIF / HEIC / HEIF)
+    // "ftyp" at offset 4
+    if (
+      u8[4] === 0x66 &&
+      u8[5] === 0x74 &&
+      u8[6] === 0x79 &&
+      u8[7] === 0x70
+    ) {
+      const type = String.fromCharCode(u8[8], u8[9], u8[10], u8[11]);
+      if (type === 'avif' || type === 'avis') return 'image/avif';
+      if (type === 'heic' || type === 'heix' || type === 'hevc' || type === 'hevx') return 'image/heic';
+      if (type === 'mif1' || type === 'msf1') return 'image/heif';
+    }
+
+    // JPEG XL: FF 0A or container bits
+    if (u8[0] === 0xff && u8[1] === 0x0a) return 'image/jxl';
+    // Container: 00 00 00 0c 4a 58 4c 20 0d 0a 87 0a (JXL )
+    if (u8[0] === 0x00 && u8[4] === 0x4a && u8[5] === 0x58 && u8[6] === 0x4c) return 'image/jxl';
+
+    // JPEG 2000
+    if (u8[0] === 0x00 && u8[4] === 0x6a && u8[5] === 0x50 && u8[6] === 0x20) return 'image/jp2';
+
+    // SVG: Check for <svg or <?xml (heuristics)
+    const preview = String.fromCharCode(...u8.slice(0, 100)).toLowerCase();
+    if (preview.includes('<svg') || preview.includes('<?xml')) {
+      return 'image/svg+xml';
+    }
+
+    return null;
   }
 
   static async processAudio(source) {
@@ -53,8 +138,11 @@ export default class MultimodalConverter {
     }
 
     // BufferSource -> Assume it's already an audio file (mp3/wav)
-    if (ArrayBuffer.isView(source) || source instanceof ArrayBuffer) {
-      const buffer = source instanceof ArrayBuffer ? source : source.buffer;
+    const isArrayBuffer = source instanceof ArrayBuffer || (source && source.constructor && source.constructor.name === 'ArrayBuffer');
+    const isView = ArrayBuffer.isView(source) || (source && source.buffer && (source.buffer instanceof ArrayBuffer || source.buffer.constructor.name === 'ArrayBuffer'));
+
+    if (isArrayBuffer || isView) {
+      const buffer = isArrayBuffer ? source : source.buffer;
       return {
         inlineData: {
           data: this.arrayBufferToBase64(buffer),
