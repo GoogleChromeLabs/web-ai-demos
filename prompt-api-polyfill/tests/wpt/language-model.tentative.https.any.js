@@ -3,11 +3,6 @@
 // META: script=/resources/testharness.js
 // META: script=/resources/testharnessreport.js
 
-import geminiConfig from '/.env-gemini.json' with { type: 'json' };
-
-setTimeout(() => {
-  window.GEMINI_CONFIG = geminiConfig;
-
 promise_test(async t => {
   assert_true('LanguageModel' in self, "LanguageModel should be available in global scope");
 
@@ -163,4 +158,3 @@ promise_test(async t => {
 
   assert_true(aiResponse.toLowerCase().includes('country'), "Audio transcription should be accurate");
 }, "LanguageModel supports multimodal audio input");
-}, 1000);

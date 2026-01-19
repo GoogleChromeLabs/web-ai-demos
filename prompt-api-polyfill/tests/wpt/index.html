@@ -14,11 +14,15 @@
   <script
     src="https://raw.githack.com/web-platform-tests/wpt/refs/heads/master/page-visibility/resources/window_state_context.js"></script>
   <script type="module">
+    import geminiConfig from '/.env-gemini.json' with { type: 'json' };
+    window.GEMINI_CONFIG = geminiConfig;
+
     if (!('LanguageModel' in window)) {
       await import('/prompt-api-polyfill.js');
     }
-  </script>
-  <script type="module" src="language-model.tentative.https.any.js"></script>
-</body>
 
+    await import('./language-model.tentative.https.any.js')
+  </script>
+
+</body>
 </html>
