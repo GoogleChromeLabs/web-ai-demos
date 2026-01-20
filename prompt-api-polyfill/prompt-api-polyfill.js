@@ -105,6 +105,9 @@ export class LanguageModel extends EventTarget {
     try {
       await LanguageModel.#validateOptions(options);
     } catch (e) {
+      if (e instanceof TypeError) {
+        throw e;
+      }
       return 'unavailable';
     }
     const backendClass = await LanguageModel.#getBackendClass();
@@ -172,7 +175,12 @@ export class LanguageModel extends EventTarget {
         throw new RangeError('The provided temperature and topK must be numbers.');
       }
 
-      if (temperature < 0 || temperature > maxTemperature || topK > maxTopK) {
+      if (
+        temperature < 0 ||
+        temperature > maxTemperature ||
+        topK <= 0 ||
+        topK > maxTopK
+      ) {
         throw new RangeError(
           'The provided temperature or topK is outside the supported range.'
         );
@@ -182,6 +190,13 @@ export class LanguageModel extends EventTarget {
     // Language validation for expectedInputs and expectedOutputs
     if (options.expectedInputs) {
       for (const input of options.expectedInputs) {
+        if (
+          input.type !== 'text' &&
+          input.type !== 'image' &&
+          input.type !== 'audio'
+        ) {
+          throw new TypeError(`Invalid input type: ${input.type}`);
+        }
         if (input.languages) {
           LanguageModel.#testLanguageTags(input.languages);
         }
@@ -189,6 +204,9 @@ export class LanguageModel extends EventTarget {
     }
     if (options.expectedOutputs) {
       for (const output of options.expectedOutputs) {
+        if (output.type !== 'text') {
+          throw new RangeError(`Unsupported output type: ${output.type}`);
+        }
         if (output.languages) {
           LanguageModel.#testLanguageTags(output.languages);
         }
@@ -224,12 +242,6 @@ export class LanguageModel extends EventTarget {
 
   static async create(options = {}) {
     const availability = await LanguageModel.availability(options);
-    if (availability === 'unavailable') {
-      throw new DOMException(
-        'The model is not available for the provided options.',
-        'NotSupportedError'
-      );
-    }
     if (availability === 'downloadable' || availability === 'downloading') {
       throw new DOMException(
         'Requires a user gesture when availability is "downloading" or "downloadable".',
