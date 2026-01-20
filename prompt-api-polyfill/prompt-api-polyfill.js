@@ -102,7 +102,11 @@ export class LanguageModel extends EventTarget {
   }
 
   static async availability(options = {}) {
-    await LanguageModel.#validateOptions(options);
+    try {
+      await LanguageModel.#validateOptions(options);
+    } catch (e) {
+      return 'unavailable';
+    }
     const backendClass = await LanguageModel.#getBackendClass();
     return backendClass.availability(options);
   }
@@ -156,30 +160,55 @@ export class LanguageModel extends EventTarget {
       );
     }
 
-    // If neither temperature nor topK are provided, nothing to validate.
-    if (!hasTemperature && !hasTopK) {
+    if (hasTemperature && hasTopK) {
+      const { temperature, topK } = options;
+
+      if (
+        typeof temperature !== 'number' ||
+        Number.isNaN(temperature) ||
+        typeof topK !== 'number' ||
+        Number.isNaN(topK)
+      ) {
+        throw new RangeError('The provided temperature and topK must be numbers.');
+      }
+
+      if (temperature < 0 || temperature > maxTemperature || topK > maxTopK) {
+        throw new RangeError(
+          'The provided temperature or topK is outside the supported range.'
+        );
+      }
+    }
+
+    // Language validation for expectedInputs and expectedOutputs
+    if (options.expectedInputs) {
+      for (const input of options.expectedInputs) {
+        if (input.languages) {
+          LanguageModel.#testLanguageTags(input.languages);
+        }
+      }
+    }
+    if (options.expectedOutputs) {
+      for (const output of options.expectedOutputs) {
+        if (output.languages) {
+          LanguageModel.#testLanguageTags(output.languages);
+        }
+      }
+    }
+  }
+
+  static #testLanguageTags(languages) {
+    if (!Array.isArray(languages)) {
       return;
     }
-
-    const { temperature, topK } = options;
-
-    if (
-      typeof temperature !== 'number' ||
-      Number.isNaN(temperature) ||
-      typeof topK !== 'number' ||
-      Number.isNaN(topK)
-    ) {
-      throw new DOMException(
-        'The provided temperature and topK must be numbers.',
-        'NotSupportedError'
-      );
-    }
-
-    if (temperature < 0 || temperature > maxTemperature || topK > maxTopK) {
-      throw new DOMException(
-        'The provided temperature or topK is outside the supported range.',
-        'NotSupportedError'
-      );
+    for (const lang of languages) {
+      if (lang === 'unk') {
+        throw new RangeError(`Invalid language tag: "${lang}"`);
+      }
+      try {
+        Intl.getCanonicalLocales(lang);
+      } catch (e) {
+        throw new RangeError(`Invalid language tag: "${lang}"`);
+      }
     }
   }
 
@@ -195,6 +224,12 @@ export class LanguageModel extends EventTarget {
 
   static async create(options = {}) {
     const availability = await LanguageModel.availability(options);
+    if (availability === 'unavailable') {
+      throw new DOMException(
+        'The model is not available for the provided options.',
+        'NotSupportedError'
+      );
+    }
     if (availability === 'downloadable' || availability === 'downloading') {
       throw new DOMException(
         'Requires a user gesture when availability is "downloading" or "downloadable".',

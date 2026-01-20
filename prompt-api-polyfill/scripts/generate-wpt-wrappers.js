@@ -57,6 +57,9 @@ const indexHtml = `<!DOCTYPE html>
     </style>
     ${injectedConfigs}
     <script src="resources/testharness.js"></script>
+    <script>
+        setup({ explicit_timeout: true, timeout_multiplier: 10 });
+    </script>
     <script src="resources/testharnessreport.js"></script>
     <script src="resources/testdriver.js"></script>
     <script src="resources/testdriver-vendor.js"></script>
