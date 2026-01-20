@@ -37,7 +37,10 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "npx http-server",
-    "test:browser": "node scripts/list-backends.js && vitest run -c vitest.browser.config.js .browser.test.js",
+    "sync:wpt": "node scripts/sync-wpt.js",
+    "generate:wpt": "node scripts/generate-wpt-wrappers.js",
+    "test:wpt": "npm run sync:wpt && npm run generate:wpt && npm run start",
+    "test:browser": "npm run sync:wpt && node scripts/list-backends.js && vitest run -c vitest.browser.config.js .browser.test.js",
     "fix": "npx prettier --write ."
   },
   "devDependencies": {

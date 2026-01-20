@@ -1,2 +1,3 @@
 tests/active-backends.json
 .env-*.json
+tests/wpt/
