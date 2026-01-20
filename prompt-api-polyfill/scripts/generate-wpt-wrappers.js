@@ -71,11 +71,10 @@ const indexHtml = `<!DOCTYPE html>
     <h1>Prompt API WPT Tests</h1>
     <p>Running all tests against the polyfill in a single page.</p>
     <div id="log"></div>
-    ${testFiles.map(file => `<script type="module" src="${file}"></script>`).join('\n    ')}
+    ${testFiles.map((file) => `<script type="module" src="${file}"></script>`).join('\n    ')}
 </body>
 </html>`;
 
 fs.writeFileSync(path.join(WPT_DIR, 'index.html'), indexHtml);
 console.log(`Generated unified runner: ${path.join(WPT_DIR, 'index.html')}`);
 console.log('Done.');
-

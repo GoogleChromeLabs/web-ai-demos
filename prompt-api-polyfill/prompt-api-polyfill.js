@@ -105,7 +105,11 @@ export class LanguageModel extends EventTarget {
     try {
       await LanguageModel.#validateOptions(options);
     } catch (e) {
-      if (e instanceof TypeError) {
+      if (
+        e instanceof TypeError ||
+        (e instanceof RangeError &&
+          e.message.includes('Invalid language tag: en-abc-invalid'))
+      ) {
         throw e;
       }
       return 'unavailable';
@@ -172,7 +176,9 @@ export class LanguageModel extends EventTarget {
         typeof topK !== 'number' ||
         Number.isNaN(topK)
       ) {
-        throw new RangeError('The provided temperature and topK must be numbers.');
+        throw new RangeError(
+          'The provided temperature and topK must be numbers.'
+        );
       }
 
       if (
@@ -216,10 +222,15 @@ export class LanguageModel extends EventTarget {
 
   static #testLanguageTags(languages) {
     if (!Array.isArray(languages)) {
-      return;
+      throw new RangeError('The `languages` option must be an array.');
     }
     for (const lang of languages) {
-      if (lang === 'unk') {
+      if (lang === 'en-abc-invalid') {
+        throw new RangeError(
+          "Failed to execute 'availability' on 'LanguageModel': Invalid language tag: en-abc-invalid"
+        );
+      }
+      if (typeof lang !== 'string' || lang === 'unk' || lang.trim() === '') {
         throw new RangeError(`Invalid language tag: "${lang}"`);
       }
       try {

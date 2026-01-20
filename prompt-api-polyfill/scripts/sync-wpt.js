@@ -14,19 +14,23 @@ const SOURCES = [
     local: path.join(WPT_BASE_DIR, 'language-model'),
   },
   {
-    download_url: 'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testharness.js',
+    download_url:
+      'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testharness.js',
     local: path.join(WPT_BASE_DIR, 'resources', 'testharness.js'),
   },
   {
-    download_url: 'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testharnessreport.js',
+    download_url:
+      'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testharnessreport.js',
     local: path.join(WPT_BASE_DIR, 'resources', 'testharnessreport.js'),
   },
   {
-    download_url: 'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testdriver.js',
+    download_url:
+      'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testdriver.js',
     local: path.join(WPT_BASE_DIR, 'resources', 'testdriver.js'),
   },
   {
-    download_url: 'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testdriver-vendor.js',
+    download_url:
+      'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testdriver-vendor.js',
     local: path.join(WPT_BASE_DIR, 'resources', 'testdriver-vendor.js'),
   },
 ];
@@ -77,8 +81,13 @@ async function main() {
   if (fs.existsSync(WPT_BASE_DIR)) {
     const existing = fs.readdirSync(WPT_BASE_DIR);
     for (const file of existing) {
-      if (file === 'index.html') continue;
-      fs.rmSync(path.join(WPT_BASE_DIR, file), { recursive: true, force: true });
+      if (file === 'index.html') {
+        continue;
+      }
+      fs.rmSync(path.join(WPT_BASE_DIR, file), {
+        recursive: true,
+        force: true,
+      });
     }
   } else {
     fs.mkdirSync(WPT_BASE_DIR, { recursive: true });
@@ -97,7 +106,9 @@ async function main() {
     }
 
     // Filter for test files we want to load in index.html
-    const testFiles = allFiles.filter(f => f.endsWith('.js') && !f.includes('resources/'));
+    const testFiles = allFiles.filter(
+      (f) => f.endsWith('.js') && !f.includes('resources/')
+    );
 
     fs.writeFileSync(
       path.join(WPT_BASE_DIR, 'tests.json'),
