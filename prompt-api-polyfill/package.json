@@ -23,6 +23,7 @@
     "polyfill",
     "firebase",
     "gemini",
+    "openai",
     "web-ai"
   ],
   "repository": {
