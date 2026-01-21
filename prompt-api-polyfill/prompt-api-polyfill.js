@@ -78,7 +78,7 @@ export class LanguageModel extends EventTarget {
     this.#inputUsage = inputUsage;
     this.#onquotaoverflow = {};
 
-    this.#topK = options.topK;
+    this.#topK = options.topK !== undefined ? Math.floor(options.topK) : undefined;
     this.#temperature = options.temperature;
   }
 
@@ -115,8 +115,7 @@ export class LanguageModel extends EventTarget {
     } catch (e) {
       if (
         e instanceof TypeError ||
-        (e instanceof RangeError &&
-          e.message.includes('Invalid language tag: en-abc-invalid')) ||
+        e instanceof RangeError ||
         (e instanceof DOMException && e.name === 'NotSupportedError')
       ) {
         throw e;
@@ -177,7 +176,11 @@ export class LanguageModel extends EventTarget {
     }
 
     if (hasTemperature && hasTopK) {
-      const { temperature, topK } = options;
+      let { temperature, topK } = options;
+
+      if (typeof topK === 'number') {
+        topK = Math.floor(topK);
+      }
 
       if (
         typeof temperature !== 'number' ||
@@ -200,6 +203,7 @@ export class LanguageModel extends EventTarget {
           'The provided temperature or topK is outside the supported range.'
         );
       }
+      options.topK = topK;
     }
 
     // Language validation for expectedInputs and expectedOutputs
@@ -234,7 +238,19 @@ export class LanguageModel extends EventTarget {
       : ['text'];
 
     if (options.initialPrompts && Array.isArray(options.initialPrompts)) {
-      for (const prompt of options.initialPrompts) {
+      let systemPromptFound = false;
+      for (let i = 0; i < options.initialPrompts.length; i++) {
+        const prompt = options.initialPrompts[i];
+        if (prompt.role === 'system') {
+          if (i !== 0) {
+            throw new TypeError('System prompt must be the first prompt.');
+          }
+          if (systemPromptFound) {
+            throw new TypeError('Only one system prompt is allowed.');
+          }
+          systemPromptFound = true;
+        }
+
         if (Array.isArray(prompt.content)) {
           for (const item of prompt.content) {
             const type = item.type || 'text';
