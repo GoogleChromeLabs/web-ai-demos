@@ -80,7 +80,9 @@ const allTestsHtml = `<!DOCTYPE html>
 </html>`;
 
 fs.writeFileSync(path.join(WPT_DIR, 'all-tests.html'), allTestsHtml);
-console.log(`Generated unified runner: ${path.join(WPT_DIR, 'all-tests.html')}`);
+console.log(
+  `Generated unified runner: ${path.join(WPT_DIR, 'all-tests.html')}`
+);
 
 // 2. Generate individual wrappers
 for (const testFile of testFiles) {
@@ -150,11 +152,11 @@ const indexHtml = `<!DOCTYPE html>
     <h2>Individual Tests</h2>
     <ul>
         ${testFiles
-    .map((testFile) => {
-      const htmlLink = testFile.replace('.js', '.html');
-      return `<li><a href="${htmlLink}">${testFile}</a></li>`;
-    })
-    .join('\n        ')}
+          .map((testFile) => {
+            const htmlLink = testFile.replace('.js', '.html');
+            return `<li><a href="${htmlLink}">${testFile}</a></li>`;
+          })
+          .join('\n        ')}
     </ul>
 </body>
 </html>`;
@@ -166,4 +168,3 @@ console.log(`Generated landing page: ${path.join(WPT_DIR, 'index.html')}`);
 // Actually we already overwritten it in step 3.
 
 console.log('Done.');
-

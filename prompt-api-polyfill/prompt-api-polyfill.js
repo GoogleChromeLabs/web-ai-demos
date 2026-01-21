@@ -60,7 +60,14 @@ export class LanguageModel extends EventTarget {
   #temperature;
   #onquotaoverflow;
 
-  constructor(backend, model, initialHistory, options = {}, inCloudParams, inputUsage = 0) {
+  constructor(
+    backend,
+    model,
+    initialHistory,
+    options = {},
+    inCloudParams,
+    inputUsage = 0
+  ) {
     super();
     this.#backend = backend;
     this.#model = model;
@@ -108,7 +115,8 @@ export class LanguageModel extends EventTarget {
       if (
         e instanceof TypeError ||
         (e instanceof RangeError &&
-          e.message.includes('Invalid language tag: en-abc-invalid'))
+          e.message.includes('Invalid language tag: en-abc-invalid')) ||
+        (e instanceof DOMException && e.name === 'NotSupportedError')
       ) {
         throw e;
       }
@@ -218,6 +226,35 @@ export class LanguageModel extends EventTarget {
         }
       }
     }
+
+    // Validate initialPrompts against expectedInputs
+    const allowedInputs = options.expectedInputs
+      ? options.expectedInputs.map((i) => i.type)
+      : ['text'];
+
+    if (options.initialPrompts && Array.isArray(options.initialPrompts)) {
+      for (const prompt of options.initialPrompts) {
+        if (Array.isArray(prompt.content)) {
+          for (const item of prompt.content) {
+            const type = item.type || 'text';
+            if (!allowedInputs.includes(type)) {
+              throw new DOMException(
+                `The content type "${type}" is not in the expectedInputs.`,
+                'NotSupportedError'
+              );
+            }
+          }
+        } else {
+          // Content is a simple string, which is 'text'
+          if (!allowedInputs.includes('text')) {
+            throw new DOMException(
+              'The content type "text" is not in the expectedInputs.',
+              'NotSupportedError'
+            );
+          }
+        }
+      }
+    }
   }
 
   static #testLanguageTags(languages) {
@@ -253,6 +290,14 @@ export class LanguageModel extends EventTarget {
 
   static async create(options = {}) {
     const availability = await LanguageModel.availability(options);
+
+    if (availability === 'unavailable') {
+      throw new DOMException(
+        'The model is not available for the given options.',
+        'NotSupportedError'
+      );
+    }
+
     if (availability === 'downloadable' || availability === 'downloading') {
       throw new DOMException(
         'Requires a user gesture when availability is "downloading" or "downloadable".',
@@ -342,7 +387,7 @@ export class LanguageModel extends EventTarget {
 
   // Instance Methods
 
-  async clone(options = {}) {    
+  async clone(options = {}) {
     if (this.#destroyed) {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
     }

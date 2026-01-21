@@ -3,7 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const WPT_BASE_DIR = path.join(__dirname, '..', 'tests', 'wpt');
+const ROOT_DIR = path.join(__dirname, '..');
+const WPT_BASE_DIR = path.join(ROOT_DIR, 'tests', 'wpt');
 const SOURCES = [
   {
     api: 'https://api.github.com/repos/web-platform-tests/wpt/contents/ai/resources',
@@ -33,6 +34,16 @@ const SOURCES = [
       'https://raw.githubusercontent.com/web-platform-tests/wpt/master/resources/testdriver-vendor.js',
     local: path.join(WPT_BASE_DIR, 'resources', 'testdriver-vendor.js'),
   },
+  {
+    download_url:
+      'https://raw.githubusercontent.com/web-platform-tests/wpt/master/images/computer.jpg',
+    local: path.join(ROOT_DIR, 'images', 'computer.jpg'),
+  },
+  {
+    download_url:
+      'https://raw.githubusercontent.com/web-platform-tests/wpt/master/media/speech.wav',
+    local: path.join(ROOT_DIR, 'media', 'speech.wav'),
+  },
 ];
 
 async function fetchJson(url) {
@@ -53,9 +64,9 @@ async function downloadFile(url, destPath) {
   if (!response.ok) {
     throw new Error(`Failed to download ${url}: ${response.statusText}`);
   }
-  const content = await response.text();
+  const content = await response.arrayBuffer();
   fs.mkdirSync(path.dirname(destPath), { recursive: true });
-  fs.writeFileSync(destPath, content);
+  fs.writeFileSync(destPath, Buffer.from(content));
 }
 
 async function syncDir(apiPath, localPath) {
