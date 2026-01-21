@@ -76,6 +76,7 @@ export class LanguageModel extends EventTarget {
     this.#inCloudParams = inCloudParams;
     this.#destroyed = false;
     this.#inputUsage = inputUsage;
+    this.#onquotaoverflow = {};
 
     this.#topK = options.topK;
     this.#temperature = options.temperature;
@@ -364,10 +365,12 @@ export class LanguageModel extends EventTarget {
         const startEvent = new ProgressEvent('downloadprogress', {
           loaded: 0,
           total: 1,
+          lengthComputable: true,
         });
         const endEvent = new ProgressEvent('downloadprogress', {
           loaded: 1,
           total: 1,
+          lengthComputable: true,
         });
         monitorTarget.dispatchEvent(startEvent);
         monitorTarget.dispatchEvent(endEvent);
