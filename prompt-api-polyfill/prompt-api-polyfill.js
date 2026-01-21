@@ -60,7 +60,7 @@ export class LanguageModel extends EventTarget {
   #temperature;
   #onquotaoverflow;
 
-  constructor(backend, model, initialHistory, options = {}, inCloudParams) {
+  constructor(backend, model, initialHistory, options = {}, inCloudParams, inputUsage = 0) {
     super();
     this.#backend = backend;
     this.#model = model;
@@ -68,7 +68,7 @@ export class LanguageModel extends EventTarget {
     this.#options = options;
     this.#inCloudParams = inCloudParams;
     this.#destroyed = false;
-    this.#inputUsage = 0;
+    this.#inputUsage = inputUsage;
 
     this.#topK = options.topK;
     this.#temperature = options.temperature;
@@ -342,7 +342,7 @@ export class LanguageModel extends EventTarget {
 
   // Instance Methods
 
-  async clone(options = {}) {
+  async clone(options = {}) {    
     if (this.#destroyed) {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
     }
@@ -372,7 +372,8 @@ export class LanguageModel extends EventTarget {
       newModel,
       historyCopy,
       mergedOptions,
-      mergedInCloudParams
+      mergedInCloudParams,
+      this.#inputUsage
     );
   }
 
