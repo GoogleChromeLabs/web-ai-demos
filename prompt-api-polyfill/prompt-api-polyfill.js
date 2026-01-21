@@ -290,6 +290,10 @@ export class LanguageModel extends EventTarget {
   }
 
   static async create(options = {}) {
+    if (options.signal?.aborted) {
+      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+    }
+
     const availability = await LanguageModel.availability(options);
 
     if (availability === 'unavailable') {
@@ -304,6 +308,10 @@ export class LanguageModel extends EventTarget {
         'Requires a user gesture when availability is "downloading" or "downloadable".',
         'NotAllowedError'
       );
+    }
+
+    if (options.signal?.aborted) {
+      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
     }
 
     // --- Backend Selection Logic ---
@@ -349,6 +357,10 @@ export class LanguageModel extends EventTarget {
       initialHistory = await convertToHistory(conversationPrompts);
     }
 
+    if (options.signal?.aborted) {
+      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+    }
+
     const model = backend.createSession(resolvedOptions, inCloudParams);
 
     // If a monitor callback is provided, simulate simple downloadprogress events
@@ -358,24 +370,39 @@ export class LanguageModel extends EventTarget {
       try {
         resolvedOptions.monitor(monitorTarget);
       } catch (e) {
-        console.error('Error in monitor callback:', e);
+        // Re-throw if the monitor callback itself throws, as per WPT requirements
+        throw e;
       }
 
-      try {
-        const startEvent = new ProgressEvent('downloadprogress', {
-          loaded: 0,
-          total: 1,
-          lengthComputable: true,
-        });
-        const endEvent = new ProgressEvent('downloadprogress', {
-          loaded: 1,
-          total: 1,
-          lengthComputable: true,
-        });
-        monitorTarget.dispatchEvent(startEvent);
-        monitorTarget.dispatchEvent(endEvent);
-      } catch (e) {
-        console.error('Error dispatching downloadprogress events:', e);
+      const dispatchProgress = async (loaded) => {
+        if (options.signal?.aborted) {
+          return false;
+        }
+        try {
+          const progressEvent = new ProgressEvent('downloadprogress', {
+            loaded: loaded,
+            total: 1,
+            lengthComputable: true,
+          });
+          monitorTarget.dispatchEvent(progressEvent);
+        } catch (e) {
+          console.error('Error dispatching downloadprogress events:', e);
+        }
+        // Yield to the event loop to allow the test/user to abort
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        return !options.signal?.aborted;
+      };
+
+      if (!(await dispatchProgress(0))) {
+        throw (
+          options.signal.reason || new DOMException('Aborted', 'AbortError')
+        );
+      }
+
+      if (!(await dispatchProgress(1))) {
+        throw (
+          options.signal.reason || new DOMException('Aborted', 'AbortError')
+        );
       }
     }
 
@@ -393,6 +420,9 @@ export class LanguageModel extends EventTarget {
   async clone(options = {}) {
     if (this.#destroyed) {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
+    }
+    if (options.signal?.aborted) {
+      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
     }
 
     const historyCopy = JSON.parse(JSON.stringify(this.#history));
@@ -414,6 +444,10 @@ export class LanguageModel extends EventTarget {
       mergedOptions,
       mergedInCloudParams
     );
+
+    if (options.signal?.aborted) {
+      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+    }
 
     return new LanguageModel(
       newBackend,
