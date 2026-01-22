@@ -60,6 +60,13 @@ const commonHead = `
     <script src="resources/util.js"></script>
     <script type="module" src="../../async-iterator-polyfill.js"></script>
     <script type="module" src="../../prompt-api-polyfill.js"></script>
+    <script>
+        if (typeof gc !== 'function') {
+            window.gc = () => {
+                console.warn('gc() is not available in this environment. Skipping GC.');
+            };
+        }
+    </script>
 `;
 
 // 1. Generate all-tests.html (Unified Runner)
@@ -113,6 +120,13 @@ for (const testFile of testFiles) {
     <script src="${resourcePrefix}resources/util.js"></script>
     <script type="module" src="${polyfillPrefix}async-iterator-polyfill.js"></script>
     <script type="module" src="${polyfillPrefix}prompt-api-polyfill.js"></script>
+    <script>
+        if (typeof gc !== 'function') {
+            window.gc = () => {
+                console.warn('gc() is not available in this environment. Skipping GC.');
+            };
+        }
+    </script>
 </head>
 <body>
     <h1>WPT: ${testFile}</h1>

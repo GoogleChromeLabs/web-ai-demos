@@ -41,8 +41,18 @@ const SOURCES = [
   },
   {
     download_url:
+      'https://raw.githubusercontent.com/web-platform-tests/wpt/master/images/pattern.svg',
+    local: path.join(ROOT_DIR, 'images', 'pattern.svg'),
+  },
+  {
+    download_url:
       'https://raw.githubusercontent.com/web-platform-tests/wpt/master/media/speech.wav',
     local: path.join(ROOT_DIR, 'media', 'speech.wav'),
+  },
+  {
+    download_url:
+      'https://raw.githubusercontent.com/web-platform-tests/wpt/master/media/test.webm',
+    local: path.join(ROOT_DIR, 'media', 'test.webm'),
   },
 ];
 
