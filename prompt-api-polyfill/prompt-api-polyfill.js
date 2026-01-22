@@ -919,10 +919,13 @@ export class LanguageModel extends EventTarget {
           'NotSupportedError'
         );
       }
-      return [{ text: input }];
+      return [{ text: input === '' ? ' ' : input }];
     }
 
     if (Array.isArray(input)) {
+      if (input.length === 0) {
+        return [{ text: ' ' }];
+      }
       if (input.length > 0 && input[0].role) {
         let combinedParts = [];
         for (const msg of input) {
@@ -995,7 +998,13 @@ export class LanguageModel extends EventTarget {
         'NotSupportedError'
       );
     }
-    return [{ text: JSON.stringify(input) }];
+    const text =
+      typeof input === 'object' &&
+      input !== null &&
+      Object.keys(input).length === 0
+        ? '[object Object]'
+        : JSON.stringify(input);
+    return [{ text }];
   }
 
   // Map backend errors to WPT expectations
