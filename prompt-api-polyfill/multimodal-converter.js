@@ -221,7 +221,11 @@ export default class MultimodalConverter {
     canvas.height = h;
 
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(source, 0, 0);
+    if (typeof ImageData !== 'undefined' && source instanceof ImageData) {
+      ctx.putImageData(source, 0, 0);
+    } else {
+      ctx.drawImage(source, 0, 0);
+    }
 
     const dataUrl = canvas.toDataURL('image/png');
     return {
