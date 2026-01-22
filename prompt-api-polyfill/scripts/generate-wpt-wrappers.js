@@ -39,6 +39,22 @@ function collectTests(dir) {
 
 collectTests(path.join(WPT_DIR, 'language-model'));
 
+const blessScript = `
+    <script>
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE && node.id?.startsWith('wpt-test-driver-bless-')) {
+                        console.log('Automatically clicking bless button:', node.id);
+                        node.click();
+                    }
+                }
+            }
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    </script>
+`;
+
 const commonHead = `
     <style>
         body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
@@ -67,6 +83,7 @@ const commonHead = `
             };
         }
     </script>
+    ${blessScript}
 `;
 
 // 1. Generate all-tests.html (Unified Runner)
@@ -127,6 +144,7 @@ for (const testFile of testFiles) {
             };
         }
     </script>
+    ${blessScript}
 </head>
 <body>
     <h1>WPT: ${testFile}</h1>
