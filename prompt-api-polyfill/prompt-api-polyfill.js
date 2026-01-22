@@ -316,8 +316,11 @@ export class LanguageModel extends EventTarget {
           "Failed to execute 'availability' on 'LanguageModel': Invalid language tag: en-abc-invalid"
         );
       }
-      if (typeof lang !== 'string' || lang === 'unk' || lang.trim() === '') {
+      if (typeof lang !== 'string' || lang.trim() === '') {
         throw new RangeError(`Invalid language tag: "${lang}"`);
+      }
+      if (lang === 'unk') {
+        throw new Error(`Unsupported language tag: "${lang}"`);
       }
       try {
         Intl.getCanonicalLocales(lang);
