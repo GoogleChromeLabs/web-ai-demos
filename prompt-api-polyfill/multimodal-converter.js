@@ -214,25 +214,61 @@ export default class MultimodalConverter {
     });
   }
 
-  static canvasSourceToInlineData(source) {
-    const canvas = document.createElement('canvas');
-    const w =
+  static async canvasSourceToInlineData(source) {
+    if (
+      typeof HTMLImageElement !== 'undefined' &&
+      source instanceof HTMLImageElement &&
+      !source.complete
+    ) {
+      await source.decode().catch(() => {});
+    }
+
+    const getDimension = (name) => {
+      const val = source[name];
+      if (typeof val === 'object' && val !== null && 'baseVal' in val) {
+        return val.baseVal.value;
+      }
+      return typeof val === 'number' ? val : 0;
+    };
+
+    let w =
       source.displayWidth ||
       source.naturalWidth ||
       source.videoWidth ||
-      source.width;
-    const h =
+      getDimension('width');
+    let h =
       source.displayHeight ||
       source.naturalHeight ||
       source.videoHeight ||
-      source.height;
+      getDimension('height');
 
-    canvas.width = w;
-    canvas.height = h;
+    // Fallback for SVG elements (like SVGImageElement in DOM)
+    if ((!w || !h) && typeof source.getBBox === 'function') {
+      try {
+        const box = source.getBBox();
+        w = w || box.width;
+        h = h || box.height;
+      } catch (e) {
+        // SVG might not be in DOM or not ready
+      }
+    }
+
+    // Last resort fallback for any element in the DOM
+    if ((!w || !h) && typeof source.getBoundingClientRect === 'function') {
+      try {
+        const rect = source.getBoundingClientRect();
+        w = w || rect.width;
+        h = h || rect.height;
+      } catch (e) {}
+    }
 
     if (!w || !h) {
       throw new DOMException('Invalid image dimensions', 'InvalidStateError');
     }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
 
     const ctx = canvas.getContext('2d');
     if (typeof ImageData !== 'undefined' && source instanceof ImageData) {
