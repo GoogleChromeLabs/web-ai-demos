@@ -4,23 +4,23 @@
  */
 
 export type ToolCall = {
-    args: object,
-    functionName: string,
-}
+  args: object;
+  functionName: string;
+};
 
 export type Tool = {
-    description: string,
-    functionName: string,
-    parameters: object,
-}
+  description: string;
+  functionName: string;
+  parameters: object;
+};
 
 export type ToolsSchema = {
-    tools: [ToolSchema],
-}
+  tools: [ToolSchema];
+};
 
 export type ToolSchema = {
-    name: string,
-    description: string,
-    inputSchema: object | null,
-    outputSchema: object | null,
-}
+  name: string;
+  description: string;
+  inputSchema: object | null;
+  outputSchema: object | null;
+};

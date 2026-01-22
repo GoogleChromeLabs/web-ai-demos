@@ -3,37 +3,37 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
-export type Message = ContentMessage | FunctionCallMessage | FunctionResponseMessage;
+export type Message =
+  | ContentMessage
+  | FunctionCallMessage
+  | FunctionResponseMessage;
 
 export type ContentMessage = {
-    role: 'user' | 'model',
-    type: 'message',
-    content: string,
-}
+  role: "user" | "model";
+  type: "message";
+  content: string;
+};
 
 export type FunctionCallMessage = {
-    role: 'model',
-    type: 'functioncall'
-    name: string,
-    arguments: object,
-}
+  role: "model";
+  type: "functioncall";
+  name: string;
+  arguments: object;
+};
 
 export type FunctionResponseMessage = {
-    role: 'user',
-    type: 'functionresponse',
-    name: string,
-    response: object,
-}
+  role: "user";
+  type: "functionresponse";
+  name: string;
+  response: object;
+};
 
 export type Eval = {
-    messages: [Message],
-    expectedCall: FunctionCall,
-}
+  messages: [Message];
+  expectedCall: FunctionCall;
+};
 
 export type FunctionCall = {
-    functionName: string,
-    arguments: object,
-}
-
-
+  functionName: string;
+  arguments: object;
+};
