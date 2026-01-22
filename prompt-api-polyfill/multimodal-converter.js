@@ -29,7 +29,10 @@ export default class MultimodalConverter {
         u8.byteOffset + u8.byteLength
       );
       const base64 = this.arrayBufferToBase64(buffer);
-      const mimeType = this.#sniffImageMimeType(u8) || 'image/png';
+      const mimeType = this.#sniffImageMimeType(u8);
+      if (!mimeType) {
+        throw new DOMException('Invalid image data', 'InvalidStateError');
+      }
 
       return { inlineData: { data: base64, mimeType } };
     }
@@ -147,6 +150,13 @@ export default class MultimodalConverter {
   static async processAudio(source) {
     // Blob
     if (source instanceof Blob) {
+      if (
+        source.type &&
+        !source.type.startsWith('audio/') &&
+        source.type !== 'application/ogg'
+      ) {
+        throw new DOMException('Invalid audio mime type', 'DataError');
+      }
       return this.blobToInlineData(source);
     }
 
@@ -219,6 +229,10 @@ export default class MultimodalConverter {
 
     canvas.width = w;
     canvas.height = h;
+
+    if (!w || !h) {
+      throw new DOMException('Invalid image dimensions', 'InvalidStateError');
+    }
 
     const ctx = canvas.getContext('2d');
     if (typeof ImageData !== 'undefined' && source instanceof ImageData) {

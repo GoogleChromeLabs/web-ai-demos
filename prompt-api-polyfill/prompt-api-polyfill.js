@@ -668,8 +668,15 @@ export class LanguageModel extends EventTarget {
 
       const requestContents = [...this.#history, userContent];
 
-      const { text, usage } =
-        await this.#backend.generateContent(requestContents);
+      let result;
+      try {
+        result = await this.#backend.generateContent(requestContents);
+      } catch (error) {
+        this.#handleBackendError(error, parts);
+        throw error;
+      }
+
+      const { text, usage } = result;
 
       if (usage) {
         this.#inputUsage = usage;
@@ -777,8 +784,14 @@ export class LanguageModel extends EventTarget {
 
           const requestContents = [..._this.#history, userContent];
 
-          const stream =
-            await _this.#backend.generateContentStream(requestContents);
+          let stream;
+          try {
+            stream =
+              await _this.#backend.generateContentStream(requestContents);
+          } catch (error) {
+            _this.#handleBackendError(error, parts);
+            throw error;
+          }
 
           let fullResponseText = '';
 
@@ -983,6 +996,32 @@ export class LanguageModel extends EventTarget {
       );
     }
     return [{ text: JSON.stringify(input) }];
+  }
+
+  // Map backend errors to WPT expectations
+  #handleBackendError(error, parts) {
+    const msg = String(error.message || error);
+    if (
+      msg.includes('400') ||
+      msg.toLowerCase().includes('unable to process') ||
+      msg.toLowerCase().includes('invalid')
+    ) {
+      const hasAudio = parts.some((p) =>
+        p.inlineData?.mimeType.startsWith('audio/')
+      );
+      const hasImage = parts.some((p) =>
+        p.inlineData?.mimeType.startsWith('image/')
+      );
+
+      const DOMExceptionClass =
+        this.#window.DOMException || globalThis.DOMException;
+      if (hasAudio) {
+        throw new DOMExceptionClass('Invalid audio data', 'DataError');
+      }
+      if (hasImage) {
+        throw new DOMExceptionClass('Invalid image data', 'InvalidStateError');
+      }
+    }
   }
 }
 
