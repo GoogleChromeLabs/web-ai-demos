@@ -78,7 +78,8 @@ export class LanguageModel extends EventTarget {
     this.#inputUsage = inputUsage;
     this.#onquotaoverflow = {};
 
-    this.#topK = options.topK !== undefined ? Math.floor(options.topK) : undefined;
+    this.#topK =
+      options.topK !== undefined ? Math.floor(options.topK) : undefined;
     this.#temperature = options.temperature;
   }
 
@@ -485,7 +486,7 @@ export class LanguageModel extends EventTarget {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
     }
     if (options.signal?.aborted) {
-      throw new DOMException('Aborted', 'AbortError');
+      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
     }
 
     if (options.responseConstraint) {
@@ -508,7 +509,25 @@ export class LanguageModel extends EventTarget {
     const parts = await this.#processInput(input);
     const userContent = { role: 'user', parts: parts };
 
-    try {
+    const abortTask = new Promise((_, reject) => {
+      if (options.signal?.aborted) {
+        reject(
+          options.signal.reason || new DOMException('Aborted', 'AbortError')
+        );
+        return;
+      }
+      options.signal?.addEventListener(
+        'abort',
+        () => {
+          reject(
+            options.signal.reason || new DOMException('Aborted', 'AbortError')
+          );
+        },
+        { once: true }
+      );
+    });
+
+    const promptTask = (async () => {
       // Estimate usage
       const totalTokens = await this.#backend.countTokens([
         { role: 'user', parts },
@@ -531,8 +550,18 @@ export class LanguageModel extends EventTarget {
       this.#history.push({ role: 'model', parts: [{ text }] });
 
       return text;
+    })();
+
+    try {
+      return await Promise.race([promptTask, abortTask]);
     } catch (error) {
-      console.error('Prompt API Polyfill Error:', error);
+      // If promptTask was already underway, it might still finish but we rejected the race.
+      // We don't need to do specific cleanup here unless the backend supports cancellation.
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        // Log or handle abortion if needed
+      } else {
+        console.error('Prompt API Polyfill Error:', error);
+      }
       throw error;
     }
   }
@@ -542,7 +571,7 @@ export class LanguageModel extends EventTarget {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
     }
     if (options.signal?.aborted) {
-      throw new DOMException('Aborted', 'AbortError');
+      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
     }
 
     const _this = this; // Capture 'this' to access private fields in callback
@@ -551,22 +580,22 @@ export class LanguageModel extends EventTarget {
 
     return new ReadableStream({
       async start(controller) {
-        const abortError = new DOMException('Aborted', 'AbortError');
-
-        if (signal?.aborted) {
-          controller.error(abortError);
-          return;
-        }
-
         let aborted = false;
         const onAbort = () => {
           aborted = true;
           try {
-            controller.error(abortError);
+            const error =
+              signal?.reason || new DOMException('Aborted', 'AbortError');
+            controller.error(error);
           } catch {
             // Ignore
           }
         };
+
+        if (signal?.aborted) {
+          onAbort();
+          return;
+        }
 
         if (signal) {
           signal.addEventListener('abort', onAbort);
@@ -650,7 +679,7 @@ export class LanguageModel extends EventTarget {
       throw new DOMException('Session is destroyed', 'InvalidStateError');
     }
     if (options.signal?.aborted) {
-      throw new DOMException('Aborted', 'AbortError');
+      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
     }
 
     const parts = await this.#processInput(input);
