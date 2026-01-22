@@ -418,6 +418,7 @@ export class LanguageModel extends EventTarget {
     };
 
     let initialHistory = [];
+    let inputUsageValue = 0;
 
     if (
       resolvedOptions.initialPrompts &&
@@ -450,6 +451,11 @@ export class LanguageModel extends EventTarget {
     }
 
     const model = backend.createSession(resolvedOptions, inCloudParams);
+
+    // Initialize inputUsage with the tokens from the initial prompts
+    if (initialHistory.length > 0) {
+      inputUsageValue = (await backend.countTokens(initialHistory)) || 0;
+    }
 
     // If a monitor callback is provided, simulate simple downloadprogress events
     if (typeof resolvedOptions.monitor === 'function') {
@@ -508,7 +514,7 @@ export class LanguageModel extends EventTarget {
       initialHistory,
       resolvedOptions,
       inCloudParams,
-      0,
+      inputUsageValue,
       win
     );
   }
@@ -844,17 +850,14 @@ export class LanguageModel extends EventTarget {
     }
     const content = { role: 'user', parts: parts };
 
+    this.#history.push(content);
+
     try {
-      const totalTokens = await this.#backend.countTokens([
-        ...this.#history,
-        content,
-      ]);
-      this.#inputUsage = totalTokens;
+      const totalTokens = await this.#backend.countTokens(this.#history);
+      this.#inputUsage = totalTokens || 0;
     } catch {
       // Do nothing.
     }
-
-    this.#history.push(content);
 
     if (this.#inputUsage > this.inputQuota) {
       this.dispatchEvent(new Event('quotaoverflow'));

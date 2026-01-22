@@ -206,8 +206,16 @@ export default class MultimodalConverter {
 
   static canvasSourceToInlineData(source) {
     const canvas = document.createElement('canvas');
-    const w = source.naturalWidth || source.videoWidth || source.width;
-    const h = source.naturalHeight || source.videoHeight || source.height;
+    const w =
+      source.displayWidth ||
+      source.naturalWidth ||
+      source.videoWidth ||
+      source.width;
+    const h =
+      source.displayHeight ||
+      source.naturalHeight ||
+      source.videoHeight ||
+      source.height;
 
     canvas.width = w;
     canvas.height = h;
