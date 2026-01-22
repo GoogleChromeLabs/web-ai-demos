@@ -59,6 +59,7 @@ export class LanguageModel extends EventTarget {
   #topK;
   #temperature;
   #onquotaoverflow;
+  #window;
 
   constructor(
     backend,
@@ -66,7 +67,8 @@ export class LanguageModel extends EventTarget {
     initialHistory,
     options = {},
     inCloudParams,
-    inputUsage = 0
+    inputUsage = 0,
+    win = globalThis
   ) {
     super();
     this.#backend = backend;
@@ -77,6 +79,7 @@ export class LanguageModel extends EventTarget {
     this.#destroyed = false;
     this.#inputUsage = inputUsage;
     this.#onquotaoverflow = {};
+    this.#window = win;
 
     this.#topK =
       options.topK !== undefined ? Math.floor(options.topK) : undefined;
@@ -110,20 +113,48 @@ export class LanguageModel extends EventTarget {
     }
   }
 
-  static async availability(options = {}) {
+  static #checkContext(win) {
     try {
-      await LanguageModel.#validateOptions(options);
+      if (!win || !win.document || win.document.defaultView !== win) {
+        throw new Error();
+      }
+      // If it's an iframe, its frameElement should be connected to the parent document
+      if (
+        win !== globalThis &&
+        win !== win.top &&
+        (!win.frameElement || !win.frameElement.isConnected)
+      ) {
+        throw new Error();
+      }
+    } catch (e) {
+      const DOMExceptionClass = win?.DOMException || globalThis.DOMException;
+      throw new DOMExceptionClass(
+        'The execution context is not valid.',
+        'InvalidStateError'
+      );
+    }
+  }
+
+  #validateContext() {
+    LanguageModel.#checkContext(this.#window);
+  }
+
+  static async availability(options = {}) {
+    const win = this.__window || globalThis;
+    LanguageModel.#checkContext(win);
+    try {
+      await LanguageModel.#validateOptions(options, win);
     } catch (e) {
       if (
         e instanceof TypeError ||
         e instanceof RangeError ||
-        (e instanceof DOMException && e.name === 'NotSupportedError')
+        e.name === 'NotSupportedError'
       ) {
         throw e;
       }
       return 'unavailable';
     }
-    const backendClass = await LanguageModel.#getBackendClass();
+    const backendClass = await LanguageModel.#getBackendClass(win);
     return backendClass.availability(options);
   }
 
@@ -142,26 +173,26 @@ export class LanguageModel extends EventTarget {
     },
   ];
 
-  static #getBackendInfo() {
+  static #getBackendInfo(win = globalThis) {
     for (const b of LanguageModel.#backends) {
-      const config = window[b.config];
+      const config = win[b.config] || globalThis[b.config];
       if (config && config.apiKey) {
         return { ...b, configValue: config };
       }
     }
-    throw new DOMException(
+    throw new (win.DOMException || globalThis.DOMException)(
       'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
       'NotSupportedError'
     );
   }
 
-  static async #getBackendClass() {
-    const info = LanguageModel.#getBackendInfo();
+  static async #getBackendClass(win = globalThis) {
+    const info = LanguageModel.#getBackendInfo(win);
     return (await import(/* @vite-ignore */ info.path)).default;
   }
 
-  static async #validateOptions(options = {}) {
-    const { maxTemperature, maxTopK } = await LanguageModel.params();
+  static async #validateOptions(options = {}, win = globalThis) {
+    const { maxTemperature, maxTopK } = await LanguageModel.params(win);
 
     const hasTemperature = Object.prototype.hasOwnProperty.call(
       options,
@@ -170,7 +201,7 @@ export class LanguageModel extends EventTarget {
     const hasTopK = Object.prototype.hasOwnProperty.call(options, 'topK');
 
     if (hasTemperature !== hasTopK) {
-      throw new DOMException(
+      throw new (win.DOMException || globalThis.DOMException)(
         'Initializing a new session must either specify both topK and temperature, or neither of them.',
         'NotSupportedError'
       );
@@ -256,7 +287,7 @@ export class LanguageModel extends EventTarget {
           for (const item of prompt.content) {
             const type = item.type || 'text';
             if (!allowedInputs.includes(type)) {
-              throw new DOMException(
+              throw new (win.DOMException || globalThis.DOMException)(
                 `The content type "${type}" is not in the expectedInputs.`,
                 'NotSupportedError'
               );
@@ -265,7 +296,7 @@ export class LanguageModel extends EventTarget {
         } else {
           // Content is a simple string, which is 'text'
           if (!allowedInputs.includes('text')) {
-            throw new DOMException(
+            throw new (win.DOMException || globalThis.DOMException)(
               'The content type "text" is not in the expectedInputs.',
               'NotSupportedError'
             );
@@ -296,7 +327,9 @@ export class LanguageModel extends EventTarget {
     }
   }
 
-  static async params() {
+  static async params(win = globalThis) {
+    const contextWin = this.__window || win;
+    LanguageModel.#checkContext(contextWin);
     return {
       // Values from https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-flash-lite#:~:text=%2C%20audio/webm-,Parameter%20defaults,-tune.
       defaultTemperature: 1.0,
@@ -307,34 +340,49 @@ export class LanguageModel extends EventTarget {
   }
 
   static async create(options = {}) {
+    const win = this.__window || globalThis;
+    LanguageModel.#checkContext(win);
+
     if (options.signal?.aborted) {
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+      throw (
+        options.signal.reason ||
+        new (win.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
     }
 
-    const availability = await LanguageModel.availability(options);
+    const availability = await this.availability(options);
 
     if (availability === 'unavailable') {
-      throw new DOMException(
+      throw new (win.DOMException || globalThis.DOMException)(
         'The model is not available for the given options.',
         'NotSupportedError'
       );
     }
 
     if (availability === 'downloadable' || availability === 'downloading') {
-      throw new DOMException(
+      throw new (win.DOMException || globalThis.DOMException)(
         'Requires a user gesture when availability is "downloading" or "downloadable".',
         'NotAllowedError'
       );
     }
 
     if (options.signal?.aborted) {
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+      throw (
+        options.signal.reason ||
+        new (win.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
     }
 
     // --- Backend Selection Logic ---
-    const info = LanguageModel.#getBackendInfo();
+    const info = LanguageModel.#getBackendInfo(win);
 
-    const BackendClass = await LanguageModel.#getBackendClass();
+    const BackendClass = await LanguageModel.#getBackendClass(win);
     const backend = new BackendClass(info.configValue);
 
     const defaults = {
@@ -375,7 +423,13 @@ export class LanguageModel extends EventTarget {
     }
 
     if (options.signal?.aborted) {
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+      throw (
+        options.signal.reason ||
+        new (win.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
     }
 
     const model = backend.createSession(resolvedOptions, inCloudParams);
@@ -412,34 +466,54 @@ export class LanguageModel extends EventTarget {
 
       if (!(await dispatchProgress(0))) {
         throw (
-          options.signal.reason || new DOMException('Aborted', 'AbortError')
+          options.signal.reason ||
+          new (win.DOMException || globalThis.DOMException)(
+            'Aborted',
+            'AbortError'
+          )
         );
       }
 
       if (!(await dispatchProgress(1))) {
         throw (
-          options.signal.reason || new DOMException('Aborted', 'AbortError')
+          options.signal.reason ||
+          new (win.DOMException || globalThis.DOMException)(
+            'Aborted',
+            'AbortError'
+          )
         );
       }
     }
 
-    return new LanguageModel(
+    return new this(
       backend,
       model,
       initialHistory,
       resolvedOptions,
-      inCloudParams
+      inCloudParams,
+      0,
+      win
     );
   }
 
   // Instance Methods
 
   async clone(options = {}) {
+    this.#validateContext();
     if (this.#destroyed) {
-      throw new DOMException('Session is destroyed', 'InvalidStateError');
+      throw new (this.#window.DOMException || globalThis.DOMException)(
+        'Session is destroyed',
+        'InvalidStateError'
+      );
     }
     if (options.signal?.aborted) {
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+      throw (
+        options.signal.reason ||
+        new (this.#window.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
     }
 
     const historyCopy = JSON.parse(JSON.stringify(this.#history));
@@ -454,8 +528,8 @@ export class LanguageModel extends EventTarget {
     }
 
     // Re-create the backend for the clone since it now holds state (#model)
-    const BackendClass = await LanguageModel.#getBackendClass();
-    const info = LanguageModel.#getBackendInfo();
+    const BackendClass = await LanguageModel.#getBackendClass(this.#window);
+    const info = LanguageModel.#getBackendInfo(this.#window);
     const newBackend = new BackendClass(info.configValue);
     const newModel = newBackend.createSession(
       mergedOptions,
@@ -463,30 +537,48 @@ export class LanguageModel extends EventTarget {
     );
 
     if (options.signal?.aborted) {
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+      throw (
+        options.signal.reason ||
+        new (this.#window.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
     }
 
-    return new LanguageModel(
+    return new this.constructor(
       newBackend,
       newModel,
       historyCopy,
       mergedOptions,
       mergedInCloudParams,
-      this.#inputUsage
+      this.#inputUsage,
+      this.#window
     );
   }
 
   destroy() {
+    this.#validateContext();
     this.#destroyed = true;
     this.#history = null;
   }
 
   async prompt(input, options = {}) {
+    this.#validateContext();
     if (this.#destroyed) {
-      throw new DOMException('Session is destroyed', 'InvalidStateError');
+      throw new (this.#window.DOMException || globalThis.DOMException)(
+        'Session is destroyed',
+        'InvalidStateError'
+      );
     }
     if (options.signal?.aborted) {
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+      throw (
+        options.signal.reason ||
+        new (this.#window.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
     }
 
     if (options.responseConstraint) {
@@ -508,14 +600,21 @@ export class LanguageModel extends EventTarget {
     // Process Input (Async conversion of Blob/Canvas/AudioBuffer)
     const parts = await this.#processInput(input);
     if (this.#destroyed) {
-      throw new DOMException('Session is destroyed', 'InvalidStateError');
+      throw new (this.#window.DOMException || globalThis.DOMException)(
+        'Session is destroyed',
+        'InvalidStateError'
+      );
     }
     const userContent = { role: 'user', parts: parts };
 
     const abortTask = new Promise((_, reject) => {
       if (options.signal?.aborted) {
         reject(
-          options.signal.reason || new DOMException('Aborted', 'AbortError')
+          options.signal.reason ||
+            new (this.#window.DOMException || globalThis.DOMException)(
+              'Aborted',
+              'AbortError'
+            )
         );
         return;
       }
@@ -523,7 +622,11 @@ export class LanguageModel extends EventTarget {
         'abort',
         () => {
           reject(
-            options.signal.reason || new DOMException('Aborted', 'AbortError')
+            options.signal.reason ||
+              new (this.#window.DOMException || globalThis.DOMException)(
+                'Aborted',
+                'AbortError'
+              )
           );
         },
         { once: true }
@@ -560,7 +663,7 @@ export class LanguageModel extends EventTarget {
     } catch (error) {
       // If promptTask was already underway, it might still finish but we rejected the race.
       // We don't need to do specific cleanup here unless the backend supports cancellation.
-      if (error instanceof DOMException && error.name === 'AbortError') {
+      if (error.name === 'AbortError') {
         // Log or handle abortion if needed
       } else {
         console.error('Prompt API Polyfill Error:', error);
@@ -570,11 +673,21 @@ export class LanguageModel extends EventTarget {
   }
 
   promptStreaming(input, options = {}) {
+    this.#validateContext();
     if (this.#destroyed) {
-      throw new DOMException('Session is destroyed', 'InvalidStateError');
+      throw new (this.#window.DOMException || globalThis.DOMException)(
+        'Session is destroyed',
+        'InvalidStateError'
+      );
     }
     if (options.signal?.aborted) {
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+      throw (
+        options.signal.reason ||
+        new (this.#window.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
     }
 
     const _this = this; // Capture 'this' to access private fields in callback
@@ -588,7 +701,11 @@ export class LanguageModel extends EventTarget {
           aborted = true;
           try {
             const error =
-              signal?.reason || new DOMException('Aborted', 'AbortError');
+              signal?.reason ||
+              new (_this.#window.DOMException || globalThis.DOMException)(
+                'Aborted',
+                'AbortError'
+              );
             controller.error(error);
           } catch {
             // Ignore
@@ -620,7 +737,10 @@ export class LanguageModel extends EventTarget {
 
           const parts = await _this.#processInput(input);
           if (_this.#destroyed) {
-            throw new DOMException('Session is destroyed', 'InvalidStateError');
+            throw new (_this.#window.DOMException || globalThis.DOMException)(
+              'Session is destroyed',
+              'InvalidStateError'
+            );
           }
           const userContent = { role: 'user', parts: parts };
 
@@ -681,16 +801,29 @@ export class LanguageModel extends EventTarget {
   }
 
   async append(input, options = {}) {
+    this.#validateContext();
     if (this.#destroyed) {
-      throw new DOMException('Session is destroyed', 'InvalidStateError');
+      throw new (this.#window.DOMException || globalThis.DOMException)(
+        'Session is destroyed',
+        'InvalidStateError'
+      );
     }
     if (options.signal?.aborted) {
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
+      throw (
+        options.signal.reason ||
+        new (this.#window.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
     }
 
     const parts = await this.#processInput(input);
     if (this.#destroyed) {
-      throw new DOMException('Session is destroyed', 'InvalidStateError');
+      throw new (this.#window.DOMException || globalThis.DOMException)(
+        'Session is destroyed',
+        'InvalidStateError'
+      );
     }
     const content = { role: 'user', parts: parts };
 
@@ -712,14 +845,21 @@ export class LanguageModel extends EventTarget {
   }
 
   async measureInputUsage(input) {
+    this.#validateContext();
     if (this.#destroyed) {
-      throw new DOMException('Session is destroyed', 'InvalidStateError');
+      throw new (this.#window.DOMException || globalThis.DOMException)(
+        'Session is destroyed',
+        'InvalidStateError'
+      );
     }
 
     try {
       const parts = await this.#processInput(input);
       if (this.#destroyed) {
-        throw new DOMException('Session is destroyed', 'InvalidStateError');
+        throw new (this.#window.DOMException || globalThis.DOMException)(
+          'Session is destroyed',
+          'InvalidStateError'
+        );
       }
       const totalTokens = await this.#backend.countTokens([
         { role: 'user', parts },
@@ -770,11 +910,86 @@ export class LanguageModel extends EventTarget {
   }
 }
 
-if (!('LanguageModel' in window) || window.__FORCE_PROMPT_API_POLYFILL__) {
+if (
+  !('LanguageModel' in globalThis) ||
+  globalThis.__FORCE_PROMPT_API_POLYFILL__
+) {
   // Attach to window
-  window.LanguageModel = LanguageModel;
+  globalThis.LanguageModel = LanguageModel;
   LanguageModel.__isPolyfill = true;
   console.log(
     'Polyfill: window.LanguageModel is now backed by the Prompt API polyfill.'
   );
+
+  // Subclassing per window to handle detached iframes
+  const inject = (win) => {
+    try {
+      if (!win || win.LanguageModel?.__isPolyfill) {
+        return;
+      }
+
+      const LocalLanguageModel = class extends LanguageModel {};
+      LocalLanguageModel.__window = win;
+      LocalLanguageModel.__isPolyfill = true;
+      win.LanguageModel = LocalLanguageModel;
+    } catch (e) {
+      // Ignore cross-origin errors
+    }
+  };
+
+  // Synchronous injection via contentWindow getter
+  if (typeof HTMLIFrameElement !== 'undefined') {
+    try {
+      const descriptor = Object.getOwnPropertyDescriptor(
+        HTMLIFrameElement.prototype,
+        'contentWindow'
+      );
+      if (descriptor && descriptor.get) {
+        Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
+          get() {
+            const win = descriptor.get.call(this);
+            if (win) {
+              inject(win);
+            }
+            return win;
+          },
+          configurable: true,
+        });
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  // Monitor for same-origin iframes
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.tagName === 'IFRAME') {
+          // Attempt immediate injection for about:blank
+          inject(node.contentWindow);
+          // Also listen for load to handle navigations
+          node.addEventListener(
+            'load',
+            () => {
+              inject(node.contentWindow);
+            },
+            { once: false }
+          );
+        }
+      }
+    }
+  });
+
+  if (globalThis.document?.documentElement) {
+    observer.observe(globalThis.document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+
+    // Inject into existing iframes
+    globalThis.document.querySelectorAll('iframe').forEach((iframe) => {
+      inject(iframe.contentWindow);
+    });
+  }
 }
