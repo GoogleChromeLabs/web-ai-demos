@@ -507,6 +507,9 @@ export class LanguageModel extends EventTarget {
 
     // Process Input (Async conversion of Blob/Canvas/AudioBuffer)
     const parts = await this.#processInput(input);
+    if (this.#destroyed) {
+      throw new DOMException('Session is destroyed', 'InvalidStateError');
+    }
     const userContent = { role: 'user', parts: parts };
 
     const abortTask = new Promise((_, reject) => {
@@ -616,6 +619,9 @@ export class LanguageModel extends EventTarget {
           }
 
           const parts = await _this.#processInput(input);
+          if (_this.#destroyed) {
+            throw new DOMException('Session is destroyed', 'InvalidStateError');
+          }
           const userContent = { role: 'user', parts: parts };
 
           const totalTokens = await _this.#backend.countTokens([
@@ -683,6 +689,9 @@ export class LanguageModel extends EventTarget {
     }
 
     const parts = await this.#processInput(input);
+    if (this.#destroyed) {
+      throw new DOMException('Session is destroyed', 'InvalidStateError');
+    }
     const content = { role: 'user', parts: parts };
 
     try {
@@ -709,6 +718,9 @@ export class LanguageModel extends EventTarget {
 
     try {
       const parts = await this.#processInput(input);
+      if (this.#destroyed) {
+        throw new DOMException('Session is destroyed', 'InvalidStateError');
+      }
       const totalTokens = await this.#backend.countTokens([
         { role: 'user', parts },
       ]);
