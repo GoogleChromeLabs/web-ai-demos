@@ -1,4 +1,4 @@
-# Tools Evals TS
+# WebMCP Evals
 
 A TypeScript framework for evaluating the tool-calling capabilities of Large Language Models (LLMs). This project allows you to define test cases (evals) and schemas to verify if an interactive agent correctly calls tools based on user inputs.
 
@@ -13,9 +13,9 @@ A TypeScript framework for evaluating the tool-calling capabilities of Large Lan
 The project is structured as follows:
 
 - `src/`: Source code.
-    - `index.ts`: Main entry point that sets up the backend and runs the evaluation loop.
+    - `bin/runevals.ts`: Main entry point that sets up the backend and runs the evaluation loop.
     - `backend/`: Implementation of LLM backends (e.g., `googleai.ts`, `ollama.ts`).
-    - `types.ts`: TypeScript definitions for tools, messages, and evaluations.
+    - `types/`: TypeScript definitions for tools, messages, and evaluations.
 - `examples/`: Detailed examples and test data.
     - `travel/`: A travel agent example containing `tools_schema.json` and `evals.json`.
 
