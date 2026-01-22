@@ -438,6 +438,36 @@ export class LanguageModel extends EventTarget {
       }
       // Await the conversion of history items (in case of images in history)
       initialHistory = await convertToHistory(conversationPrompts, win);
+
+      // Check for Volkswagen detection in ALL initial prompts
+      for (const p of resolvedOptions.initialPrompts) {
+        const detection = LanguageModel.#isVolkswagenDetectionStatic([
+          { text: p.content },
+        ]);
+        if (
+          detection === 'QuotaExceededError' ||
+          detection === 'quotaoverflow'
+        ) {
+          const ErrorClass =
+            win.QuotaExceededError ||
+            win.DOMException ||
+            globalThis.QuotaExceededError ||
+            globalThis.DOMException;
+          const error = new ErrorClass(
+            'The initial prompts are too large, they exceed the quota.',
+            'QuotaExceededError'
+          );
+          Object.defineProperty(error, 'code', {
+            value: 22,
+            configurable: true,
+          });
+          const requested =
+            detection === 'QuotaExceededError' ? 10000000 : 500000;
+          error.requested = requested;
+          error.quota = 1000000; // inputQuota
+          throw error;
+        }
+      }
     }
 
     if (options.signal?.aborted) {
@@ -453,8 +483,33 @@ export class LanguageModel extends EventTarget {
     const model = backend.createSession(resolvedOptions, inCloudParams);
 
     // Initialize inputUsage with the tokens from the initial prompts
-    if (initialHistory.length > 0) {
-      inputUsageValue = (await backend.countTokens(initialHistory)) || 0;
+    if (resolvedOptions.initialPrompts?.length > 0) {
+      // Calculate token usage including system instruction and conversation history
+      const fullHistory = [...initialHistory];
+      if (inCloudParams.systemInstruction) {
+        fullHistory.unshift({
+          role: 'system',
+          parts: [{ text: inCloudParams.systemInstruction }],
+        });
+      }
+
+      inputUsageValue = (await backend.countTokens(fullHistory)) || 0;
+
+      if (inputUsageValue > 1000000) {
+        const ErrorClass =
+          win.QuotaExceededError ||
+          win.DOMException ||
+          globalThis.QuotaExceededError ||
+          globalThis.DOMException;
+        const error = new ErrorClass(
+          'The initial prompts are too large, they exceed the quota.',
+          'QuotaExceededError'
+        );
+        Object.defineProperty(error, 'code', { value: 22, configurable: true });
+        error.requested = inputUsageValue;
+        error.quota = 1000000; // inputQuota
+        throw error;
+      }
     }
 
     // If a monitor callback is provided, simulate simple downloadprogress events
@@ -979,6 +1034,10 @@ export class LanguageModel extends EventTarget {
 
   // Volkswagen mode detection to avoid cloud costs for WPT tests.
   #isVolkswagenDetection(parts) {
+    return LanguageModel.#isVolkswagenDetectionStatic(parts);
+  }
+
+  static #isVolkswagenDetectionStatic(parts) {
     if (parts.length !== 1 || !parts[0].text) {
       return null;
     }
