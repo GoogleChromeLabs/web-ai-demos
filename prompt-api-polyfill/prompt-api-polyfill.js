@@ -20,18 +20,32 @@ import MultimodalConverter from './multimodal-converter.js';
 import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 
 // --- Helper to convert initial History ---
-async function convertToHistory(prompts) {
+async function convertToHistory(prompts, win = globalThis) {
   const history = [];
   for (const p of prompts) {
     const role = p.role === 'assistant' ? 'model' : 'user';
+    const isAssistant = role === 'model';
     let parts = [];
 
     if (Array.isArray(p.content)) {
       // Mixed content
       for (const item of p.content) {
         if (item.type === 'text') {
-          parts.push({ text: item.value || item.text || '' });
+          const text = item.value || item.text || '';
+          if (typeof text !== 'string') {
+            throw new (win.DOMException || globalThis.DOMException)(
+              'The content type "text" must have a string value.',
+              'SyntaxError'
+            );
+          }
+          parts.push({ text });
         } else {
+          if (isAssistant) {
+            throw new (win.DOMException || globalThis.DOMException)(
+              'Assistant messages only support text content.',
+              'NotSupportedError'
+            );
+          }
           const part = await MultimodalConverter.convert(item.type, item.value);
           parts.push(part);
         }
@@ -266,7 +280,7 @@ export class LanguageModel extends EventTarget {
 
     // Validate initialPrompts against expectedInputs
     const allowedInputs = options.expectedInputs
-      ? options.expectedInputs.map((i) => i.type)
+      ? ['text', ...options.expectedInputs.map((i) => i.type)]
       : ['text'];
 
     if (options.initialPrompts && Array.isArray(options.initialPrompts)) {
@@ -422,7 +436,7 @@ export class LanguageModel extends EventTarget {
           .join('\n');
       }
       // Await the conversion of history items (in case of images in history)
-      initialHistory = await convertToHistory(conversationPrompts);
+      initialHistory = await convertToHistory(conversationPrompts, win);
     }
 
     if (options.signal?.aborted) {
@@ -878,7 +892,17 @@ export class LanguageModel extends EventTarget {
 
   // Private Helper to process diverse input types
   async #processInput(input) {
+    const allowedInputs = this.#options.expectedInputs
+      ? ['text', ...this.#options.expectedInputs.map((i) => i.type)]
+      : ['text'];
+
     if (typeof input === 'string') {
+      if (!allowedInputs.includes('text')) {
+        throw new (this.#window.DOMException || globalThis.DOMException)(
+          'The content type "text" is not in the expectedInputs.',
+          'NotSupportedError'
+        );
+      }
       return [{ text: input }];
     }
 
@@ -886,7 +910,14 @@ export class LanguageModel extends EventTarget {
       if (input.length > 0 && input[0].role) {
         let combinedParts = [];
         for (const msg of input) {
+          const isAssistant = msg.role === 'assistant' || msg.role === 'model';
           if (typeof msg.content === 'string') {
+            if (!allowedInputs.includes('text')) {
+              throw new (this.#window.DOMException || globalThis.DOMException)(
+                'The content type "text" is not in the expectedInputs.',
+                'NotSupportedError'
+              );
+            }
             combinedParts.push({ text: msg.content });
             if (msg.prefix) {
               console.warn(
@@ -895,9 +926,34 @@ export class LanguageModel extends EventTarget {
             }
           } else if (Array.isArray(msg.content)) {
             for (const c of msg.content) {
-              if (c.type === 'text') {
+              const type = c.type || 'text';
+              if (!allowedInputs.includes(type)) {
+                throw new (
+                  this.#window.DOMException || globalThis.DOMException
+                )(
+                  `The content type "${type}" is not in the expectedInputs.`,
+                  'NotSupportedError'
+                );
+              }
+              if (type === 'text') {
+                if (typeof c.value !== 'string') {
+                  throw new (
+                    this.#window.DOMException || globalThis.DOMException
+                  )(
+                    'The content type "text" must have a string value.',
+                    'SyntaxError'
+                  );
+                }
                 combinedParts.push({ text: c.value });
               } else {
+                if (isAssistant) {
+                  throw new (
+                    this.#window.DOMException || globalThis.DOMException
+                  )(
+                    'Assistant messages only support text content.',
+                    'NotSupportedError'
+                  );
+                }
                 const part = await MultimodalConverter.convert(c.type, c.value);
                 combinedParts.push(part);
               }
@@ -906,9 +962,23 @@ export class LanguageModel extends EventTarget {
         }
         return combinedParts;
       }
-      return input.map((s) => ({ text: String(s) }));
+      return input.map((s) => {
+        if (!allowedInputs.includes('text')) {
+          throw new (this.#window.DOMException || globalThis.DOMException)(
+            'The content type "text" is not in the expectedInputs.',
+            'NotSupportedError'
+          );
+        }
+        return { text: String(s) };
+      });
     }
 
+    if (!allowedInputs.includes('text')) {
+      throw new (this.#window.DOMException || globalThis.DOMException)(
+        'The content type "text" is not in the expectedInputs.',
+        'NotSupportedError'
+      );
+    }
     return [{ text: JSON.stringify(input) }];
   }
 }
