@@ -5,17 +5,25 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WPT_DIR = path.resolve(__dirname, '../tests/wpt');
 
-const CONFIG_FILES = [
-  { name: 'FIREBASE_CONFIG', path: '../.env-firebase.json' },
-  { name: 'GEMINI_CONFIG', path: '../.env-gemini.json' },
-  { name: 'OPENAI_CONFIG', path: '../.env-openai.json' },
-];
+const backendsDir = path.resolve(__dirname, '../backends');
+const backendFiles = fs.readdirSync(backendsDir).filter(
+    (file) => file.endsWith('.js') && file !== 'base.js' && file !== 'defaults.js'
+);
 
-const injectedConfigs = CONFIG_FILES.map((c) => {
-  const fullPath = path.resolve(__dirname, c.path);
+const allPossibleConfigs = backendFiles.map((file) => {
+    const name = file.replace('.js', '');
+    return {
+        name,
+        configKey: `${name.toUpperCase()}_CONFIG`,
+        file: `.env-${name}.json`,
+    };
+});
+
+const injectedConfigs = allPossibleConfigs.map((c) => {
+    const fullPath = path.resolve(__dirname, '../', c.file);
   if (fs.existsSync(fullPath)) {
     const content = fs.readFileSync(fullPath, 'utf8');
-    return `<script>window.${c.name} = ${content.trim()};</script>`;
+      return `<script>window.${c.configKey} = ${content.trim()};</script>`;
   }
   return '';
 }).join('\n    ');
