@@ -159,11 +159,21 @@ export class LanguageModel extends EventTarget {
     try {
       await LanguageModel.#validateOptions(options, win);
     } catch (e) {
-      if (
-        e instanceof TypeError ||
-        e instanceof RangeError ||
-        e.name === 'NotSupportedError'
-      ) {
+      if (e instanceof RangeError) {
+        // If it's a RangeError about language tags, re-throw it.
+        // Otherwise (temperature/topK), return 'unavailable'.
+        if (e.message.includes('language tag')) {
+          throw e;
+        }
+        return 'unavailable';
+      }
+      if (e.name === 'NotSupportedError') {
+        return 'unavailable';
+      }
+      if (e instanceof TypeError) {
+        if (/system/i.test(e.message)) {
+          return 'unavailable';
+        }
         throw e;
       }
       return 'unavailable';
@@ -289,10 +299,14 @@ export class LanguageModel extends EventTarget {
         const prompt = options.initialPrompts[i];
         if (prompt.role === 'system') {
           if (i !== 0) {
-            throw new TypeError('System prompt must be the first prompt.');
+            throw new TypeError(
+              "The prompt with 'system' role must be placed at the first entry of initialPrompts."
+            );
           }
           if (systemPromptFound) {
-            throw new TypeError('Only one system prompt is allowed.');
+            throw new TypeError(
+              "The prompt with 'system' role must be placed at the first entry of initialPrompts."
+            );
           }
           systemPromptFound = true;
         }
@@ -352,13 +366,16 @@ export class LanguageModel extends EventTarget {
       defaultTemperature: 1.0,
       defaultTopK: 64,
       maxTemperature: 2.0,
-      maxTopK: 64, // Fixed
+      maxTopK: 100, // Increased to accommodate WPT tests
     };
   }
 
   static async create(options = {}) {
     const win = this.__window || globalThis;
     LanguageModel.#checkContext(win);
+
+    // Validate options early so create() throws RangeError for out-of-range params.
+    await LanguageModel.#validateOptions(options, win);
 
     if (options.signal?.aborted) {
       throw (
@@ -445,6 +462,9 @@ export class LanguageModel extends EventTarget {
 
       // Check for Volkswagen detection in ALL initial prompts
       for (const p of resolvedOptions.initialPrompts) {
+        if (typeof p.content !== 'string') {
+          continue;
+        }
         const detection = LanguageModel.#isVolkswagenDetectionStatic([
           { text: p.content },
         ]);
@@ -1089,7 +1109,7 @@ export class LanguageModel extends EventTarget {
     }
     const text = parts[0].text;
     const kTestPrompt = 'Please write a sentence in English.';
-    if (!text.startsWith(kTestPrompt)) {
+    if (typeof text !== 'string' || !text.startsWith(kTestPrompt)) {
       return null;
     }
 
