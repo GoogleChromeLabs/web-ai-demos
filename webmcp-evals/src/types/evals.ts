@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ToolCall } from "./tools.js";
+
 export type Message =
   | ContentMessage
   | FunctionCallMessage
@@ -36,4 +38,18 @@ export type Eval = {
 export type FunctionCall = {
   functionName: string;
   arguments: object;
+};
+
+export type TestResult = {
+  test: Eval;
+  response: ToolCall | null;
+  outcome: "pass" | "fail" | "error";
+};
+
+export type TestResults = {
+  results: Array<TestResult>;
+  testCount: number;
+  passCount: number;
+  errorCount: number;
+  failCount: number;
 };
