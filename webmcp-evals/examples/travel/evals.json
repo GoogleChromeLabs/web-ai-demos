@@ -408,5 +408,53 @@
                 "stops": [0]
             }
         }
-    }   
+    },
+    {
+        "messages": [
+            {
+                "role": "user",
+                "type": "message",
+                "content": "Search for a round-trip flight from LON to NYC departing on 2026-01-20 and returning on 2026-01-27 for 1 passenger"
+            },{
+                "role": "model",
+                "type": "functioncall",
+                "name": "searchFlights",
+                    "arguments": {
+                    "destination":"NYC",
+                    "inboundDate":"2026-01-27",
+                    "origin":"LON",
+                    "outboundDate":"2026-01-20",
+                    "passengers":1,
+                    "tripType":"round-trip"
+                }
+            }, {
+                "role": "user",
+                "type": "functionresponse",
+                "name": "searchFlights",
+                "response" : {
+                    "result": "A new flight search was started."
+                }
+            },             {
+                "role": "model",
+                "type": "message",
+                "content": "OK. I have searched for a round-trip flight from LON to NYC for one person, departing on January 20, 2026 and returning on January 27, 2026."
+            },
+            {
+                "role": "user",
+                "type": "message",
+                "content": "Change the origin to Bristol"
+            }
+        ],
+        "expectedCall": {
+            "functionName": "searchFlights",
+            "arguments": {
+                "destination":"NYC",
+                "inboundDate":"2026-01-27",
+                "origin":"BRS",
+                "outboundDate":"2026-01-20",
+                "passengers":1,
+                "tripType":"round-trip"
+            }
+        }
+    }
 ]
