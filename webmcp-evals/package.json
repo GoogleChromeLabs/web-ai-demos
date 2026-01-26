@@ -1,0 +1,24 @@
+{
+  "name": "webmcp-evals",
+  "version": "0.1.0",
+  "description": "",
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@google/genai": "^1.38.0",
+    "@types/cli-progress": "^3.11.6",
+    "@types/minimist": "^1.2.5",
+    "cli-progress": "^3.12.0",
+    "dotenv": "^17.2.3",
+    "minimist": "^1.2.8",
+    "ollama": "^0.6.3"
+  }
+}
