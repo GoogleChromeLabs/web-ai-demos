@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summarizer API Polyfill Test</title>
+  <style>
+    body {
+      font-family: system-ui;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      line-height: 1.5;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      margin-bottom: 1rem;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .output {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      min-height: 100px;
+      white-space: pre-wrap;
+      background: #f9f9f9;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+
+    progress {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Summarizer API Polyfill Test</h1>
+
+  <p>This page tests the Summarizer API polyfill. <strong>Make sure to set a backend config in the console or edit this
+      file!</strong></p>
+
+  <textarea
+    id="input">The web is a vast place. Built-in AI APIs like the Summarizer API allow developers to process information directly on the user's device. This improves privacy and performance. By using polyfills, we can bridge the gap between experimental specs and today's browsers. The Prompt API is a foundational piece that powers many of these task-specific APIs. Transformers.js and other local backends enable this to happen without a cloud connection.</textarea>
+
+  <div class="controls">
+    <div>
+      <label>Type:</label><br>
+      <select id="type">
+        <option value="tldr">TL;DR</option>
+        <option value="teaser">Teaser</option>
+        <option value="key-points" selected>Key Points</option>
+        <option value="headline">Headline</option>
+      </select>
+    </div>
+    <div>
+      <label>Format:</label><br>
+      <select id="format">
+        <option value="plain-text">Plain Text</option>
+        <option value="markdown" selected>Markdown</option>
+      </select>
+    </div>
+    <div>
+      <label>Length:</label><br>
+      <select id="length">
+        <option value="short" selected>Short</option>
+        <option value="medium">Medium</option>
+        <option value="long">Long</option>
+      </select>
+    </div>
+  </div>
+
+  <progress id="progress" value="0" max="1" style="display: none;"></progress>
+  <div id="status"></div>
+
+  <button id="summarizeBtn">Summarize</button>
+  <button id="summarizeStreamBtn">Summarize Streaming</button>
+  <button id="stopBtn" disabled>Stop</button>
+
+  <h2>Output</h2>
+  <div id="output" class="output"></div>
+
+  <script type="module">
+    import firebaseConfig from './.env.json' with { type: 'json' };
+
+    // Set FIREBASE_CONFIG to select the Firebase backend
+    window.FIREBASE_CONFIG = firebaseConfig;
+
+
+    // Load polyfills
+    // Assuming prompt-api-polyfill handles its own exports to window
+    // We import summarizer.js which should also attach to window
+    import { Summarizer } from './summarizer-api-polyfill.js';
+
+    const input = document.getElementById('input');
+    const type = document.getElementById('type');
+    const format = document.getElementById('format');
+    const length = document.getElementById('length');
+    const summarizeBtn = document.getElementById('summarizeBtn');
+    const summarizeStreamBtn = document.getElementById('summarizeStreamBtn');
+    const output = document.getElementById('output');
+    const progress = document.getElementById('progress');
+    const status = document.getElementById('status');
+
+    // MOCK CONFIG FOR TESTING IF NEEDED (or user provides)
+    // window.GEMINI_CONFIG = { apiKey: 'YOUR_KEY' };
+
+    const stopBtn = document.getElementById('stopBtn');
+    let abortController = null;
+
+    stopBtn.onclick = () => {
+      if (abortController) {
+        abortController.abort();
+        status.textContent = 'Summarization aborted.';
+        stopBtn.disabled = true;
+      }
+    };
+
+    summarizeBtn.onclick = async () => {
+      output.textContent = 'Summarizing...';
+      abortController = new AbortController();
+      stopBtn.disabled = false;
+
+      try {
+        const summarizer = await Summarizer.create({
+          type: type.value,
+          format: format.value,
+          length: length.value,
+          signal: abortController.signal,
+          monitor: (m) => {
+            progress.style.display = 'block';
+            m.addEventListener('downloadprogress', (e) => {
+              progress.value = e.loaded;
+              progress.max = e.total;
+              status.textContent = `Downloading model: ${Math.round(e.loaded / e.total * 100)}%`;
+              if (e.loaded === e.total) {
+                status.textContent = 'Model loaded.';
+                setTimeout(() => progress.style.display = 'none', 1000);
+              }
+            });
+          }
+        });
+
+        const result = await summarizer.summarize(input.value, { signal: abortController.signal });
+        output.textContent = result;
+        summarizer.destroy();
+      } catch (err) {
+        output.textContent = 'Error: ' + err.message;
+      } finally {
+        stopBtn.disabled = true;
+        abortController = null;
+      }
+    };
+
+    summarizeStreamBtn.onclick = async () => {
+      output.textContent = '';
+      abortController = new AbortController();
+      stopBtn.disabled = false;
+
+      try {
+        const summarizer = await Summarizer.create({
+          type: type.value,
+          format: format.value,
+          length: length.value,
+          signal: abortController.signal,
+          monitor: (m) => {
+            progress.style.display = 'block';
+            m.addEventListener('downloadprogress', (e) => {
+              progress.value = e.loaded;
+              progress.max = e.total;
+              status.textContent = `Downloading model: ${Math.round(e.loaded / e.total * 100)}%`;
+              if (e.loaded === e.total) {
+                status.textContent = 'Model loaded.';
+                setTimeout(() => progress.style.display = 'none', 1000);
+              }
+            });
+          }
+        });
+
+        const stream = summarizer.summarizeStreaming(input.value, { signal: abortController.signal });
+        const reader = stream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          output.textContent += value;
+        }
+        summarizer.destroy();
+      } catch (err) {
+        output.textContent = 'Error: ' + err.message;
+      } finally {
+        stopBtn.disabled = true;
+        abortController = null;
+      }
+    };
+  </script>
+</body>
+
+</html>

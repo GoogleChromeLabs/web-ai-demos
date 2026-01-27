@@ -120,6 +120,10 @@ export class LanguageModel extends EventTarget {
       config: 'OPENAI_CONFIG',
       path: './backends/openai.js',
     },
+    {
+      config: 'TRANSFORMERS_CONFIG',
+      path: './backends/transformers.js',
+    },
   ];
 
   static #getBackendInfo() {
