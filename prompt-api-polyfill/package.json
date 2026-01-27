@@ -1,6 +1,6 @@
 {
   "name": "prompt-api-polyfill",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Polyfill for the Prompt API (`LanguageModel`) backed by Firebase AI Logic, Gemini API, or OpenAI API.",
   "type": "module",
   "main": "./prompt-api-polyfill.js",
@@ -14,7 +14,8 @@
     "json-schema-converter.js",
     "multimodal-converter.js",
     "prompt-api-polyfill.js",
-    "dot_env.json"
+    "dot_env.json",
+    "backends/"
   ],
   "sideEffects": true,
   "keywords": [
