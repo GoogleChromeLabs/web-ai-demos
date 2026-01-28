@@ -103,24 +103,67 @@ export default class TransformersBackend extends PolyfillBackend {
     const generator = await this.#ensureGenerator();
     const prompt = this.#convertContentsToPrompt(contents);
 
+    const queue = [];
+    let resolveSignal;
+    let promise = new Promise((r) => (resolveSignal = r));
+    let isDone = false;
+
+    const on_token_callback = (text) => {
+      queue.push(text);
+      if (resolveSignal) {
+        resolveSignal();
+        resolveSignal = null;
+      }
+    };
+
     const streamer = new TextStreamer(this.#tokenizer, {
       skip_prompt: true,
       skip_special_tokens: true,
+      callback_function: on_token_callback,
     });
 
-    // Run generation in the background (don't await)
-    generator(prompt, {
+    const generationPromise = generator(prompt, {
       ...this.generationConfig,
       streamer,
     });
 
-    // streamer is an AsyncIterable in Transformers.js v3
+    generationPromise
+      .then(() => {
+        isDone = true;
+        if (resolveSignal) {
+          resolveSignal();
+          resolveSignal = null;
+        }
+      })
+      .catch((err) => {
+        console.error('[Transformers.js] Generation error:', err);
+        isDone = true;
+        if (resolveSignal) {
+          resolveSignal();
+          resolveSignal = null;
+        }
+      });
+
     return (async function* () {
-      for await (const newText of streamer) {
-        yield {
-          text: () => newText,
-          usageMetadata: { totalTokenCount: 0 },
-        };
+      while (true) {
+        if (queue.length === 0 && !isDone) {
+          if (!resolveSignal) {
+            promise = new Promise((r) => (resolveSignal = r));
+          }
+          await promise;
+        }
+
+        while (queue.length > 0) {
+          const newText = queue.shift();
+          yield {
+            text: () => newText,
+            usageMetadata: { totalTokenCount: 0 },
+          };
+        }
+
+        if (isDone) {
+          break;
+        }
       }
     })();
   }
