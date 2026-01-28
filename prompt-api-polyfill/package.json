@@ -1,6 +1,6 @@
 {
   "name": "prompt-api-polyfill",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Polyfill for the Prompt API (`LanguageModel`) backed by Firebase AI Logic, Gemini API, or OpenAI API.",
   "type": "module",
   "main": "./prompt-api-polyfill.js",
@@ -14,7 +14,8 @@
     "json-schema-converter.js",
     "multimodal-converter.js",
     "prompt-api-polyfill.js",
-    "dot_env.json"
+    "dot_env.json",
+    "backends/"
   ],
   "sideEffects": true,
   "keywords": [
@@ -38,21 +39,13 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "npx http-server",
-    "test:browser": "node scripts/list-backends.js && vitest run -c vitest.browser.config.js .browser.test.js",
+    "sync:wpt": "node scripts/sync-wpt.js",
+    "generate:wpt": "node scripts/list-backends.js && node scripts/generate-wpt-wrappers.js",
+    "test:wpt": "npm run sync:wpt && npm run generate:wpt && npx http-server -o /tests/wpt/index.html",
     "fix": "npx prettier --write ."
   },
   "devDependencies": {
-    "@firebase/ai": "^2.6.1",
-    "@google/generative-ai": "^0.24.1",
-    "@vitest/browser": "^4.0.17",
-    "@vitest/browser-playwright": "^4.0.17",
-    "ajv": "^8.17.1",
-    "firebase": "^12.7.0",
     "http-server": "^14.1.1",
-    "jsdom": "^27.4.0",
-    "openai": "^6.16.0",
-    "playwright": "^1.57.0",
-    "prettier-plugin-curly": "^0.4.1",
-    "vitest": "^4.0.17"
+    "prettier-plugin-curly": "^0.4.1"
   }
 }
