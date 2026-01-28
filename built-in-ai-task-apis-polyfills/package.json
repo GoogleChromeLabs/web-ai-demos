@@ -1,0 +1,34 @@
+{
+  "name": "built-in-ai-task-apis-polyfills",
+  "version": "1.0.0",
+  "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, etc.)",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./summarizer": "./summarizer-api-polyfill.js"
+  },
+  "files": [
+    "summarizer-api-polyfill.js",
+    "summarizer-prompt-builder.js",
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "http-server . -p 8080",
+    "summarizer-prompt-extractor": "node scripts/summarizer-prompt-extractor.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git"
+  },
+  "author": "Google Chrome Labs",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "prompt-api-polyfill": "^0.3.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
