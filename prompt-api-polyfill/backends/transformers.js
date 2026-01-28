@@ -18,47 +18,80 @@ export default class TransformersBackend extends PolyfillBackend {
 
   async #ensureGenerator(monitorTarget) {
     if (!this.#generator) {
-      console.log(`[Transformers.js] Loading model: ${this.modelName}`);
+      const files = new Map();
+      const modelFiles = await resolveModelFiles(this.modelName, {
+        quantized: true,
+      });
+      for (const { path, size } of modelFiles) {
+        files.set(path, { loaded: 0, total: size });
+      }
 
-      const progress_callback = (data) => {
+      const dispatch = (loaded) => {
         if (!monitorTarget) {
           return;
         }
-
-        // Round to nearest 1/0x10000 (65536) as required by WPT in tests/wpt/resources/util.js
+        // Round to nearest 1/0x10000 (65536) as required by WPT
         const precision = 1 / 65536;
+        const roundedLoaded = Math.floor(loaded / precision) * precision;
 
-        if (data.status === 'progress') {
-          const progress = data.total > 0 ? data.loaded / data.total : 0;
-          const roundedProgress = Math.floor(progress / precision) * precision;
+        // Ensure strict monotonicity using the property set by the polyfill
+        if (roundedLoaded <= monitorTarget.__lastProgressLoaded) {
+          return;
+        }
 
-          // Ensure strict monotonicity
-          if (roundedProgress <= monitorTarget.__lastProgressLoaded) {
-            return;
+        monitorTarget.dispatchEvent(
+          new ProgressEvent('downloadprogress', {
+            loaded: roundedLoaded,
+            total: 1,
+            lengthComputable: true,
+          })
+        );
+        monitorTarget.__lastProgressLoaded = roundedLoaded;
+      };
+
+      const progress_callback = (data) => {
+        if (data.status === 'initiate') {
+          if (files.has(data.file)) {
+            const fileData = files.get(data.file);
+            // Update with actual size if available, otherwise keep pre-fetched
+            if (data.total) {
+              fileData.total = data.total;
+            }
+          } else {
+            files.set(data.file, { loaded: 0, total: data.total || 0 });
           }
-
-          monitorTarget.dispatchEvent(
-            new ProgressEvent('downloadprogress', {
-              loaded: roundedProgress,
-              total: 1,
-              lengthComputable: true,
-            })
-          );
-          monitorTarget.__lastProgressLoaded = roundedProgress;
+        } else if (data.status === 'progress') {
+          if (files.has(data.file)) {
+            files.get(data.file).loaded = data.loaded;
+          }
         } else if (data.status === 'done') {
-          if (monitorTarget.__lastProgressLoaded >= 1) {
-            return;
+          if (files.has(data.file)) {
+            const fileData = files.get(data.file);
+            fileData.loaded = fileData.total;
           }
-          monitorTarget.dispatchEvent(
-            new ProgressEvent('downloadprogress', {
-              loaded: 1,
-              total: 1,
-              lengthComputable: true,
-            })
-          );
-          monitorTarget.__lastProgressLoaded = 1;
+        } else if (data.status === 'ready') {
+          dispatch(1);
+          return;
+        }
+
+        if (data.status === 'progress' || data.status === 'done') {
+          let totalLoaded = 0;
+          let totalSize = 0;
+          for (const { loaded, total } of files.values()) {
+            totalLoaded += loaded;
+            totalSize += total;
+          }
+
+          if (totalSize > 0) {
+            const globalProgress = totalLoaded / totalSize;
+            // Cap at slightly less than 1.0 until 'ready'
+            dispatch(Math.min(globalProgress, 0.9999));
+          }
         }
       };
+
+      // Initial 0% progress
+      dispatch(0);
 
       this.#generator = await pipeline('text-generation', this.modelName, {
         device: 'webgpu',
@@ -212,4 +245,65 @@ export default class TransformersBackend extends PolyfillBackend {
     prompt += '<|im_start|>assistant\n';
     return prompt;
   }
+}
+
+/**
+ * Generates the full list of file paths and sizes that Transformers.js would attempt to download.
+ * @param {string} modelId - The Hugging Face model ID (e.g., "onnx-community/Qwen3-4B-ONNX")
+ * @param {object} options - Configuration options
+ * @param {boolean} [options.quantized=true] - Whether to load the quantized version (default: true)
+ * @param {string} [options.branch='main'] - The git branch/revision to fetch from
+ * @param {boolean} [options.includeExternalData=true] - Whether to guess and include .onnx_data files (needed for models >2GB)
+ * @returns {Promise<Object[]>} Array of { path, size } objects
+ */
+async function resolveModelFiles(modelId, options = {}) {
+  const {
+    quantized = true,
+    branch = 'main',
+    includeExternalData = true,
+  } = options;
+
+  const baseUrl = `https://huggingface.co/${modelId}/resolve/${branch}`;
+
+  // 1. The "Always On" Configuration Files
+  const configFiles = [
+    'config.json',
+    'tokenizer_config.json',
+    'tokenizer.json',
+    'generation_config.json',
+  ];
+
+  // 2. The Model Weights Logic
+  const subfolder = 'onnx';
+  const modelFileName = quantized ? 'model_quantized.onnx' : 'model.onnx';
+  const modelPath = `${subfolder}/${modelFileName}`;
+
+  const modelFiles = [modelPath];
+
+  // 3. The "External Data" Logic
+  if (includeExternalData) {
+    modelFiles.push(`${modelPath}_data`);
+  }
+
+  const allPaths = [...configFiles, ...modelFiles];
+  const results = await Promise.all(
+    allPaths.map(async (path) => {
+      const url = `${baseUrl}/${path}`;
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        if (response.ok) {
+          const size = parseInt(
+            response.headers.get('Content-Length') || '0',
+            10
+          );
+          return { path, size };
+        }
+      } catch (e) {
+        // Ignore errors and filter out later
+      }
+      return null;
+    })
+  );
+
+  return results.filter((r) => r !== null);
 }
