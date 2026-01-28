@@ -38,6 +38,7 @@ function getInjectedConfig(backendKey = null) {
 
   return `
     <script>
+        window.__FORCE_PROMPT_API_POLYFILL__ = true;
         ${Object.entries(configs)
           .map(([key, value]) => `window.${key} = ${JSON.stringify(value)};`)
           .join('\n        ')}
