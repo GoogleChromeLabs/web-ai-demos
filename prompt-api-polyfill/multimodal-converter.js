@@ -29,7 +29,10 @@ export default class MultimodalConverter {
         u8.byteOffset + u8.byteLength
       );
       const base64 = this.arrayBufferToBase64(buffer);
-      const mimeType = this.#sniffImageMimeType(u8) || 'image/png';
+      const mimeType = this.#sniffImageMimeType(u8);
+      if (!mimeType) {
+        throw new DOMException('Invalid image data', 'InvalidStateError');
+      }
 
       return { inlineData: { data: base64, mimeType } };
     }
@@ -147,6 +150,13 @@ export default class MultimodalConverter {
   static async processAudio(source) {
     // Blob
     if (source instanceof Blob) {
+      if (
+        source.type &&
+        !source.type.startsWith('audio/') &&
+        source.type !== 'application/ogg'
+      ) {
+        throw new DOMException('Invalid audio mime type', 'DataError');
+      }
       return this.blobToInlineData(source);
     }
 
@@ -204,16 +214,68 @@ export default class MultimodalConverter {
     });
   }
 
-  static canvasSourceToInlineData(source) {
-    const canvas = document.createElement('canvas');
-    const w = source.naturalWidth || source.videoWidth || source.width;
-    const h = source.naturalHeight || source.videoHeight || source.height;
+  static async canvasSourceToInlineData(source) {
+    if (
+      typeof HTMLImageElement !== 'undefined' &&
+      source instanceof HTMLImageElement &&
+      !source.complete
+    ) {
+      await source.decode().catch(() => {});
+    }
 
+    const getDimension = (name) => {
+      const val = source[name];
+      if (typeof val === 'object' && val !== null && 'baseVal' in val) {
+        return val.baseVal.value;
+      }
+      return typeof val === 'number' ? val : 0;
+    };
+
+    let w =
+      source.displayWidth ||
+      source.naturalWidth ||
+      source.videoWidth ||
+      getDimension('width');
+    let h =
+      source.displayHeight ||
+      source.naturalHeight ||
+      source.videoHeight ||
+      getDimension('height');
+
+    // Fallback for SVG elements (like SVGImageElement in DOM)
+    if ((!w || !h) && typeof source.getBBox === 'function') {
+      try {
+        const box = source.getBBox();
+        w = w || box.width;
+        h = h || box.height;
+      } catch (e) {
+        // SVG might not be in DOM or not ready
+      }
+    }
+
+    // Last resort fallback for any element in the DOM
+    if ((!w || !h) && typeof source.getBoundingClientRect === 'function') {
+      try {
+        const rect = source.getBoundingClientRect();
+        w = w || rect.width;
+        h = h || rect.height;
+      } catch (e) {}
+    }
+
+    if (!w || !h) {
+      throw new DOMException('Invalid image dimensions', 'InvalidStateError');
+    }
+
+    const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
 
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(source, 0, 0);
+    if (typeof ImageData !== 'undefined' && source instanceof ImageData) {
+      ctx.putImageData(source, 0, 0);
+    } else {
+      ctx.drawImage(source, 0, 0);
+    }
 
     const dataUrl = canvas.toDataURL('image/png');
     return {
