@@ -69,7 +69,28 @@ export default class TransformersBackend extends PolyfillBackend {
     return this.#generator;
   }
 
+  /**
+   * Checks if the backend is available given the options.
+   * @param {Object} options - LanguageModel options.
+   * @returns {string} 'available' or 'unavailable'.
+   */
+  static availability(options) {
+    if (options?.expectedInputs && Array.isArray(options.expectedInputs)) {
+      for (const input of options.expectedInputs) {
+        if (input.type === 'audio' || input.type === 'image') {
+          return 'unavailable';
+        }
+      }
+    }
+    return 'available';
+  }
+
   async createSession(options, inCloudParams, monitorTarget) {
+    if (options.responseConstraint) {
+      console.warn(
+        "The `responseConstraint` flag isn't supported by the Transformers.js backend and was ignored."
+      );
+    }
     // Initializing the generator can be slow, so we do it lazily or here.
     // For now, let's trigger the loading.
     await this.#ensureGenerator(monitorTarget);
