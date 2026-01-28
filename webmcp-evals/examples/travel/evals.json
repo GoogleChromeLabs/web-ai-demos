@@ -341,6 +341,23 @@
             }
         }
     },
+        {
+        "messages": [
+            { "role": "user", "type": "message", "content": "Filter for price between 300 and 800" },
+            { "role": "model", "type": "functioncall", "name": "filterFlights", "arguments": { "minPrice": 300, "maxPrice": 800 }},
+            { "role": "user", "type": "functionresponse", "name": "filterFlights", "response": {"result": "Filters successfully updated." }},
+            { "role": "user", "type": "message", "content": "Show me only direct flights" }
+        ],
+        
+        "expectedCall": {
+            "functionName": "filterFlights",
+            "arguments": {
+                "minPrice": 300,
+                "maxPrice": 800,
+                "stops": [0]
+            }
+        }
+    },
     {
         "messages": [{ "role": "user", "type": "message", "content": "Find me options departing from JFK or Newark that are direct and cost less than $1000." }],
         "expectedCall": {
@@ -419,7 +436,7 @@
                 "role": "model",
                 "type": "functioncall",
                 "name": "searchFlights",
-                    "arguments": {
+                "arguments": {
                     "destination":"NYC",
                     "inboundDate":"2026-01-27",
                     "origin":"LON",
@@ -456,5 +473,44 @@
                 "tripType":"round-trip"
             }
         }
-    }
+    },
+    {
+        "messages": [
+            {
+                "role": "user",
+                "type": "message",
+                "content": "Search for a round-trip flight from London to New York departing on 2026-01-20 and returning on 2026-01-27 for 1 passenger"
+            },{
+                "role": "model",
+                "type": "functioncall",
+                "name": "searchFlights",
+                "arguments": {
+                    "destination":"New York",
+                    "inboundDate":"2026-01-27",
+                    "origin":"LON",
+                    "outboundDate":"2026-01-20",
+                    "passengers":1,
+                    "tripType":"round-trip"
+                }
+            }, {
+                "role": "user",
+                "type": "functionresponse",
+                "name": "searchFlights",
+                "response" : {
+                    "result": "ERROR: destination must be a 3 letter IATA code"
+                }
+            }
+        ],
+        "expectedCall": {
+            "functionName": "searchFlights",
+            "arguments": {
+                "destination":"NYC",
+                "inboundDate":"2026-01-27",
+                "origin":"LON",
+                "outboundDate":"2026-01-20",
+                "passengers":1,
+                "tripType":"round-trip"
+            }
+        }
+    }    
 ]

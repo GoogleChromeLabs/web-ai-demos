@@ -96,7 +96,7 @@ function renderDetail(testNumber: number, testResult: TestResult): string {
   return `<li>
         <details>
             <summary>
-                Test #${testNumber} -
+                <span>Test #${testNumber}:</span>
                 <span class="${testResult.outcome}">${testResult.outcome.toUpperCase()}</span>
             </summary>
             <div>
@@ -106,7 +106,7 @@ function renderDetail(testNumber: number, testResult: TestResult): string {
                 </details>
 
                 <div>
-                    <h4>Result</h4>
+                    <h4><a href="#result-${testNumber}">Result</a></h4>
                     <table>
                         <tr>
                             <th></th>
