@@ -195,6 +195,10 @@ export class LanguageModel extends EventTarget {
       config: 'OPENAI_CONFIG',
       path: './backends/openai.js',
     },
+    {
+      config: 'TRANSFORMERS_CONFIG',
+      path: './backends/transformers.js',
+    },
   ];
 
   static #getBackendInfo(win = globalThis) {
@@ -205,7 +209,7 @@ export class LanguageModel extends EventTarget {
       }
     }
     throw new (win.DOMException || globalThis.DOMException)(
-      'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, or window.OPENAI_CONFIG.',
+      'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, window.OPENAI_CONFIG, or window.TRANSFORMERS_CONFIG.',
       'NotSupportedError'
     );
   }
@@ -494,7 +498,51 @@ export class LanguageModel extends EventTarget {
       }
     }
 
-    if (options.signal?.aborted) {
+    let monitorTarget = null;
+    if (typeof resolvedOptions.monitor === 'function') {
+      monitorTarget = new EventTarget();
+      try {
+        resolvedOptions.monitor(monitorTarget);
+      } catch (e) {
+        throw e;
+      }
+    }
+
+    if (monitorTarget) {
+      monitorTarget.__lastProgressLoaded = -1;
+    }
+    const dispatchProgress = async (loaded) => {
+      if (!monitorTarget || options.signal?.aborted) {
+        return !options.signal?.aborted;
+      }
+
+      // Round to nearest 1/0x10000 (65536) as required by WPT in tests/wpt/resources/util.js
+      const precision = 1 / 65536;
+      const roundedLoaded = Math.floor(loaded / precision) * precision;
+
+      // Ensure strict monotonicity
+      if (roundedLoaded <= monitorTarget.__lastProgressLoaded) {
+        return true;
+      }
+
+      try {
+        monitorTarget.dispatchEvent(
+          new ProgressEvent('downloadprogress', {
+            loaded: roundedLoaded,
+            total: 1,
+            lengthComputable: true,
+          })
+        );
+        monitorTarget.__lastProgressLoaded = roundedLoaded;
+      } catch (e) {
+        console.error('Error dispatching downloadprogress events:', e);
+      }
+      // Yield to the event loop to allow the test/user to abort
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return !options.signal?.aborted;
+    };
+
+    if (!(await dispatchProgress(0))) {
       throw (
         options.signal.reason ||
         new (win.DOMException || globalThis.DOMException)(
@@ -504,7 +552,21 @@ export class LanguageModel extends EventTarget {
       );
     }
 
-    const model = backend.createSession(resolvedOptions, inCloudParams);
+    const model = await backend.createSession(
+      resolvedOptions,
+      inCloudParams,
+      monitorTarget
+    );
+
+    if (!(await dispatchProgress(1))) {
+      throw (
+        options.signal.reason ||
+        new (win.DOMException || globalThis.DOMException)(
+          'Aborted',
+          'AbortError'
+        )
+      );
+    }
 
     // Initialize inputUsage with the tokens from the initial prompts
     if (resolvedOptions.initialPrompts?.length > 0) {
@@ -533,57 +595,6 @@ export class LanguageModel extends EventTarget {
         error.requested = inputUsageValue;
         error.quota = 1000000; // inputQuota
         throw error;
-      }
-    }
-
-    // If a monitor callback is provided, simulate simple downloadprogress events
-    if (typeof resolvedOptions.monitor === 'function') {
-      const monitorTarget = new EventTarget();
-
-      try {
-        resolvedOptions.monitor(monitorTarget);
-      } catch (e) {
-        // Re-throw if the monitor callback itself throws, as per WPT requirements
-        throw e;
-      }
-
-      const dispatchProgress = async (loaded) => {
-        if (options.signal?.aborted) {
-          return false;
-        }
-        try {
-          const progressEvent = new ProgressEvent('downloadprogress', {
-            loaded: loaded,
-            total: 1,
-            lengthComputable: true,
-          });
-          monitorTarget.dispatchEvent(progressEvent);
-        } catch (e) {
-          console.error('Error dispatching downloadprogress events:', e);
-        }
-        // Yield to the event loop to allow the test/user to abort
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        return !options.signal?.aborted;
-      };
-
-      if (!(await dispatchProgress(0))) {
-        throw (
-          options.signal.reason ||
-          new (win.DOMException || globalThis.DOMException)(
-            'Aborted',
-            'AbortError'
-          )
-        );
-      }
-
-      if (!(await dispatchProgress(1))) {
-        throw (
-          options.signal.reason ||
-          new (win.DOMException || globalThis.DOMException)(
-            'Aborted',
-            'AbortError'
-          )
-        );
       }
     }
 
