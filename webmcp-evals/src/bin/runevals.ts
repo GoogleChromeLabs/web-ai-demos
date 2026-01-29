@@ -6,7 +6,7 @@
 import { GoogleAiBackend } from "../backend/googleai.js";
 import { readFile, writeFile } from "fs/promises";
 import * as dotenv from "dotenv";
-import { deepEqual } from "../utils.js";
+import { functionCallOutcome } from "../utils.js";
 import { Eval, TestResult } from "../types/evals.js";
 import { OllamaBackend } from "../backend/ollama.js";
 import { Tool, ToolsSchema } from "../types/tools.js";
@@ -98,12 +98,7 @@ for (const test of tests) {
   testCount++;
   try {
     const response = await backend.execute(test.messages);
-    const outcome =
-      response !== null &&
-      response.functionName === test.expectedCall.functionName &&
-      deepEqual(response.args, test.expectedCall.arguments)
-        ? "pass"
-        : "fail";
+    const outcome = functionCallOutcome(test.expectedCall, response);
     testResults.push({ test, response, outcome });
     outcome === "pass" ? passCount++ : failCount++;
   } catch (e) {
