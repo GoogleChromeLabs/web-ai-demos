@@ -351,6 +351,113 @@ To see the browser and DevTools while testing, you can modify
 
 ---
 
+## Create your own backend provider
+
+If you want to add your own backend provider, these are the steps to follow.
+
+### Extend the base backend class
+
+Create a new file in the `backends/` directory, for example,
+`backends/custom.js`. You need to extend the `PolyfillBackend` class and
+implement the core methods that satisfy the expected interface.
+
+```js
+import PolyfillBackend from './base.js';
+import { DEFAULT_MODELS } from './defaults.js';
+
+export default class CustomBackend extends PolyfillBackend {
+  constructor(config) {
+    // config typically comes from a window global (e.g., window.CUSTOM_CONFIG)
+    super(config.modelName || DEFAULT_MODELS.custom.modelName);
+  }
+
+  // Check if the backend is configured (e.g., API key is present)
+  static availability(options) {
+    return window.CUSTOM_CONFIG?.apiKey ? 'available' : 'unavailable';
+  }
+
+  // Initialize the underlying SDK or API client
+  createSession(options, inCloudParams) {
+    // Return the initialized session or client instance
+  }
+
+  // Non-streaming prompt execution
+  async generateContent(contents) {
+    // contents: Array of { role: 'user'|'model', parts: [{ text: string }] }
+    // Return: { text: string, usage: number }
+  }
+
+  // Streaming prompt execution
+  async generateContentStream(contents) {
+    // Return: AsyncIterable yielding chunks
+  }
+
+  // Token counting for quota/usage tracking
+  async countTokens(contents) {
+    // Return: total token count (number)
+  }
+}
+```
+
+### Register your backend
+
+The polyfill uses a "First-Match Priority" strategy based on global
+configuration. You need to register your backend in the
+`prompt-api-polyfill.js` file by adding it to the static `#backends` array:
+
+```js
+// prompt-api-polyfill.js
+static #backends = [
+  // ... existing backends
+  {
+    config: 'CUSTOM_CONFIG', // The global object to look for on `window`
+    path: './backends/custom.js',
+  },
+];
+```
+
+### Set a default model
+
+Define the fallback model identity in `backends/defaults.js`. This is used when
+a user initializes a session without specifying a specific `modelName`.
+
+```js
+// backends/defaults.js
+export const DEFAULT_MODELS = {
+  // ...
+  custom: { modelName: 'custom-model-pro-v1' },
+};
+```
+
+### Enable local development and testing
+
+The project uses a discovery script (`scripts/list-backends.js`) to generate
+test matrices. To include your new backend in the test runner, create a
+`.env-[name].json` file (for example, `.env-custom.json`) in the root
+directory:
+
+```json
+{
+  "apiKey": "your-api-key-here",
+  "modelName": "custom-model-pro-v1"
+}
+```
+
+### Verify via Web Platform Tests (WPT)
+
+The final step is ensuring compliance. Because the polyfill is spec-driven, any
+new backend should pass the official (or tentative) Web Platform Tests:
+
+```bash
+npm run test:wpt
+```
+
+This verification step ensures that your backend handles things like
+`AbortSignal`, system prompts, and history formatting exactly as the Prompt API
+specification expects.
+
+---
+
 ## License
 
 Apache 2.0
