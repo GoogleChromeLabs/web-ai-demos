@@ -11,16 +11,20 @@ import { DEFAULT_MODELS } from './defaults.js';
 export default class TransformersBackend extends PolyfillBackend {
   #generator;
   #tokenizer;
+  #device;
+  #dtype;
 
   constructor(config) {
     super(config.modelName || DEFAULT_MODELS.transformers);
+    this.#device = config.device || 'webgpu';
+    this.#dtype = config.dtype || 'q8';
   }
 
   async #ensureGenerator(monitorTarget) {
     if (!this.#generator) {
       const files = new Map();
       const modelFiles = await resolveModelFiles(this.modelName, {
-        quantized: true,
+        dtype: this.#dtype,
       });
       for (const { path, size } of modelFiles) {
         files.set(path, { loaded: 0, total: size });
@@ -94,7 +98,8 @@ export default class TransformersBackend extends PolyfillBackend {
       dispatch(0);
 
       this.#generator = await pipeline('text-generation', this.modelName, {
-        device: 'webgpu',
+        device: this.#device,
+        dtype: this.#dtype,
         progress_callback,
       });
       this.#tokenizer = this.#generator.tokenizer;
@@ -248,62 +253,106 @@ export default class TransformersBackend extends PolyfillBackend {
 }
 
 /**
- * Generates the full list of file paths and sizes that Transformers.js would attempt to download.
- * @param {string} modelId - The Hugging Face model ID (e.g., "onnx-community/Qwen3-4B-ONNX")
- * @param {object} options - Configuration options
- * @param {boolean} [options.quantized=true] - Whether to load the quantized version (default: true)
- * @param {string} [options.branch='main'] - The git branch/revision to fetch from
- * @param {boolean} [options.includeExternalData=true] - Whether to guess and include .onnx_data files (needed for models >2GB)
- * @returns {Promise<Object[]>} Array of { path, size } objects
+ * Exact replication of Transformers.js file resolution logic using HF Tree API.
+ * @param {string} modelId - The Hugging Face model ID.
+ * @param {object} options - Configuration options.
+ * @returns {Promise<Object[]>} Array of { path, size } objects.
  */
 async function resolveModelFiles(modelId, options = {}) {
-  const {
-    quantized = true,
-    branch = 'main',
-    includeExternalData = true,
-  } = options;
+  const { dtype = 'q8', branch = 'main' } = options;
 
-  const baseUrl = `https://huggingface.co/${modelId}/resolve/${branch}`;
+  const manifestUrl = `https://huggingface.co/api/models/${modelId}/tree/${branch}?recursive=true`;
 
-  // 1. The "Always On" Configuration Files
-  const configFiles = [
-    'config.json',
-    'tokenizer_config.json',
-    'tokenizer.json',
-    'generation_config.json',
-  ];
-
-  // 2. The Model Weights Logic
-  const subfolder = 'onnx';
-  const modelFileName = quantized ? 'model_quantized.onnx' : 'model.onnx';
-  const modelPath = `${subfolder}/${modelFileName}`;
-
-  const modelFiles = [modelPath];
-
-  // 3. The "External Data" Logic
-  if (includeExternalData) {
-    modelFiles.push(`${modelPath}_data`);
+  const response = await fetch(manifestUrl);
+  if (!response.ok) {
+    throw new Error(`Manifest fetch failed: ${response.status}`);
   }
 
-  const allPaths = [...configFiles, ...modelFiles];
-  const results = await Promise.all(
-    allPaths.map(async (path) => {
-      const url = `${baseUrl}/${path}`;
-      try {
-        const response = await fetch(url, { method: 'HEAD' });
-        if (response.ok) {
-          const size = parseInt(
-            response.headers.get('Content-Length') || '0',
-            10
-          );
-          return { path, size };
-        }
-      } catch (e) {
-        // Ignore errors and filter out later
-      }
-      return null;
-    })
-  );
+  const fileTree = await response.json();
+  const fileMap = new Map(fileTree.map((f) => [f.path, f.size]));
+  const finalFiles = [];
 
-  return results.filter((r) => r !== null);
+  // Helper: check existence and return { path, size }
+  const exists = (path) => fileMap.has(path);
+  const add = (path) => {
+    if (exists(path)) {
+      finalFiles.push({ path, size: fileMap.get(path) });
+      return true;
+    }
+    return false;
+  };
+
+  // --- 1. Configs (Always Required) ---
+  add('config.json');
+  add('generation_config.json');
+  add('preprocessor_config.json');
+
+  // --- 2. Tokenizer Resolution ---
+  if (exists('tokenizer.json')) {
+    add('tokenizer.json');
+    add('tokenizer_config.json');
+  } else {
+    // Fallback: Legacy tokenizer files
+    add('tokenizer_config.json');
+    add('special_tokens_map.json');
+    add('vocab.json');
+    add('merges.txt');
+    add('vocab.txt');
+  }
+
+  // --- 3. ONNX Model Resolution ---
+  const onnxFolder = 'onnx';
+
+  let suffixes = [];
+  if (dtype === 'fp32') {
+    suffixes = [''];
+  } else if (dtype === 'quantized') {
+    suffixes = ['_quantized'];
+  } else {
+    suffixes = [`_${dtype}`];
+    if (dtype === 'q8') {
+      suffixes.push('');
+    }
+  }
+
+  let components = [
+    'model',
+    'encoder_model',
+    'decoder_model',
+    'decoder_model_merged',
+  ];
+
+  const foundComponents = [];
+  for (const c of components) {
+    for (const s of suffixes) {
+      const filename = `${onnxFolder}/${c}${s}.onnx`;
+      if (exists(filename)) {
+        foundComponents.push(filename);
+        break;
+      }
+    }
+  }
+
+  const hasMerged = foundComponents.some((f) =>
+    f.includes('decoder_model_merged')
+  );
+  const filteredComponents = foundComponents.filter((f) => {
+    if (hasMerged && f.includes('decoder_model') && !f.includes('merged')) {
+      return false;
+    }
+    return true;
+  });
+
+  for (const file of filteredComponents) {
+    add(file);
+    const dataFile = `${file}_data`;
+    if (add(dataFile)) {
+      let i = 1;
+      while (add(`${dataFile}_${i}`)) {
+        i++;
+      }
+    }
+  }
+
+  return finalFiles;
 }
