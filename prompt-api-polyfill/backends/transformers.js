@@ -13,6 +13,7 @@ export default class TransformersBackend extends PolyfillBackend {
   #tokenizer;
   #device;
   #dtype;
+  #systemInstruction;
 
   constructor(config) {
     super(config.modelName || DEFAULT_MODELS.transformers);
@@ -142,12 +143,18 @@ export default class TransformersBackend extends PolyfillBackend {
       do_sample: inCloudParams.generationConfig?.temperature > 0,
     };
 
+    this.#systemInstruction = inCloudParams.systemInstruction;
+
     return this.#generator;
   }
 
   async generateContent(contents) {
     const generator = await this.#ensureGenerator();
-    const prompt = this.#convertContentsToPrompt(contents);
+    const messages = this.#contentsToMessages(contents);
+    const prompt = this.#tokenizer.apply_chat_template(messages, {
+      tokenize: false,
+      add_generation_prompt: true,
+    });
 
     const output = await generator(prompt, this.generationConfig);
     const text = output[0].generated_text.slice(prompt.length);
@@ -160,7 +167,11 @@ export default class TransformersBackend extends PolyfillBackend {
 
   async generateContentStream(contents) {
     const generator = await this.#ensureGenerator();
-    const prompt = this.#convertContentsToPrompt(contents);
+    const messages = this.#contentsToMessages(contents);
+    const prompt = this.#tokenizer.apply_chat_template(messages, {
+      tokenize: false,
+      add_generation_prompt: true,
+    });
 
     const queue = [];
     let resolveSignal;
@@ -229,26 +240,34 @@ export default class TransformersBackend extends PolyfillBackend {
 
   async countTokens(contents) {
     await this.#ensureGenerator();
-    const text = this.#convertContentsToPrompt(contents);
-    const { input_ids } = await this.#tokenizer(text);
-    return input_ids.size;
+    const messages = this.#contentsToMessages(contents);
+    const input_ids = this.#tokenizer.apply_chat_template(messages, {
+      tokenize: true,
+      add_generation_prompt: true,
+    });
+    return input_ids.length;
   }
 
-  #convertContentsToPrompt(contents) {
-    // Simple ChatML-like format for Qwen/Llama
-    let prompt = '';
-    for (const content of contents) {
-      const role = content.role === 'model' ? 'assistant' : 'user';
-      prompt += `<|im_start|>${role}\n`;
-      for (const part of content.parts) {
-        if (part.text) {
-          prompt += part.text;
-        }
-      }
-      prompt += '<|im_end|>\n';
+  #contentsToMessages(contents) {
+    const messages = contents.map((c) => ({
+      role:
+        c.role === 'model'
+          ? 'assistant'
+          : c.role === 'system'
+            ? 'system'
+            : 'user',
+      content: c.parts.map((p) => p.text).join(''),
+    }));
+
+    // If there's a system instruction and it's not already in the messages, prepend it
+    if (this.#systemInstruction && !messages.some((m) => m.role === 'system')) {
+      messages.unshift({
+        role: 'system',
+        content: this.#systemInstruction,
+      });
     }
-    prompt += '<|im_start|>assistant\n';
-    return prompt;
+
+    return messages;
   }
 }
 
@@ -260,6 +279,20 @@ export default class TransformersBackend extends PolyfillBackend {
  */
 async function resolveModelFiles(modelId, options = {}) {
   const { dtype = 'q8', branch = 'main' } = options;
+
+  const cacheKey = `transformers_model_files_${modelId}_${dtype}_${branch}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const { timestamp, files } = JSON.parse(cached);
+      const oneDay = 24 * 60 * 60 * 1000;
+      if (Date.now() - timestamp < oneDay) {
+        return files;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to read from localStorage cache:', e);
+  }
 
   const manifestUrl = `https://huggingface.co/api/models/${modelId}/tree/${branch}?recursive=true`;
 
@@ -352,6 +385,18 @@ async function resolveModelFiles(modelId, options = {}) {
         i++;
       }
     }
+  }
+
+  try {
+    localStorage.setItem(
+      cacheKey,
+      JSON.stringify({
+        timestamp: Date.now(),
+        files: finalFiles,
+      })
+    );
+  } catch (e) {
+    console.warn('Failed to write to localStorage cache:', e);
   }
 
   return finalFiles;
