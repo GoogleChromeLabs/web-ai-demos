@@ -4,6 +4,7 @@
  * - Firebase AI Logic (via `firebase/ai`)
  * - Google Gemini API (via `@google/generative-ai`)
  * - OpenAI API (via `openai`)
+ * - Transformers.js (via `@huggingface/transformers`)
  *
  * Spec: https://github.com/webmachinelearning/prompt-api/blob/main/README.md
  *
@@ -13,6 +14,7 @@
  *    - For Firebase: Define `window.FIREBASE_CONFIG`.
  *    - For Gemini: Define `window.GEMINI_CONFIG`.
  *    - For OpenAI: Define `window.OPENAI_CONFIG`.
+ *    - For Transformers.js: Define `window.TRANSFORMERS_CONFIG`.
  */
 
 import './async-iterator-polyfill.js';
