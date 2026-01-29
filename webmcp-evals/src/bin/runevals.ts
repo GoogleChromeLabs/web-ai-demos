@@ -6,7 +6,7 @@
 import { GoogleAiBackend } from "../backend/googleai.js";
 import { readFile, writeFile } from "fs/promises";
 import * as dotenv from "dotenv";
-import { deepEqual, functionCallOutcome } from "../utils.js";
+import { functionCallOutcome } from "../utils.js";
 import { Eval, TestResult } from "../types/evals.js";
 import { OllamaBackend } from "../backend/ollama.js";
 import { Tool, ToolsSchema } from "../types/tools.js";
