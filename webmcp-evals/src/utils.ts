@@ -3,6 +3,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { FunctionCall } from './types/evals.js';
+import { ToolCall } from './types/tools.js';
+
+export function functionCallOutcome(expected: FunctionCall | null, actual: ToolCall | null): "pass" | "fail" {
+  if (expected === null && actual === null) {
+    return "pass";
+  } 
+
+  if (expected?.functionName !== actual?.functionName) {
+    return "fail";
+  }
+
+  if (deepEqual(expected?.arguments, actual?.args)) {
+    return "pass";
+  }
+
+  return "fail";
+}
+
 export function deepEqual(obj1: any, obj2: any): boolean {
   if (obj1 === obj2) {
     return true;

@@ -1,0 +1,373 @@
+
+<!DOCTYPE html>
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">    
+    <style>
+        body {
+            font-family: "Roboto", sans-serif;        
+        }
+        .pass {
+            color: green;
+        }
+        .fail {
+            color: red;
+        }
+        .error {
+            color: orange;
+        }
+    </style>
+</head>
+<body>
+    <h1>Eval Results</h1>
+    <div>
+        <h2>Test configuration</h2>
+        
+<ul>
+    <li>Tool definitions: <code>examples/events/schema.json</code></li>
+    <li>Evals: <code>examples/events/evals.json</li>
+    <li>Backend: <code>gemini</code></li>
+    <li>Model: <code>gemini-2.5-flash</code></li>
+</ul>
+    </div>
+    <div>
+        <h2>Results</h2>
+        <h3>Summary</h3>
+        <div>
+            
+        <ul>
+            <li>Evals count: <code>5</code></li>
+            <li>Pass count: <code>4</code></li>
+            <li>Fail count: <code>1</code></li>
+            <li>Error count: <code>0</code></li>
+            <li>Pass rate: <code>80.0%</code>
+            </li>            
+        </ul>
+        </div>
+        <div>
+            <h3>Details</h3>
+            <ul><li>
+        <details>
+            <summary>
+                <span>Test #0:</span>
+                <span class="pass">PASS</span>
+            </summary>
+            <div>
+                <details>
+                    <summary>Messages</summary>
+                    <ul>
+    <li>
+        <div>user - message<div>
+        <div>Create an event for February 2nd, 2026 at 3 PM<div>
+    </li></ul>
+                </details>
+
+                <div>
+                    <h4><a href="#result-0">Result</a></h4>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>Expected</th>
+                            <th>Actual</th>
+                            <th>Pass</th>
+                        </tr>
+                        <tr>
+                            <th>Function</th>
+                            <td><code>createEvent</code></td>
+                            <td><code>createEvent</code></td>
+                            <td class="pass">
+                                PASS
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Arguments</th>
+                            <td>
+                                <code>
+                                    <pre>{
+  "date": "2026-02-02",
+  "time": "15:00"
+}</pre>
+                                </code>
+                            </td>
+                            <td>
+                                <code>
+                                    <pre>{
+  "date": "2026-02-02",
+  "time": "15:00"
+}</pre>
+                                </code>
+                            </td>
+                            <td class="pass">PASS</td></tr>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </details>
+    </li><li>
+        <details>
+            <summary>
+                <span>Test #1:</span>
+                <span class="pass">PASS</span>
+            </summary>
+            <div>
+                <details>
+                    <summary>Messages</summary>
+                    <ul>
+    <li>
+        <div>user - message<div>
+        <div>Create an event for February 2nd, 2026 at 3 PM at the London office with description "discuss WebMCP" and invite john@example.com and jane@example.com<div>
+    </li></ul>
+                </details>
+
+                <div>
+                    <h4><a href="#result-1">Result</a></h4>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>Expected</th>
+                            <th>Actual</th>
+                            <th>Pass</th>
+                        </tr>
+                        <tr>
+                            <th>Function</th>
+                            <td><code>createEvent</code></td>
+                            <td><code>createEvent</code></td>
+                            <td class="pass">
+                                PASS
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Arguments</th>
+                            <td>
+                                <code>
+                                    <pre>{
+  "date": "2026-02-02",
+  "time": "15:00",
+  "location": "London office",
+  "description": "discuss WebMCP",
+  "guest_emails": [
+    "john@example.com",
+    "jane@example.com"
+  ]
+}</pre>
+                                </code>
+                            </td>
+                            <td>
+                                <code>
+                                    <pre>{
+  "time": "15:00",
+  "location": "London office",
+  "date": "2026-02-02",
+  "guest_emails": [
+    "john@example.com",
+    "jane@example.com"
+  ],
+  "description": "discuss WebMCP"
+}</pre>
+                                </code>
+                            </td>
+                            <td class="pass">PASS</td></tr>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </details>
+    </li><li>
+        <details>
+            <summary>
+                <span>Test #2:</span>
+                <span class="pass">PASS</span>
+            </summary>
+            <div>
+                <details>
+                    <summary>Messages</summary>
+                    <ul>
+    <li>
+        <div>user - message<div>
+        <div>Create an event for tomorrow at noon in the London office with description "discuss WebMCP".<div>
+    </li></ul>
+                </details>
+
+                <div>
+                    <h4><a href="#result-2">Result</a></h4>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>Expected</th>
+                            <th>Actual</th>
+                            <th>Pass</th>
+                        </tr>
+                        <tr>
+                            <th>Function</th>
+                            <td><code>createEvent</code></td>
+                            <td><code>createEvent</code></td>
+                            <td class="pass">
+                                PASS
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Arguments</th>
+                            <td>
+                                <code>
+                                    <pre>{
+  "date": "2026-01-20",
+  "time": "12:00",
+  "location": "London office",
+  "description": "discuss WebMCP"
+}</pre>
+                                </code>
+                            </td>
+                            <td>
+                                <code>
+                                    <pre>{
+  "location": "London office",
+  "time": "12:00",
+  "description": "discuss WebMCP",
+  "date": "2026-01-20"
+}</pre>
+                                </code>
+                            </td>
+                            <td class="pass">PASS</td></tr>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </details>
+    </li><li>
+        <details>
+            <summary>
+                <span>Test #3:</span>
+                <span class="pass">PASS</span>
+            </summary>
+            <div>
+                <details>
+                    <summary>Messages</summary>
+                    <ul>
+    <li>
+        <div>user - message<div>
+        <div>Create a restaurant reservation for three at Ginno's pizza for tomorrow at 7PM<div>
+    </li></ul>
+                </details>
+
+                <div>
+                    <h4><a href="#result-3">Result</a></h4>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>Expected</th>
+                            <th>Actual</th>
+                            <th>Pass</th>
+                        </tr>
+                        <tr>
+                            <th>Function</th>
+                            <td><code>null</code></td>
+                            <td><code>null</code></td>
+                            <td class="pass">
+                                PASS
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Arguments</th>
+                            <td>
+                                <code>
+                                    <pre>null</pre>
+                                </code>
+                            </td>
+                            <td>
+                                <code>
+                                    <pre>null</pre>
+                                </code>
+                            </td>
+                            <td class="pass">PASS</td></tr>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </details>
+    </li><li>
+        <details>
+            <summary>
+                <span>Test #4:</span>
+                <span class="fail">FAIL</span>
+            </summary>
+            <div>
+                <details>
+                    <summary>Messages</summary>
+                    <ul>
+    <li>
+        <div>user - message<div>
+        <div>Create a restaurant reservation for three at Ginno's pizza for tomorrow at 7PM and then add to my calendar<div>
+    </li>
+    <li>
+        <div>model - functioncall<div>
+        <div><pre>{
+  "function": "bookRestaurant",
+  "args": {
+    "date": "2026-01-20",
+    "time": "19:00",
+    "restaurant": "Ginno's pizza",
+    "guests": 3
+  }
+}</pre><div>
+    </li>
+    <li>
+        <div>user - functionresponse<div>
+        <div><pre>{
+  "function": "bookRestaurant",
+  "args": {
+    "result": "A reservation for Ginno's pizza for 3 on 2026-01-20 at 19:00 was booked successfully"
+  }
+}</pre><div>
+    </li></ul>
+                </details>
+
+                <div>
+                    <h4><a href="#result-4">Result</a></h4>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>Expected</th>
+                            <th>Actual</th>
+                            <th>Pass</th>
+                        </tr>
+                        <tr>
+                            <th>Function</th>
+                            <td><code>createEvent</code></td>
+                            <td><code>createEvent</code></td>
+                            <td class="pass">
+                                PASS
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Arguments</th>
+                            <td>
+                                <code>
+                                    <pre>{
+  "date": "2026-01-20",
+  "time": "19:00",
+  "location": "Ginno's Pizza",
+  "description": "Restaurant reservation for 3 at Ginno's pizza"
+}</pre>
+                                </code>
+                            </td>
+                            <td>
+                                <code>
+                                    <pre>{
+  "description": "Restaurant reservation at Ginno's pizza for 3 people",
+  "date": "2026-01-20",
+  "time": "19:00",
+  "location": "Ginno's pizza"
+}</pre>
+                                </code>
+                            </td>
+                            <td class="fail">FAIL</td></tr>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </details>
+    </li></ul>
+        </div>
+    </div>
+</body>    
