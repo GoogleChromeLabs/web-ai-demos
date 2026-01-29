@@ -15,7 +15,7 @@ export default class FirebaseBackend extends PolyfillBackend {
   #model;
 
   constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.firebase);
+    super(config.modelName || DEFAULT_MODELS.firebase.modelName);
     this.ai = getAI(initializeApp(config), { backend: new GoogleAIBackend() });
   }
 

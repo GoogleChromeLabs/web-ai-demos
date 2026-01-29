@@ -9,7 +9,7 @@ export default class GeminiBackend extends PolyfillBackend {
   #model;
 
   constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.gemini);
+    super(config.modelName || DEFAULT_MODELS.gemini.modelName);
     this.genAI = new GoogleGenerativeAI(config.apiKey);
   }
 

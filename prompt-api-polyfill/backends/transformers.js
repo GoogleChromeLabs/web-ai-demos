@@ -15,10 +15,11 @@ export default class TransformersBackend extends PolyfillBackend {
   #dtype;
   #systemInstruction;
 
-  constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.transformers);
-    this.#device = config.device || 'webgpu';
-    this.#dtype = config.dtype || 'q8';
+  constructor(config = {}) {
+    super(config.modelName || DEFAULT_MODELS.transformers.modelName);
+    this.#device =
+      config.device || DEFAULT_MODELS.transformers.device || 'webgpu';
+    this.#dtype = config.dtype || DEFAULT_MODELS.transformers.dtype || 'q4f16';
   }
 
   async #ensureGenerator(monitorTarget) {
@@ -141,6 +142,7 @@ export default class TransformersBackend extends PolyfillBackend {
       temperature: inCloudParams.generationConfig?.temperature || 1.0,
       top_p: 1.0,
       do_sample: inCloudParams.generationConfig?.temperature > 0,
+      return_full_text: false,
     };
 
     this.#systemInstruction = inCloudParams.systemInstruction;
@@ -156,8 +158,11 @@ export default class TransformersBackend extends PolyfillBackend {
       add_generation_prompt: true,
     });
 
-    const output = await generator(prompt, this.generationConfig);
-    const text = output[0].generated_text.slice(prompt.length);
+    const output = await generator(prompt, {
+      ...this.generationConfig,
+      add_special_tokens: false,
+    });
+    const text = output[0].generated_text;
 
     // Approximate usage
     const usage = await this.countTokens(contents);
@@ -194,6 +199,7 @@ export default class TransformersBackend extends PolyfillBackend {
 
     const generationPromise = generator(prompt, {
       ...this.generationConfig,
+      add_special_tokens: false,
       streamer,
     });
 
@@ -244,6 +250,7 @@ export default class TransformersBackend extends PolyfillBackend {
     const input_ids = this.#tokenizer.apply_chat_template(messages, {
       tokenize: true,
       add_generation_prompt: true,
+      return_tensor: false,
     });
     return input_ids.length;
   }

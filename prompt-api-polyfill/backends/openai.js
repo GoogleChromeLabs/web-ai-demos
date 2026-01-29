@@ -9,7 +9,7 @@ export default class OpenAIBackend extends PolyfillBackend {
   #model;
 
   constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.openai);
+    super(config.modelName || DEFAULT_MODELS.openai.modelName);
     this.config = config;
     this.openai = new OpenAI({
       apiKey: config.apiKey,
