@@ -15,11 +15,11 @@ export function functionCallOutcome(expected: FunctionCall | null, actual: ToolC
     return "fail";
   }
 
-  if (deepEqual(expected?.arguments, actual?.args)) {
-    return "pass";
+  if (!deepEqual(expected?.arguments, actual?.args)) {
+    return "fail";
   }
 
-  return "fail";
+  return "pass";
 }
 
 export function deepEqual(obj1: any, obj2: any): boolean {
