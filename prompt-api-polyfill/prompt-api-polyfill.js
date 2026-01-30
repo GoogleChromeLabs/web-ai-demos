@@ -69,7 +69,7 @@ export class LanguageModel extends EventTarget {
   #model;
   #history;
   #options;
-  #inCloudParams;
+  #sessionParams;
   #destroyed;
   #inputUsage;
   #topK;
@@ -82,7 +82,7 @@ export class LanguageModel extends EventTarget {
     model,
     initialHistory,
     options = {},
-    inCloudParams,
+    sessionParams,
     inputUsage = 0,
     win = globalThis
   ) {
@@ -91,7 +91,7 @@ export class LanguageModel extends EventTarget {
     this.#model = model;
     this.#history = initialHistory || [];
     this.#options = options;
-    this.#inCloudParams = inCloudParams;
+    this.#sessionParams = sessionParams;
     this.#destroyed = false;
     this.#inputUsage = inputUsage;
     this.#onquotaoverflow = {};
@@ -436,7 +436,7 @@ export class LanguageModel extends EventTarget {
       win
     );
 
-    const inCloudParams = {
+    const sessionParams = {
       model: backend.modelName,
       generationConfig: {
         temperature: resolvedOptions.temperature,
@@ -459,8 +459,19 @@ export class LanguageModel extends EventTarget {
       );
 
       if (systemPrompts.length > 0) {
-        inCloudParams.systemInstruction = systemPrompts
-          .map((p) => p.content)
+        sessionParams.systemInstruction = systemPrompts
+          .map((p) => {
+            if (typeof p.content === 'string') {
+              return p.content;
+            }
+            if (Array.isArray(p.content)) {
+              return p.content
+                .filter((part) => part.type === 'text')
+                .map((part) => part.value || part.text || '')
+                .join('\n');
+            }
+            return '';
+          })
           .join('\n');
       }
       // Await the conversion of history items (in case of images in history)
@@ -556,7 +567,7 @@ export class LanguageModel extends EventTarget {
 
     const model = await backend.createSession(
       resolvedOptions,
-      inCloudParams,
+      sessionParams,
       monitorTarget
     );
 
@@ -570,17 +581,15 @@ export class LanguageModel extends EventTarget {
       );
     }
 
-    // Initialize inputUsage with the tokens from the initial prompts
+    // Initialize inputUsage with the tokens from the initial prompts.
     if (resolvedOptions.initialPrompts?.length > 0) {
-      // Calculate token usage including system instruction and conversation history
       const fullHistory = [...initialHistory];
-      if (inCloudParams.systemInstruction) {
+      if (sessionParams.systemInstruction) {
         fullHistory.unshift({
           role: 'system',
-          parts: [{ text: inCloudParams.systemInstruction }],
+          parts: [{ text: sessionParams.systemInstruction }],
         });
       }
-
       inputUsageValue = (await backend.countTokens(fullHistory)) || 0;
 
       if (inputUsageValue > 1000000) {
@@ -605,7 +614,7 @@ export class LanguageModel extends EventTarget {
       model,
       initialHistory,
       resolvedOptions,
-      inCloudParams,
+      sessionParams,
       inputUsageValue,
       win
     );
@@ -633,13 +642,13 @@ export class LanguageModel extends EventTarget {
 
     const historyCopy = JSON.parse(JSON.stringify(this.#history));
     const mergedOptions = { ...this.#options, ...options };
-    const mergedInCloudParams = { ...this.#inCloudParams };
+    const mergedSessionParams = { ...this.#sessionParams };
 
     if (options.temperature !== undefined) {
-      mergedInCloudParams.generationConfig.temperature = options.temperature;
+      mergedSessionParams.generationConfig.temperature = options.temperature;
     }
     if (options.topK !== undefined) {
-      mergedInCloudParams.generationConfig.topK = options.topK;
+      mergedSessionParams.generationConfig.topK = options.topK;
     }
 
     // Re-create the backend for the clone since it now holds state (#model)
@@ -648,7 +657,7 @@ export class LanguageModel extends EventTarget {
     const newBackend = new BackendClass(info.configValue);
     const newModel = newBackend.createSession(
       mergedOptions,
-      mergedInCloudParams
+      mergedSessionParams
     );
 
     if (options.signal?.aborted) {
@@ -666,7 +675,7 @@ export class LanguageModel extends EventTarget {
       newModel,
       historyCopy,
       mergedOptions,
-      mergedInCloudParams,
+      mergedSessionParams,
       this.#inputUsage,
       this.#window
     );
@@ -718,14 +727,14 @@ export class LanguageModel extends EventTarget {
       const schema = convertJsonSchemaToVertexSchema(
         options.responseConstraint
       );
-      this.#inCloudParams.generationConfig.responseMimeType =
+      this.#sessionParams.generationConfig.responseMimeType =
         'application/json';
-      this.#inCloudParams.generationConfig.responseSchema = schema;
+      this.#sessionParams.generationConfig.responseSchema = schema;
 
       // Re-create model with new config/schema (stored in backend)
       this.#model = this.#backend.createSession(
         this.#options,
-        this.#inCloudParams
+        this.#sessionParams
       );
     }
 
@@ -789,19 +798,37 @@ export class LanguageModel extends EventTarget {
         return 'Mock response for quota overflow test.';
       }
 
+      const fullHistoryWithNewPrompt = [...this.#history, userContent];
+      if (this.#sessionParams.systemInstruction) {
+        fullHistoryWithNewPrompt.unshift({
+          role: 'system',
+          parts: [{ text: this.#sessionParams.systemInstruction }],
+        });
+      }
+
       // Estimate usage
-      const totalTokens = await this.#backend.countTokens([
-        { role: 'user', parts },
-      ]);
+      const totalTokens = await this.#backend.countTokens(
+        fullHistoryWithNewPrompt
+      );
 
       if (totalTokens > this.inputQuota) {
-        throw new (this.#window.DOMException || globalThis.DOMException)(
+        const ErrorClass =
+          (this.#window && this.#window.QuotaExceededError) ||
+          (this.#window && this.#window.DOMException) ||
+          globalThis.QuotaExceededError ||
+          globalThis.DOMException;
+        const error = new ErrorClass(
           `The prompt is too large (${totalTokens} tokens), it exceeds the quota of ${this.inputQuota} tokens.`,
           'QuotaExceededError'
         );
+        // Attach properties expected by WPT tests
+        Object.defineProperty(error, 'code', { value: 22, configurable: true });
+        error.requested = totalTokens;
+        error.quota = this.inputQuota;
+        throw error;
       }
 
-      if (this.#inputUsage + totalTokens > this.inputQuota) {
+      if (totalTokens > this.inputQuota) {
         this.dispatchEvent(new Event('quotaoverflow'));
       }
 
@@ -928,12 +955,12 @@ export class LanguageModel extends EventTarget {
             const schema = convertJsonSchemaToVertexSchema(
               options.responseConstraint
             );
-            _this.#inCloudParams.generationConfig.responseMimeType =
+            _this.#sessionParams.generationConfig.responseMimeType =
               'application/json';
-            _this.#inCloudParams.generationConfig.responseSchema = schema;
+            _this.#sessionParams.generationConfig.responseSchema = schema;
             _this.#model = _this.#backend.createSession(
               _this.#options,
-              _this.#inCloudParams
+              _this.#sessionParams
             );
           }
 
@@ -974,18 +1001,39 @@ export class LanguageModel extends EventTarget {
             return;
           }
 
-          const totalTokens = await _this.#backend.countTokens([
-            { role: 'user', parts },
-          ]);
+          const fullHistoryWithNewPrompt = [..._this.#history, userContent];
+          if (_this.#sessionParams.systemInstruction) {
+            fullHistoryWithNewPrompt.unshift({
+              role: 'system',
+              parts: [{ text: _this.#sessionParams.systemInstruction }],
+            });
+          }
+
+          const totalTokens = await _this.#backend.countTokens(
+            fullHistoryWithNewPrompt
+          );
 
           if (totalTokens > _this.inputQuota) {
-            throw new (_this.#window.DOMException || globalThis.DOMException)(
+            const ErrorClass =
+              (_this.#window && _this.#window.QuotaExceededError) ||
+              (_this.#window && _this.#window.DOMException) ||
+              globalThis.QuotaExceededError ||
+              globalThis.DOMException;
+            const error = new ErrorClass(
               `The prompt is too large (${totalTokens} tokens), it exceeds the quota of ${_this.inputQuota} tokens.`,
               'QuotaExceededError'
             );
+            // Attach properties expected by WPT tests
+            Object.defineProperty(error, 'code', {
+              value: 22,
+              configurable: true,
+            });
+            error.requested = totalTokens;
+            error.quota = _this.inputQuota;
+            throw error;
           }
 
-          if (_this.#inputUsage + totalTokens > _this.inputQuota) {
+          if (totalTokens > _this.inputQuota) {
             _this.dispatchEvent(new Event('quotaoverflow'));
           }
 
@@ -1094,7 +1142,14 @@ export class LanguageModel extends EventTarget {
     this.#history.push(content);
 
     try {
-      const totalTokens = await this.#backend.countTokens(this.#history);
+      const fullHistory = [...this.#history];
+      if (this.#sessionParams.systemInstruction) {
+        fullHistory.unshift({
+          role: 'system',
+          parts: [{ text: this.#sessionParams.systemInstruction }],
+        });
+      }
+      const totalTokens = await this.#backend.countTokens(fullHistory);
       this.#inputUsage = totalTokens || 0;
     } catch {
       // Do nothing.
