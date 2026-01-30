@@ -13,7 +13,6 @@ export default class TransformersBackend extends PolyfillBackend {
   #tokenizer;
   #device;
   #dtype;
-  #systemInstruction;
 
   constructor(config = {}) {
     super(config.modelName || DEFAULT_MODELS.transformers.modelName);
@@ -145,8 +144,6 @@ export default class TransformersBackend extends PolyfillBackend {
       return_full_text: false,
     };
 
-    this.#systemInstruction = sessionParams.systemInstruction;
-
     return this.#generator;
   }
 
@@ -157,7 +154,6 @@ export default class TransformersBackend extends PolyfillBackend {
       tokenize: false,
       add_generation_prompt: true,
     });
-
     const output = await generator(prompt, {
       ...this.generationConfig,
       add_special_tokens: false,
@@ -264,16 +260,32 @@ export default class TransformersBackend extends PolyfillBackend {
             ? 'system'
             : 'user';
       const content = c.parts.map((p) => p.text).join('');
-
-      // Special handling for Transformers to pass a WPT test:
-      // Gemma insists on a strict alternation of user and assistant messages.
-      // This test puts a user message in the initial prompt.
-      if (role === 'system' && content === '') {
-        role = 'assistant';
-      }
-
       return { role, content };
     });
+    /*
+        if (this.#systemInstruction && !messages.some((m) => m.role === 'system')) {
+          messages.unshift({ role: 'system', content: this.#systemInstruction });
+        }
+    */
+    if (this.modelName.toLowerCase().includes('gemma')) {
+      const systemIndex = messages.findIndex((m) => m.role === 'system');
+      if (systemIndex !== -1) {
+        const systemMsg = messages[systemIndex];
+        const nextUserIndex = messages.findIndex(
+          (m, i) => m.role === 'user' && i > systemIndex
+        );
+        if (nextUserIndex !== -1) {
+          messages[nextUserIndex].content =
+            systemMsg.content + '\n\n' + messages[nextUserIndex].content;
+          messages.splice(systemIndex, 1);
+        } else {
+          // If there's no user message after the system message,
+          // just convert the system message to a user message.
+          systemMsg.content += '\n\n';
+          systemMsg.role = 'user';
+        }
+      }
+    }
 
     return messages;
   }
