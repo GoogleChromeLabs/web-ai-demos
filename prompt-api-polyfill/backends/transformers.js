@@ -13,6 +13,7 @@ export default class TransformersBackend extends PolyfillBackend {
   #tokenizer;
   #device;
   #dtype;
+  #systemInstruction;
 
   constructor(config = {}) {
     super(config.modelName || DEFAULT_MODELS.transformers.modelName);
@@ -143,6 +144,7 @@ export default class TransformersBackend extends PolyfillBackend {
       do_sample: sessionParams.generationConfig?.temperature > 0,
       return_full_text: false,
     };
+    this.#systemInstruction = sessionParams.systemInstruction;
 
     return this.#generator;
   }
@@ -245,7 +247,7 @@ export default class TransformersBackend extends PolyfillBackend {
     const messages = this.#contentsToMessages(contents);
     const input_ids = this.#tokenizer.apply_chat_template(messages, {
       tokenize: true,
-      add_generation_prompt: true,
+      add_generation_prompt: false,
       return_tensor: false,
     });
     return input_ids.length;
@@ -262,11 +264,11 @@ export default class TransformersBackend extends PolyfillBackend {
       const content = c.parts.map((p) => p.text).join('');
       return { role, content };
     });
-    /*
-        if (this.#systemInstruction && !messages.some((m) => m.role === 'system')) {
-          messages.unshift({ role: 'system', content: this.#systemInstruction });
-        }
-    */
+
+    if (this.#systemInstruction && !messages.some((m) => m.role === 'system')) {
+      messages.unshift({ role: 'system', content: this.#systemInstruction });
+    }
+
     if (this.modelName.toLowerCase().includes('gemma')) {
       const systemIndex = messages.findIndex((m) => m.role === 'system');
       if (systemIndex !== -1) {
