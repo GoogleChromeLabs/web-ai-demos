@@ -24,7 +24,7 @@ export default class FirebaseBackend extends PolyfillBackend {
     this.#sessionParams = sessionParams;
     this.#model = getGenerativeModel(this.ai, {
       mode: InferenceMode.ONLY_IN_CLOUD,
-      sessionParams,
+      inCloudParams: sessionParams,
     });
     return this.#model;
   }
