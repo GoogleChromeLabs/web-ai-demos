@@ -402,8 +402,8 @@ export default class CustomBackend extends PolyfillBackend {
 ### Register your backend
 
 The polyfill uses a "First-Match Priority" strategy based on global
-configuration. You need to register your backend in the
-`prompt-api-polyfill.js` file by adding it to the static `#backends` array:
+configuration. You need to register your backend in the `prompt-api-polyfill.js`
+file by adding it to the static `#backends` array:
 
 ```js
 // prompt-api-polyfill.js
@@ -433,8 +433,7 @@ export const DEFAULT_MODELS = {
 
 The project uses a discovery script (`scripts/list-backends.js`) to generate
 test matrices. To include your new backend in the test runner, create a
-`.env-[name].json` file (for example, `.env-custom.json`) in the root
-directory:
+`.env-[name].json` file (for example, `.env-custom.json`) in the root directory:
 
 ```json
 {
