@@ -302,11 +302,13 @@ export default class TransformersBackend extends PolyfillBackend {
 async function resolveModelFiles(modelId, options = {}) {
   const { dtype = 'q8', branch = 'main' } = options;
 
+  let cachedData = null;
   const cacheKey = `transformers_model_files_${modelId}_${dtype}_${branch}`;
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
-      const { timestamp, files } = JSON.parse(cached);
+      cachedData = JSON.parse(cached);
+      const { timestamp, files } = cachedData;
       const oneDay = 24 * 60 * 60 * 1000;
       if (Date.now() - timestamp < oneDay) {
         return files;
@@ -318,9 +320,21 @@ async function resolveModelFiles(modelId, options = {}) {
 
   const manifestUrl = `https://huggingface.co/api/models/${modelId}/tree/${branch}?recursive=true`;
 
-  const response = await fetch(manifestUrl);
-  if (!response.ok) {
-    throw new Error(`Manifest fetch failed: ${response.status}`);
+  let response;
+  try {
+    response = await fetch(manifestUrl);
+    if (!response.ok) {
+      throw new Error(`Manifest fetch failed: ${response.status}`);
+    }
+  } catch (e) {
+    if (cachedData) {
+      console.warn(
+        `Failed to fetch manifest from network, falling back to cached data (expired):`,
+        e
+      );
+      return cachedData.files;
+    }
+    throw e;
   }
 
   const fileTree = await response.json();
