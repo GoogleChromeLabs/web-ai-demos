@@ -256,7 +256,11 @@ The web is a vast place. Built-in AI APIs like the Summarizer API allow develope
           }
           summarizer.destroy();
         } catch (err) {
-          output.textContent = 'Error: ' + err.message;
+          if (err.name === 'AbortError') {
+            console.log('Summarization stopped by user.');
+          } else {
+            output.textContent = 'Error: ' + err.message;
+          }
         } finally {
           stopBtn.disabled = true;
           abortController = null;

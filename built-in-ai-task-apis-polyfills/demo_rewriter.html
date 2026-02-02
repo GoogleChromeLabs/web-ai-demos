@@ -276,8 +276,12 @@ The Rewriter API provides a way to rewrite text while controlling the tone, form
           setStatus('Task complete.');
           rewriter.destroy();
         } catch (err) {
-          output.textContent = 'Error: ' + err.message;
-          setStatus('An error occurred.');
+          if (err.name === 'AbortError') {
+            console.log('Rewriting stopped by user.');
+          } else {
+            output.textContent = 'Error: ' + err.message;
+            setStatus('An error occurred.');
+          }
         } finally {
           stopBtn.disabled = true;
           abortController = null;

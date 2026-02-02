@@ -275,8 +275,12 @@ The history of artificial intelligence started with Alan Turing's work...</texta
           setStatus('Task complete.');
           writer.destroy();
         } catch (err) {
-          output.textContent = 'Error: ' + err.message;
-          setStatus('An error occurred.');
+          if (err.name === 'AbortError') {
+            console.log('Writing stopped by user.');
+          } else {
+            output.textContent = 'Error: ' + err.message;
+            setStatus('An error occurred.');
+          }
         } finally {
           stopBtn.disabled = true;
           abortController = null;
