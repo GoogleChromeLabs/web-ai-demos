@@ -23,10 +23,10 @@ export default class PolyfillBackend {
   /**
    * Creates a model session and stores it.
    * @param {Object} options - LanguageModel options.
-   * @param {Object} inCloudParams - Parameters for the cloud model.
+   * @param {Object} sessionParams - Parameters for the cloud or local model.
    * @returns {any} The created session object.
    */
-  createSession(options, inCloudParams, monitorTarget) {
+  createSession(options, sessionParams, monitorTarget) {
     throw new Error('Not implemented');
   }
 
