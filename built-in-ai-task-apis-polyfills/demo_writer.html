@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writer API Polyfill Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    body {
+      font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--primary), #818cf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      transition: all 0.2s;
+      box-sizing: border-box;
+      background: #fff;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    textarea {
+      height: 120px;
+      resize: vertical;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #cbd5e1;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .output-container {
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 1.5rem;
+      border-radius: 8px;
+      min-height: 150px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', Courier, monospace;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .output-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    progress {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    progress::-webkit-progress-bar {
+      background-color: var(--border);
+    }
+
+    progress::-webkit-progress-value {
+      background-color: var(--primary);
+      transition: width 0.3s ease;
+    }
+
+    #status {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      height: 1.2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #e0f2fe;
+      color: #0369a1;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .loading-pulse {
+      animation: pulse 1.5s infinite;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Writer API</h1>
+  <p class="subtitle">Polyfilled Built-in AI for modern web applications</p>
+
+  <div class="card">
+    <div class="form-group">
+      <label for="input">Input Text</label>
+      <textarea id="input"
+        placeholder="What would you like me to write about?">The history of artificial intelligence started with Alan Turing's work...</textarea>
+    </div>
+
+    <div class="controls">
+      <div class="form-group">
+        <label for="sharedContext">Shared Context</label>
+        <input type="text" id="sharedContext" placeholder="e.g. You are a tech blogger">
+      </div>
+      <div class="form-group">
+        <label for="context">Task Context</label>
+        <input type="text" id="context" placeholder="e.g. Focus on recent breakthroughs">
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="form-group">
+        <label for="tone">Tone</label>
+        <select id="tone">
+          <option value="formal">Formal</option>
+          <option value="neutral" selected>Neutral</option>
+          <option value="casual">Casual</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="format">Format</label>
+        <select id="format">
+          <option value="plain-text">Plain Text</option>
+          <option value="markdown" selected>Markdown</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="length">Length</label>
+        <select id="length">
+          <option value="short" selected>Short</option>
+          <option value="medium">Medium</option>
+          <option value="long">Long</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="status">Ready</div>
+    <progress id="progress" value="0" max="1" style="display: none;"></progress>
+
+    <div class="actions">
+      <button id="writeBtn" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Write
+      </button>
+      <button id="writeStreamBtn" class="btn-secondary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        Write Streaming
+      </button>
+      <button id="stopBtn" class="btn-secondary" disabled>Stop</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="output-label">Output</span>
+    <div id="output" class="output-container">Your results will appear here...</div>
+  </div>
+
+  <script type="module">
+    import firebaseConfig from './.env.json' with { type: 'json' };
+    import { Writer } from './writer-api-polyfill.js';
+
+    // Set FIREBASE_CONFIG to select the Firebase backend
+    window.FIREBASE_CONFIG = firebaseConfig;
+
+    const input = document.getElementById('input');
+    const sharedContext = document.getElementById('sharedContext');
+    const context = document.getElementById('context');
+    const tone = document.getElementById('tone');
+    const format = document.getElementById('format');
+    const length = document.getElementById('length');
+    const writeBtn = document.getElementById('writeBtn');
+    const writeStreamBtn = document.getElementById('writeStreamBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const output = document.getElementById('output');
+    const progress = document.getElementById('progress');
+    const status = document.getElementById('status');
+
+    let abortController = null;
+
+    const setStatus = (msg, isAlived = false) => {
+      status.textContent = msg;
+      if (isAlived) {
+        status.classList.add('loading-pulse');
+      } else {
+        status.classList.remove('loading-pulse');
+      }
+    };
+
+    stopBtn.onclick = () => {
+      if (abortController) {
+        abortController.abort();
+        setStatus('Operation aborted.');
+        stopBtn.disabled = true;
+      }
+    };
+
+    const getWriterOptions = () => ({
+      sharedContext: sharedContext.value,
+      tone: tone.value,
+      format: format.value,
+      length: length.value,
+      signal: abortController.signal,
+      monitor: (m) => {
+        progress.style.display = 'block';
+        m.addEventListener('downloadprogress', (e) => {
+          progress.value = e.loaded;
+          progress.max = e.total;
+          setStatus(`Downloading model: ${Math.round(e.loaded / e.total * 100)}%`, true);
+          if (e.loaded === e.total) {
+            setStatus('Model loaded.');
+            setTimeout(() => progress.style.display = 'none', 1000);
+          }
+        });
+      }
+    });
+
+    writeBtn.onclick = async () => {
+      output.textContent = 'Thinking...';
+      abortController = new AbortController();
+      stopBtn.disabled = false;
+      setStatus('Initializing Writer...', true);
+
+      try {
+        const writer = await Writer.create(getWriterOptions());
+        setStatus('Generating content...', true);
+        const result = await writer.write(input.value, {
+          context: context.value,
+          signal: abortController.signal
+        });
+        output.textContent = result;
+        setStatus('Task complete.');
+        writer.destroy();
+      } catch (err) {
+        output.textContent = 'Error: ' + err.message;
+        setStatus('An error occurred.');
+      } finally {
+        stopBtn.disabled = true;
+        abortController = null;
+      }
+    };
+
+    writeStreamBtn.onclick = async () => {
+      output.textContent = '';
+      abortController = new AbortController();
+      stopBtn.disabled = false;
+      setStatus('Initializing Writer...', true);
+
+      try {
+        const writer = await Writer.create(getWriterOptions());
+        setStatus('Streaming response...', true);
+        const stream = writer.writeStreaming(input.value, {
+          context: context.value,
+          signal: abortController.signal
+        });
+
+        const reader = stream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          output.textContent += value;
+        }
+        setStatus('Task complete.');
+        writer.destroy();
+      } catch (err) {
+        output.textContent = 'Error: ' + err.message;
+        setStatus('An error occurred.');
+      } finally {
+        stopBtn.disabled = true;
+        abortController = null;
+      }
+    };
+  </script>
+</body>
+
+</html>

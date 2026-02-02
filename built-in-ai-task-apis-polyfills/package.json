@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "start": "http-server . -p 8080",
-    "summarizer-prompt-extractor": "node scripts/summarizer-prompt-extractor.js"
+    "summarizer-prompt-extractor": "node scripts/summarizer-prompt-extractor.js",
+    "writer-prompt-extractor": "node scripts/writer-prompt-extractor.js"
   },
   "repository": {
     "type": "git",

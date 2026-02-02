@@ -1,12 +1,12 @@
 import { BaseTaskModel } from './base-task-model.js';
-import { SummarizerPromptBuilder } from './summarizer-prompt-builder.js';
+import { WriterPromptBuilder } from './writer-prompt-builder.js';
 
 /**
- * Summarizer API Polyfill
+ * Writer API Polyfill
  * Backed by Prompt API Polyfill (LanguageModel)
  */
 
-export class Summarizer extends BaseTaskModel {
+export class Writer extends BaseTaskModel {
   #options;
 
   constructor(session, builder, options) {
@@ -20,7 +20,7 @@ export class Summarizer extends BaseTaskModel {
 
   static async create(options = {}) {
     await this.ensureLanguageModel();
-    const builder = new SummarizerPromptBuilder(options);
+    const builder = new WriterPromptBuilder(options);
     const { systemPrompt } = builder.buildPrompt('');
 
     const sessionOptions = {
@@ -30,25 +30,25 @@ export class Summarizer extends BaseTaskModel {
     };
 
     const session = await LanguageModel.create(sessionOptions);
-    return new Summarizer(session, builder, options);
+    return new Writer(session, builder, options);
   }
 
-  async summarize(input, options = {}) {
+  async write(input, options = {}) {
     return await this._runTask(input, options);
   }
 
-  summarizeStreaming(input, options = {}) {
+  writeStreaming(input, options = {}) {
     return this._runTaskStreaming(input, options);
   }
 
-  get type() { return this.#options.type || 'key-points'; }
+  get tone() { return this.#options.tone || 'neutral'; }
 }
 
 // Global exposure if in browser
-if (typeof window !== 'undefined' && (!('Summarizer' in window) || window.__FORCE_SUMMARIZER_POLYFILL__)) {
-  window.Summarizer = Summarizer;
-  Summarizer.__isPolyfill = true;
+if (typeof window !== 'undefined' && (!('Writer' in window) || window.__FORCE_WRITER_POLYFILL__)) {
+  window.Writer = Writer;
+  Writer.__isPolyfill = true;
   console.log(
-    'Polyfill: window.Summarizer is now backed by the Summarizer API polyfill.'
+    'Polyfill: window.Writer is now backed by the Writer API polyfill.'
   );
 }
