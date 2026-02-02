@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Writer API Polyfill Demo</title>
+    <title>Rewriter API Polyfill Demo</title>
     <style>
       :root {
         color-scheme: dark light;
@@ -58,16 +58,16 @@
   </head>
 
   <body>
-    <h1>Writer API</h1>
+    <h1>Rewriter API</h1>
 
     <div>
       <div>
         <label for="input">Input Text</label><br />
         <textarea
           id="input"
-          placeholder="What would you like me to write about?"
+          placeholder="Enter the text you want to rewrite..."
         >
-The history of artificial intelligence started with Alan Turing's work...</textarea
+The Rewriter API provides a way to rewrite text while controlling the tone, format, and length.</textarea
         >
       </div>
 
@@ -77,7 +77,7 @@ The history of artificial intelligence started with Alan Turing's work...</texta
           <input
             type="text"
             id="sharedContext"
-            placeholder="e.g. You are a tech blogger"
+            placeholder="e.g. You are a professional editor"
           />
         </div>
         <div>
@@ -85,7 +85,7 @@ The history of artificial intelligence started with Alan Turing's work...</texta
           <input
             type="text"
             id="context"
-            placeholder="e.g. Focus on recent breakthroughs"
+            placeholder="e.g. Make it sound more exciting"
           />
         </div>
       </div>
@@ -94,24 +94,25 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         <div>
           <label for="tone">Tone</label><br />
           <select id="tone">
-            <option value="formal">Formal</option>
-            <option value="neutral" selected>Neutral</option>
-            <option value="casual">Casual</option>
+            <option value="as-is" selected>As-is</option>
+            <option value="more-formal">More Formal</option>
+            <option value="more-casual">More Casual</option>
           </select>
         </div>
         <div>
           <label for="format">Format</label><br />
           <select id="format">
+            <option value="as-is" selected>As-is</option>
             <option value="plain-text">Plain Text</option>
-            <option value="markdown" selected>Markdown</option>
+            <option value="markdown">Markdown</option>
           </select>
         </div>
         <div>
           <label for="length">Length</label><br />
           <select id="length">
-            <option value="short" selected>Short</option>
-            <option value="medium">Medium</option>
-            <option value="long">Long</option>
+            <option value="as-is" selected>As-is</option>
+            <option value="shorter">Shorter</option>
+            <option value="longer">Longer</option>
           </select>
         </div>
       </div>
@@ -152,8 +153,8 @@ The history of artificial intelligence started with Alan Turing's work...</texta
       ></progress>
 
       <div>
-        <button id="writeBtn">Write</button>
-        <button id="writeStreamBtn">Write Streaming</button>
+        <button id="rewriteBtn">Rewrite</button>
+        <button id="rewriteStreamBtn">Rewrite Streaming</button>
         <button id="stopBtn" disabled>Stop</button>
       </div>
     </div>
@@ -163,7 +164,7 @@ The history of artificial intelligence started with Alan Turing's work...</texta
 
     <script type="module">
       import firebaseConfig from './.env.json' with { type: 'json' };
-      import { Writer } from './writer-api-polyfill.js';
+      import { Rewriter } from './rewriter-api-polyfill.js';
 
       // Set FIREBASE_CONFIG to select the Firebase backend
       window.FIREBASE_CONFIG = firebaseConfig;
@@ -181,8 +182,8 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         'expectedContextLanguages'
       );
       const outputLanguage = document.getElementById('outputLanguage');
-      const writeBtn = document.getElementById('writeBtn');
-      const writeStreamBtn = document.getElementById('writeStreamBtn');
+      const rewriteBtn = document.getElementById('rewriteBtn');
+      const rewriteStreamBtn = document.getElementById('rewriteStreamBtn');
       const stopBtn = document.getElementById('stopBtn');
       const output = document.getElementById('output');
       const progress = document.getElementById('progress');
@@ -202,7 +203,7 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         }
       };
 
-      const getWriterOptions = () => ({
+      const getRewriterOptions = () => ({
         sharedContext: sharedContext.value,
         tone: tone.value,
         format: format.value,
@@ -225,22 +226,22 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         },
       });
 
-      writeBtn.onclick = async () => {
+      rewriteBtn.onclick = async () => {
         output.textContent = 'Thinking...';
         abortController = new AbortController();
         stopBtn.disabled = false;
-        setStatus('Initializing Writer...');
+        setStatus('Initializing Rewriter...');
 
         try {
-          const writer = await Writer.create(getWriterOptions());
+          const rewriter = await Rewriter.create(getRewriterOptions());
           setStatus('Generating content...');
-          const result = await writer.write(input.value, {
+          const result = await rewriter.rewrite(input.value, {
             context: context.value,
             signal: abortController.signal,
           });
           output.textContent = result;
           setStatus('Task complete.');
-          writer.destroy();
+          rewriter.destroy();
         } catch (err) {
           output.textContent = 'Error: ' + err.message;
           setStatus('An error occurred.');
@@ -250,16 +251,16 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         }
       };
 
-      writeStreamBtn.onclick = async () => {
+      rewriteStreamBtn.onclick = async () => {
         output.textContent = '';
         abortController = new AbortController();
         stopBtn.disabled = false;
-        setStatus('Initializing Writer...');
+        setStatus('Initializing Rewriter...');
 
         try {
-          const writer = await Writer.create(getWriterOptions());
+          const rewriter = await Rewriter.create(getRewriterOptions());
           setStatus('Streaming response...');
-          const stream = writer.writeStreaming(input.value, {
+          const stream = rewriter.rewriteStreaming(input.value, {
             context: context.value,
             signal: abortController.signal,
           });
@@ -273,7 +274,7 @@ The history of artificial intelligence started with Alan Turing's work...</texta
             output.textContent += value;
           }
           setStatus('Task complete.');
-          writer.destroy();
+          rewriter.destroy();
         } catch (err) {
           output.textContent = 'Error: ' + err.message;
           setStatus('An error occurred.');

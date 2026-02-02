@@ -1,11 +1,14 @@
 # Built-in AI Task APIs Polyfills
 
-Polyfills for the [Built-in AI Task APIs](https://github.com/webmachinelearning/writing-assistance-apis).
+Polyfills for the
+[Built-in AI Task APIs](https://github.com/webmachinelearning/writing-assistance-apis).
 
 Current APIs supported:
+
 - [Summarizer API](https://github.com/webmachinelearning/writing-assistance-apis/blob/main/summarizer-api.md)
 
 Planned APIs:
+
 - [Writer API](https://github.com/webmachinelearning/writing-assistance-apis/blob/main/writer-api.md)
 - [Rewriter API](https://github.com/webmachinelearning/writing-assistance-apis/blob/main/rewriter-api.md)
 
@@ -19,7 +22,8 @@ npm install built-in-ai-task-apis-polyfills
 
 ### As a side-effect polyfill (Global Scope)
 
-Import this at the top of your entry file to automatically polyfill `window.Summarizer`.
+Import this at the top of your entry file to automatically polyfill
+`window.Summarizer`.
 
 ```javascript
 import 'built-in-ai-task-apis-polyfills';
@@ -48,7 +52,9 @@ import 'built-in-ai-task-apis-polyfills/summarizer';
 
 ## Dependencies
 
-This polyfill depends on [`prompt-api-polyfill`](https://www.npmjs.com/package/prompt-api-polyfill). It will attempt to load it from `esm.sh` if it's not present in the global scope.
+This polyfill depends on
+[`prompt-api-polyfill`](https://www.npmjs.com/package/prompt-api-polyfill). It
+will attempt to load it from `esm.sh` if it's not present in the global scope.
 
 ## License
 

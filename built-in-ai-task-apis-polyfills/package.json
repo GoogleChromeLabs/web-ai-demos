@@ -18,7 +18,9 @@
   "scripts": {
     "start": "http-server . -p 8080",
     "summarizer-prompt-extractor": "node scripts/summarizer-prompt-extractor.js",
-    "writer-prompt-extractor": "node scripts/writer-prompt-extractor.js"
+    "writer-prompt-extractor": "node scripts/writer-prompt-extractor.js",
+    "rewriter-prompt-extractor": "node scripts/rewriter-prompt-extractor.js",
+    "fix": "npx prettier --write ."
   },
   "repository": {
     "type": "git",
@@ -30,6 +32,7 @@
     "prompt-api-polyfill": "^0.3.0"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "prettier-plugin-curly": "^0.4.1"
   }
 }

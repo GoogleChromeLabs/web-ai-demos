@@ -6,25 +6,27 @@ import { copyToClipboard, ask } from './utils.js';
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 const WriterPromptManager = {
-  tones: ["formal", "neutral", "casual"],
-  formats: ["plain-text", "markdown"],
-  lengths: ["short", "medium", "long"],
+  tones: ['formal', 'neutral', 'casual'],
+  formats: ['plain-text', 'markdown'],
+  lengths: ['short', 'medium', 'long'],
 
   generateChromeSnippet: function () {
     const lines = [];
-    this.tones.forEach(tone => {
-      this.formats.forEach(format => {
-        this.lengths.forEach(length => {
+    this.tones.forEach((tone) => {
+      this.formats.forEach((format) => {
+        this.lengths.forEach((length) => {
           const opts = `{ tone: "${tone}", format: "${format}", length: "${length}", outputLanguage: "ja", sharedContext: 'SHARED_CONTEXT' }`;
-          lines.push(`await (await Writer.create(${opts})).write('INPUT_TEXT', { context: 'INPUT_CONTEXT' });`);
+          lines.push(
+            `await (await Writer.create(${opts})).write('INPUT_TEXT', { context: 'INPUT_CONTEXT' });`
+          );
         });
       });
     });
-    return lines.join("\n");
+    return lines.join('\n');
   },
 
   extractPrompts: function (logContent) {
@@ -33,9 +35,9 @@ const WriterPromptManager = {
     const lookup = {};
     let i = 0;
 
-    this.tones.forEach(t => {
-      this.formats.forEach(f => {
-        this.lengths.forEach(l => {
+    this.tones.forEach((t) => {
+      this.formats.forEach((f) => {
+        this.lengths.forEach((l) => {
           if (matches[i]) {
             lookup[`${t}|${f}|${l}`] = matches[i][1].trim();
             i++;
@@ -44,16 +46,18 @@ const WriterPromptManager = {
       });
     });
     return lookup;
-  }
+  },
 };
 
 async function run() {
-  console.log("\x1b[36m%s\x1b[0m", "--- Writer Prompt Builder Generator ---");
+  console.log('\x1b[36m%s\x1b[0m', '--- Writer Prompt Builder Generator ---');
 
   const snippet = WriterPromptManager.generateChromeSnippet();
   copyToClipboard(snippet);
 
-  console.log("\n1. Test snippets copied to clipboard. Paste them in chrome://on-device-internals console.");
+  console.log(
+    '\n1. Test snippets copied to clipboard. Paste them in chrome://on-device-internals console.'
+  );
   console.log("2. Click 'Dump' to download the log file.");
 
   const defaultPath = path.join(process.cwd(), 'dumps', 'writer.txt');
@@ -61,8 +65,12 @@ async function run() {
   const answer = await ask(rl, `\nHave you downloaded the dump? ([y]/n): `);
   const normalizedAnswer = answer.trim().toLowerCase();
 
-  if (normalizedAnswer !== '' && normalizedAnswer !== 'y' && normalizedAnswer !== 'yes') {
-    console.log("Exiting...");
+  if (
+    normalizedAnswer !== '' &&
+    normalizedAnswer !== 'y' &&
+    normalizedAnswer !== 'yes'
+  ) {
+    console.log('Exiting...');
     rl.close();
     return;
   }
@@ -78,10 +86,12 @@ async function run() {
     fs.writeFileSync('writer-prompt-builder.js', finalCode);
     copyToClipboard(finalCode);
 
-    console.log("\n\x1b[32m✔ Success! Builder saved to writer-prompt-builder.js\x1b[0m");
-    console.log("✔ Final code also copied to your clipboard.");
+    console.log(
+      '\n\x1b[32m✔ Success! Builder saved to writer-prompt-builder.js\x1b[0m'
+    );
+    console.log('✔ Final code also copied to your clipboard.');
   } catch (e) {
-    console.error("Error:", e.message);
+    console.error('Error:', e.message);
   } finally {
     rl.close();
   }

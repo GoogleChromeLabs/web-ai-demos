@@ -1,12 +1,12 @@
 import { BaseTaskModel } from './base-task-model.js';
-import { SummarizerPromptBuilder } from './summarizer-prompt-builder.js';
+import { RewriterPromptBuilder } from './rewriter-prompt-builder.js';
 
 /**
- * Summarizer API Polyfill
+ * Rewriter API Polyfill
  * Backed by Prompt API Polyfill (LanguageModel)
  */
 
-export class Summarizer extends BaseTaskModel {
+export class Rewriter extends BaseTaskModel {
   #options;
 
   constructor(session, builder, options) {
@@ -20,7 +20,7 @@ export class Summarizer extends BaseTaskModel {
 
   static async create(options = {}) {
     await this.ensureLanguageModel();
-    const builder = new SummarizerPromptBuilder(options);
+    const builder = new RewriterPromptBuilder(options);
     const { systemPrompt } = builder.buildPrompt('');
 
     const sessionOptions = {
@@ -30,30 +30,39 @@ export class Summarizer extends BaseTaskModel {
     };
 
     const session = await LanguageModel.create(sessionOptions);
-    return new Summarizer(session, builder, options);
+    return new Rewriter(session, builder, options);
   }
 
-  async summarize(input, options = {}) {
+  async rewrite(input, options = {}) {
     return await this._runTask(input, options);
   }
 
-  summarizeStreaming(input, options = {}) {
+  rewriteStreaming(input, options = {}) {
     return this._runTaskStreaming(input, options);
   }
 
-  get type() {
-    return this.#options.type || 'key-points';
+  get sharedContext() {
+    return this.#options.sharedContext || '';
+  }
+  get tone() {
+    return this.#options.tone || 'as-is';
+  }
+  get format() {
+    return this.#options.format || 'as-is';
+  }
+  get length() {
+    return this.#options.length || 'as-is';
   }
 }
 
 // Global exposure if in browser
 if (
   typeof window !== 'undefined' &&
-  (!('Summarizer' in window) || window.__FORCE_SUMMARIZER_POLYFILL__)
+  (!('Rewriter' in window) || window.__FORCE_REWRITER_POLYFILL__)
 ) {
-  window.Summarizer = Summarizer;
-  Summarizer.__isPolyfill = true;
+  window.Rewriter = Rewriter;
+  Rewriter.__isPolyfill = true;
   console.log(
-    'Polyfill: window.Summarizer is now backed by the Summarizer API polyfill.'
+    'Polyfill: window.Rewriter is now backed by the Rewriter API polyfill.'
   );
 }

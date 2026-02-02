@@ -26,7 +26,7 @@ export class Writer extends BaseTaskModel {
     const sessionOptions = {
       initialPrompts: [{ role: 'system', content: systemPrompt }],
       signal: options.signal,
-      monitor: options.monitor
+      monitor: options.monitor,
     };
 
     const session = await LanguageModel.create(sessionOptions);
@@ -41,11 +41,16 @@ export class Writer extends BaseTaskModel {
     return this._runTaskStreaming(input, options);
   }
 
-  get tone() { return this.#options.tone || 'neutral'; }
+  get tone() {
+    return this.#options.tone || 'neutral';
+  }
 }
 
 // Global exposure if in browser
-if (typeof window !== 'undefined' && (!('Writer' in window) || window.__FORCE_WRITER_POLYFILL__)) {
+if (
+  typeof window !== 'undefined' &&
+  (!('Writer' in window) || window.__FORCE_WRITER_POLYFILL__)
+) {
   window.Writer = Writer;
   Writer.__isPolyfill = true;
   console.log(

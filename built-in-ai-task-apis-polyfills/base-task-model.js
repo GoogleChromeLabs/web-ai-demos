@@ -26,14 +26,18 @@ export class BaseTaskModel {
     }
 
     const lmOptions = {
-      expectedInputs: [{
-        type: 'text',
-        languages: options.expectedInputLanguages || ['en']
-      }],
-      expectedOutputs: [{
-        type: 'text',
-        languages: options.outputLanguage ? [options.outputLanguage] : ['en']
-      }]
+      expectedInputs: [
+        {
+          type: 'text',
+          languages: options.expectedInputLanguages || ['en'],
+        },
+      ],
+      expectedOutputs: [
+        {
+          type: 'text',
+          languages: options.outputLanguage ? [options.outputLanguage] : ['en'],
+        },
+      ],
     };
 
     return await LanguageModel.availability(lmOptions);
@@ -77,7 +81,9 @@ export class BaseTaskModel {
     return new ReadableStream({
       async start(controller) {
         if (signal?.aborted) {
-          controller.error(signal.reason || new DOMException('Aborted', 'AbortError'));
+          controller.error(
+            signal.reason || new DOMException('Aborted', 'AbortError')
+          );
           return;
         }
 
@@ -89,7 +95,9 @@ export class BaseTaskModel {
 
           if (signal) {
             abortHandler = () => {
-              controller.error(signal.reason || new DOMException('Aborted', 'AbortError'));
+              controller.error(
+                signal.reason || new DOMException('Aborted', 'AbortError')
+              );
               if (clonedSession) {
                 clonedSession.destroy();
                 clonedSession = null;
@@ -102,7 +110,9 @@ export class BaseTaskModel {
           const reader = stream.getReader();
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              break;
+            }
             controller.enqueue(value);
           }
           controller.close();
@@ -116,21 +126,33 @@ export class BaseTaskModel {
             clonedSession.destroy();
           }
         }
-      }
+      },
     });
   }
 
-  get sharedContext() { return this.#options.sharedContext || ''; }
-  get format() { return this.#options.format || 'markdown'; }
-  get length() { return this.#options.length || 'short'; }
+  get sharedContext() {
+    return this.#options.sharedContext || '';
+  }
+  get format() {
+    return this.#options.format || 'markdown';
+  }
+  get length() {
+    return this.#options.length || 'short';
+  }
 
   get expectedInputLanguages() {
-    return this.#options.expectedInputLanguages ? Object.freeze([...this.#options.expectedInputLanguages]) : null;
+    return this.#options.expectedInputLanguages
+      ? Object.freeze([...this.#options.expectedInputLanguages])
+      : null;
   }
   get expectedContextLanguages() {
-    return this.#options.expectedContextLanguages ? Object.freeze([...this.#options.expectedContextLanguages]) : null;
+    return this.#options.expectedContextLanguages
+      ? Object.freeze([...this.#options.expectedContextLanguages])
+      : null;
   }
-  get outputLanguage() { return this.#options.outputLanguage || null; }
+  get outputLanguage() {
+    return this.#options.outputLanguage || null;
+  }
 
   async measureInputUsage(input, options = {}) {
     const { userPrompt } = this.#builder.buildPrompt(input, options);
