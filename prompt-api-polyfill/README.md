@@ -4,10 +4,10 @@ This package provides a browser polyfill for the
 [Prompt API `LanguageModel`](https://github.com/webmachinelearning/prompt-api),
 supporting dynamic backends:
 
-- **Firebase AI Logic**
-- **Google Gemini API**
-- **OpenAI API**
-- **Transformers.js (local)**
+- **Firebase AI Logic** (cloud)
+- **Google Gemini API** (cloud)
+- **OpenAI API** (cloud)
+- **Transformers.js** (local after initial model download)
 
 When loaded in the browser, it defines a global:
 
@@ -20,28 +20,28 @@ natively available.
 
 ## Supported Backends
 
-### Firebase AI Logic
+### Firebase AI Logic (cloud)
 
 - **Uses**: `firebase/ai` SDK.
 - **Select by setting**: `window.FIREBASE_CONFIG`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
-### Google Gemini API
+### Google Gemini API (cloud)
 
 - **Uses**: `@google/generative-ai` SDK.
 - **Select by setting**: `window.GEMINI_CONFIG`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
-### OpenAI API
+### OpenAI API (cloud)
 
 - **Uses**: `openai` SDK.
 - **Select by setting**: `window.OPENAI_CONFIG`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
-### Transformers.js (local)
+### Transformers.js (local after initial model download)
 
 - **Uses**: `@huggingface/transformers` SDK.
 - **Select by setting**: `window.TRANSFORMERS_CONFIG`.
@@ -60,7 +60,7 @@ npm install prompt-api-polyfill
 
 ## Quick start
 
-### Backed by Firebase
+### Backed by Firebase AI Logic (cloud)
 
 1. **Create a Firebase project with Generative AI enabled**.
 2. **Provide your Firebase config** on `window.FIREBASE_CONFIG`.
@@ -81,7 +81,7 @@ npm install prompt-api-polyfill
 </script>
 ```
 
-### Backed by Gemini API
+### Backed by Gemini API (cloud)
 
 1. **Get a Gemini API Key** from
    [Google AI Studio](https://aistudio.google.com/).
@@ -102,7 +102,7 @@ npm install prompt-api-polyfill
 </script>
 ```
 
-### Backed by OpenAI API
+### Backed by OpenAI API (cloud)
 
 1. **Get an OpenAI API Key** from the
    [OpenAI Platform](https://platform.openai.com/).
@@ -123,9 +123,9 @@ npm install prompt-api-polyfill
 </script>
 ```
 
-### Backed by Transformers.js (local)
+### Backed by Transformers.js (local after initial model download)
 
-1. **No API Key required** (runs locally in the browser).
+1. **Only a dummy API Key required** (runs locally in the browser).
 2. **Provide configuration** on `window.TRANSFORMERS_CONFIG`.
 3. **Import the polyfill**.
 
@@ -206,12 +206,12 @@ This repo ships with a template file:
 ```jsonc
 // dot_env.json
 {
-  // For Firebase:
+  // For Firebase AI Logic:
   "projectId": "",
   "appId": "",
   "modelName": "",
 
-  // For Firebase OR Gemini OR OpenAI OR Transformers.js:
+  // For Firebase AI Logic OR Gemini OR OpenAI OR Transformers.js:
   "apiKey": "",
 
   // For Transformers.js:
@@ -233,7 +233,7 @@ cp dot_env.json .env.json
 
 Then open `.env.json` and fill in the values.
 
-**For Firebase:**
+**For Firebase AI Logic:**
 
 ```json
 {
@@ -276,11 +276,11 @@ Then open `.env.json` and fill in the values.
 ### Field-by-field explanation
 
 - `apiKey`:
-  - **Firebase**: Your Firebase Web API key.
+  - **Firebase AI Logic**: Your Firebase Web API key.
   - **Gemini**: Your Gemini API Key.
   - **OpenAI**: Your OpenAI API Key.
   - **Transformers.js**: Use `"dummy"`.
-- `projectId` / `appId`: **Firebase only**.
+- `projectId` / `appId`: **Firebase AI Logic only**.
 
 - `device`: **Transformers.js only**. Either `"webgpu"` or `"cpu"`.
 - `dtype`: **Transformers.js only**. Quantization level (e.g., `"q4f16"`).
