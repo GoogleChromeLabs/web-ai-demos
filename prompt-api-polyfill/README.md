@@ -371,13 +371,16 @@ export default class CustomBackend extends PolyfillBackend {
     super(config.modelName || DEFAULT_MODELS.custom.modelName);
   }
 
-  // Check if the backend is configured (e.g., API key is present)
+  // Check if the backend is configured (e.g., API key is present), if given
+  // combinations of modelName and options are supported, or, for local model,
+  // if the model is available.
   static availability(options) {
     return window.CUSTOM_CONFIG?.apiKey ? 'available' : 'unavailable';
   }
 
-  // Initialize the underlying SDK or API client
-  createSession(options, inCloudParams) {
+  // Initialize the underlying SDK or API client. With local models, use
+  // monitorTarget to report model download progress to the polyfill.
+  createSession(options, sessionParams, monitorTarget) {
     // Return the initialized session or client instance
   }
 

@@ -24,7 +24,7 @@ export default class TransformersBackend extends PolyfillBackend {
 
   /**
    * Loaded models can be large, so we initialize them lazily.
-   * @param {EventTarget} [monitorTarget] - The target to dispatch download progress events to.
+   * @param {EventTarget} [monitorTarget] - The event target to dispatch download progress events to.
    * @returns {Promise<Object>} The generator.
    */
   async #ensureGenerator(monitorTarget) {
@@ -134,7 +134,7 @@ export default class TransformersBackend extends PolyfillBackend {
    * Creates a new session.
    * @param {Object} options - LanguageModel options.
    * @param {Object} sessionParams - Session parameters.
-   * @param {EventTarget} [monitorTarget] - The target to dispatch download progress events to.
+   * @param {EventTarget} [monitorTarget] - The event target to dispatch download progress events to.
    * @returns {Promise<Object>} The generator.
    */
   async createSession(options, sessionParams, monitorTarget) {
