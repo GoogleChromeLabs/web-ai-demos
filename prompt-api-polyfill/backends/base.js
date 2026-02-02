@@ -24,7 +24,7 @@ export default class PolyfillBackend {
    * Creates a model session and stores it.
    * @param {Object} options - LanguageModel options.
    * @param {Object} sessionParams - Parameters for the cloud or local model.
-   * @param {Object} monitorTarget - Object to report download progress to.
+   * @param {EventTarget} [monitorTarget] - The event target to dispatch download progress events to.
    * @returns {any} The created session object.
    */
   createSession(options, sessionParams, monitorTarget) {
