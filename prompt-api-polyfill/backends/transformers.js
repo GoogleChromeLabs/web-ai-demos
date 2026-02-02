@@ -22,6 +22,11 @@ export default class TransformersBackend extends PolyfillBackend {
     this.#dtype = config.dtype || DEFAULT_MODELS.transformers.dtype || 'q4f16';
   }
 
+  /**
+   * Loaded models can be large, so we initialize them lazily.
+   * @param {EventTarget} [monitorTarget] - The target to dispatch download progress events to.
+   * @returns {Promise<Object>} The generator.
+   */
   async #ensureGenerator(monitorTarget) {
     if (!this.#generator) {
       const files = new Map();
@@ -125,6 +130,13 @@ export default class TransformersBackend extends PolyfillBackend {
     return 'available';
   }
 
+  /**
+   * Creates a new session.
+   * @param {Object} options - LanguageModel options.
+   * @param {Object} sessionParams - Session parameters.
+   * @param {EventTarget} [monitorTarget] - The target to dispatch download progress events to.
+   * @returns {Promise<Object>} The generator.
+   */
   async createSession(options, sessionParams, monitorTarget) {
     if (options.responseConstraint) {
       console.warn(
