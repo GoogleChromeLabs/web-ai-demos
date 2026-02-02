@@ -13,16 +13,18 @@ import { DEFAULT_MODELS } from './defaults.js';
  */
 export default class FirebaseBackend extends PolyfillBackend {
   #model;
+  #sessionParams;
 
   constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.firebase);
+    super(config.modelName || DEFAULT_MODELS.firebase.modelName);
     this.ai = getAI(initializeApp(config), { backend: new GoogleAIBackend() });
   }
 
-  createSession(_options, inCloudParams) {
+  createSession(_options, sessionParams) {
+    this.#sessionParams = sessionParams;
     this.#model = getGenerativeModel(this.ai, {
       mode: InferenceMode.ONLY_IN_CLOUD,
-      inCloudParams,
+      inCloudParams: sessionParams,
     });
     return this.#model;
   }
@@ -39,7 +41,9 @@ export default class FirebaseBackend extends PolyfillBackend {
   }
 
   async countTokens(contents) {
-    const { totalTokens } = await this.#model.countTokens({ contents });
+    const { totalTokens } = await this.#model.countTokens({
+      contents,
+    });
     return totalTokens;
   }
 }

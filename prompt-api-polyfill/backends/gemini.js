@@ -7,17 +7,19 @@ import { DEFAULT_MODELS } from './defaults.js';
  */
 export default class GeminiBackend extends PolyfillBackend {
   #model;
+  #sessionParams;
 
   constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.gemini);
+    super(config.modelName || DEFAULT_MODELS.gemini.modelName);
     this.genAI = new GoogleGenerativeAI(config.apiKey);
   }
 
-  createSession(options, inCloudParams) {
+  createSession(options, sessionParams) {
+    this.#sessionParams = sessionParams;
     const modelParams = {
       model: options.modelName || this.modelName,
-      generationConfig: inCloudParams.generationConfig,
-      systemInstruction: inCloudParams.systemInstruction,
+      generationConfig: sessionParams.generationConfig,
+      systemInstruction: sessionParams.systemInstruction,
     };
     // Clean undefined systemInstruction
     if (!modelParams.systemInstruction) {
@@ -42,7 +44,9 @@ export default class GeminiBackend extends PolyfillBackend {
   }
 
   async countTokens(contents) {
-    const { totalTokens } = await this.#model.countTokens({ contents });
+    const { totalTokens } = await this.#model.countTokens({
+      contents,
+    });
     return totalTokens;
   }
 }

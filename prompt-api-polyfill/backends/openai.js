@@ -9,7 +9,7 @@ export default class OpenAIBackend extends PolyfillBackend {
   #model;
 
   constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.openai);
+    super(config.modelName || DEFAULT_MODELS.openai.modelName);
     this.config = config;
     this.openai = new OpenAI({
       apiKey: config.apiKey,
@@ -32,17 +32,17 @@ export default class OpenAIBackend extends PolyfillBackend {
     return 'available';
   }
 
-  createSession(options, inCloudParams) {
+  createSession(options, sessionParams) {
     // OpenAI doesn't have a "session" object like Gemini, so we return a context object
     // tailored for our generate methods.
     this.#model = {
       model: options.modelName || this.modelName,
-      temperature: inCloudParams.generationConfig?.temperature,
+      temperature: sessionParams.generationConfig?.temperature,
       top_p: 1.0, // Default to 1.0 as topK is not directly supported the same way
-      systemInstruction: inCloudParams.systemInstruction,
+      systemInstruction: sessionParams.systemInstruction,
     };
 
-    const config = inCloudParams.generationConfig || {};
+    const config = sessionParams.generationConfig || {};
     if (config.responseSchema) {
       const { schema, wrapped } = this.#fixSchemaForOpenAI(
         config.responseSchema
@@ -269,9 +269,6 @@ export default class OpenAIBackend extends PolyfillBackend {
     // For this initial implementation, we use a character-based approximation (e.g., text.length / 4)
     // to avoid adding heavy WASM dependencies (`tiktoken`) to the polyfill.
     let totalText = '';
-    if (this.#model && this.#model.systemInstruction) {
-      totalText += this.#model.systemInstruction;
-    }
 
     if (Array.isArray(contents)) {
       for (const content of contents) {

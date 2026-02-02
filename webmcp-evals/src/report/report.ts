@@ -82,13 +82,13 @@ function renderDetails(testResults: Array<TestResult>): string {
 
 function renderDetail(testNumber: number, testResult: TestResult): string {
   const functionNameOutcome =
-    testResult.test.expectedCall.functionName ===
+    testResult.test.expectedCall?.functionName ===
     testResult.response?.functionName
       ? "pass"
       : "fail";
 
   const argsOutcome = deepEqual(
-    testResult.test.expectedCall.arguments,
+    testResult.test.expectedCall?.arguments,
     testResult.response?.args,
   )
     ? "pass"
@@ -96,7 +96,7 @@ function renderDetail(testNumber: number, testResult: TestResult): string {
   return `<li>
         <details>
             <summary>
-                Test #${testNumber} -
+                <span>Test #${testNumber}:</span>
                 <span class="${testResult.outcome}">${testResult.outcome.toUpperCase()}</span>
             </summary>
             <div>
@@ -106,7 +106,7 @@ function renderDetail(testNumber: number, testResult: TestResult): string {
                 </details>
 
                 <div>
-                    <h4>Result</h4>
+                    <h4><a href="#result-${testNumber}">Result</a></h4>
                     <table>
                         <tr>
                             <th></th>
@@ -116,8 +116,8 @@ function renderDetail(testNumber: number, testResult: TestResult): string {
                         </tr>
                         <tr>
                             <th>Function</th>
-                            <td><code>${testResult.test.expectedCall.functionName}</code></td>
-                            <td><code>${testResult.response?.functionName}</code></td>
+                            <td><code>${testResult.test.expectedCall?.functionName || null}</code></td>
+                            <td><code>${testResult.response?.functionName || null}</code></td>
                             <td class="${functionNameOutcome}">
                                 ${functionNameOutcome.toUpperCase()}
                             </td>
@@ -126,12 +126,12 @@ function renderDetail(testNumber: number, testResult: TestResult): string {
                             <th>Arguments</th>
                             <td>
                                 <code>
-                                    <pre>${JSON.stringify(testResult.test.expectedCall.arguments, null, 2)}</pre>
+                                    <pre>${JSON.stringify(testResult.test.expectedCall?.arguments || null, null, 2)}</pre>
                                 </code>
                             </td>
                             <td>
                                 <code>
-                                    <pre>${JSON.stringify(testResult.response?.args, null, 2)}</pre>
+                                    <pre>${JSON.stringify(testResult.response?.args || null, null, 2)}</pre>
                                 </code>
                             </td>
                             <td class="${argsOutcome}">${argsOutcome.toUpperCase()}</td></tr>

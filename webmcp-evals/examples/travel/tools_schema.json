@@ -73,7 +73,7 @@
         },
         {
             "name": "filterFlights",
-            "description": "Filters the list of flights according to the provided criteria. Used to help users find the flights they are looking for in the page.",
+            "description": "Filters the full list of flights according to the provided criteria. Help users find the flights they are looking for in the page.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -173,12 +173,12 @@
                 "properties": {
                     "origin": {
                         "type": "string",
-                        "description": "The IATA code for the origin airport. Prefer city IATA codes when a specific airport is not provided.",
+                        "description": "City or airport IATA code for the origin. Prefer city IATA codes when a specific airport is not provided.",
                         "pattern": "^[A-Z]{3}$"
                     },
                     "destination": {
                         "type": "string",
-                        "description": "The IATA code for the destination airport. Prefer city IATA codes when a specific airport is not provided.",
+                        "description": "City or airport IATA code for the destination airport. Prefer city IATA codes when a specific airport is not provided.",
                         "pattern": "^[A-Z]{3}$"
                     },
                     "tripType": {

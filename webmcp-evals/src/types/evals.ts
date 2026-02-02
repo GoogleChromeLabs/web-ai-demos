@@ -32,7 +32,7 @@ export type FunctionResponseMessage = {
 
 export type Eval = {
   messages: [Message];
-  expectedCall: FunctionCall;
+  expectedCall: FunctionCall | null;
 };
 
 export type FunctionCall = {

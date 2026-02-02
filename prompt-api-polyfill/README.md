@@ -4,9 +4,10 @@ This package provides a browser polyfill for the
 [Prompt API `LanguageModel`](https://github.com/webmachinelearning/prompt-api),
 supporting dynamic backends:
 
-- **Firebase AI Logic**
-- **Google Gemini API**
-- **OpenAI API**
+- **Firebase AI Logic** (cloud)
+- **Google Gemini API** (cloud)
+- **OpenAI API** (cloud)
+- **Transformers.js** (local after initial model download)
 
 When loaded in the browser, it defines a global:
 
@@ -19,24 +20,31 @@ natively available.
 
 ## Supported Backends
 
-### Firebase AI Logic
+### Firebase AI Logic (cloud)
 
 - **Uses**: `firebase/ai` SDK.
 - **Select by setting**: `window.FIREBASE_CONFIG`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
-### Google Gemini API
+### Google Gemini API (cloud)
 
 - **Uses**: `@google/generative-ai` SDK.
 - **Select by setting**: `window.GEMINI_CONFIG`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
-### OpenAI API
+### OpenAI API (cloud)
 
 - **Uses**: `openai` SDK.
 - **Select by setting**: `window.OPENAI_CONFIG`.
+- **Model**: Uses default if not specified (see
+  [`backends/defaults.js`](backends/defaults.js)).
+
+### Transformers.js (local after initial model download)
+
+- **Uses**: `@huggingface/transformers` SDK.
+- **Select by setting**: `window.TRANSFORMERS_CONFIG`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
@@ -52,7 +60,7 @@ npm install prompt-api-polyfill
 
 ## Quick start
 
-### Backed by Firebase
+### Backed by Firebase AI Logic (cloud)
 
 1. **Create a Firebase project with Generative AI enabled**.
 2. **Provide your Firebase config** on `window.FIREBASE_CONFIG`.
@@ -73,7 +81,7 @@ npm install prompt-api-polyfill
 </script>
 ```
 
-### Backed by Gemini API
+### Backed by Gemini API (cloud)
 
 1. **Get a Gemini API Key** from
    [Google AI Studio](https://aistudio.google.com/).
@@ -94,7 +102,7 @@ npm install prompt-api-polyfill
 </script>
 ```
 
-### Backed by OpenAI API
+### Backed by OpenAI API (cloud)
 
 1. **Get an OpenAI API Key** from the
    [OpenAI Platform](https://platform.openai.com/).
@@ -106,6 +114,29 @@ npm install prompt-api-polyfill
   // NOTE: Do not expose real keys in production source code!
   // Set OPENAI_CONFIG to select the OpenAI backend
   window.OPENAI_CONFIG = { apiKey: 'YOUR_OPENAI_API_KEY' };
+
+  if (!('LanguageModel' in window)) {
+    await import('prompt-api-polyfill');
+  }
+
+  const session = await LanguageModel.create();
+</script>
+```
+
+### Backed by Transformers.js (local after initial model download)
+
+1. **Only a dummy API Key required** (runs locally in the browser).
+2. **Provide configuration** on `window.TRANSFORMERS_CONFIG`.
+3. **Import the polyfill**.
+
+```html
+<script type="module">
+  // Set TRANSFORMERS_CONFIG to select the Transformers.js backend
+  window.TRANSFORMERS_CONFIG = {
+    apiKey: 'dummy', // Required for now by the loader
+    device: 'webgpu', // 'webgpu' or 'cpu'
+    dtype: 'q4f16', // Quantization level
+  };
 
   if (!('LanguageModel' in window)) {
     await import('prompt-api-polyfill');
@@ -175,13 +206,17 @@ This repo ships with a template file:
 ```jsonc
 // dot_env.json
 {
-  // For Firebase:
+  // For Firebase AI Logic:
   "projectId": "",
   "appId": "",
   "modelName": "",
 
-  // For Firebase OR Gemini OR OpenAI:
+  // For Firebase AI Logic OR Gemini OR OpenAI OR Transformers.js:
   "apiKey": "",
+
+  // For Transformers.js:
+  "device": "webgpu",
+  "dtype": "q4f16",
 }
 ```
 
@@ -198,7 +233,7 @@ cp dot_env.json .env.json
 
 Then open `.env.json` and fill in the values.
 
-**For Firebase:**
+**For Firebase AI Logic:**
 
 ```json
 {
@@ -227,13 +262,28 @@ Then open `.env.json` and fill in the values.
 }
 ```
 
+**For Transformers.js:**
+
+```json
+{
+  "apiKey": "dummy",
+  "modelName": "onnx-community/gemma-3-1b-it-ONNX-GQA",
+  "device": "webgpu",
+  "dtype": "q4f16"
+}
+```
+
 ### Field-by-field explanation
 
 - `apiKey`:
-  - **Firebase**: Your Firebase Web API key.
+  - **Firebase AI Logic**: Your Firebase Web API key.
   - **Gemini**: Your Gemini API Key.
   - **OpenAI**: Your OpenAI API Key.
-- `projectId` / `appId`: **Firebase only**.
+  - **Transformers.js**: Use `"dummy"`.
+- `projectId` / `appId`: **Firebase AI Logic only**.
+
+- `device`: **Transformers.js only**. Either `"webgpu"` or `"cpu"`.
+- `dtype`: **Transformers.js only**. Quantization level (e.g., `"q4f16"`).
 
 - `modelName` (optional): The model ID to use. If not provided, the polyfill
   uses the defaults defined in [`backends/defaults.js`](backends/defaults.js).
@@ -245,7 +295,8 @@ Then open `.env.json` and fill in the values.
 ### Wiring the config into the polyfill
 
 Once `.env.json` is filled out, you can import it and expose it to the polyfill.
-See the [Quick start](#quick-start) examples above.
+See the [Quick start](#quick-start) examples above. For Transformers.js, ensure
+you set `window.TRANSFORMERS_CONFIG`.
 
 ---
 
@@ -297,6 +348,115 @@ npm run test:browser
 
 To see the browser and DevTools while testing, you can modify
 `vitest.browser.config.js` to set `headless: false`.
+
+---
+
+## Create your own backend provider
+
+If you want to add your own backend provider, these are the steps to follow.
+
+### Extend the base backend class
+
+Create a new file in the `backends/` directory, for example,
+`backends/custom.js`. You need to extend the `PolyfillBackend` class and
+implement the core methods that satisfy the expected interface.
+
+```js
+import PolyfillBackend from './base.js';
+import { DEFAULT_MODELS } from './defaults.js';
+
+export default class CustomBackend extends PolyfillBackend {
+  constructor(config) {
+    // config typically comes from a window global (e.g., window.CUSTOM_CONFIG)
+    super(config.modelName || DEFAULT_MODELS.custom.modelName);
+  }
+
+  // Check if the backend is configured (e.g., API key is present), if given
+  // combinations of modelName and options are supported, or, for local model,
+  // if the model is available.
+  static availability(options) {
+    return window.CUSTOM_CONFIG?.apiKey ? 'available' : 'unavailable';
+  }
+
+  // Initialize the underlying SDK or API client. With local models, use
+  // monitorTarget to report model download progress to the polyfill.
+  createSession(options, sessionParams, monitorTarget) {
+    // Return the initialized session or client instance
+  }
+
+  // Non-streaming prompt execution
+  async generateContent(contents) {
+    // contents: Array of { role: 'user'|'model', parts: [{ text: string }] }
+    // Return: { text: string, usage: number }
+  }
+
+  // Streaming prompt execution
+  async generateContentStream(contents) {
+    // Return: AsyncIterable yielding chunks
+  }
+
+  // Token counting for quota/usage tracking
+  async countTokens(contents) {
+    // Return: total token count (number)
+  }
+}
+```
+
+### Register your backend
+
+The polyfill uses a "First-Match Priority" strategy based on global
+configuration. You need to register your backend in the `prompt-api-polyfill.js`
+file by adding it to the static `#backends` array:
+
+```js
+// prompt-api-polyfill.js
+static #backends = [
+  // ... existing backends
+  {
+    config: 'CUSTOM_CONFIG', // The global object to look for on `window`
+    path: './backends/custom.js',
+  },
+];
+```
+
+### Set a default model
+
+Define the fallback model identity in `backends/defaults.js`. This is used when
+a user initializes a session without specifying a specific `modelName`.
+
+```js
+// backends/defaults.js
+export const DEFAULT_MODELS = {
+  // ...
+  custom: { modelName: 'custom-model-pro-v1' },
+};
+```
+
+### Enable local development and testing
+
+The project uses a discovery script (`scripts/list-backends.js`) to generate
+test matrices. To include your new backend in the test runner, create a
+`.env-[name].json` file (for example, `.env-custom.json`) in the root directory:
+
+```json
+{
+  "apiKey": "your-api-key-here",
+  "modelName": "custom-model-pro-v1"
+}
+```
+
+### Verify via Web Platform Tests (WPT)
+
+The final step is ensuring compliance. Because the polyfill is spec-driven, any
+new backend should pass the official (or tentative) Web Platform Tests:
+
+```bash
+npm run test:wpt
+```
+
+This verification step ensures that your backend handles things like
+`AbortSignal`, system prompts, and history formatting exactly as the Prompt API
+specification expects.
 
 ---
 
