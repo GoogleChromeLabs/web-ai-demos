@@ -1,7 +1,7 @@
 # Built-in AI Task APIs Polyfills
 
 This package provides browser polyfills for the
-[Built-in AI Task APIs](https://github.com/webmachinelearning/built-in-ai-task-apis),
+[Built-in AI Task APIs](https://developer.chrome.com/docs/ai/built-in-apis),
 specifically:
 
 - **Summarizer API**
@@ -9,13 +9,9 @@ specifically:
 - **Rewriter API**
 
 These polyfills are backed by the
-[`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills),
-meaning they support the same dynamic backends:
-
-- **Firebase AI Logic** (cloud)
-- **Google Gemini API** (cloud)
-- **OpenAI API** (cloud)
-- **Transformers.js** (local after initial model download)
+[`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill),
+meaning they support the same
+[dynamic backends](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill#supported-backends).
 
 When loaded in the browser, they define globals:
 
@@ -27,31 +23,6 @@ window.Rewriter;
 
 so you can use these Task APIs even in environments where they are not yet
 natively available.
-
----
-
-## Supported Backends
-
-The polyfills use `prompt-api-polyfill` under the hood. You can configure the
-backend by setting specific global variables on `window`.
-
-### Firebase AI Logic (cloud)
-
-- **Select by setting**: `window.FIREBASE_CONFIG`.
-
-### Google Gemini API (cloud)
-
-- **Select by setting**: `window.GEMINI_CONFIG`.
-
-### OpenAI API (cloud)
-
-- **Select by setting**: `window.OPENAI_CONFIG`.
-
-### Transformers.js (local after initial model download)
-
-- **Select by setting**: `window.TRANSFORMERS_CONFIG`.
-
----
 
 ## Installation
 
@@ -162,7 +133,8 @@ Once the polyfills are loaded, you can use them as described in the official
 documentation:
 
 - [Summarizer API](https://developer.chrome.com/docs/ai/summarizer-api)
-- [Writer and Rewriter APIs](https://developer.chrome.com/docs/ai/writer-rewriter-api)
+- [Writer API](https://developer.chrome.com/docs/ai/writer-api)
+- [Rewriter API](https://developer.chrome.com/docs/ai/rewriter-api)
 
 For complete examples, see:
 
@@ -193,14 +165,6 @@ For complete examples, see:
 
 The project includes a comprehensive test suite based on Web Platform Tests
 (WPT).
-
-### Running Browser Tests
-
-```bash
-npm run test:browser
-```
-
-### Running WPT
 
 ```bash
 npm run test:wpt
