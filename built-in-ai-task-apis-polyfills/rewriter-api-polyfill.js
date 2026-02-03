@@ -14,8 +14,10 @@ export class Rewriter extends BaseTaskModel {
     this.#options = options;
   }
 
-  static async availability(options = {}) {
-    return await super.baseAvailability(options);
+  static availability(options = {}) {
+    const p = super.baseAvailability(options);
+    p.catch(() => {});
+    return p;
   }
 
   static create(options = {}) {

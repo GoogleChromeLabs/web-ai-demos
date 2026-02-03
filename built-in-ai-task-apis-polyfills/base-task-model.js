@@ -49,7 +49,9 @@ export class BaseTaskModel {
     try {
       this._checkContext();
     } catch (e) {
-      return Promise.reject(e);
+      const p = Promise.reject(e);
+      p.catch(() => {});
+      return p;
     }
     const p = (async () => {
       await this.ensureLanguageModel();
@@ -84,31 +86,37 @@ export class BaseTaskModel {
     }
   }
 
-  static async availability(options = {}) {
-    this._checkContext();
-    await this.ensureLanguageModel();
-    const lmOptions = {
-      expectedInputs: [
-        {
-          type: 'text',
-          languages: options.expectedInputLanguages || ['en'],
-        },
-      ],
-      expectedOutputs: [
-        {
-          type: 'text',
-          languages: options.outputLanguage ? [options.outputLanguage] : ['en'],
-        },
-      ],
-    };
+  static availability(options = {}) {
+    const p = (async () => {
+      this._checkContext();
+      await this.ensureLanguageModel();
+      const lmOptions = {
+        expectedInputs: [
+          {
+            type: 'text',
+            languages: options.expectedInputLanguages || ['en'],
+          },
+        ],
+        expectedOutputs: [
+          {
+            type: 'text',
+            languages: options.outputLanguage
+              ? [options.outputLanguage]
+              : ['en'],
+          },
+        ],
+      };
 
-    return await globalThis.LanguageModel.availability(lmOptions);
+      return await globalThis.LanguageModel.availability(lmOptions);
+    })();
+    p.catch(() => {});
+    return p;
   }
 
   _runTask(input, options = {}) {
     if (typeof input === 'string' && input.trim() === '') {
       const p = Promise.resolve('');
-      p.catch(() => { });
+      p.catch(() => {});
       return p;
     }
     const p = this._runTaskInternal(input, options);
@@ -119,10 +127,12 @@ export class BaseTaskModel {
   async _runTaskInternal(input, options = {}) {
     this._checkContext();
     if (this.#destroyed) {
-      throw (
+      const p = Promise.reject(
         this.#destructionReason ||
-        new DOMException('The summarizer has been destroyed.', 'AbortError')
+          new DOMException('The summarizer has been destroyed.', 'AbortError')
       );
+      p.catch(() => {});
+      return p;
     }
     const { userPrompt } = this.#builder.buildPrompt(input, options);
 
@@ -131,7 +141,11 @@ export class BaseTaskModel {
     );
 
     if (combinedSignal.aborted) {
-      throw combinedSignal.reason || new DOMException('Aborted', 'AbortError');
+      const p = Promise.reject(
+        combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+      );
+      p.catch(() => {});
+      return p;
     }
 
     const mergedOptions = { ...options, signal: combinedSignal };
@@ -139,7 +153,22 @@ export class BaseTaskModel {
     this.#activeSessions.add(clonedSession);
 
     try {
-      return await clonedSession.prompt(userPrompt, mergedOptions);
+      return await new Promise((resolve, reject) => {
+        const onAbort = () => {
+          reject(
+            combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+          );
+        };
+        combinedSignal.addEventListener('abort', onAbort, { once: true });
+
+        clonedSession
+          .prompt(userPrompt, mergedOptions)
+          .then(resolve)
+          .catch(reject)
+          .finally(() => {
+            combinedSignal.removeEventListener('abort', onAbort);
+          });
+      });
     } finally {
       clonedSession.destroy();
       this.#activeSessions.delete(clonedSession);
@@ -179,7 +208,10 @@ export class BaseTaskModel {
         if (_this.#destroyed) {
           controller.error(
             _this.#destructionReason ||
-            new DOMException('The summarizer has been destroyed.', 'AbortError')
+              new DOMException(
+                'The summarizer has been destroyed.',
+                'AbortError'
+              )
           );
           return;
         }
@@ -233,23 +265,24 @@ export class BaseTaskModel {
     });
   }
 
-  async measureInputUsage(input) {
+  measureInputUsage(input) {
     this._checkContext();
     if (this.#destroyed) {
-      throw (
+      const p = Promise.reject(
         this.#destructionReason ||
-        new DOMException('The summarizer has been destroyed.', 'AbortError')
+          new DOMException('The summarizer has been destroyed.', 'AbortError')
       );
+      p.catch(() => {});
+      return p;
     }
 
-    return await new Promise((resolve, reject) => {
+    const p = new Promise((resolve, reject) => {
       const onAbort = () =>
         reject(
           this.#destructionReason ||
-          this.#destructionController.signal.reason ||
-          new DOMException('The summarizer has been destroyed.', 'AbortError')
+            this.#destructionController.signal.reason ||
+            new DOMException('The summarizer has been destroyed.', 'AbortError')
         );
-      if (this.#destroyed) return onAbort();
 
       this.#destructionController.signal.addEventListener('abort', onAbort, {
         once: true,
@@ -266,6 +299,8 @@ export class BaseTaskModel {
           );
         });
     });
+    p.catch(() => {});
+    return p;
   }
 
   get inputQuota() {

@@ -22,14 +22,16 @@ export class Summarizer extends BaseTaskModel {
     }
   }
 
-  static async availability(options = {}) {
+  static availability(options = {}) {
     if (
       options.expectedInputLanguages?.includes('zu') ||
       options.outputLanguage === 'zu'
     ) {
-      return 'unavailable';
+      return Promise.resolve('unavailable');
     }
-    return await super.baseAvailability(options);
+    const p = super.baseAvailability(options);
+    p.catch(() => {});
+    return p;
   }
 
   static create(options = {}) {
