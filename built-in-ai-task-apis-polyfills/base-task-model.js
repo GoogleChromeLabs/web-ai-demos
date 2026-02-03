@@ -159,6 +159,10 @@ export class BaseTaskModel {
             combinedSignal.reason || new DOMException('Aborted', 'AbortError')
           );
         };
+        if (combinedSignal.aborted) {
+          onAbort();
+          return;
+        }
         combinedSignal.addEventListener('abort', onAbort, { once: true });
 
         clonedSession
@@ -230,6 +234,20 @@ export class BaseTaskModel {
           }
         };
 
+        const onAbort = () => {
+          if (clonedSession) {
+            cleanup();
+          }
+          try {
+            controller.error(
+              combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+            );
+          } catch (e) {
+            // Ignore if already closed/errored
+          }
+        };
+        combinedSignal.addEventListener('abort', onAbort, { once: true });
+
         try {
           const mergedOptions = { ...options, signal: combinedSignal };
           clonedSession = await session.clone(mergedOptions);
@@ -237,7 +255,7 @@ export class BaseTaskModel {
 
           // Check if it was aborted while cloning
           if (combinedSignal.aborted) {
-            cleanup();
+            onAbort();
             return;
           }
 
@@ -255,10 +273,9 @@ export class BaseTaskModel {
           }
           controller.close();
         } catch (err) {
-          if (!combinedSignal.aborted) {
-            controller.error(err);
-          }
+          controller.error(err);
         } finally {
+          combinedSignal.removeEventListener('abort', onAbort);
           cleanup();
         }
       },
@@ -283,6 +300,10 @@ export class BaseTaskModel {
             this.#destructionController.signal.reason ||
             new DOMException('The summarizer has been destroyed.', 'AbortError')
         );
+      if (this.#destroyed) {
+        onAbort();
+        return;
+      }
 
       this.#destructionController.signal.addEventListener('abort', onAbort, {
         once: true,

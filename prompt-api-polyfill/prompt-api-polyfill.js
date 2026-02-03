@@ -655,7 +655,7 @@ export class LanguageModel extends EventTarget {
     const BackendClass = await LanguageModel.#getBackendClass(this.#window);
     const info = LanguageModel.#getBackendInfo(this.#window);
     const newBackend = new BackendClass(info.configValue);
-    const newModel = newBackend.createSession(
+    const newModel = await newBackend.createSession(
       mergedOptions,
       mergedSessionParams
     );
