@@ -19,7 +19,15 @@ export class Rewriter extends BaseTaskModel {
   }
 
   static async create(options = {}) {
+    const p = this._createInternal(options);
+    p.catch(() => {});
+    return await p;
+  }
+
+  static async _createInternal(options = {}) {
+    this._checkContext();
     await this.ensureLanguageModel();
+    this._checkContext();
     const builder = new RewriterPromptBuilder(options);
     const { systemPrompt } = builder.buildPrompt('');
 
@@ -29,8 +37,9 @@ export class Rewriter extends BaseTaskModel {
       monitor: options.monitor,
     };
 
-    const session = await LanguageModel.create(sessionOptions);
-    return new Rewriter(session, builder, options);
+    const win = this.__window || globalThis;
+    const session = await win.LanguageModel.create(sessionOptions);
+    return new this(session, builder, options);
   }
 
   async rewrite(input, options = {}) {
@@ -56,13 +65,8 @@ export class Rewriter extends BaseTaskModel {
 }
 
 // Global exposure if in browser
-if (
-  typeof window !== 'undefined' &&
-  (!('Rewriter' in window) || window.__FORCE_REWRITER_POLYFILL__)
-) {
-  window.Rewriter = Rewriter;
-  Rewriter.__isPolyfill = true;
-  console.log(
-    'Polyfill: window.Rewriter is now backed by the Rewriter API polyfill.'
-  );
-}
+BaseTaskModel.exposeAPIGlobally(
+  'Rewriter',
+  Rewriter,
+  '__FORCE_REWRITER_POLYFILL__'
+);

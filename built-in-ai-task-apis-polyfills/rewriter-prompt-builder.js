@@ -73,8 +73,15 @@ export class RewriterPromptBuilder {
   }
 
   getLanguageName(code) {
-    const regionNames = new Intl.DisplayNames(['en'], { type: 'language' });
-    return regionNames.of(code) || 'English';
+    if (!code) {
+      return 'English';
+    }
+    try {
+      const regionNames = new Intl.DisplayNames(['en'], { type: 'language' });
+      return regionNames.of(code) || 'English';
+    } catch (e) {
+      return 'English';
+    }
   }
 
   /**

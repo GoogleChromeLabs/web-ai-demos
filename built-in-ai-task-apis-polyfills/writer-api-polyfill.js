@@ -19,7 +19,15 @@ export class Writer extends BaseTaskModel {
   }
 
   static async create(options = {}) {
+    const p = this._createInternal(options);
+    p.catch(() => {});
+    return await p;
+  }
+
+  static async _createInternal(options = {}) {
+    this._checkContext();
     await this.ensureLanguageModel();
+    this._checkContext();
     const builder = new WriterPromptBuilder(options);
     const { systemPrompt } = builder.buildPrompt('');
 
@@ -29,8 +37,9 @@ export class Writer extends BaseTaskModel {
       monitor: options.monitor,
     };
 
-    const session = await LanguageModel.create(sessionOptions);
-    return new Writer(session, builder, options);
+    const win = this.__window || globalThis;
+    const session = await win.LanguageModel.create(sessionOptions);
+    return new this(session, builder, options);
   }
 
   async write(input, options = {}) {
@@ -47,13 +56,4 @@ export class Writer extends BaseTaskModel {
 }
 
 // Global exposure if in browser
-if (
-  typeof window !== 'undefined' &&
-  (!('Writer' in window) || window.__FORCE_WRITER_POLYFILL__)
-) {
-  window.Writer = Writer;
-  Writer.__isPolyfill = true;
-  console.log(
-    'Polyfill: window.Writer is now backed by the Writer API polyfill.'
-  );
-}
+BaseTaskModel.exposeAPIGlobally('Writer', Writer, '__FORCE_WRITER_POLYFILL__');

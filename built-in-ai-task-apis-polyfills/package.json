@@ -20,6 +20,9 @@
     "summarizer-prompt-extractor": "node scripts/summarizer-prompt-extractor.js",
     "writer-prompt-extractor": "node scripts/writer-prompt-extractor.js",
     "rewriter-prompt-extractor": "node scripts/rewriter-prompt-extractor.js",
+    "sync:wpt": "node scripts/sync-wpt.js",
+    "generate:wpt": "node scripts/generate-wpt-wrappers.js",
+    "test:wpt": "npm run sync:wpt && npm run generate:wpt && npx http-server -o /tests/wpt/index.html",
     "fix": "npx prettier --write ."
   },
   "repository": {

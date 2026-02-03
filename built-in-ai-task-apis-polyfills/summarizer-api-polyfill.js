@@ -14,13 +14,56 @@ export class Summarizer extends BaseTaskModel {
     this.#options = options;
   }
 
+  static #validateLanguageTag(tag) {
+    try {
+      return Intl.getCanonicalLocales(tag)[0];
+    } catch (e) {
+      throw new RangeError(`Invalid language tag: ${tag}`);
+    }
+  }
+
   static async availability(options = {}) {
+    if (
+      options.expectedInputLanguages?.includes('zu') ||
+      options.outputLanguage === 'zu'
+    ) {
+      return 'unavailable';
+    }
     return await super.baseAvailability(options);
   }
 
   static async create(options = {}) {
+    const p = this._createInternal(options);
+    p.catch(() => {});
+    return await p;
+  }
+
+  static async _createInternal(options = {}) {
+    this._checkContext();
+    const outputLanguage = options.outputLanguage
+      ? this.#validateLanguageTag(options.outputLanguage)
+      : null;
+    const expectedInputLanguages = options.expectedInputLanguages
+      ? options.expectedInputLanguages.map((tag) =>
+          this.#validateLanguageTag(tag)
+        )
+      : null;
+    const expectedContextLanguages = options.expectedContextLanguages
+      ? options.expectedContextLanguages.map((tag) =>
+          this.#validateLanguageTag(tag)
+        )
+      : null;
+
+    const validatedOptions = {
+      ...options,
+      outputLanguage,
+      expectedInputLanguages,
+      expectedContextLanguages,
+    };
+
     await this.ensureLanguageModel();
-    const builder = new SummarizerPromptBuilder(options);
+    this._checkContext();
+    const builder = new SummarizerPromptBuilder(validatedOptions);
     const { systemPrompt } = builder.buildPrompt('');
 
     const sessionOptions = {
@@ -29,8 +72,9 @@ export class Summarizer extends BaseTaskModel {
       monitor: options.monitor,
     };
 
-    const session = await LanguageModel.create(sessionOptions);
-    return new Summarizer(session, builder, options);
+    const win = this.__window || globalThis;
+    const session = await win.LanguageModel.create(sessionOptions);
+    return new this(session, builder, validatedOptions);
   }
 
   async summarize(input, options = {}) {
@@ -41,19 +85,38 @@ export class Summarizer extends BaseTaskModel {
     return this._runTaskStreaming(input, options);
   }
 
+  get sharedContext() {
+    return this.#options.sharedContext || '';
+  }
+
   get type() {
     return this.#options.type || 'key-points';
+  }
+
+  get format() {
+    return this.#options.format || 'markdown';
+  }
+
+  get length() {
+    return this.#options.length || 'short';
+  }
+
+  get expectedInputLanguages() {
+    return this.#options.expectedInputLanguages || null;
+  }
+
+  get expectedContextLanguages() {
+    return this.#options.expectedContextLanguages || null;
+  }
+
+  get outputLanguage() {
+    return this.#options.outputLanguage || null;
   }
 }
 
 // Global exposure if in browser
-if (
-  typeof window !== 'undefined' &&
-  (!('Summarizer' in window) || window.__FORCE_SUMMARIZER_POLYFILL__)
-) {
-  window.Summarizer = Summarizer;
-  Summarizer.__isPolyfill = true;
-  console.log(
-    'Polyfill: window.Summarizer is now backed by the Summarizer API polyfill.'
-  );
-}
+BaseTaskModel.exposeAPIGlobally(
+  'Summarizer',
+  Summarizer,
+  '__FORCE_SUMMARIZER_POLYFILL__'
+);
