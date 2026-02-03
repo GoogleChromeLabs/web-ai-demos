@@ -39,7 +39,19 @@ export class Rewriter extends BaseTaskModel {
 
     const win = this.__window || globalThis;
     const session = await win.LanguageModel.create(sessionOptions);
-    return new this(session, builder, options);
+    const rewriter = new this(session, builder, options);
+
+    if (options.signal) {
+      options.signal.addEventListener(
+        'abort',
+        () => {
+          rewriter.destroy(options.signal.reason);
+        },
+        { once: true }
+      );
+    }
+
+    return rewriter;
   }
 
   rewrite(input, options = {}) {

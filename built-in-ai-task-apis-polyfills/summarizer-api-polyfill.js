@@ -74,7 +74,19 @@ export class Summarizer extends BaseTaskModel {
 
     const win = this.__window || globalThis;
     const session = await win.LanguageModel.create(sessionOptions);
-    return new this(session, builder, validatedOptions);
+    const summarizer = new this(session, builder, validatedOptions);
+
+    if (options.signal) {
+      options.signal.addEventListener(
+        'abort',
+        () => {
+          summarizer.destroy(options.signal.reason);
+        },
+        { once: true }
+      );
+    }
+
+    return summarizer;
   }
 
   summarize(input, options = {}) {

@@ -4,6 +4,10 @@
 export class BaseTaskModel {
   #session;
   #builder;
+  #destroyed = false;
+  #activeSessions = new Set();
+  #destructionController = new AbortController();
+  #destructionReason = null;
 
   constructor(session, builder) {
     this.#session = session;
@@ -102,6 +106,11 @@ export class BaseTaskModel {
   }
 
   _runTask(input, options = {}) {
+    if (typeof input === 'string' && input.trim() === '') {
+      const p = Promise.resolve('');
+      p.catch(() => { });
+      return p;
+    }
     const p = this._runTaskInternal(input, options);
     p.catch(() => {});
     return p;
@@ -109,37 +118,45 @@ export class BaseTaskModel {
 
   async _runTaskInternal(input, options = {}) {
     this._checkContext();
+    if (this.#destroyed) {
+      throw (
+        this.#destructionReason ||
+        new DOMException('The summarizer has been destroyed.', 'AbortError')
+      );
+    }
     const { userPrompt } = this.#builder.buildPrompt(input, options);
-    const signal = options.signal;
 
-    if (signal?.aborted) {
-      throw signal.reason || new DOMException('Aborted', 'AbortError');
+    const combinedSignal = AbortSignal.any(
+      [this.#destructionController.signal, options.signal].filter(Boolean)
+    );
+
+    if (combinedSignal.aborted) {
+      throw combinedSignal.reason || new DOMException('Aborted', 'AbortError');
     }
 
-    const clonedSession = await this.#session.clone(options);
-    let abortHandler;
+    const mergedOptions = { ...options, signal: combinedSignal };
+    const clonedSession = await this.#session.clone(mergedOptions);
+    this.#activeSessions.add(clonedSession);
 
     try {
-      if (signal) {
-        return await new Promise((resolve, reject) => {
-          abortHandler = () => {
-            reject(signal.reason || new DOMException('Aborted', 'AbortError'));
-          };
-          signal.addEventListener('abort', abortHandler, { once: true });
-          clonedSession.prompt(userPrompt, options).then(resolve).catch(reject);
-        });
-      }
-      return await clonedSession.prompt(userPrompt, options);
+      return await clonedSession.prompt(userPrompt, mergedOptions);
     } finally {
-      if (signal && abortHandler) {
-        signal.removeEventListener('abort', abortHandler);
-      }
       clonedSession.destroy();
+      this.#activeSessions.delete(clonedSession);
     }
   }
 
   _runTaskStreaming(input, options = {}) {
     this._checkContext();
+
+    if (typeof input === 'string' && input.trim() === '') {
+      return new ReadableStream({
+        start(controller) {
+          controller.close();
+        },
+      });
+    }
+
     const { userPrompt } = this.#builder.buildPrompt(input, options);
     const session = this.#session;
     const signal = options.signal;
@@ -148,47 +165,54 @@ export class BaseTaskModel {
       throw signal.reason || new DOMException('Aborted', 'AbortError');
     }
 
+    const _this = this;
+    const combinedSignal = AbortSignal.any(
+      [this.#destructionController.signal, options.signal].filter(Boolean)
+    );
+
+    if (combinedSignal.aborted) {
+      throw combinedSignal.reason || new DOMException('Aborted', 'AbortError');
+    }
+
     return new ReadableStream({
       async start(controller) {
+        if (_this.#destroyed) {
+          controller.error(
+            _this.#destructionReason ||
+            new DOMException('The summarizer has been destroyed.', 'AbortError')
+          );
+          return;
+        }
         let clonedSession;
-        let abortHandler;
         let reader;
 
         const cleanup = () => {
-          if (signal && abortHandler) {
-            signal.removeEventListener('abort', abortHandler);
-            abortHandler = null;
-          }
           if (reader) {
             reader.cancel().catch(() => {});
             reader = null;
           }
           if (clonedSession) {
             clonedSession.destroy();
+            _this.#activeSessions.delete(clonedSession);
             clonedSession = null;
           }
         };
 
         try {
-          if (signal) {
-            abortHandler = () => {
-              controller.error(
-                signal.reason || new DOMException('Aborted', 'AbortError')
-              );
-              cleanup();
-            };
-            signal.addEventListener('abort', abortHandler);
-          }
-
-          clonedSession = await session.clone(options);
+          const mergedOptions = { ...options, signal: combinedSignal };
+          clonedSession = await session.clone(mergedOptions);
+          _this.#activeSessions.add(clonedSession);
 
           // Check if it was aborted while cloning
-          if (signal?.aborted) {
+          if (combinedSignal.aborted) {
             cleanup();
             return;
           }
 
-          const stream = clonedSession.promptStreaming(userPrompt, options);
+          const stream = clonedSession.promptStreaming(
+            userPrompt,
+            mergedOptions
+          );
           reader = stream.getReader();
           while (true) {
             const { done, value } = await reader.read();
@@ -199,7 +223,7 @@ export class BaseTaskModel {
           }
           controller.close();
         } catch (err) {
-          if (!signal?.aborted) {
+          if (!combinedSignal.aborted) {
             controller.error(err);
           }
         } finally {
@@ -210,7 +234,38 @@ export class BaseTaskModel {
   }
 
   async measureInputUsage(input) {
-    return await this.#session.measureInputUsage(input);
+    this._checkContext();
+    if (this.#destroyed) {
+      throw (
+        this.#destructionReason ||
+        new DOMException('The summarizer has been destroyed.', 'AbortError')
+      );
+    }
+
+    return await new Promise((resolve, reject) => {
+      const onAbort = () =>
+        reject(
+          this.#destructionReason ||
+          this.#destructionController.signal.reason ||
+          new DOMException('The summarizer has been destroyed.', 'AbortError')
+        );
+      if (this.#destroyed) return onAbort();
+
+      this.#destructionController.signal.addEventListener('abort', onAbort, {
+        once: true,
+      });
+
+      this.#session
+        .measureInputUsage(input)
+        .then(resolve)
+        .catch(reject)
+        .finally(() => {
+          this.#destructionController.signal.removeEventListener(
+            'abort',
+            onAbort
+          );
+        });
+    });
   }
 
   get inputQuota() {
@@ -229,7 +284,20 @@ export class BaseTaskModel {
     return this.#session.inputQuota;
   }
 
-  destroy() {
+  destroy(reason) {
+    if (this.#destroyed) {
+      return;
+    }
+    this.#destroyed = true;
+    this.#destructionReason =
+      reason ||
+      new DOMException('The summarizer has been destroyed.', 'AbortError');
+    this.#destructionController.abort(this.#destructionReason);
+
+    for (const session of this.#activeSessions) {
+      session.destroy();
+    }
+    this.#activeSessions.clear();
     this.#session.destroy();
   }
 

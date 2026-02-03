@@ -39,7 +39,19 @@ export class Writer extends BaseTaskModel {
 
     const win = this.__window || globalThis;
     const session = await win.LanguageModel.create(sessionOptions);
-    return new this(session, builder, options);
+    const writer = new this(session, builder, options);
+
+    if (options.signal) {
+      options.signal.addEventListener(
+        'abort',
+        () => {
+          writer.destroy(options.signal.reason);
+        },
+        { once: true }
+      );
+    }
+
+    return writer;
   }
 
   write(input, options = {}) {
