@@ -41,6 +41,16 @@
   },
   "author": "Google Chrome Labs",
   "license": "Apache-2.0",
+  "keywords": [
+    "ai",
+    "polyfill",
+    "summarizer",
+    "writer",
+    "rewriter",
+    "web-ai"
+  ],
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",
+  "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "dependencies": {
     "prompt-api-polyfill": "^1.0.1"
   },

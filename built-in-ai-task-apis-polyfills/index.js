@@ -5,4 +5,3 @@ import './rewriter-api-polyfill.js';
 export { Summarizer } from './summarizer-api-polyfill.js';
 export { Writer } from './writer-api-polyfill.js';
 export { Rewriter } from './rewriter-api-polyfill.js';
-

@@ -1,61 +1,213 @@
 # Built-in AI Task APIs Polyfills
 
-Polyfills for the
-[Built-in AI Task APIs](https://github.com/webmachinelearning/writing-assistance-apis).
+This package provides browser polyfills for the
+[Built-in AI Task APIs](https://github.com/webmachinelearning/built-in-ai-task-apis),
+specifically:
 
-Current APIs supported:
+- **Summarizer API**
+- **Writer API**
+- **Rewriter API**
 
-- [Summarizer API](https://github.com/webmachinelearning/writing-assistance-apis/blob/main/summarizer-api.md)
+These polyfills are backed by the
+[`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills),
+meaning they support the same dynamic backends:
 
-Planned APIs:
+- **Firebase AI Logic** (cloud)
+- **Google Gemini API** (cloud)
+- **OpenAI API** (cloud)
+- **Transformers.js** (local after initial model download)
 
-- [Writer API](https://github.com/webmachinelearning/writing-assistance-apis/blob/main/writer-api.md)
-- [Rewriter API](https://github.com/webmachinelearning/writing-assistance-apis/blob/main/rewriter-api.md)
+When loaded in the browser, they define globals:
+
+```js
+window.Summarizer;
+window.Writer;
+window.Rewriter;
+```
+
+so you can use these Task APIs even in environments where they are not yet
+natively available.
+
+---
+
+## Supported Backends
+
+The polyfills use `prompt-api-polyfill` under the hood. You can configure the
+backend by setting specific global variables on `window`.
+
+### Firebase AI Logic (cloud)
+
+- **Select by setting**: `window.FIREBASE_CONFIG`.
+
+### Google Gemini API (cloud)
+
+- **Select by setting**: `window.GEMINI_CONFIG`.
+
+### OpenAI API (cloud)
+
+- **Select by setting**: `window.OPENAI_CONFIG`.
+
+### Transformers.js (local after initial model download)
+
+- **Select by setting**: `window.TRANSFORMERS_CONFIG`.
+
+---
 
 ## Installation
+
+Install from npm:
 
 ```bash
 npm install built-in-ai-task-apis-polyfills
 ```
 
-## Usage
+## Quick start
 
-### As a side-effect polyfill (Global Scope)
+### Recommended Loading Strategy
 
-Import this at the top of your entry file to automatically polyfill
-`window.Summarizer`.
+To ensure your app uses the native implementation when available, use a
+defensive dynamic import strategy:
 
-```javascript
-import 'built-in-ai-task-apis-polyfills';
+```html
+<script type="module">
+  import config from './.env.json' with { type: 'json' };
 
-// Now window.Summarizer is available
-const summarizer = await Summarizer.create();
+  // Example: Use Gemini backend
+  window.GEMINI_CONFIG = config;
+
+  // Load polyfills only if not natively supported
+  const polyfills = [];
+  if (!('Summarizer' in window)) {
+    polyfills.push(import('built-in-ai-task-apis-polyfills/summarizer'));
+  }
+  if (!('Writer' in window)) {
+    polyfills.push(import('built-in-ai-task-apis-polyfills/writer'));
+  }
+  if (!('Rewriter' in window)) {
+    polyfills.push(import('built-in-ai-task-apis-polyfills/rewriter'));
+  }
+  await Promise.all(polyfills);
+
+  // Now you can use the APIs
+  if ((await Summarizer.availability()) === 'available') {
+    const summarizer = await Summarizer.create();
+    const summary = await summarizer.summarize('Long text to summarize...');
+    console.log(summary);
+  }
+</script>
 ```
 
-### As a Module
+### API Usage Examples
 
-You can also import the classes directly.
+#### Summarizer API
 
-```javascript
-import { Summarizer } from 'built-in-ai-task-apis-polyfills';
+```js
+const summarizer = await Summarizer.create({
+  type: 'key-points',
+  format: 'markdown',
+  length: 'short',
+});
 
-const summarizer = await Summarizer.create();
+const result = await summarizer.summarize(text);
+// or streaming
+const stream = summarizer.summarizeStreaming(text);
+for await (const chunk of stream) {
+  console.log(chunk);
+}
 ```
 
-### Specific Polyfills
+#### Writer API
 
-If you only want to import a specific polyfill:
+```js
+const writer = await Writer.create({
+  tone: 'professional',
+  format: 'plain-text',
+});
 
-```javascript
-import 'built-in-ai-task-apis-polyfills/summarizer';
+const result = await writer.write('Draft of an email to my boss');
 ```
 
-## Dependencies
+#### Rewriter API
 
-This polyfill depends on
-[`prompt-api-polyfill`](https://www.npmjs.com/package/prompt-api-polyfill). It
-will attempt to load it from `esm.sh` if it's not present in the global scope.
+```js
+const rewriter = await Rewriter.create({
+  tone: 'casual',
+});
+
+const result = await rewriter.rewrite('I am writing to inform you that...');
+```
+
+---
+
+## Configuration
+
+### Configuring `.env.json`
+
+This repo ships with a `dot_env.json` template. Copy it to `.env.json` and fill
+in your credentials:
+
+```bash
+cp dot_env.json .env.json
+```
+
+The polyfill will look for these configurations on the `window` object. Adjust
+your loading logic to pass the JSON content to the appropriate global (e.g.,
+`window.GEMINI_CONFIG`).
+
+---
+
+## API surface
+
+Once the polyfills are loaded, you can use them as described in the official
+documentation:
+
+- [Summarizer API](https://developer.chrome.com/docs/ai/summarizer-api)
+- [Writer and Rewriter APIs](https://developer.chrome.com/docs/ai/writer-rewriter-api)
+
+For complete examples, see:
+
+- [`demo_summarizer.html`](demo_summarizer.html)
+- [`demo_writer.html`](demo_writer.html)
+- [`demo_rewriter.html`](demo_rewriter.html)
+
+---
+
+## Running the demos locally
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy and fill in your config:
+   ```bash
+   cp dot_env.json .env.json
+   ```
+3. Start the server:
+   ```bash
+   npm start
+   ```
+
+---
+
+## Testing
+
+The project includes a comprehensive test suite based on Web Platform Tests
+(WPT).
+
+### Running Browser Tests
+
+```bash
+npm run test:browser
+```
+
+### Running WPT
+
+```bash
+npm run test:wpt
+```
+
+---
 
 ## License
 
-Apache-2.0
+Apache 2.0
