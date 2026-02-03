@@ -18,10 +18,10 @@ export class Writer extends BaseTaskModel {
     return await super.baseAvailability(options);
   }
 
-  static async create(options = {}) {
+  static create(options = {}) {
     const p = this._createInternal(options);
     p.catch(() => {});
-    return await p;
+    return p;
   }
 
   static async _createInternal(options = {}) {
@@ -42,8 +42,8 @@ export class Writer extends BaseTaskModel {
     return new this(session, builder, options);
   }
 
-  async write(input, options = {}) {
-    return await this._runTask(input, options);
+  write(input, options = {}) {
+    return this._runTask(input, options);
   }
 
   writeStreaming(input, options = {}) {

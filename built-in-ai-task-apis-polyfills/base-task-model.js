@@ -41,25 +41,36 @@ export class BaseTaskModel {
     this.constructor._checkContext();
   }
 
-  static async baseAvailability(options = {}) {
-    this._checkContext();
-    await this.ensureLanguageModel();
-    const lmOptions = {
-      expectedInputs: [
-        {
-          type: 'text',
-          languages: options.expectedInputLanguages || ['en'],
-        },
-      ],
-      expectedOutputs: [
-        {
-          type: 'text',
-          languages: options.outputLanguage ? [options.outputLanguage] : ['en'],
-        },
-      ],
-    };
+  static baseAvailability(options = {}) {
+    try {
+      this._checkContext();
+    } catch (e) {
+      return Promise.reject(e);
+    }
+    const p = (async () => {
+      await this.ensureLanguageModel();
+      const lmOptions = {
+        expectedInputs: [
+          {
+            type: 'text',
+            languages: options.expectedInputLanguages || ['en'],
+          },
+        ],
+        expectedOutputs: [
+          {
+            type: 'text',
+            languages: options.outputLanguage
+              ? [options.outputLanguage]
+              : ['en'],
+          },
+        ],
+      };
 
-    return await globalThis.LanguageModel.availability(lmOptions);
+      const win = this.__window || globalThis;
+      return await win.LanguageModel.availability(lmOptions);
+    })();
+    p.catch(() => {});
+    return p;
   }
 
   static async ensureLanguageModel() {
@@ -90,10 +101,10 @@ export class BaseTaskModel {
     return await globalThis.LanguageModel.availability(lmOptions);
   }
 
-  async _runTask(input, options = {}) {
+  _runTask(input, options = {}) {
     const p = this._runTaskInternal(input, options);
     p.catch(() => {});
-    return await p;
+    return p;
   }
 
   async _runTaskInternal(input, options = {}) {
