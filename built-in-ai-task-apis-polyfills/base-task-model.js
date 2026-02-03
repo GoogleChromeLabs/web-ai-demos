@@ -423,7 +423,8 @@ export class BaseTaskModel {
         }
 
         if (!(apiName in win) || isForced) {
-          const LocalAPI = class extends apiClass {};
+          const LocalAPI = { [apiName]: class extends apiClass {} }[apiName];
+          LocalAPI.prototype[Symbol.toStringTag] = apiName;
           LocalAPI.__window = win;
           LocalAPI.__isPolyfill = true;
 
