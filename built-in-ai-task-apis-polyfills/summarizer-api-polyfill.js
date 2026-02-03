@@ -43,16 +43,16 @@ export class Summarizer extends BaseTaskModel {
   static async _createInternal(options = {}) {
     this._checkContext();
     const outputLanguage = options.outputLanguage
-      ? this.#validateLanguageTag(options.outputLanguage)
+      ? Summarizer.#validateLanguageTag(options.outputLanguage)
       : null;
     const expectedInputLanguages = options.expectedInputLanguages
       ? options.expectedInputLanguages.map((tag) =>
-          this.#validateLanguageTag(tag)
+          Summarizer.#validateLanguageTag(tag)
         )
       : null;
     const expectedContextLanguages = options.expectedContextLanguages
       ? options.expectedContextLanguages.map((tag) =>
-          this.#validateLanguageTag(tag)
+          Summarizer.#validateLanguageTag(tag)
         )
       : null;
 

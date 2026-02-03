@@ -380,6 +380,15 @@ export class BaseTaskModel {
           const LocalAPI = class extends apiClass {};
           LocalAPI.__window = win;
           LocalAPI.__isPolyfill = true;
+
+          // Bind essential static methods to the constructor so they work when detached.
+          if (typeof LocalAPI.create === 'function') {
+            LocalAPI.create = LocalAPI.create.bind(LocalAPI);
+          }
+          if (typeof LocalAPI.availability === 'function') {
+            LocalAPI.availability = LocalAPI.availability.bind(LocalAPI);
+          }
+
           win[apiName] = LocalAPI;
 
           // Ensure QuotaExceededError is also available in the iframe for WPT tests
