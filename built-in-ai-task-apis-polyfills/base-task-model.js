@@ -4,14 +4,60 @@
 export class BaseTaskModel {
   #session;
   #builder;
+  #options;
   #destroyed = false;
   #activeSessions = new Set();
   #destructionController = new AbortController();
   #destructionReason = null;
 
-  constructor(session, builder) {
+  constructor(session, builder, options = {}) {
     this.#session = session;
     this.#builder = builder;
+    this.#options = options;
+  }
+
+  get options() {
+    return this.#options;
+  }
+
+  get sharedContext() {
+    return this.#options.sharedContext || '';
+  }
+
+  get format() {
+    return this.#options.format || null;
+  }
+
+  get length() {
+    return this.#options.length || null;
+  }
+
+  get expectedInputLanguages() {
+    return this.#options.expectedInputLanguages || null;
+  }
+
+  get expectedContextLanguages() {
+    return this.#options.expectedContextLanguages || null;
+  }
+
+  get outputLanguage() {
+    return this.#options.outputLanguage || null;
+  }
+
+  get tone() {
+    return this.#options.tone || null;
+  }
+
+  get type() {
+    return this.#options.type || null;
+  }
+
+  static _validateLanguageTag(tag) {
+    try {
+      return Intl.getCanonicalLocales(tag)[0];
+    } catch (e) {
+      throw new RangeError(`Invalid language tag: ${tag}`);
+    }
   }
 
   static _checkContext() {

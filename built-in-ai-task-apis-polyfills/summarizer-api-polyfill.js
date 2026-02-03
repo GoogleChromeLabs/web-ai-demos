@@ -7,24 +7,14 @@ import { SummarizerPromptBuilder } from './summarizer-prompt-builder.js';
  */
 
 export class Summarizer extends BaseTaskModel {
-  #options;
-
   constructor(session, builder, options) {
     super(session, builder, options);
-    this.#options = options;
-  }
-
-  static #validateLanguageTag(tag) {
-    try {
-      return Intl.getCanonicalLocales(tag)[0];
-    } catch (e) {
-      throw new RangeError(`Invalid language tag: ${tag}`);
-    }
   }
 
   static availability(options = {}) {
     if (
       options.expectedInputLanguages?.includes('zu') ||
+      options.expectedContextLanguages?.includes('zu') ||
       options.outputLanguage === 'zu'
     ) {
       return Promise.resolve('unavailable');
@@ -43,16 +33,16 @@ export class Summarizer extends BaseTaskModel {
   static async _createInternal(options = {}) {
     this._checkContext();
     const outputLanguage = options.outputLanguage
-      ? Summarizer.#validateLanguageTag(options.outputLanguage)
+      ? this._validateLanguageTag(options.outputLanguage)
       : null;
     const expectedInputLanguages = options.expectedInputLanguages
       ? options.expectedInputLanguages.map((tag) =>
-          Summarizer.#validateLanguageTag(tag)
+          this._validateLanguageTag(tag)
         )
       : null;
     const expectedContextLanguages = options.expectedContextLanguages
       ? options.expectedContextLanguages.map((tag) =>
-          Summarizer.#validateLanguageTag(tag)
+          this._validateLanguageTag(tag)
         )
       : null;
 
@@ -100,31 +90,31 @@ export class Summarizer extends BaseTaskModel {
   }
 
   get sharedContext() {
-    return this.#options.sharedContext || '';
+    return super.sharedContext;
   }
 
   get type() {
-    return this.#options.type || 'key-points';
+    return super.type || 'key-points';
   }
 
   get format() {
-    return this.#options.format || 'markdown';
+    return super.format || 'markdown';
   }
 
   get length() {
-    return this.#options.length || 'short';
+    return super.length || 'short';
   }
 
   get expectedInputLanguages() {
-    return this.#options.expectedInputLanguages || null;
+    return super.expectedInputLanguages;
   }
 
   get expectedContextLanguages() {
-    return this.#options.expectedContextLanguages || null;
+    return super.expectedContextLanguages;
   }
 
   get outputLanguage() {
-    return this.#options.outputLanguage || null;
+    return super.outputLanguage;
   }
 }
 
