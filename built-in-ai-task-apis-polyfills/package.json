@@ -6,11 +6,17 @@
   "main": "./index.js",
   "exports": {
     ".": "./index.js",
-    "./summarizer": "./summarizer-api-polyfill.js"
+    "./summarizer": "./summarizer-api-polyfill.js",
+    "./writer": "./writer-api-polyfill.js",
+    "./rewriter": "./rewriter-api-polyfill.js"
   },
   "files": [
     "summarizer-api-polyfill.js",
     "summarizer-prompt-builder.js",
+    "writer-api-polyfill.js",
+    "writer-prompt-builder.js",
+    "rewriter-api-polyfill.js",
+    "rewriter-prompt-builder.js",
     "index.js",
     "README.md",
     "LICENSE"
@@ -32,7 +38,7 @@
   "author": "Google Chrome Labs",
   "license": "Apache-2.0",
   "dependencies": {
-    "prompt-api-polyfill": "^0.3.0"
+    "prompt-api-polyfill": "^1.0.1"
   },
   "devDependencies": {
     "http-server": "^14.1.1",
