@@ -1,0 +1,8 @@
+{
+  "apiKey": "",
+  "projectId": "",
+  "appId": "",
+  "modelName": "",
+  "device": "webgpu",
+  "dtype": "q4f16"
+}

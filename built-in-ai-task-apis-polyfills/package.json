@@ -11,6 +11,7 @@
     "./rewriter": "./rewriter-api-polyfill.js"
   },
   "files": [
+    "base-task-model.js",
     "summarizer-api-polyfill.js",
     "summarizer-prompt-builder.js",
     "writer-api-polyfill.js",
@@ -18,8 +19,11 @@
     "rewriter-api-polyfill.js",
     "rewriter-prompt-builder.js",
     "index.js",
+    "dot_env.json",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "scripts/",
+    "dumps/"
   ],
   "scripts": {
     "start": "http-server . -p 8080",
