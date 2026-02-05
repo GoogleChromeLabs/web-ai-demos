@@ -60,6 +60,7 @@ function getInjectedConfig(backendKey = null) {
         window.__FORCE_WRITER_POLYFILL__ = true;
         window.__FORCE_REWRITER_POLYFILL__ = true;
         window.__FORCE_LANGUAGE_DETECTOR_POLYFILL__ = true;
+        window.__FORCE_TRANSLATOR_POLYFILL__ = true;
         window.__FORCE_PROMPT_API_POLYFILL__ = true;
         ${Object.entries(configs)
           .map(([key, value]) => `window.${key} = ${JSON.stringify(value)};`)
@@ -137,6 +138,7 @@ function getCommonHead(depth = 0, backendKey = null) {
     <script type="module" src="${polyfillPrefix}writer-api-polyfill.js"></script>
     <script type="module" src="${polyfillPrefix}rewriter-api-polyfill.js"></script>
     <script type="module" src="${polyfillPrefix}language-detector-api-polyfill.js"></script>
+    <script type="module" src="${polyfillPrefix}translator-api-polyfill.js"></script>
     <script>
         if (typeof gc !== 'function') {
             window.gc = () => {
@@ -150,12 +152,19 @@ function getCommonHead(depth = 0, backendKey = null) {
 }
 
 console.log('Generating WPT runner files...');
-const apis = ['summarizer', 'writer', 'rewriter', 'language-detection'];
+const apis = [
+  'summarizer',
+  'writer',
+  'rewriter',
+  'language-detection',
+  'translator',
+];
 const apiTests = {
   summarizer: [],
   writer: [],
   rewriter: [],
   'language-detection': [],
+  translator: [],
 };
 
 function parseMetaScripts(filePath) {

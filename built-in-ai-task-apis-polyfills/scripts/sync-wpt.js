@@ -27,6 +27,10 @@ const SOURCES = [
     local: path.join(WPT_BASE_DIR, 'language-detection'),
   },
   {
+    api: 'https://api.github.com/repos/web-platform-tests/wpt/contents/ai/translator',
+    local: path.join(WPT_BASE_DIR, 'translator'),
+  },
+  {
     download_url:
       'https://raw.githubusercontent.com/web-platform-tests/wpt/master/ai/resources/util.js',
     local: path.join(WPT_BASE_DIR, 'resources', 'util.js'),
