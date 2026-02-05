@@ -347,7 +347,7 @@ export class BaseTaskModel {
       const p = Promise.reject(
         combinedSignal.reason || new DOMException('Aborted', 'AbortError')
       );
-      p.catch(() => { });
+      p.catch(() => {});
       return p;
     }
 

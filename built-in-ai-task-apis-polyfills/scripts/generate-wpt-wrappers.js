@@ -228,15 +228,15 @@ for (const api of apis) {
         'resources/testharnessreport.js',
         'resources/testdriver.js',
         'resources/testdriver-vendor.js',
-        'resources/util.js'
-      ].map(s => resourcePrefix + s);
+        'resources/util.js',
+      ].map((s) => resourcePrefix + s);
 
       const extraScripts = testInfo.scripts
-        .filter(s => {
+        .filter((s) => {
           const resolved = resolveScriptPath(testFile, s);
           return !commonResolved.includes(resolved);
         })
-        .map(s => `<script src="${resolveScriptPath(testFile, s)}"></script>`)
+        .map((s) => `<script src="${resolveScriptPath(testFile, s)}"></script>`)
         .join('\n    ');
 
       const individualHtml = `<!DOCTYPE html>
@@ -273,6 +273,15 @@ for (const api of apis) {
     const backendName = backendKey.replace('_CONFIG', '').toLowerCase();
     const allTestsFileName = `all-tests-${backendName}.html`;
 
+    const globallyIncludedScripts = new Set([
+      'resources/testharness.js',
+      'resources/testharnessreport.js',
+      'resources/testdriver.js',
+      'resources/testdriver-vendor.js',
+      'resources/util.js',
+      'resources/locale-util.js', // Also treat this as common to avoid duplicates
+    ]);
+
     const allTestsHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -284,33 +293,34 @@ for (const api of apis) {
     <h1>All ${api.toUpperCase()} WPT Tests (${backendName.toUpperCase()})</h1>
     <p><a href="index.html">&larr; Back to Index</a></p>
     <div id="log"></div>
-    ${apiTests[api].map((testInfo) => {
-      const testFile = testInfo.file;
-      const extraScripts = testInfo.scripts
-        .filter(s => {
-          // Let's resolve everything relative to WPT_DIR for comparison
-          const absoluteResolved = s.startsWith('/')
-            ? s.substring(1)
-            : path.join(path.dirname(testFile), s);
+    ${apiTests[api]
+      .map((testInfo) => {
+        const testFile = testInfo.file;
+        const extraScripts = testInfo.scripts
+          .filter((s) => {
+            // Let's resolve everything relative to WPT_DIR for comparison
+            const absoluteResolved = s.startsWith('/')
+              ? s.substring(1)
+              : path.join(path.dirname(testFile), s);
 
-          const commonPaths = [
-            'resources/testharness.js',
-            'resources/testharnessreport.js',
-            'resources/testdriver.js',
-            'resources/testdriver-vendor.js',
-            'resources/util.js'
-          ];
-          return !commonPaths.includes(absoluteResolved);
-        })
-        .map(s => {
-          if (s.startsWith('/')) return '..' + s;
-          // Path relative to apiDir (e.g., 'language-detection')
-          const relDir = path.relative(api, path.dirname(testFile));
-          return `<script src="${path.join(relDir, s)}"></script>`;
-        })
-        .join('\n    ');
-      return `${extraScripts}\n    <script type="module" src="${path.relative(api, testFile)}"></script>`;
-    }).join('\n    ')}
+            if (globallyIncludedScripts.has(absoluteResolved)) {
+              return false;
+            }
+            globallyIncludedScripts.add(absoluteResolved);
+            return true;
+          })
+          .map((s) => {
+            if (s.startsWith('/')) {
+              return '..' + s;
+            }
+            // Path relative to apiDir (e.g., 'language-detection')
+            const relDir = path.relative(api, path.dirname(testFile));
+            return `<script src="${path.join(relDir, s)}"></script>`;
+          })
+          .join('\n    ');
+        return `${extraScripts}${extraScripts ? '\n    ' : ''}<script type="module" src="${path.relative(api, testFile)}"></script>`;
+      })
+      .join('\n    ')}
 </body>
 </html>`;
 
