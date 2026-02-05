@@ -132,6 +132,7 @@ function getCommonHead(depth = 0, backendKey = null) {
     <script src="${resourcePrefix}resources/testdriver.js"></script>
     <script src="${resourcePrefix}resources/testdriver-vendor.js"></script>
     <script src="${resourcePrefix}resources/util.js"></script>
+    <script src="${resourcePrefix}resources/locale-util.js"></script>
     <script type="module" src="${polyfillPrefix}summarizer-api-polyfill.js"></script>
     <script type="module" src="${polyfillPrefix}writer-api-polyfill.js"></script>
     <script type="module" src="${polyfillPrefix}rewriter-api-polyfill.js"></script>
@@ -229,6 +230,7 @@ for (const api of apis) {
         'resources/testdriver.js',
         'resources/testdriver-vendor.js',
         'resources/util.js',
+        'resources/locale-util.js',
       ].map((s) => resourcePrefix + s);
 
       const extraScripts = testInfo.scripts
