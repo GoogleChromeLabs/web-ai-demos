@@ -44,12 +44,8 @@ export class Translator extends BaseTaskModel {
     await this.ensureLanguageModel();
     this._checkContext();
 
-    const builder = new TranslatorPromptBuilder();
-    const { systemPrompt, initialPrompts } = builder.buildPrompt(
-      '',
-      sourceLanguage,
-      targetLanguage
-    );
+    const builder = new TranslatorPromptBuilder(sourceLanguage, targetLanguage);
+    const { systemPrompt, initialPrompts } = builder.buildPrompt('');
 
     const sessionOptions = {
       initialPrompts: [
@@ -84,24 +80,12 @@ export class Translator extends BaseTaskModel {
 
   translate(input, options = {}) {
     this._checkContext();
-    return this._runTask(input, options, (inputText) =>
-      this._builder.buildPrompt(
-        inputText,
-        this.#sourceLanguage,
-        this.#targetLanguage
-      )
-    );
+    return this._runTask(input, options);
   }
 
   translateStreaming(input, options = {}) {
     this._checkContext();
-    return this._runTaskStreaming(input, options, (inputText) =>
-      this._builder.buildPrompt(
-        inputText,
-        this.#sourceLanguage,
-        this.#targetLanguage
-      )
-    );
+    return this._runTaskStreaming(input, options);
   }
 
   get sourceLanguage() {

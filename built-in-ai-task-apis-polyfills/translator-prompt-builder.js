@@ -2,6 +2,14 @@
  * Translator Prompt Builder
  */
 export class TranslatorPromptBuilder {
+  #sourceLanguage;
+  #targetLanguage;
+
+  constructor(sourceLanguage, targetLanguage) {
+    this.#sourceLanguage = sourceLanguage;
+    this.#targetLanguage = targetLanguage;
+  }
+
   static #systemPrompt = `You are a helpful and accurate translator. Your goal is to translate the given text from the source language to the target language. Preserve the meaning, tone, and any formatting as much as possible. Do not include any explanations or extra text in your response, only the translated text itself. If you are unsure of the translation, provide the most likely one.`;
 
   static #initialPrompts = [
@@ -56,11 +64,11 @@ export class TranslatorPromptBuilder {
     },
   ];
 
-  buildPrompt(inputText, sourceLanguage, targetLanguage) {
+  buildPrompt(inputText) {
     return {
       systemPrompt: TranslatorPromptBuilder.#systemPrompt,
       initialPrompts: TranslatorPromptBuilder.#initialPrompts,
-      userPrompt: `SOURCE: ${sourceLanguage}\nTARGET: ${targetLanguage}\nTEXT: ${inputText}`,
+      userPrompt: `SOURCE: ${this.#sourceLanguage}\nTARGET: ${this.#targetLanguage}\nTEXT: ${inputText}`,
     };
   }
 }

@@ -51,6 +51,11 @@
         margin-bottom: 1rem;
         align-items: center;
       }
+
+      #status {
+        height: 1.2rem;
+        margin-bottom: 0.5rem;
+      }
     </style>
   </head>
 
@@ -92,16 +97,17 @@
 Hello, how are you today? I hope you are having a wonderful time.</textarea
     >
 
+    <div id="status">Ready</div>
     <progress id="progress" value="0" max="1" style="display: none"></progress>
-    <div id="status"></div>
 
     <div class="controls">
       <button id="translateBtn">Translate</button>
       <button id="translateStreamingBtn">Translate Streaming</button>
+      <button id="stopBtn" disabled>Stop</button>
     </div>
 
     <h2>Output</h2>
-    <div id="output" class="output"></div>
+    <div id="output" class="output">Your results will appear here...</div>
 
     <script type="module">
       import firebaseConfig from './.env.json' with { type: 'json' };
@@ -118,6 +124,7 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
       const translateStreamingBtn = document.getElementById(
         'translateStreamingBtn'
       );
+      const stopBtn = document.getElementById('stopBtn');
       const output = document.getElementById('output');
       const progress = document.getElementById('progress');
       const status = document.getElementById('status');
@@ -125,6 +132,19 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
       let translator = null;
       let currentSource = '';
       let currentTarget = '';
+      let abortController = null;
+
+      const setStatus = (msg) => {
+        status.textContent = msg;
+      };
+
+      stopBtn.onclick = () => {
+        if (abortController) {
+          abortController.abort();
+          setStatus('Operation aborted.');
+          stopBtn.disabled = true;
+        }
+      };
 
       async function getTranslator() {
         const src = sourceLanguage.value;
@@ -138,7 +158,7 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
           translator.destroy();
         }
 
-        status.textContent = 'Initializing translator...';
+        setStatus('Initializing translator...');
         translator = await Translator.create({
           sourceLanguage: src,
           targetLanguage: tgt,
@@ -147,9 +167,11 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
             m.addEventListener('downloadprogress', (e) => {
               progress.value = e.loaded;
               progress.max = e.total;
-              status.textContent = `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`;
+              setStatus(
+                `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`
+              );
               if (e.loaded === e.total) {
-                status.textContent = 'Model loaded.';
+                setStatus('Model loaded.');
                 setTimeout(() => (progress.style.display = 'none'), 1000);
               }
             });
@@ -157,33 +179,64 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
         });
         currentSource = src;
         currentTarget = tgt;
-        status.textContent = 'Ready.';
+        setStatus('Ready.');
         return translator;
       }
 
       translateBtn.onclick = async () => {
         output.textContent = 'Translating...';
+        abortController = new AbortController();
+        stopBtn.disabled = false;
         try {
           const t = await getTranslator();
-          const result = await t.translate(input.value);
+          setStatus('Generating translation...');
+          const result = await t.translate(input.value, {
+            signal: abortController.signal,
+          });
           output.textContent = result;
-          status.textContent = 'Translation complete.';
+          setStatus('Translation complete.');
         } catch (err) {
-          output.textContent = 'Error: ' + err.message;
+          if (err.name === 'AbortError') {
+            console.log('Translation stopped by user.');
+          } else {
+            output.textContent = 'Error: ' + err.message;
+            setStatus('An error occurred.');
+          }
+        } finally {
+          stopBtn.disabled = true;
+          abortController = null;
         }
       };
 
       translateStreamingBtn.onclick = async () => {
         output.textContent = '';
+        abortController = new AbortController();
+        stopBtn.disabled = false;
         try {
           const t = await getTranslator();
-          const stream = t.translateStreaming(input.value);
-          for await (const chunk of stream) {
-            output.textContent = chunk;
+          setStatus('Streaming translation...');
+          const stream = t.translateStreaming(input.value, {
+            signal: abortController.signal,
+          });
+          const reader = stream.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+            output.textContent += value;
           }
-          status.textContent = 'Streaming translation complete.';
+          setStatus('Streaming translation complete.');
         } catch (err) {
-          output.textContent = 'Error: ' + err.message;
+          if (err.name === 'AbortError') {
+            console.log('Translation stopped by user.');
+          } else {
+            output.textContent = 'Error: ' + err.message;
+            setStatus('An error occurred.');
+          }
+        } finally {
+          stopBtn.disabled = true;
+          abortController = null;
         }
       };
     </script>
