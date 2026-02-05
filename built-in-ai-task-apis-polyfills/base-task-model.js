@@ -328,7 +328,7 @@ export class BaseTaskModel {
     });
   }
 
-  measureInputUsage(input) {
+  measureInputUsage(input, options = {}) {
     this._checkContext();
     if (this.#destroyed) {
       const p = Promise.reject(
@@ -339,19 +339,25 @@ export class BaseTaskModel {
       return p;
     }
 
+    const combinedSignal = AbortSignal.any(
+      [this.#destructionController.signal, options.signal].filter(Boolean)
+    );
+
+    if (combinedSignal.aborted) {
+      const p = Promise.reject(
+        combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+      );
+      p.catch(() => { });
+      return p;
+    }
+
     const p = new Promise((resolve, reject) => {
       const onAbort = () =>
         reject(
-          this.#destructionReason ||
-            this.#destructionController.signal.reason ||
-            new DOMException('The summarizer has been destroyed.', 'AbortError')
+          combinedSignal.reason || new DOMException('Aborted', 'AbortError')
         );
-      if (this.#destroyed) {
-        onAbort();
-        return;
-      }
 
-      this.#destructionController.signal.addEventListener('abort', onAbort, {
+      combinedSignal.addEventListener('abort', onAbort, {
         once: true,
       });
 
@@ -360,10 +366,7 @@ export class BaseTaskModel {
         .then(resolve)
         .catch(reject)
         .finally(() => {
-          this.#destructionController.signal.removeEventListener(
-            'abort',
-            onAbort
-          );
+          combinedSignal.removeEventListener('abort', onAbort);
         });
     });
     p.catch(() => {});

@@ -59,6 +59,7 @@ function getInjectedConfig(backendKey = null) {
         window.__FORCE_SUMMARIZER_POLYFILL__ = true;
         window.__FORCE_WRITER_POLYFILL__ = true;
         window.__FORCE_REWRITER_POLYFILL__ = true;
+        window.__FORCE_LANGUAGE_DETECTOR_POLYFILL__ = true;
         window.__FORCE_PROMPT_API_POLYFILL__ = true;
         ${Object.entries(configs)
           .map(([key, value]) => `window.${key} = ${JSON.stringify(value)};`)
@@ -134,6 +135,7 @@ function getCommonHead(depth = 0, backendKey = null) {
     <script type="module" src="${polyfillPrefix}summarizer-api-polyfill.js"></script>
     <script type="module" src="${polyfillPrefix}writer-api-polyfill.js"></script>
     <script type="module" src="${polyfillPrefix}rewriter-api-polyfill.js"></script>
+    <script type="module" src="${polyfillPrefix}language-detector-api-polyfill.js"></script>
     <script>
         if (typeof gc !== 'function') {
             window.gc = () => {
@@ -147,12 +149,36 @@ function getCommonHead(depth = 0, backendKey = null) {
 }
 
 console.log('Generating WPT runner files...');
-const apis = ['summarizer', 'writer', 'rewriter'];
+const apis = ['summarizer', 'writer', 'rewriter', 'language-detection'];
 const apiTests = {
   summarizer: [],
   writer: [],
   rewriter: [],
+  'language-detection': [],
 };
+
+function parseMetaScripts(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const scripts = [];
+  const lines = content.split('\n');
+  for (const line of lines) {
+    const match = line.match(/\/\/\s*META:\s*script=([^\s]+)/);
+    if (match) {
+      scripts.push(match[1]);
+    }
+  }
+  return scripts;
+}
+
+function resolveScriptPath(testFile, scriptPath) {
+  if (scriptPath.startsWith('/')) {
+    // Relative to WPT_DIR
+    const depth = testFile.split(path.sep).length - 1;
+    return '../'.repeat(depth) + scriptPath.substring(1);
+  }
+  // Relative to test file
+  return scriptPath;
+}
 
 function collectTests(dir, api) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -163,7 +189,12 @@ function collectTests(dir, api) {
         collectTests(fullPath, api);
       }
     } else if (entry.name.endsWith('.window.js')) {
-      apiTests[api].push(path.relative(WPT_DIR, fullPath));
+      const relativePath = path.relative(WPT_DIR, fullPath);
+      const scripts = parseMetaScripts(fullPath);
+      apiTests[api].push({
+        file: relativePath,
+        scripts,
+      });
     }
   }
 }
@@ -182,12 +213,31 @@ const apiBackendTests = {}; // api -> [ { testFile, backendName, htmlFileName } 
 
 for (const api of apis) {
   apiBackendTests[api] = [];
-  for (const testFile of apiTests[api]) {
+  for (const testInfo of apiTests[api]) {
+    const testFile = testInfo.file;
     for (const backendKey of activeBackends) {
       const backendName = backendKey.replace('_CONFIG', '').toLowerCase();
       const htmlFileName = testFile.replace('.js', `.${backendName}.html`);
       const htmlPath = path.join(WPT_DIR, htmlFileName);
       const depth = testFile.split(path.sep).length - 1;
+
+      // Filter out scripts already in common head
+      const resourcePrefix = '../'.repeat(depth);
+      const commonResolved = [
+        'resources/testharness.js',
+        'resources/testharnessreport.js',
+        'resources/testdriver.js',
+        'resources/testdriver-vendor.js',
+        'resources/util.js'
+      ].map(s => resourcePrefix + s);
+
+      const extraScripts = testInfo.scripts
+        .filter(s => {
+          const resolved = resolveScriptPath(testFile, s);
+          return !commonResolved.includes(resolved);
+        })
+        .map(s => `<script src="${resolveScriptPath(testFile, s)}"></script>`)
+        .join('\n    ');
 
       const individualHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -195,6 +245,7 @@ for (const api of apis) {
     <meta charset="UTF-8">
     <title>WPT (${backendName.toUpperCase()}): ${testFile}</title>
     ${getCommonHead(depth, backendKey)}
+    ${extraScripts}
 </head>
 <body>
     <h1>WPT (${backendName.toUpperCase()}): ${testFile}</h1>
@@ -233,7 +284,33 @@ for (const api of apis) {
     <h1>All ${api.toUpperCase()} WPT Tests (${backendName.toUpperCase()})</h1>
     <p><a href="index.html">&larr; Back to Index</a></p>
     <div id="log"></div>
-    ${apiTests[api].map((test) => `<script type="module" src="${path.basename(test)}"></script>`).join('\n    ')}
+    ${apiTests[api].map((testInfo) => {
+      const testFile = testInfo.file;
+      const extraScripts = testInfo.scripts
+        .filter(s => {
+          // Let's resolve everything relative to WPT_DIR for comparison
+          const absoluteResolved = s.startsWith('/')
+            ? s.substring(1)
+            : path.join(path.dirname(testFile), s);
+
+          const commonPaths = [
+            'resources/testharness.js',
+            'resources/testharnessreport.js',
+            'resources/testdriver.js',
+            'resources/testdriver-vendor.js',
+            'resources/util.js'
+          ];
+          return !commonPaths.includes(absoluteResolved);
+        })
+        .map(s => {
+          if (s.startsWith('/')) return '..' + s;
+          // Path relative to apiDir (e.g., 'language-detection')
+          const relDir = path.relative(api, path.dirname(testFile));
+          return `<script src="${path.join(relDir, s)}"></script>`;
+        })
+        .join('\n    ');
+      return `${extraScripts}\n    <script type="module" src="${path.relative(api, testFile)}"></script>`;
+    }).join('\n    ')}
 </body>
 </html>`;
 
@@ -286,13 +363,13 @@ for (const api of apis) {
         <tbody>
             ${apiTests[api]
               .map(
-                (testFile) => `
+                (testInfo) => `
                 <tr>
-                    <td class="test-name">${path.basename(testFile)}</td>
+                    <td class="test-name">${path.basename(testInfo.file)}</td>
                     ${backendNames
                       .map((backendName) => {
                         const link = path
-                          .basename(testFile)
+                          .basename(testInfo.file)
                           .replace('.js', `.${backendName}.html`);
                         return `<td><a href="${link}">Run</a></td>`;
                       })
