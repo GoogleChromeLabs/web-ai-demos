@@ -121,9 +121,13 @@ export class BaseTaskModel {
     return p;
   }
 
+  _isNonTranslatable(input) {
+    return typeof input === 'string' && /^[\s\x00-\x1f]*$/.test(input);
+  }
+
   _runTask(input, options = {}) {
-    if (typeof input === 'string' && input.trim() === '') {
-      const p = Promise.resolve('');
+    if (this._isNonTranslatable(input)) {
+      const p = Promise.resolve(input);
       p.catch(() => {});
       return p;
     }
@@ -190,9 +194,10 @@ export class BaseTaskModel {
   _runTaskStreaming(input, options = {}) {
     this._checkContext();
 
-    if (typeof input === 'string' && input.trim() === '') {
+    if (this._isNonTranslatable(input)) {
       return new ReadableStream({
         start(controller) {
+          controller.enqueue(input);
           controller.close();
         },
       });
