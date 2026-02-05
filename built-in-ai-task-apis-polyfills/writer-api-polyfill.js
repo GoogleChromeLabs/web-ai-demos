@@ -7,8 +7,11 @@ import { WriterPromptBuilder } from './writer-prompt-builder.js';
  */
 
 export class Writer extends BaseTaskModel {
+  #options;
+
   constructor(session, builder, options) {
-    super(session, builder, options);
+    super(session, builder);
+    this.#options = options;
   }
 
   static availability(options = {}) {
@@ -89,16 +92,28 @@ export class Writer extends BaseTaskModel {
     return this._runTaskStreaming(input, options);
   }
 
+  get sharedContext() {
+    return this.#options.sharedContext || '';
+  }
+
   get format() {
-    return super.format || 'plain-text';
+    return this.#options.format || 'plain-text';
   }
 
   get length() {
-    return super.length || 'short';
+    return this.#options.length || 'short';
+  }
+
+  get expectedInputLanguages() {
+    return this.#options.expectedInputLanguages || null;
+  }
+
+  get outputLanguage() {
+    return this.#options.outputLanguage || null;
   }
 
   get tone() {
-    return super.tone || 'neutral';
+    return this.#options.tone || 'neutral';
   }
 }
 

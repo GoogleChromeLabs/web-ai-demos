@@ -7,8 +7,11 @@ import { SummarizerPromptBuilder } from './summarizer-prompt-builder.js';
  */
 
 export class Summarizer extends BaseTaskModel {
+  #options;
+
   constructor(session, builder, options) {
-    super(session, builder, options);
+    super(session, builder);
+    this.#options = options;
   }
 
   static availability(options = {}) {
@@ -90,31 +93,31 @@ export class Summarizer extends BaseTaskModel {
   }
 
   get sharedContext() {
-    return super.sharedContext;
+    return this.#options.sharedContext || '';
   }
 
   get type() {
-    return super.type || 'key-points';
+    return this.#options.type || 'key-points';
   }
 
   get format() {
-    return super.format || 'markdown';
+    return this.#options.format || 'markdown';
   }
 
   get length() {
-    return super.length || 'short';
+    return this.#options.length || 'short';
   }
 
   get expectedInputLanguages() {
-    return super.expectedInputLanguages;
+    return this.#options.expectedInputLanguages || null;
   }
 
   get expectedContextLanguages() {
-    return super.expectedContextLanguages;
+    return this.#options.expectedContextLanguages || null;
   }
 
   get outputLanguage() {
-    return super.outputLanguage;
+    return this.#options.outputLanguage || null;
   }
 }
 

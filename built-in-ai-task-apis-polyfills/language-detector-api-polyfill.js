@@ -168,8 +168,11 @@ class LanguageDetectorPromptBuilder {
 }
 
 export class LanguageDetector extends BaseTaskModel {
+  #options;
+
   constructor(session, builder, options) {
-    super(session, builder, options);
+    super(session, builder);
+    this.#options = options;
   }
 
   static availability(options = {}) {
@@ -326,7 +329,7 @@ export class LanguageDetector extends BaseTaskModel {
   }
 
   get expectedInputLanguages() {
-    return super.expectedInputLanguages;
+    return this.#options.expectedInputLanguages || null;
   }
 
   get inputQuota() {

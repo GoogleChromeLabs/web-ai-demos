@@ -7,8 +7,11 @@ import { RewriterPromptBuilder } from './rewriter-prompt-builder.js';
  */
 
 export class Rewriter extends BaseTaskModel {
+  #options;
+
   constructor(session, builder, options) {
-    super(session, builder, options);
+    super(session, builder);
+    this.#options = options;
   }
 
   static availability(options = {}) {
@@ -90,16 +93,27 @@ export class Rewriter extends BaseTaskModel {
   }
 
   get sharedContext() {
-    return super.sharedContext;
+    return this.#options.sharedContext || '';
   }
+
   get tone() {
-    return super.tone || 'as-is';
+    return this.#options.tone || 'as-is';
   }
+
   get format() {
-    return super.format || 'as-is';
+    return this.#options.format || 'as-is';
   }
+
   get length() {
-    return super.length || 'as-is';
+    return this.#options.length || 'as-is';
+  }
+
+  get expectedInputLanguages() {
+    return this.#options.expectedInputLanguages || null;
+  }
+
+  get outputLanguage() {
+    return this.#options.outputLanguage || null;
   }
 }
 

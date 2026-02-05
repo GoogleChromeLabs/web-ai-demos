@@ -4,52 +4,14 @@
 export class BaseTaskModel {
   #session;
   #builder;
-  #options;
   #destroyed = false;
   #activeSessions = new Set();
   #destructionController = new AbortController();
   #destructionReason = null;
 
-  constructor(session, builder, options = {}) {
+  constructor(session, builder) {
     this.#session = session;
     this.#builder = builder;
-    this.#options = options;
-  }
-
-  get options() {
-    return this.#options;
-  }
-
-  get sharedContext() {
-    return this.#options.sharedContext || '';
-  }
-
-  get format() {
-    return this.#options.format || null;
-  }
-
-  get length() {
-    return this.#options.length || null;
-  }
-
-  get expectedInputLanguages() {
-    return this.#options.expectedInputLanguages || null;
-  }
-
-  get expectedContextLanguages() {
-    return this.#options.expectedContextLanguages || null;
-  }
-
-  get outputLanguage() {
-    return this.#options.outputLanguage || null;
-  }
-
-  get tone() {
-    return this.#options.tone || null;
-  }
-
-  get type() {
-    return this.#options.type || null;
   }
 
   static _validateLanguageTag(tag) {
@@ -374,18 +336,6 @@ export class BaseTaskModel {
   }
 
   get inputQuota() {
-    return this.#session.inputQuota;
-  }
-
-  get tokensUsage() {
-    return this.#session.inputUsage;
-  }
-
-  get tokensLeft() {
-    return this.#session.inputQuota - this.#session.inputUsage;
-  }
-
-  get maxTokens() {
     return this.#session.inputQuota;
   }
 
