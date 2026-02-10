@@ -5,6 +5,7 @@ The taxonomy categories are provided as a flat list of Unique IDs and their corr
 
 Return a JSON array of objects, each containing the category "id" and a "confidence" score between 0 and 1.
 Order the results from highest to lowest confidence.
+The values of the confidence scores, plus an optional "unknown" category ID if you are unsure, must sum to 1.
 Only include categories that are relevant to the text.
 
 TAXONOMY:
@@ -772,9 +773,10 @@ JSON Schema for output:
         {
           role: 'assistant',
           content: JSON.stringify([
-            { id: '464', confidence: 0.99 }, // Science
-            { id: '471', confidence: 0.95 }, // Physics
-            { id: '110', confidence: 0.85 }, // Power and Energy Industry
+            { id: '464', confidence: 0.6 }, // Science
+            { id: '471', confidence: 0.3 }, // Physics
+            { id: '110', confidence: 0.09 }, // Power and Energy Industry
+            { id: 'unknown', confidence: 0.01 },
           ]),
         },
       ],

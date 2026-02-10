@@ -88,16 +88,55 @@ export class Taxonomizer extends BaseTaskModel {
       throw new Error('Categorization results must be an array.');
     }
 
-    // Basic cleaning and validation
+    // 1. Basic cleaning and validation
     results = results.map((res) => ({
-      id: String(res.id),
-      confidence: Math.max(0, Math.min(1, Number(res.confidence || 0))),
+      id: String(res.id || 'unknown'),
+      confidence: Math.max(0, Number(res.confidence || 0)),
     }));
 
-    // Sort by decreasing confidence
+    // 2. Sort by decreasing confidence
     results.sort((a, b) => b.confidence - a.confidence);
 
-    return results;
+    // 3. Handle sum to 1
+    let finalResults = [];
+    let unknownResult = null;
+    let currentSum = 0;
+
+    for (const res of results) {
+      // Normalize 'und' to 'unknown' just in case
+      if (res.id === 'und' || res.id === 'unknown') {
+        unknownResult = res;
+        res.id = 'unknown';
+        continue;
+      }
+
+      if (currentSum + res.confidence <= 1) {
+        finalResults.push(res);
+        currentSum += res.confidence;
+      } else {
+        // Capped if it exceeds 1
+        const remaining = 1 - currentSum;
+        if (remaining > 0) {
+          res.confidence = remaining;
+          finalResults.push(res);
+          currentSum = 1;
+        }
+        break;
+      }
+    }
+
+    // 4. Handle "unknown"
+    if (unknownResult) {
+      unknownResult.confidence = Math.max(0, 1 - currentSum);
+      finalResults.push(unknownResult);
+    } else if (currentSum < 1) {
+      finalResults.push({
+        id: 'unknown',
+        confidence: 1 - currentSum,
+      });
+    }
+
+    return finalResults;
   }
 
   // Static helper as requested by the user
