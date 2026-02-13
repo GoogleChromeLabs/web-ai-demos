@@ -90,7 +90,7 @@ export class BaseTaskModel {
   static async ensureLanguageModel() {
     const win = this.__window || globalThis;
     if (typeof win !== 'undefined' && !win.LanguageModel) {
-      await import('https://esm.sh/prompt-api-polyfill?raw');
+      await import('prompt-api-polyfill');
     }
   }
 

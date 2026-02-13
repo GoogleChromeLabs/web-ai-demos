@@ -3,36 +3,33 @@
   "version": "1.0.0",
   "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, etc.)",
   "type": "module",
-  "main": "./index.js",
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./index.js",
-    "./summarizer": "./summarizer-api-polyfill.js",
-    "./writer": "./writer-api-polyfill.js",
-    "./rewriter": "./rewriter-api-polyfill.js"
+    ".": "./dist/index.js",
+    "./summarizer": "./dist/summarizer.js",
+    "./writer": "./dist/writer.js",
+    "./rewriter": "./dist/rewriter.js",
+    "./language-detector": "./dist/language-detector.js",
+    "./translator": "./dist/translator.js",
+    "./taxonomizer": "./dist/taxonomizer.js"
   },
   "files": [
-    "base-task-model.js",
-    "summarizer-api-polyfill.js",
-    "summarizer-prompt-builder.js",
-    "writer-api-polyfill.js",
-    "writer-prompt-builder.js",
-    "rewriter-api-polyfill.js",
-    "rewriter-prompt-builder.js",
-    "index.js",
-    "dot_env.json",
+    "dist/",
     "README.md",
-    "LICENSE",
-    "scripts/",
-    "dumps/"
+    "LICENSE"
   ],
   "scripts": {
-    "start": "http-server . -p 8080",
+    "dev": "vite",
+    "build": "vite build",
+    "prepublishOnly": "npm run build",
+    "preview": "vite preview",
+    "start": "npm run dev",
     "summarizer-prompt-extractor": "node scripts/summarizer-prompt-extractor.js",
     "writer-prompt-extractor": "node scripts/writer-prompt-extractor.js",
     "rewriter-prompt-extractor": "node scripts/rewriter-prompt-extractor.js",
     "sync:wpt": "node scripts/sync-wpt.js",
     "generate:wpt": "node scripts/generate-wpt-wrappers.js",
-    "test:wpt": "npm run sync:wpt && npm run generate:wpt && npx http-server -o /tests/wpt/index.html",
+    "test:wpt": "npm run sync:wpt && npm run generate:wpt && vite --open /tests/wpt/index.html",
     "fix": "npx prettier --write ."
   },
   "repository": {
@@ -55,7 +52,7 @@
     "prompt-api-polyfill": "^1.0.1"
   },
   "devDependencies": {
-    "http-server": "^14.1.1",
-    "prettier-plugin-curly": "^0.4.1"
+    "prettier-plugin-curly": "^0.4.1",
+    "vite": "^7.3.1"
   }
 }
