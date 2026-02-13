@@ -1,4 +1,4 @@
-import { Schema } from 'https://esm.run/firebase/ai';
+import { Schema } from 'firebase/ai';
 
 /**
  * Converts a standard JSON Schema object into a Firebase Vertex AI Schema class instance.

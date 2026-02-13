@@ -1,4 +1,4 @@
-import OpenAI from 'https://esm.run/openai';
+import OpenAI from 'openai';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
 

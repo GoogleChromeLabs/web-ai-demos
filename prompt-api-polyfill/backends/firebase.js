@@ -1,10 +1,10 @@
-import { initializeApp } from 'https://esm.run/firebase/app';
+import { initializeApp } from 'firebase/app';
 import {
   getAI,
   getGenerativeModel,
   GoogleAIBackend,
   InferenceMode,
-} from 'https://esm.run/firebase/ai';
+} from 'firebase/ai';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
 
