@@ -3,3 +3,4 @@ tests/active-backends.json
 images/
 media/
 tests/
+dist/
