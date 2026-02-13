@@ -1,7 +1,7 @@
 import {
   pipeline,
   TextStreamer,
-} from 'https://esm.run/@huggingface/transformers';
+} from '@huggingface/transformers';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
 
