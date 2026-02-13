@@ -2,6 +2,15 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
+  optimizeDeps: {
+    exclude: ['prompt-api-polyfill'],
+  },
+  server: {
+    fs: {
+      strict: false,
+      allow: [resolve(__dirname)],
+    },
+  },
   build: {
     lib: {
       entry: {
