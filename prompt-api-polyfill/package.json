@@ -44,12 +44,14 @@
   },
   "devDependencies": {
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "node-addon-api": "^8.5.0",
+    "node-gyp": "^12.2.0"
   },
   "dependencies": {
     "@google/genai": "^1.41.0",
     "@huggingface/transformers": "^3.8.1",
     "firebase": "^12.9.0",
-    "openai": "^6.21.0"
+    "openai": "^6.22.0"
   }
 }

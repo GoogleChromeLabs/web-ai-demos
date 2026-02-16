@@ -72,8 +72,6 @@ export class LanguageModel extends EventTarget {
   #sessionParams;
   #destroyed;
   #inputUsage;
-  #topK;
-  #temperature;
   #onquotaoverflow;
   #window;
 
@@ -96,10 +94,6 @@ export class LanguageModel extends EventTarget {
     this.#inputUsage = inputUsage;
     this.#onquotaoverflow = {};
     this.#window = win;
-
-    this.#topK =
-      options.topK !== undefined ? Math.floor(options.topK) : undefined;
-    this.#temperature = options.temperature;
   }
 
   get inputUsage() {
@@ -107,12 +101,6 @@ export class LanguageModel extends EventTarget {
   }
   get inputQuota() {
     return 1000000;
-  }
-  get topK() {
-    return this.#topK;
-  }
-  get temperature() {
-    return this.#temperature;
   }
 
   get onquotaoverflow() {
@@ -163,7 +151,7 @@ export class LanguageModel extends EventTarget {
     } catch (e) {
       if (e instanceof RangeError) {
         // If it's a RangeError about language tags, re-throw it.
-        // Otherwise (temperature/topK), return 'unavailable'.
+        // Otherwise, return 'unavailable'.
         if (e.message.includes('language tag')) {
           throw e;
         }
@@ -222,52 +210,6 @@ export class LanguageModel extends EventTarget {
   }
 
   static async #validateOptions(options = {}, win = globalThis) {
-    const { maxTemperature, maxTopK } = await LanguageModel.params(win);
-
-    const hasTemperature = Object.prototype.hasOwnProperty.call(
-      options,
-      'temperature'
-    );
-    const hasTopK = Object.prototype.hasOwnProperty.call(options, 'topK');
-
-    if (hasTemperature !== hasTopK) {
-      throw new (win.DOMException || globalThis.DOMException)(
-        'Initializing a new session must either specify both topK and temperature, or neither of them.',
-        'NotSupportedError'
-      );
-    }
-
-    if (hasTemperature && hasTopK) {
-      let { temperature, topK } = options;
-
-      if (typeof topK === 'number') {
-        topK = Math.floor(topK);
-      }
-
-      if (
-        typeof temperature !== 'number' ||
-        Number.isNaN(temperature) ||
-        typeof topK !== 'number' ||
-        Number.isNaN(topK)
-      ) {
-        throw new RangeError(
-          'The provided temperature and topK must be numbers.'
-        );
-      }
-
-      if (
-        temperature < 0 ||
-        temperature > maxTemperature ||
-        topK <= 0 ||
-        topK > maxTopK
-      ) {
-        throw new RangeError(
-          'The provided temperature or topK is outside the supported range.'
-        );
-      }
-      options.topK = topK;
-    }
-
     // Language validation for expectedInputs and expectedOutputs
     if (options.expectedInputs) {
       for (const input of options.expectedInputs) {
@@ -364,17 +306,6 @@ export class LanguageModel extends EventTarget {
     }
   }
 
-  static async params(win = globalThis) {
-    const contextWin = this.__window || win;
-    LanguageModel.#checkContext(contextWin);
-    return {
-      // Values from https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-flash-lite#:~:text=%2C%20audio/webm-,Parameter%20defaults,-tune.
-      defaultTemperature: 1.0,
-      defaultTopK: 64,
-      maxTemperature: 2.0,
-      maxTopK: 100, // Increased to accommodate WPT tests
-    };
-  }
 
   static async create(options = {}) {
     const win = this.__window || globalThis;
@@ -425,12 +356,7 @@ export class LanguageModel extends EventTarget {
     const BackendClass = await LanguageModel.#getBackendClass(win);
     const backend = new BackendClass(info.configValue);
 
-    const defaults = {
-      temperature: 1.0,
-      topK: 3,
-    };
-
-    const resolvedOptions = { ...defaults, ...options };
+    const resolvedOptions = { ...options };
     LanguageModel.#validateResponseConstraint(
       resolvedOptions.responseConstraint,
       win
@@ -438,10 +364,7 @@ export class LanguageModel extends EventTarget {
 
     const sessionParams = {
       model: backend.modelName,
-      generationConfig: {
-        temperature: resolvedOptions.temperature,
-        topK: resolvedOptions.topK,
-      },
+      generationConfig: {},
     };
 
     let initialHistory = [];
@@ -642,14 +565,6 @@ export class LanguageModel extends EventTarget {
 
     const historyCopy = JSON.parse(JSON.stringify(this.#history));
     const mergedOptions = { ...this.#options, ...options };
-    const mergedSessionParams = { ...this.#sessionParams };
-
-    if (options.temperature !== undefined) {
-      mergedSessionParams.generationConfig.temperature = options.temperature;
-    }
-    if (options.topK !== undefined) {
-      mergedSessionParams.generationConfig.topK = options.topK;
-    }
 
     // Re-create the backend for the clone since it now holds state (#model)
     const BackendClass = await LanguageModel.#getBackendClass(this.#window);
@@ -657,7 +572,7 @@ export class LanguageModel extends EventTarget {
     const newBackend = new BackendClass(info.configValue);
     const newModel = await newBackend.createSession(
       mergedOptions,
-      mergedSessionParams
+      this.#sessionParams
     );
 
     if (options.signal?.aborted) {
@@ -675,7 +590,7 @@ export class LanguageModel extends EventTarget {
       newModel,
       historyCopy,
       mergedOptions,
-      mergedSessionParams,
+      this.#sessionParams,
       this.#inputUsage,
       this.#window
     );
