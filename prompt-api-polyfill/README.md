@@ -24,6 +24,7 @@ natively available.
 
 - **Uses**: `firebase/ai` SDK.
 - **Select by setting**: `window.FIREBASE_CONFIG`.
+- **API Provider**: Supports `"developer"` (Gemini Developer API, default) or `"vertex"` (Vertex AI).
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
@@ -209,6 +210,7 @@ This repo ships with a template file:
   // For Firebase AI Logic:
   "projectId": "",
   "appId": "",
+  "geminiApiProvider": "developer", // "developer" (default) or "vertex"
   "modelName": "",
 
   // For Firebase AI Logic OR Gemini OR OpenAI OR Transformers.js:
@@ -240,6 +242,7 @@ Then open `.env.json` and fill in the values.
   "apiKey": "YOUR_FIREBASE_WEB_API_KEY",
   "projectId": "your-gcp-project-id",
   "appId": "YOUR_FIREBASE_APP_ID",
+  "geminiApiProvider": "developer",
   "modelName": "choose-model-for-firebase"
 }
 ```
@@ -281,6 +284,7 @@ Then open `.env.json` and fill in the values.
   - **OpenAI**: Your OpenAI API Key.
   - **Transformers.js**: Use `"dummy"`.
 - `projectId` / `appId`: **Firebase AI Logic only**.
+- `geminiApiProvider`: **Firebase AI Logic only**. Either `"developer"` (Gemini Developer API, default) or `"vertex"` (Vertex AI).
 
 - `device`: **Transformers.js only**. Either `"webgpu"` or `"cpu"`.
 - `dtype`: **Transformers.js only**. Quantization level (e.g., `"q4f16"`).

@@ -3,6 +3,7 @@ import {
   getAI,
   getGenerativeModel,
   GoogleAIBackend,
+  VertexAIBackend,
   InferenceMode,
 } from 'firebase/ai';
 import PolyfillBackend from './base.js';
@@ -16,8 +17,13 @@ export default class FirebaseBackend extends PolyfillBackend {
   #sessionParams;
 
   constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.firebase.modelName);
-    this.ai = getAI(initializeApp(config), { backend: new GoogleAIBackend() });
+    const { geminiApiProvider, modelName, ...firebaseConfig } = config;
+    super(modelName || DEFAULT_MODELS.firebase.modelName);
+    const backend =
+      geminiApiProvider === 'vertex'
+        ? new VertexAIBackend()
+        : new GoogleAIBackend();
+    this.ai = getAI(initializeApp(firebaseConfig), { backend });
   }
 
   createSession(_options, sessionParams) {
