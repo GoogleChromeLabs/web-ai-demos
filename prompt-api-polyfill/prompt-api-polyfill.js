@@ -306,7 +306,6 @@ export class LanguageModel extends EventTarget {
     }
   }
 
-
   static async create(options = {}) {
     const win = this.__window || globalThis;
     LanguageModel.#checkContext(win);

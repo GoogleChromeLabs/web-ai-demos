@@ -22,7 +22,7 @@ export default defineConfig({
         'firebase/ai',
         'openai',
         '@google/genai',
-        '@huggingface/transformers'
+        '@huggingface/transformers',
       ],
       output: {
         entryFileNames: '[name].js',
@@ -32,8 +32,12 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Exclude WPT tests from dependency scanning as they are many and static
-    entries: [
-      resolve(__dirname, 'prompt-api-polyfill.js'),
-    ],
+    entries: [resolve(__dirname, 'prompt-api-polyfill.js')],
+  },
+  server: {
+    fs: {
+      // Allow serving files from one level up to the project root
+      allow: ['..', '.'],
+    },
   },
 });

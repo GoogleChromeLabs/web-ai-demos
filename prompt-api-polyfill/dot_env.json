@@ -3,6 +3,9 @@
   "projectId": "",
   "appId": "",
   "modelName": "",
+  "useAppCheck": false,
+  "reCaptchaSiteKey": "",
+  "useLimitedUseAppCheckTokens": true,
   "device": "webgpu",
   "dtype": "q4f16"
 }

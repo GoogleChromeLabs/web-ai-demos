@@ -1,5 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from 'firebase/app-check';
+import {
   getAI,
   getGenerativeModel,
   GoogleAIBackend,
@@ -17,13 +21,30 @@ export default class FirebaseBackend extends PolyfillBackend {
   #sessionParams;
 
   constructor(config) {
-    const { geminiApiProvider, modelName, ...firebaseConfig } = config;
+    const {
+      geminiApiProvider,
+      modelName,
+      useAppCheck,
+      reCaptchaSiteKey,
+      useLimitedUseAppCheckTokens,
+      ...firebaseConfig
+    } = config;
     super(modelName || DEFAULT_MODELS.firebase.modelName);
+    const app = initializeApp(firebaseConfig);
+    if (useAppCheck && reCaptchaSiteKey) {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(reCaptchaSiteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    }
     const backend =
       geminiApiProvider === 'vertex'
         ? new VertexAIBackend()
         : new GoogleAIBackend();
-    this.ai = getAI(initializeApp(firebaseConfig), { backend });
+    this.ai = getAI(app, {
+      backend,
+      useLimitedUseAppCheckTokens: useLimitedUseAppCheckTokens || true,
+    });
   }
 
   createSession(_options, sessionParams) {

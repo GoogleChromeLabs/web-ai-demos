@@ -24,7 +24,10 @@ natively available.
 
 - **Uses**: `firebase/ai` SDK.
 - **Select by setting**: `window.FIREBASE_CONFIG`.
-- **API Provider**: Supports `"developer"` (Gemini Developer API, default) or `"vertex"` (Vertex AI).
+- **API Provider**: Supports `"developer"` (Gemini Developer API, default) or
+  `"vertex"` (Vertex AI).
+- **App Check**: Supports optional App Check protection via `useAppCheck`,
+  `reCaptchaSiteKey`, and `useLimitedUseAppCheckTokens`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
@@ -211,6 +214,9 @@ This repo ships with a template file:
   "projectId": "",
   "appId": "",
   "geminiApiProvider": "developer", // "developer" (default) or "vertex"
+  "useAppCheck": false,
+  "reCaptchaSiteKey": "",
+  "useLimitedUseAppCheckTokens": false,
   "modelName": "",
 
   // For Firebase AI Logic OR Gemini OR OpenAI OR Transformers.js:
@@ -243,6 +249,9 @@ Then open `.env.json` and fill in the values.
   "projectId": "your-gcp-project-id",
   "appId": "YOUR_FIREBASE_APP_ID",
   "geminiApiProvider": "developer",
+  "useAppCheck": false,
+  "reCaptchaSiteKey": "YOUR_RECAPTCHA_SITE_KEY",
+  "useLimitedUseAppCheckTokens": false,
   "modelName": "choose-model-for-firebase"
 }
 ```
@@ -284,7 +293,14 @@ Then open `.env.json` and fill in the values.
   - **OpenAI**: Your OpenAI API Key.
   - **Transformers.js**: Use `"dummy"`.
 - `projectId` / `appId`: **Firebase AI Logic only**.
-- `geminiApiProvider`: **Firebase AI Logic only**. Either `"developer"` (Gemini Developer API, default) or `"vertex"` (Vertex AI).
+- `geminiApiProvider`: **Firebase AI Logic only**. Either `"developer"` (Gemini
+  Developer API, default) or `"vertex"` (Vertex AI).
+- `useAppCheck`: **Firebase AI Logic only**. Whether to use Firebase App Check
+  (default `false`).
+- `reCaptchaSiteKey`: **Firebase AI Logic only**. Your reCAPTCHA Enterprise site
+  key for App Check.
+- `useLimitedUseAppCheckTokens`: **Firebase AI Logic only**. Whether to use
+  limited-use tokens for enhanced protection (default `false`).
 
 - `device`: **Transformers.js only**. Either `"webgpu"` or `"cpu"`.
 - `dtype`: **Transformers.js only**. Quantization level (e.g., `"q4f16"`).

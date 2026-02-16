@@ -1,7 +1,4 @@
-import {
-  pipeline,
-  TextStreamer,
-} from '@huggingface/transformers';
+import { pipeline, TextStreamer } from '@huggingface/transformers';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
 
