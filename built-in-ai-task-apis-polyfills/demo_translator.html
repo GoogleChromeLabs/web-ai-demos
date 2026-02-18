@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Translator API Polyfill Test</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+      }
+
+      html {
+        box-sizing: border-box;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: clamp(320px, 90%, 1000px);
+        margin: auto;
+      }
+
+      textarea {
+        width: 100%;
+        height: 150px;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      progress {
+        width: 100%;
+      }
+
+      .output {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        min-height: 100px;
+        white-space: pre-wrap;
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        align-items: center;
+      }
+
+      #status {
+        height: 1.2rem;
+        margin-bottom: 0.5rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Translator API Polyfill Demo</h1>
+
+    <div class="controls">
+      <label>
+        Source:
+        <select id="sourceLanguage">
+          <option value="en" selected>English</option>
+          <option value="de">German</option>
+          <option value="fr">French</option>
+          <option value="ja">Japanese</option>
+          <option value="zh">Chinese</option>
+        </select>
+      </label>
+      <label>
+        Target:
+        <select id="targetLanguage">
+          <option value="en">English</option>
+          <option value="de" selected>German</option>
+          <option value="fr">French</option>
+          <option value="ja">Japanese</option>
+          <option value="zh">Chinese</option>
+        </select>
+      </label>
+    </div>
+
+    <textarea id="input">
+Hello, how are you today? I hope you are having a wonderful time.</textarea
+    >
+
+    <div id="status">Ready</div>
+    <progress id="progress" value="0" max="1" style="display: none"></progress>
+
+    <div class="controls">
+      <button id="translateBtn">Translate</button>
+      <button id="translateStreamingBtn">Translate Streaming</button>
+      <button id="stopBtn" disabled>Stop</button>
+    </div>
+
+    <h2>Output</h2>
+    <div id="output" class="output">Your results will appear here...</div>
+
+    <script type="module">
+      import firebaseConfig from './.env.json' with { type: 'json' };
+
+      // Set FIREBASE_CONFIG to select the Firebase backend
+      window.FIREBASE_CONFIG = firebaseConfig;
+
+      import { Translator } from './translator-api-polyfill.js';
+
+      const input = document.getElementById('input');
+      const sourceLanguage = document.getElementById('sourceLanguage');
+      const targetLanguage = document.getElementById('targetLanguage');
+      const translateBtn = document.getElementById('translateBtn');
+      const translateStreamingBtn = document.getElementById(
+        'translateStreamingBtn'
+      );
+      const stopBtn = document.getElementById('stopBtn');
+      const output = document.getElementById('output');
+      const progress = document.getElementById('progress');
+      const status = document.getElementById('status');
+
+      let translator = null;
+      let currentSource = '';
+      let currentTarget = '';
+      let abortController = null;
+
+      const setStatus = (msg) => {
+        status.textContent = msg;
+      };
+
+      stopBtn.onclick = () => {
+        if (abortController) {
+          abortController.abort();
+          setStatus('Operation aborted.');
+          stopBtn.disabled = true;
+        }
+      };
+
+      async function getTranslator() {
+        const src = sourceLanguage.value;
+        const tgt = targetLanguage.value;
+
+        if (translator && currentSource === src && currentTarget === tgt) {
+          return translator;
+        }
+
+        if (translator) {
+          translator.destroy();
+        }
+
+        setStatus('Initializing translator...');
+        translator = await Translator.create({
+          sourceLanguage: src,
+          targetLanguage: tgt,
+          monitor: (m) => {
+            progress.style.display = 'block';
+            m.addEventListener('downloadprogress', (e) => {
+              progress.value = e.loaded;
+              progress.max = e.total;
+              setStatus(
+                `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`
+              );
+              if (e.loaded === e.total) {
+                setStatus('Model loaded.');
+                setTimeout(() => (progress.style.display = 'none'), 1000);
+              }
+            });
+          },
+        });
+        currentSource = src;
+        currentTarget = tgt;
+        setStatus('Ready.');
+        return translator;
+      }
+
+      translateBtn.onclick = async () => {
+        output.textContent = 'Translating...';
+        abortController = new AbortController();
+        stopBtn.disabled = false;
+        try {
+          const t = await getTranslator();
+          setStatus('Generating translation...');
+          const result = await t.translate(input.value, {
+            signal: abortController.signal,
+          });
+          output.textContent = result;
+          setStatus('Translation complete.');
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            console.log('Translation stopped by user.');
+          } else {
+            output.textContent = 'Error: ' + err.message;
+            setStatus('An error occurred.');
+          }
+        } finally {
+          stopBtn.disabled = true;
+          abortController = null;
+        }
+      };
+
+      translateStreamingBtn.onclick = async () => {
+        output.textContent = '';
+        abortController = new AbortController();
+        stopBtn.disabled = false;
+        try {
+          const t = await getTranslator();
+          setStatus('Streaming translation...');
+          const stream = t.translateStreaming(input.value, {
+            signal: abortController.signal,
+          });
+          const reader = stream.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+            output.textContent += value;
+          }
+          setStatus('Streaming translation complete.');
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            console.log('Translation stopped by user.');
+          } else {
+            output.textContent = 'Error: ' + err.message;
+            setStatus('An error occurred.');
+          }
+        } finally {
+          stopBtn.disabled = true;
+          abortController = null;
+        }
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Taxonomizer API Polyfill Demo</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+      }
+
+      html {
+        box-sizing: border-box;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: clamp(320px, 90%, 1000px);
+        margin: auto;
+        padding: 1rem;
+      }
+
+      textarea {
+        width: 100%;
+        height: 250px;
+        font-family: inherit;
+        padding: 0.5rem;
+      }
+
+      button {
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        margin-top: 1rem;
+      }
+
+      progress {
+        width: 100%;
+      }
+
+      .output {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        min-height: 100px;
+        margin-top: 1rem;
+        background: rgba(128, 128, 128, 0.1);
+      }
+
+      .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+      }
+
+      .result-item:last-child {
+        border-bottom: none;
+      }
+
+      .category-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .category-name {
+        font-weight: bold;
+      }
+
+      .category-id {
+        font-size: 0.8rem;
+        opacity: 0.7;
+      }
+
+      .confidence-pill {
+        padding: 0.2rem 0.6rem;
+        border-radius: 1rem;
+        background: #4caf50;
+        color: white;
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      #status {
+        margin-top: 0.5rem;
+        font-style: italic;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Taxonomizer API Polyfill Demo</h1>
+
+    <textarea id="input">
+The new experimental fusion reactor at the ITER site in France has successfully sustained a stable plasma for 10 minutes, a new world record. This milestone brings us closer to clean, limitless energy. The complex tokamak device uses superconducting magnets to confine the 150 million degree Celsius fuel. Scientists from around the globe are collaborating on this massive physics project, which could revolutionize how we power our world.</textarea
+    >
+
+    <div id="controls">
+      <button id="categorizeBtn">Categorize Text</button>
+      <progress
+        id="progress"
+        value="0"
+        max="1"
+        style="display: none"
+      ></progress>
+      <div id="status">Initializing...</div>
+    </div>
+
+    <h2>Predicted Categories</h2>
+    <div id="output" class="output">
+      Click "Categorize Text" to see results.
+    </div>
+
+    <script type="module">
+      // Import Firebase config if present (standard pattern for this project)
+      let firebaseConfig = {};
+      try {
+        const response = await fetch('./.env.json');
+        firebaseConfig = await response.json();
+      } catch (e) {
+        console.warn(
+          'Firebase config (.env.json) not found, relying on local LanguageModel if available.'
+        );
+      }
+      window.FIREBASE_CONFIG = firebaseConfig;
+
+      // Import the polyfill
+      import { Taxonomizer } from './taxonomizer-api-polyfill.js';
+
+      const input = document.getElementById('input');
+      const categorizeBtn = document.getElementById('categorizeBtn');
+      const output = document.getElementById('output');
+      const progress = document.getElementById('progress');
+      const status = document.getElementById('status');
+
+      let taxonomizer = null;
+
+      async function init() {
+        try {
+          status.textContent = 'Checking availability...';
+          const availability = await Taxonomizer.availability();
+
+          if (availability === 'unavailable') {
+            status.textContent =
+              'Error: Built-in AI (LanguageModel) not available in this browser.';
+            categorizeBtn.disabled = true;
+            return;
+          }
+
+          status.textContent =
+            'Creating Taxonomizer instance (this may involve downloading a model)...';
+          taxonomizer = await Taxonomizer.create({
+            monitor: (m) => {
+              progress.style.display = 'block';
+              m.addEventListener('downloadprogress', (e) => {
+                progress.value = e.loaded;
+                progress.max = e.total;
+                status.textContent = `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`;
+                if (e.loaded === e.total) {
+                  status.textContent = 'Model loaded.';
+                  setTimeout(() => (progress.style.display = 'none'), 1000);
+                }
+              });
+            },
+          });
+          status.textContent = 'Ready.';
+        } catch (err) {
+          status.textContent = 'Initialization Error: ' + err.message;
+          console.error(err);
+        }
+      }
+
+      categorizeBtn.onclick = async () => {
+        if (!taxonomizer) {
+          status.textContent = 'Taxonomizer not ready.';
+          return;
+        }
+
+        const text = input.value.trim();
+        if (!text) {
+          alert('Please enter some text to categorize.');
+          return;
+        }
+
+        output.textContent = 'Analyzing content...';
+        categorizeBtn.disabled = true;
+
+        try {
+          const startTime = performance.now();
+          const results = await taxonomizer.categorize(text);
+          const endTime = performance.now();
+          const duration = ((endTime - startTime) / 1000).toFixed(1);
+
+          if (results.length === 0) {
+            output.textContent = 'No categories identified.';
+          } else {
+            output.innerHTML = '';
+            results.forEach((res) => {
+              const categoryPath = Taxonomizer.getCategoryName(res.id);
+              const item = document.createElement('div');
+              item.className = 'result-item';
+              item.innerHTML = `
+                <div class="category-info">
+                  <span class="category-name">${categoryPath}</span>
+                  <span class="category-id">ID: ${res.id}</span>
+                </div>
+                <span class="confidence-pill">${(res.confidence * 100).toFixed(1)}%</span>
+              `;
+              output.appendChild(item);
+            });
+          }
+          status.textContent = `Categorization complete in ${duration}s.`;
+        } catch (err) {
+          output.textContent = 'Error: ' + err.message;
+          status.textContent = 'An error occurred during categorization.';
+        } finally {
+          categorizeBtn.disabled = false;
+        }
+      };
+
+      init();
+    </script>
+  </body>
+</html>

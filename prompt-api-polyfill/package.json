@@ -1,21 +1,17 @@
 {
   "name": "prompt-api-polyfill",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "Polyfill for the Prompt API (`LanguageModel`) backed by Firebase AI Logic, Gemini API, OpenAI API, or Transformers.js.",
   "type": "module",
-  "main": "./prompt-api-polyfill.js",
-  "module": "./prompt-api-polyfill.js",
-  "browser": "./prompt-api-polyfill.js",
+  "main": "./dist/prompt-api-polyfill.js",
+  "module": "./dist/prompt-api-polyfill.js",
+  "browser": "./dist/prompt-api-polyfill.js",
   "exports": {
-    ".": "./prompt-api-polyfill.js"
+    ".": "./dist/prompt-api-polyfill.js"
   },
   "files": [
-    "async-iterator-polyfill.js",
-    "json-schema-converter.js",
-    "multimodal-converter.js",
-    "prompt-api-polyfill.js",
-    "dot_env.json",
-    "backends/"
+    "dist/",
+    "dot_env.json"
   ],
   "sideEffects": true,
   "keywords": [
@@ -36,17 +32,26 @@
   "bugs": {
     "url": "https://github.com/GoogleChromeLabs/web-ai-demos/issues"
   },
-  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill/README.md",
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "npx http-server",
+    "start": "vite",
+    "build": "vite build",
+    "prepublishOnly": "npm run build",
     "sync:wpt": "node scripts/sync-wpt.js",
     "generate:wpt": "node scripts/list-backends.js && node scripts/generate-wpt-wrappers.js",
-    "test:wpt": "npm run sync:wpt && npm run generate:wpt && npx http-server -o /tests/wpt/index.html",
+    "test:wpt": "npm run sync:wpt && npm run generate:wpt && npx vite --open /tests/wpt/index.html",
     "fix": "npx prettier --write ."
   },
   "devDependencies": {
-    "http-server": "^14.1.1",
-    "prettier-plugin-curly": "^0.4.1"
+    "prettier": "^3.8.1",
+    "prettier-plugin-curly": "^0.4.1",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "@google/genai": "^1.41.0",
+    "@huggingface/transformers": "^3.8.1",
+    "firebase": "^12.9.0",
+    "openai": "^6.22.0"
   }
 }

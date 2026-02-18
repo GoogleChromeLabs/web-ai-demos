@@ -1,10 +1,15 @@
-import { initializeApp } from 'https://esm.run/firebase/app';
+import { initializeApp } from 'firebase/app';
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from 'firebase/app-check';
 import {
   getAI,
   getGenerativeModel,
   GoogleAIBackend,
+  VertexAIBackend,
   InferenceMode,
-} from 'https://esm.run/firebase/ai';
+} from 'firebase/ai';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
 
@@ -16,8 +21,30 @@ export default class FirebaseBackend extends PolyfillBackend {
   #sessionParams;
 
   constructor(config) {
-    super(config.modelName || DEFAULT_MODELS.firebase.modelName);
-    this.ai = getAI(initializeApp(config), { backend: new GoogleAIBackend() });
+    const {
+      geminiApiProvider,
+      modelName,
+      useAppCheck,
+      reCaptchaSiteKey,
+      useLimitedUseAppCheckTokens,
+      ...firebaseConfig
+    } = config;
+    super(modelName || DEFAULT_MODELS.firebase.modelName);
+    const app = initializeApp(firebaseConfig);
+    if (useAppCheck && reCaptchaSiteKey) {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(reCaptchaSiteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    }
+    const backend =
+      geminiApiProvider === 'vertex'
+        ? new VertexAIBackend()
+        : new GoogleAIBackend();
+    this.ai = getAI(app, {
+      backend,
+      useLimitedUseAppCheckTokens: useLimitedUseAppCheckTokens || true,
+    });
   }
 
   createSession(_options, sessionParams) {

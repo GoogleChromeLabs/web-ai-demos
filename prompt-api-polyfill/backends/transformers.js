@@ -1,7 +1,4 @@
-import {
-  pipeline,
-  TextStreamer,
-} from 'https://esm.run/@huggingface/transformers';
+import { pipeline, TextStreamer } from '@huggingface/transformers';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
 
@@ -151,9 +148,9 @@ export default class TransformersBackend extends PolyfillBackend {
     // but we can store the generation config.
     this.generationConfig = {
       max_new_tokens: 512, // Default limit
-      temperature: sessionParams.generationConfig?.temperature || 1.0,
+      temperature: sessionParams.generationConfig?.temperature ?? 1.0,
       top_p: 1.0,
-      do_sample: sessionParams.generationConfig?.temperature > 0,
+      do_sample: sessionParams.generationConfig?.temperature !== 0,
       return_full_text: false,
     };
     this.#systemInstruction = sessionParams.systemInstruction;

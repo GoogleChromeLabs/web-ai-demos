@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Language Detector API Polyfill Test</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+      }
+
+      html {
+        box-sizing: border-box;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: clamp(320px, 90%, 1000px);
+        margin: auto;
+      }
+
+      textarea {
+        width: 100%;
+        height: 200px;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      progress {
+        width: 100%;
+      }
+
+      .output {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        min-height: 100px;
+        white-space: pre-wrap;
+      }
+
+      .result-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .result-item:last-child {
+        border-bottom: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Language Detector API Polyfill Demo</h1>
+
+    <textarea id="input">
+The web is a vast place. Built-in AI APIs like the Language Detector API allow developers to process information directly on the user's device. This improves privacy and performance.</textarea
+    >
+
+    <progress id="progress" value="0" max="1" style="display: none"></progress>
+    <div id="status"></div>
+
+    <button id="detectBtn">Detect Language</button>
+
+    <h2>Output</h2>
+    <div id="output" class="output"></div>
+
+    <script type="module">
+      import firebaseConfig from './.env.json' with { type: 'json' };
+
+      // Set FIREBASE_CONFIG to select the Firebase backend
+      window.FIREBASE_CONFIG = firebaseConfig;
+
+      import { LanguageDetector } from './language-detector-api-polyfill.js';
+
+      const input = document.getElementById('input');
+      const detectBtn = document.getElementById('detectBtn');
+      const output = document.getElementById('output');
+      const progress = document.getElementById('progress');
+      const status = document.getElementById('status');
+
+      let detector = null;
+
+      async function init() {
+        try {
+          status.textContent = 'Initializing detector...';
+          const availability = await LanguageDetector.availability();
+          if (availability === 'unavailable') {
+            status.textContent = 'API not available.';
+            detectBtn.disabled = true;
+            return;
+          }
+
+          detector = await LanguageDetector.create({
+            monitor: (m) => {
+              progress.style.display = 'block';
+              m.addEventListener('downloadprogress', (e) => {
+                progress.value = e.loaded;
+                progress.max = e.total;
+                status.textContent = `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`;
+                if (e.loaded === e.total) {
+                  status.textContent = 'Model loaded.';
+                  setTimeout(() => (progress.style.display = 'none'), 1000);
+                }
+              });
+            },
+          });
+          status.textContent = 'Ready.';
+        } catch (err) {
+          status.textContent = 'Init Error: ' + err.message;
+          console.error(err);
+        }
+      }
+
+      detectBtn.onclick = async () => {
+        if (!detector) {
+          return;
+        }
+
+        output.textContent = 'Detecting...';
+        try {
+          const results = await detector.detect(input.value);
+          output.innerHTML = '';
+          results.forEach((res) => {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.innerHTML = `
+              <span><strong>${res.detectedLanguage}</strong></span>
+              <span>${(res.confidence * 100).toFixed(2)}%</span>
+            `;
+            output.appendChild(item);
+          });
+          status.textContent = 'Detection complete.';
+        } catch (err) {
+          output.textContent = 'Error: ' + err.message;
+        }
+      };
+
+      init();
+    </script>
+  </body>
+</html>

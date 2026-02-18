@@ -1,5 +1,6 @@
 tests/active-backends.json
 .env-*.json
-tests/wpt/
-media/
 images/
+media/
+tests/
+dist/

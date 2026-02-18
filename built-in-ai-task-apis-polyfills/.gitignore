@@ -1,0 +1,4 @@
+.env*.json
+.env
+tests/
+dist/

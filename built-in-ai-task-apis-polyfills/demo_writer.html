@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Writer API Polyfill Demo</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+      }
+
+      html {
+        box-sizing: border-box;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: clamp(320px, 90%, 1000px);
+        margin: auto;
+      }
+
+      textarea {
+        width: 100%;
+        height: 120px;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      progress {
+        width: 100%;
+      }
+
+      #output {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        min-height: 150px;
+        white-space: pre-wrap;
+      }
+
+      #status {
+        height: 1.2rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Writer API Polyfill Demo</h1>
+
+    <div>
+      <div>
+        <label for="input">Input Text</label><br />
+        <textarea
+          id="input"
+          placeholder="What would you like me to write about?"
+        >
+The history of artificial intelligence started with Alan Turing's work...</textarea
+        >
+      </div>
+
+      <div class="controls">
+        <div>
+          <label for="sharedContext">Shared Context</label><br />
+          <input
+            type="text"
+            id="sharedContext"
+            placeholder="e.g. You are a tech blogger"
+          />
+        </div>
+        <div>
+          <label for="context">Task Context</label><br />
+          <input
+            type="text"
+            id="context"
+            placeholder="e.g. Focus on recent breakthroughs"
+          />
+        </div>
+      </div>
+
+      <div class="controls">
+        <div>
+          <label for="tone">Tone</label><br />
+          <select id="tone">
+            <option value="formal">Formal</option>
+            <option value="neutral" selected>Neutral</option>
+            <option value="casual">Casual</option>
+          </select>
+        </div>
+        <div>
+          <label for="format">Format</label><br />
+          <select id="format">
+            <option value="plain-text" selected>Plain Text</option>
+            <option value="markdown">Markdown</option>
+          </select>
+        </div>
+        <div>
+          <label for="length">Length</label><br />
+          <select id="length">
+            <option value="short" selected>Short</option>
+            <option value="medium">Medium</option>
+            <option value="long">Long</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div>
+          <label for="expectedInputLanguages">Input Language</label><br />
+          <select id="expectedInputLanguages">
+            <option value="en" selected>English</option>
+            <option value="ja">Japanese</option>
+            <option value="es">Spanish</option>
+          </select>
+        </div>
+        <div>
+          <label for="expectedContextLanguages">Context Language</label><br />
+          <select id="expectedContextLanguages">
+            <option value="en" selected>English</option>
+            <option value="ja">Japanese</option>
+            <option value="es">Spanish</option>
+          </select>
+        </div>
+        <div>
+          <label for="outputLanguage">Output Language</label><br />
+          <select id="outputLanguage">
+            <option value="en" selected>English</option>
+            <option value="ja">Japanese</option>
+            <option value="es">Spanish</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="status">Ready</div>
+      <progress
+        id="progress"
+        value="0"
+        max="1"
+        style="display: none"
+      ></progress>
+
+      <div>
+        <button id="writeBtn">Write</button>
+        <button id="writeStreamBtn">Write Streaming</button>
+        <button id="stopBtn" disabled>Stop</button>
+      </div>
+    </div>
+
+    <h2>Output</h2>
+    <div id="output">Your results will appear here...</div>
+
+    <script type="module">
+      import firebaseConfig from './.env.json' with { type: 'json' };
+      import { Writer } from './writer-api-polyfill.js';
+
+      // Set FIREBASE_CONFIG to select the Firebase backend
+      window.FIREBASE_CONFIG = firebaseConfig;
+
+      const input = document.getElementById('input');
+      const sharedContext = document.getElementById('sharedContext');
+      const context = document.getElementById('context');
+      const tone = document.getElementById('tone');
+      const format = document.getElementById('format');
+      const length = document.getElementById('length');
+      const expectedInputLanguages = document.getElementById(
+        'expectedInputLanguages'
+      );
+      const expectedContextLanguages = document.getElementById(
+        'expectedContextLanguages'
+      );
+      const outputLanguage = document.getElementById('outputLanguage');
+      const writeBtn = document.getElementById('writeBtn');
+      const writeStreamBtn = document.getElementById('writeStreamBtn');
+      const stopBtn = document.getElementById('stopBtn');
+      const output = document.getElementById('output');
+      const progress = document.getElementById('progress');
+      const status = document.getElementById('status');
+
+      let abortController = null;
+
+      const setStatus = (msg) => {
+        status.textContent = msg;
+      };
+
+      stopBtn.onclick = () => {
+        if (abortController) {
+          abortController.abort();
+          setStatus('Operation aborted.');
+          stopBtn.disabled = true;
+        }
+      };
+
+      const getWriterOptions = () => ({
+        sharedContext: sharedContext.value,
+        tone: tone.value,
+        format: format.value,
+        length: length.value,
+        expectedInputLanguages: [expectedInputLanguages.value],
+        expectedContextLanguages: [expectedContextLanguages.value],
+        outputLanguage: outputLanguage.value,
+        signal: abortController.signal,
+        monitor: (m) => {
+          progress.style.display = 'block';
+          m.addEventListener('downloadprogress', (e) => {
+            progress.value = e.loaded;
+            progress.max = e.total;
+            setStatus('Generating content...');
+            if (e.loaded === e.total) {
+              setStatus('Model loaded.');
+              setTimeout(() => (progress.style.display = 'none'), 1000);
+            }
+          });
+        },
+      });
+
+      writeBtn.onclick = async () => {
+        output.textContent = 'Thinking...';
+        abortController = new AbortController();
+        stopBtn.disabled = false;
+        setStatus('Initializing Writer...');
+
+        try {
+          const writer = await Writer.create(getWriterOptions());
+          setStatus('Generating content...');
+          const result = await writer.write(input.value, {
+            context: context.value,
+            signal: abortController.signal,
+          });
+          output.textContent = result;
+          setStatus('Task complete.');
+          writer.destroy();
+        } catch (err) {
+          output.textContent = 'Error: ' + err.message;
+          setStatus('An error occurred.');
+        } finally {
+          stopBtn.disabled = true;
+          abortController = null;
+        }
+      };
+
+      writeStreamBtn.onclick = async () => {
+        output.textContent = '';
+        abortController = new AbortController();
+        stopBtn.disabled = false;
+        setStatus('Initializing Writer...');
+
+        try {
+          const writer = await Writer.create(getWriterOptions());
+          setStatus('Streaming response...');
+          const stream = writer.writeStreaming(input.value, {
+            context: context.value,
+            signal: abortController.signal,
+          });
+
+          const reader = stream.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+            output.textContent += value;
+          }
+          setStatus('Task complete.');
+          writer.destroy();
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            console.log('Writing stopped by user.');
+          } else {
+            output.textContent = 'Error: ' + err.message;
+            setStatus('An error occurred.');
+          }
+        } finally {
+          stopBtn.disabled = true;
+          abortController = null;
+        }
+      };
+    </script>
+  </body>
+</html>
