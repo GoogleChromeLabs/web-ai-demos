@@ -32,7 +32,7 @@
   "bugs": {
     "url": "https://github.com/GoogleChromeLabs/web-ai-demos/issues"
   },
-  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill/README.md",
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill",
   "license": "Apache-2.0",
   "scripts": {
     "start": "vite",
@@ -44,10 +44,9 @@
     "fix": "npx prettier --write ."
   },
   "devDependencies": {
+    "prettier": "^3.8.1",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^7.3.1",
-    "node-addon-api": "^8.5.0",
-    "node-gyp": "^12.2.0"
+    "vite": "^7.3.1"
   },
   "dependencies": {
     "@google/genai": "^1.41.0",

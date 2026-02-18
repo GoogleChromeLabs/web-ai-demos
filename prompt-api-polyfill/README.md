@@ -355,19 +355,19 @@ You should see network requests to the backends logs.
 
 ## Testing
 
-The project includes a comprehensive test suite that runs in a headless browser.
+The project includes a test suite that ensures compliance with the Prompt API
+specification using Web Platform Tests (WPT).
 
-### Running Browser Tests
+### Running WPT Tests
 
-Uses `playwright` to run tests in a real Chromium instance. This is the
-recommended way to verify environmental fidelity and multimodal support.
+To run the WPT compliance tests:
 
 ```bash
-npm run test:browser
+npm run test:wpt
 ```
 
-To see the browser and DevTools while testing, you can modify
-`vitest.browser.config.js` to set `headless: false`.
+This script will sync the latest WPT tests, generate the necessary polyfill
+wrappers, and open a browser instance to run the tests.
 
 ---
 
