@@ -206,7 +206,24 @@ export class LanguageModel extends EventTarget {
 
   static async #getBackendClass(win = globalThis) {
     const info = LanguageModel.#getBackendInfo(win);
-    return (await import(/* @vite-ignore */ info.path)).default;
+    // Explicitly use literal strings for dynamic imports to support static analysis
+    // by CDNs like esm.sh and bundlers like Vite.
+    if (info.path === './backends/firebase.js') {
+      return (await import('./backends/firebase.js')).default;
+    }
+    if (info.path === './backends/gemini.js') {
+      return (await import('./backends/gemini.js')).default;
+    }
+    if (info.path === './backends/openai.js') {
+      return (await import('./backends/openai.js')).default;
+    }
+    if (info.path === './backends/transformers.js') {
+      return (await import('./backends/transformers.js')).default;
+    }
+    throw new (win.DOMException || globalThis.DOMException)(
+      `Prompt API Polyfill: Unknown backend path "${info.path}".`,
+      'NotSupportedError'
+    );
   }
 
   static async #validateOptions(options = {}, win = globalThis) {
