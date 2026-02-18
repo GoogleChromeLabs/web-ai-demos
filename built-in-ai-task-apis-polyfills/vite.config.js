@@ -18,7 +18,10 @@ export default defineConfig({
         summarizer: resolve(__dirname, 'summarizer-api-polyfill.js'),
         writer: resolve(__dirname, 'writer-api-polyfill.js'),
         rewriter: resolve(__dirname, 'rewriter-api-polyfill.js'),
-        'language-detector': resolve(__dirname, 'language-detector-api-polyfill.js'),
+        'language-detector': resolve(
+          __dirname,
+          'language-detector-api-polyfill.js'
+        ),
         translator: resolve(__dirname, 'translator-api-polyfill.js'),
         taxonomizer: resolve(__dirname, 'taxonomizer-api-polyfill.js'),
       },

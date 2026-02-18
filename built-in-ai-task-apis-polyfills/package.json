@@ -34,8 +34,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git"
+    "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git",
+    "directory": "built-in-ai-task-apis-polyfills"
   },
+  "sideEffects": true,
   "author": "Google Chrome Labs",
   "license": "Apache-2.0",
   "keywords": [
@@ -44,6 +46,9 @@
     "summarizer",
     "writer",
     "rewriter",
+    "translator",
+    "language-detector",
+    "taxonomizer",
     "web-ai"
   ],
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",

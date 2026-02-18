@@ -7,10 +7,14 @@ specifically:
 - **Summarizer API**
 - **Writer API**
 - **Rewriter API**
+- **Language Detector API**
+- **Translator API**
+- **Taxonomizer API**
 
 These polyfills are backed by the
 [`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill),
-meaning they support the same
+which is automatically loaded if `window.LanguageModel` is not detected. This
+means they support the same
 [dynamic backends](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill#supported-backends).
 
 When loaded in the browser, they define globals:
@@ -19,6 +23,9 @@ When loaded in the browser, they define globals:
 window.Summarizer;
 window.Writer;
 window.Rewriter;
+window.LanguageDetector;
+window.Translator;
+window.Taxonomizer;
 ```
 
 so you can use these Task APIs even in environments where they are not yet
@@ -56,6 +63,15 @@ defensive dynamic import strategy:
   }
   if (!('Rewriter' in window)) {
     polyfills.push(import('built-in-ai-task-apis-polyfills/rewriter'));
+  }
+  if (!('LanguageDetector' in window)) {
+    polyfills.push(import('built-in-ai-task-apis-polyfills/language-detector'));
+  }
+  if (!('Translator' in window)) {
+    polyfills.push(import('built-in-ai-task-apis-polyfills/translator'));
+  }
+  if (!('Taxonomizer' in window)) {
+    polyfills.push(import('built-in-ai-task-apis-polyfills/taxonomizer'));
   }
   await Promise.all(polyfills);
 
@@ -108,6 +124,41 @@ const rewriter = await Rewriter.create({
 const result = await rewriter.rewrite('I am writing to inform you that...');
 ```
 
+#### Language Detector API
+
+```js
+const detector = await LanguageDetector.create();
+const results = await detector.detect('C'est la vie');
+
+for (const { detectedLanguage, confidence } of results) {
+  console.log(`${detectedLanguage} (${(confidence * 100).toFixed(1)}%)`);
+}
+```
+
+#### Translator API
+
+```js
+const translator = await Translator.create({
+  sourceLanguage: 'en',
+  targetLanguage: 'fr',
+});
+
+const result = await translator.translate('Hello world');
+```
+
+#### Taxonomizer API
+
+```js
+const taxonomizer = await Taxonomizer.create();
+const results = await taxonomizer.categorize('A story about a cat');
+
+for (const { id, confidence } of results) {
+  console.log(
+    `${Taxonomizer.getCategoryName(id)} (${(confidence * 100).toFixed(1)}%)`
+  );
+}
+```
+
 ---
 
 ## Configuration
@@ -135,12 +186,17 @@ documentation:
 - [Summarizer API](https://developer.chrome.com/docs/ai/summarizer-api)
 - [Writer API](https://developer.chrome.com/docs/ai/writer-api)
 - [Rewriter API](https://developer.chrome.com/docs/ai/rewriter-api)
+- [Language Detector API](https://developer.chrome.com/docs/ai/language-detection-api)
+- [Translator API](https://developer.chrome.com/docs/ai/translator-api)
 
 For complete examples, see:
 
 - [`demo_summarizer.html`](demo_summarizer.html)
 - [`demo_writer.html`](demo_writer.html)
 - [`demo_rewriter.html`](demo_rewriter.html)
+- [`demo_language_detector.html`](demo_language_detector.html)
+- [`demo_translator.html`](demo_translator.html)
+- [`demo_taxonomizer.html`](demo_taxonomizer.html)
 
 ---
 
