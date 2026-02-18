@@ -22,7 +22,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   const rawResponse = document.querySelector("details div");
   const form = document.querySelector("form");
   const maxTokensInfo = document.getElementById("max-tokens");
-    const tokensLeftInfo = document.getElementById("tokens-left");
+  const tokensLeftInfo = document.getElementById("tokens-left");
   const tokensSoFarInfo = document.getElementById("tokens-so-far");
 
   responseArea.style.display = "none";
