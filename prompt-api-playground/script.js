@@ -22,12 +22,8 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   const rawResponse = document.querySelector("details div");
   const form = document.querySelector("form");
   const maxTokensInfo = document.getElementById("max-tokens");
-  const temperatureInfo = document.getElementById("temperature");
-  const tokensLeftInfo = document.getElementById("tokens-left");
+    const tokensLeftInfo = document.getElementById("tokens-left");
   const tokensSoFarInfo = document.getElementById("tokens-so-far");
-  const topKInfo = document.getElementById("top-k");
-  const sessionTemperature = document.getElementById("session-temperature");
-  const sessionTopK = document.getElementById("session-top-k");
 
   responseArea.style.display = "none";
 
@@ -101,9 +97,6 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       { minimumFractionDigits: 1, maximumFractionDigits: 1 },
     );
 
-    temperatureInfo.textContent = decimalNumberFormat.format(session.temperature);
-    topKInfo.textContent = numberFormat.format(session.topK);
-
     // In the new API shape, currently in Chrome Canary, `session.maxTokens` was renamed to
     // `session.inputQuota` and `session.tokensSoFar` was renamed to `session.inputUsage`.
     // `session.tokensSoFar` was removed, but the value can be calculated by subtracting
@@ -169,10 +162,8 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     copyLinkButton.style.display = "none";
     copyHelper.style.display = "none";
     maxTokensInfo.textContent = "";
-    temperatureInfo.textContent = "";
     tokensLeftInfo.textContent = "";
     tokensSoFarInfo.textContent = "";
-    topKInfo.textContent = "";
     promptInput.focus();
   };
 
@@ -208,8 +199,6 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   const updateSession = async () => {
     if (self.LanguageModel) {
       session = await LanguageModel.create({
-        temperature: Number(sessionTemperature.value),
-        topK: Number(sessionTopK.value),
         initialPrompts: [
           {
             role: 'system',
@@ -222,22 +211,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     updateStats();
   };
 
-  sessionTemperature.addEventListener("input", async () => {
-    await updateSession();
-  });
-
-  sessionTopK.addEventListener("input", async () => {
-    await updateSession();
-  });
-
   if (!session) {
-    let { defaultTopK, maxTopK, defaultTemperature, maxTemperature } = "LanguageModel" in self ?
-      await LanguageModel.params() : {defaultTopK: 3, maxTopK: 128, defaultTemperature: 1, maxTemperature: 2};
-    defaultTopK ||= 3;  // https://crbug.com/441711146
-    sessionTemperature.value = defaultTemperature;
-    sessionTemperature.max = maxTemperature;
-    sessionTopK.value = defaultTopK;
-    sessionTopK.max = maxTopK;
     await updateSession();
   }
 })();

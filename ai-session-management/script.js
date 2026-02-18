@@ -15,11 +15,6 @@ const promptInput = document.querySelector('.prompt-input');
 
 const assistants = {};
 
-const DEFAULT_PARMS = {
-  defaultTopK: 3,
-  defaultTemperature: 1.0,
-};
-
 let controller = null;
 
 stopButton.addEventListener('click', () => {
@@ -45,13 +40,6 @@ async function createLanguageModel(options) {
 }
 
 (async function init() {
-  // Get the default parameters.
-  // The new API shape, currently behind a flag in Canary has a `params()` method that returs
-  // the default and maximing topK and temperature. A hardcoded value, DEFAULT_PARAMS is used
-  // for the previous API shape.
-  const { defaultTopK: topK, defaultTemperature: temperature } = "LanguageModel" in self ?
-    await LanguageModel.params() : DEFAULT_PARMS;
-
   const uuids = getUUIDs();
 
   if (uuids.length) {
@@ -76,8 +64,6 @@ async function createLanguageModel(options) {
 
     const options = storedOptions || {
       initialPrompts: [],
-      topK,
-      temperature,
       conversationSummary: 'New conversation',
     };
 

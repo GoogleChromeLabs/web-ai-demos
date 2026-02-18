@@ -39,28 +39,11 @@
         <button type="submit" id="submit-button">Submit prompt</button>
         <button type="button" id="reset-button">Reset session</button>
         <span id="cost"></span>
-        <div class="settings">
-          <label for="session-top-k">Top-k</label>
-          <input
-            id="session-top-k"
-            min="1"
-            type="number"
-          >
-          <label for="session-temperature">Temperature</label>
-          <input
-            id="session-temperature"
-            type="number"
-            step="0.1"
-            min="0"
-          >
-        </div>
       </form>
       <h2>Session stats</h2>
       <table>
         <thead>
           <tr>
-            <th>Temperature</th>
-            <th>Top-k</th>
             <th>Tokens so far</th>
             <th>Tokens left</th>
             <th>Total tokens</th>
@@ -68,8 +51,6 @@
         </thead>
         <tbody>
           <tr>
-            <td id="temperature">&nbsp;</td>
-            <td id="top-k">&nbsp;</td>
             <td id="tokens-so-far">&nbsp;</td>
             <td id="tokens-left">&nbsp;</td>
             <td id="max-tokens">&nbsp;</td>

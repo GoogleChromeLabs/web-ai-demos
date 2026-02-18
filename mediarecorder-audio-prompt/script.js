@@ -51,12 +51,9 @@ inputFile.oninput = async (event) => {
 
 async function transcribe(blob) {
   const arrayBuffer = await blob.arrayBuffer();
-
-  const params = await LanguageModel.params();
+  
   const session = await LanguageModel.create({
     expectedInputs: [{ type: "audio" }],
-    temperature: 0.1,
-    topK: params.defaultTopK,
   });
 
   const stream = session.promptStreaming([
