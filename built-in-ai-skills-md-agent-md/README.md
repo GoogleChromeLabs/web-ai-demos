@@ -5,7 +5,7 @@ Built-in AI APIs and their polyfills.
 
 ## What it does
 
-Upon installation, this package adds or appends to `SKILL.md` and `AGENT.md` in
+Upon installation, this package adds or appends to `SKILL.md` and `AGENTS.md` in
 your project root. These files:
 
 - Inform the AI about the deprecation of `window.ai.*` in favor of top-level
@@ -23,7 +23,7 @@ Simply install the package:
 npm install built-in-ai-skills-md-agent-md
 ```
 
-The `SKILL.md` and `AGENT.md` files will be automatically created or updated in
+The `SKILL.md` and `AGENTS.md` files will be automatically created or updated in
 your project root.
 
 ## Updating IDLs

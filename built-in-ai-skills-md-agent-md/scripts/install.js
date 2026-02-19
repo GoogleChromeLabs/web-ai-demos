@@ -15,8 +15,8 @@ const templates = [
     marker: '<!-- BUILT-IN-AI-SKILLS -->',
   },
   {
-    name: 'AGENT.md',
-    path: path.join(__dirname, '../templates/AGENT.md'),
+    name: 'AGENTS.md',
+    path: path.join(__dirname, '../templates/AGENTS.md'),
     marker: '<!-- BUILT-IN-AI-AGENT -->',
   },
 ];

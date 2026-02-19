@@ -17,7 +17,7 @@
     "scripts/",
     "README.md",
     "SKILL.md",
-    "AGENT.md"
+    "AGENTS.md"
   ],
   "devDependencies": {
     "prettier": "^3.8.1"

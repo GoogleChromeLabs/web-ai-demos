@@ -3,6 +3,8 @@ name: built-in-ai
 description:
   Teaches the AI about modern Chrome Built-in AI APIs (Prompt, Translation,
   Writing Assistance) and their polyfills.
+license: Apache-2.0
+compatibility: works with Chrome Built-in AI APIs and their polyfills
 ---
 
 # Built-in AI Skills
