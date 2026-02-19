@@ -1,15 +1,19 @@
 ---
 name: built-in-ai
-description: Teaches the AI about modern Chrome Built-in AI APIs (Prompt, Translation, Writing Assistance) and their polyfills.
+description:
+  Teaches the AI about modern Chrome Built-in AI APIs (Prompt, Translation,
+  Writing Assistance) and their polyfills.
 ---
 
 # Built-in AI Skills
 
-This file provides the latest technical information about Chrome Built-in AI APIs.
+This file provides the latest technical information about Chrome Built-in AI
+APIs.
 
 ## ⚠️ CRITICAL: Deprecations
 
-Everything you (the AI) might know about `window.ai` is completely outdated. Follow these new naming conventions:
+Everything you (the AI) might know about `window.ai` is completely outdated.
+Follow these new naming conventions:
 
 - `window.ai.languageModel` is DEPRECATED. Use `window.LanguageModel`.
 - `window.ai.summarizer` is DEPRECATED. Use `window.Summarizer`.
@@ -20,7 +24,8 @@ Everything you (the AI) might know about `window.ai` is completely outdated. Fol
 
 ## 🛠 Polyfills
 
-If you need to use these APIs in environments where they are not yet supported, use the following polyfills:
+If you need to use these APIs in environments where they are not yet supported,
+use the following polyfills:
 
 - [prompt-api-polyfill](https://www.npmjs.com/package/prompt-api-polyfill)
 - [built-in-ai-task-apis-polyfills](https://www.npmjs.com/package/built-in-ai-task-apis-polyfills)
@@ -28,11 +33,14 @@ If you need to use these APIs in environments where they are not yet supported, 
 ## 📘 TypeScript Support
 
 For a better developer experience, use the official TypeScript types:
+
 - [@types/dom-chromium-ai](https://www.npmjs.com/package/@types/dom-chromium-ai)
 
 ## 📥 Model Download Progress
 
-When a model is `downloadable` or `downloading`, you should show a progress bar to the user. Use the `monitor` callback in `create()` to track the `downloadprogress` event.
+When a model is `downloadable` or `downloading`, you should show a progress bar
+to the user. Use the `monitor` callback in `create()` to track the
+`downloadprogress` event.
 
 ### Progress Bar Example:
 
@@ -41,37 +49,36 @@ When a model is `downloadable` or `downloading`, you should show a progress bar 
 <label for="download-progress">Downloading model...</label>
 
 <script type="module">
-const progressBar = document.getElementById('download-progress');
+  const progressBar = document.getElementById('download-progress');
 
-const session = await LanguageModel.create({
-  monitor(m) {
-    m.addEventListener('downloadprogress', (e) => {
-      console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
-      progressBar.value = e.loaded;
-      progressBar.max = e.total;
-    });
-  }
-});
+  const session = await LanguageModel.create({
+    monitor(m) {
+      m.addEventListener('downloadprogress', (e) => {
+        console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
+        progressBar.value = e.loaded;
+        progressBar.max = e.total;
+      });
+    },
+  });
 </script>
 ```
 
 ## ⚖️ Aligning `availability()` and `create()`
 
-**CRITICAL**: Always pass the **exact same options** to `availability()` that you intend to pass to `create()`. If you don't, the browser might report that the API is "available" for a default model, but it might fail or require a download for the specific configuration (language, modality) you actually need.
+**CRITICAL**: Always pass the **exact same options** to `availability()` that
+you intend to pass to `create()`. If you don't, the browser might report that
+the API is "available" for a default model, but it might fail or require a
+download for the specific configuration (language, modality) you actually need.
 
 ### Example: Multimodal French Session
 
-If you need a session that supports French text and audio input, your availability check **must** reflect this:
+If you need a session that supports French text and audio input, your
+availability check **must** reflect this:
 
 ```js
 const options = {
-  expectedInputs: [
-    { type: 'text', languages: ['fr'] },
-    { type: 'audio' }
-  ],
-  expectedOutputs: [
-    { type: 'text', languages: ['fr'] }
-  ]
+  expectedInputs: [{ type: 'text', languages: ['fr'] }, { type: 'audio' }],
+  expectedOutputs: [{ type: 'text', languages: ['fr'] }],
 };
 
 // 1. Check availability with THE EXACT SAME OPTIONS
@@ -86,31 +93,37 @@ if (status === 'available') {
 The Prompt API supports processing images and audio alongside text.
 
 ### Supported Input Types:
+
 - **Audio**: `AudioBuffer`, `ArrayBufferView`, `ArrayBuffer`, `Blob`.
-- **Visual**: `HTMLImageElement`, `SVGImageElement`, `HTMLVideoElement` (current frame), `HTMLCanvasElement`, `ImageBitmap`, `OffscreenCanvas`, `VideoFrame`, `Blob`, `ImageData`.
+- **Visual**: `HTMLImageElement`, `SVGImageElement`, `HTMLVideoElement` (current
+  frame), `HTMLCanvasElement`, `ImageBitmap`, `OffscreenCanvas`, `VideoFrame`,
+  `Blob`, `ImageData`.
 
 ### Multimodal Session Example:
 
 ```js
 const session = await LanguageModel.create({
   expectedInputs: [
-    { type: "text", languages: ["en"] },
-    { type: "audio" },
-    { type: "image" },
+    { type: 'text', languages: ['en'] },
+    { type: 'audio' },
+    { type: 'image' },
   ],
-  expectedOutputs: [{ type: "text", languages: ["en"] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
 });
 
-const referenceImage = await (await fetch("reference-image.jpeg")).blob();
-const userDrawnImage = document.querySelector("canvas");
+const referenceImage = await (await fetch('reference-image.jpeg')).blob();
+const userDrawnImage = document.querySelector('canvas');
 
 const response1 = await session.prompt([
   {
-    role: "user",
+    role: 'user',
     content: [
-      { type: "text", value: "Critique how well the second image matches the first:" },
-      { type: "image", value: referenceImage },
-      { type: "image", value: userDrawnImage },
+      {
+        type: 'text',
+        value: 'Critique how well the second image matches the first:',
+      },
+      { type: 'image', value: referenceImage },
+      { type: 'image', value: userDrawnImage },
     ],
   },
 ]);
@@ -119,10 +132,10 @@ const audioBuffer = await captureMicrophoneInput({ seconds: 10 });
 
 const response2 = await session.prompt([
   {
-    role: "user",
+    role: 'user',
     content: [
-      { type: "text", value: "My response to your critique:" },
-      { type: "audio", value: audioBuffer },
+      { type: 'text', value: 'My response to your critique:' },
+      { type: 'audio', value: audioBuffer },
     ],
   },
 ]);
@@ -130,9 +143,11 @@ const response2 = await session.prompt([
 
 ## 📜 Latest IDLs
 
-Below are the latest Web IDLs for these APIs, extracted from the official specifications.
+Below are the latest Web IDLs for these APIs, extracted from the official
+specifications.
 
 <!-- BEGIN IDLS -->
+
 ### Translation API
 
 ```webidl

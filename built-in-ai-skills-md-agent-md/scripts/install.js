@@ -19,7 +19,9 @@ const templates = [
  * @param {boolean} overwrite - Whether to overwrite existing files.
  */
 export function syncTemplates(targetDir, overwrite = false) {
-  console.log(`Synchronizing Built-in AI templates to ${targetDir} (overwrite: ${overwrite})...`);
+  console.log(
+    `Synchronizing Built-in AI templates to ${targetDir} (overwrite: ${overwrite})...`
+  );
 
   for (const template of templates) {
     const targetPath = path.join(targetDir, template.name);
@@ -30,7 +32,10 @@ export function syncTemplates(targetDir, overwrite = false) {
       const existingContent = fs.readFileSync(targetPath, 'utf8');
 
       // Check if we already appended this
-      if (existingContent.includes('Built-in AI Skills') || existingContent.includes('Built-in AI Expert')) {
+      if (
+        existingContent.includes('Built-in AI Skills') ||
+        existingContent.includes('Built-in AI Expert')
+      ) {
         console.log(`Content already present in ${template.name}. Skipping.`);
         continue;
       }
@@ -38,7 +43,9 @@ export function syncTemplates(targetDir, overwrite = false) {
       fs.appendFileSync(targetPath, '\n\n' + templateContent);
       console.log(`Appended to ${template.name}.`);
     } else {
-      console.log(`${overwrite ? 'Overwriting' : 'Creating'} ${template.name}...`);
+      console.log(
+        `${overwrite ? 'Overwriting' : 'Creating'} ${template.name}...`
+      );
       fs.writeFileSync(targetPath, templateContent);
       console.log(`${overwrite ? 'Overwrote' : 'Created'} ${template.name}.`);
     }
@@ -57,6 +64,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (projectRoot !== packageRoot) {
     syncTemplates(projectRoot, false);
   } else {
-    console.log('Running inside the package root. Use "npm run update-idls" to sync root files.');
+    console.log(
+      'Running inside the package root. Use "npm run update-idls" to sync root files.'
+    );
   }
 }

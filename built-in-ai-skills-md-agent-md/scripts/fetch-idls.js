@@ -36,7 +36,8 @@ async function fetchIDLs() {
 
       // Extract IDL blocks from <pre class="idl"> or <xmp class="idl">
       // Bikeshed files use these tags for IDL
-      const idlRegex = /<(pre|xmp|div)\s+[^>]*class=["']idl["'][^>]*>([\s\S]*?)<\/\1>/gi;
+      const idlRegex =
+        /<(pre|xmp|div)\s+[^>]*class=["']idl["'][^>]*>([\s\S]*?)<\/\1>/gi;
       let match;
       let sourceIdls = `### ${source.name}\n\n`;
       let found = false;
@@ -44,7 +45,7 @@ async function fetchIDLs() {
       while ((match = idlRegex.exec(text)) !== null) {
         const idlContent = match[2].trim();
         if (idlContent) {
-          sourceIdls += "```webidl\n" + idlContent + "\n```\n\n";
+          sourceIdls += '```webidl\n' + idlContent + '\n```\n\n';
           found = true;
         }
       }
@@ -79,7 +80,8 @@ async function fetchIDLs() {
 
   const updatedSkillContent =
     skillTemplateContent.substring(0, startIndex + startMarker.length) +
-    '\n' + allIdls +
+    '\n' +
+    allIdls +
     skillTemplateContent.substring(endIndex);
 
   fs.writeFileSync(SKILL_TEMPLATE_PATH, updatedSkillContent);

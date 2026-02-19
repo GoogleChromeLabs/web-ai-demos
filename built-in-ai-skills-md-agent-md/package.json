@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "update-idls": "node scripts/fetch-idls.js",
-    "postinstall": "node scripts/install.js"
+    "postinstall": "node scripts/install.js",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -17,5 +18,8 @@
     "README.md",
     "SKILL.md",
     "AGENT.md"
-  ]
+  ],
+  "devDependencies": {
+    "prettier": "^3.8.1"
+  }
 }
