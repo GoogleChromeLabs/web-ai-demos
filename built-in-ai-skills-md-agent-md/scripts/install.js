@@ -9,8 +9,16 @@ const __dirname = path.dirname(__filename);
 const projectRoot = process.env.INIT_CWD || process.cwd();
 
 const templates = [
-  { name: 'SKILL.md', path: path.join(__dirname, '../templates/SKILL.md') },
-  { name: 'AGENT.md', path: path.join(__dirname, '../templates/AGENT.md') },
+  {
+    name: 'SKILL.md',
+    path: path.join(__dirname, '../templates/SKILL.md'),
+    marker: '<!-- BUILT-IN-AI-SKILLS -->',
+  },
+  {
+    name: 'AGENT.md',
+    path: path.join(__dirname, '../templates/AGENT.md'),
+    marker: '<!-- BUILT-IN-AI-AGENT -->',
+  },
 ];
 
 /**
@@ -26,27 +34,29 @@ export function syncTemplates(targetDir, overwrite = false) {
   for (const template of templates) {
     const targetPath = path.join(targetDir, template.name);
     const templateContent = fs.readFileSync(template.path, 'utf8');
+    const contentWithMarkers = `\n\n${template.marker}\n${templateContent}\n${template.marker}\n`;
 
     if (fs.existsSync(targetPath) && !overwrite) {
       console.log(`${template.name} already exists. Checking for content...`);
       const existingContent = fs.readFileSync(targetPath, 'utf8');
 
       // Check if we already appended this
-      if (
-        existingContent.includes('Built-in AI Skills') ||
-        existingContent.includes('Built-in AI Expert')
-      ) {
+      if (existingContent.includes(template.marker)) {
         console.log(`Content already present in ${template.name}. Skipping.`);
         continue;
       }
 
-      fs.appendFileSync(targetPath, '\n\n' + templateContent);
+      fs.appendFileSync(targetPath, contentWithMarkers);
       console.log(`Appended to ${template.name}.`);
     } else {
       console.log(
         `${overwrite ? 'Overwriting' : 'Creating'} ${template.name}...`
       );
-      fs.writeFileSync(targetPath, templateContent);
+      // For creation/overwrite, we don't strictly need markers, but let's keep them for consistency
+      fs.writeFileSync(
+        targetPath,
+        overwrite ? templateContent : contentWithMarkers
+      );
       console.log(`${overwrite ? 'Overwrote' : 'Created'} ${template.name}.`);
     }
   }
@@ -65,7 +75,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     syncTemplates(projectRoot, false);
   } else {
     console.log(
-      'Running inside the package root. Use "npm run update-idls" to sync root files.'
+      'Running inside the package root. Cleaning up and skipping sync.'
     );
+    for (const template of templates) {
+      const targetPath = path.join(packageRoot, template.name);
+      if (fs.existsSync(targetPath)) {
+        fs.unlinkSync(targetPath);
+        console.log(`Deleted ${template.name} from package root.`);
+      }
+    }
   }
 }
