@@ -50,7 +50,7 @@
   const progressTargets = new Map(); // requestId -> EventTarget
   const sessionTargets = new Map(); // requestId -> Instance (for events)
 
-  const apiStatuses = {};
+  const apiStatuses = [];
   const sanitizeOptions = (options) => {
     const { monitor, signal, ...rest } = options;
     return rest;
@@ -69,7 +69,7 @@
           type: 'abort-request',
           requestId,
           callId,
-        }).catch(() => { });
+        }).catch(() => {});
       },
       { once: true }
     );
@@ -377,10 +377,11 @@
     !forceInjection &&
     nativeAPIs.LanguageModel &&
     typeof nativeAPIs.LanguageModel.create === 'function';
-  apiStatuses['LanguageModel'] = {
+  apiStatuses.push({
+    API: 'LanguageModel',
     Source: isLMNative ? 'Native' : 'Extension Proxy (Offscreen)',
-    Status: forceInjection ? 'Forced' : isLMNative ? 'Native' : 'Polyfill',
-  };
+    Backend: backend,
+  });
 
   // Set the proxy globally. This must happen BEFORE task APIs are used.
   // Use a named class to ensure it shows up correctly in the console
@@ -399,10 +400,11 @@
     const usePolyfill =
       forceInjection || !native || typeof native.create !== 'function';
 
-    apiStatuses[name] = {
+    apiStatuses.push({
+      API: name,
       Source: usePolyfill ? 'Extension Polyfill (Local)' : 'Native',
-      Status: forceInjection ? 'Forced' : usePolyfill ? 'Polyfill' : 'Native',
-    };
+      Backend: backend,
+    });
 
     if (usePolyfill) {
       // Use a dynamic object shorthand trick to ensure the class is born with the correct name.

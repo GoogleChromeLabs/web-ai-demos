@@ -75,9 +75,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           };
         }
 
-        const lowerApiName = apiType
-          ? apiType.charAt(0).toLowerCase() + apiType.slice(1)
-          : 'languageModel';
         const nativeClass = window[apiType || 'LanguageModel'];
 
         // Load Prompt API polyfill as the provider via standard package imports.
