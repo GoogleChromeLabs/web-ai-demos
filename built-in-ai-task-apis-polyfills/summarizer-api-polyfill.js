@@ -109,11 +109,17 @@ export class Summarizer extends BaseTaskModel {
   }
 
   get expectedInputLanguages() {
-    return this.#options.expectedInputLanguages || null;
+    if (this.#options.expectedInputLanguages) {
+      return Object.freeze([...this.#options.expectedInputLanguages]);
+    }
+    return null;
   }
 
   get expectedContextLanguages() {
-    return this.#options.expectedContextLanguages || null;
+    if (this.#options.expectedContextLanguages) {
+      return Object.freeze([...this.#options.expectedContextLanguages]);
+    }
+    return null;
   }
 
   get outputLanguage() {

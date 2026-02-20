@@ -105,7 +105,17 @@ export class Writer extends BaseTaskModel {
   }
 
   get expectedInputLanguages() {
-    return this.#options.expectedInputLanguages || null;
+    if (this.#options.expectedInputLanguages) {
+      return Object.freeze([...this.#options.expectedInputLanguages]);
+    }
+    return null;
+  }
+
+  get expectedContextLanguages() {
+    if (this.#options.expectedContextLanguages) {
+      return Object.freeze([...this.#options.expectedContextLanguages]);
+    }
+    return null;
   }
 
   get outputLanguage() {
