@@ -21,10 +21,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } = message;
 
         // Apply external configuration to globals for the polyfills to find.
-        // ... (lines 22-70 omitted for brevity in replacement, but I will include them if needed.
-        // Actually I should probably include the whole block to be safe or use smaller chunks)
-
-        // Apply external configuration to globals for the polyfills to find.
         setupConfigs(backend, config);
 
         const [promptApiModule] = await Promise.all([
