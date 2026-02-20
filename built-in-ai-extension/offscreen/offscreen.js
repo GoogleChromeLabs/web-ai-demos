@@ -111,12 +111,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         const ApiClass = getApiClass(promptApiModule, apiType, config);
 
-        if (!ApiClass || typeof ApiClass.availability !== 'function') {
-          // Fallback if the polyfill doesn't have availability (unlikely)
-          sendResponse({ success: true, result: 'available' });
-          return;
-        }
-
         const result = await ApiClass.availability(options);
         sendResponse({ success: true, result });
       } else if (message.type === 'clone-session') {
