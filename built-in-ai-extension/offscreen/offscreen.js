@@ -1,6 +1,7 @@
 // offscreen/offscreen.js
 
 let sessions = new Map(); // requestId -> session instance
+let controllers = new Map(); // callId -> AbortController
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.target !== 'offscreen') return;
@@ -12,11 +13,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           config,
           options,
           requestId,
+          callId,
           apiType,
           backend,
           senderTabId,
           senderFrameId,
         } = message;
+
+        // Apply external configuration to globals for the polyfills to find.
+        // ... (lines 22-70 omitted for brevity in replacement, but I will include them if needed.
+        // Actually I should probably include the whole block to be safe or use smaller chunks)
 
         // Apply external configuration to globals for the polyfills to find.
         // First, clear any previous configurations to avoid stale settings.
@@ -132,31 +138,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
         };
 
-        const session = await sessionProvider.create({ ...options, monitor });
-
-        // Relay quotaoverflow events
-        session.addEventListener?.('quotaoverflow', () => {
-          chrome.runtime.sendMessage({
-            target: senderTabId ? 'content' : 'options',
-            type: 'quota-overflow',
-            requestId,
-            senderTabId,
-            senderFrameId,
+        const controller = new AbortController();
+        if (callId) controllers.set(callId, controller);
+        try {
+          const session = await sessionProvider.create({
+            ...options,
+            monitor,
+            signal: controller.signal,
           });
-        });
 
-        sessions.set(requestId, session);
-        sendResponse({
-          success: true,
-          attributes: {
-            inputUsage: session.inputUsage,
-            inputQuota: session.inputQuota,
-          },
-        });
+          // Relay quotaoverflow events
+          session.addEventListener?.('quotaoverflow', () => {
+            chrome.runtime.sendMessage({
+              target: senderTabId ? 'content' : 'options',
+              type: 'quota-overflow',
+              requestId,
+              senderTabId,
+              senderFrameId,
+            });
+          });
+
+          sessions.set(requestId, session);
+          sendResponse({
+            success: true,
+            attributes: {
+              inputUsage: session.inputUsage,
+              inputQuota: session.inputQuota,
+            },
+          });
+        } finally {
+          if (callId) controllers.delete(callId);
+        }
       } else if (message.type === 'clone-session') {
         const {
           sourceRequestId,
           requestId,
+          callId,
           options,
           senderTabId,
           senderFrameId,
@@ -193,15 +210,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
         };
 
-        const session = await sourceSession.clone({ ...options, monitor });
-        sessions.set(requestId, session);
-        sendResponse({
-          success: true,
-          attributes: {
-            inputUsage: session.inputUsage,
-            inputQuota: session.inputQuota,
-          },
-        });
+        const controller = new AbortController();
+        if (callId) controllers.set(callId, controller);
+        try {
+          const session = await sourceSession.clone({
+            ...options,
+            monitor,
+            signal: controller.signal,
+          });
+          sessions.set(requestId, session);
+          sendResponse({
+            success: true,
+            attributes: {
+              inputUsage: session.inputUsage,
+              inputQuota: session.inputQuota,
+            },
+          });
+        } finally {
+          if (callId) controllers.delete(callId);
+        }
       } else if (message.type === 'list-models') {
         const cache = await caches.open('transformers-cache');
         const keys = await cache.keys();
@@ -240,33 +267,62 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         message.type === 'execute' ||
         message.type === 'append'
       ) {
-        const { requestId, text, method, options, senderTabId, senderFrameId } =
-          message;
+        const {
+          requestId,
+          callId,
+          text,
+          method,
+          options,
+          senderTabId,
+          senderFrameId,
+        } = message;
         const session = sessions.get(requestId);
         if (!session)
           throw new Error('No active session for requestId: ' + requestId);
 
-        const result = await session[method || message.type](text, options);
-        sendResponse({
-          success: true,
-          result,
-          attributes: {
-            inputUsage: session.inputUsage,
-            inputQuota: session.inputQuota,
-          },
-        });
+        const controller = new AbortController();
+        if (callId) controllers.set(callId, controller);
+        try {
+          const result = await session[method || message.type](text, {
+            ...options,
+            signal: controller.signal,
+          });
+          sendResponse({
+            success: true,
+            result,
+            attributes: {
+              inputUsage: session.inputUsage,
+              inputQuota: session.inputQuota,
+            },
+          });
+        } finally {
+          if (callId) controllers.delete(callId);
+        }
       } else if (
         message.type === 'prompt-streaming' ||
         message.type === 'execute-streaming'
       ) {
-        const { requestId, text, method, options, senderTabId, senderFrameId } =
-          message;
+        const {
+          requestId,
+          callId,
+          text,
+          method,
+          options,
+          senderTabId,
+          senderFrameId,
+        } = message;
         const session = sessions.get(requestId);
         if (!session)
           throw new Error('No active session for requestId: ' + requestId);
 
+        const controller = new AbortController();
+        if (callId) controllers.set(callId, controller);
+
         // session[method](text, options) preserves "this"
-        const stream = session[method || 'promptStreaming'](text, options);
+        const stream = session[method || 'promptStreaming'](text, {
+          ...options,
+          signal: controller.signal,
+        });
         const reader = stream.getReader();
 
         (async () => {
@@ -278,6 +334,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   target: senderTabId ? 'content' : 'options',
                   type: 'stream-done',
                   requestId,
+                  callId,
                   senderTabId,
                   senderFrameId,
                   // Also include final usage meta if available
@@ -292,6 +349,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 target: senderTabId ? 'content' : 'options',
                 type: 'stream-chunk',
                 requestId,
+                callId,
                 text: String(value), // Ensure it's a string
                 senderTabId,
                 senderFrameId,
@@ -299,6 +357,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
           } catch (err) {
             console.error('Streaming error in offscreen:', err);
+            chrome.runtime.sendMessage({
+              target: senderTabId ? 'content' : 'options',
+              type: 'stream-error',
+              requestId,
+              callId,
+              error: err.message,
+              name: err.name,
+              senderTabId,
+              senderFrameId,
+            });
+          } finally {
+            if (callId) controllers.delete(callId);
           }
         })();
         sendResponse({
@@ -314,10 +384,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (session && session.destroy) session.destroy();
         sessions.delete(requestId);
         sendResponse({ success: true });
+      } else if (message.type === 'abort-request') {
+        const { callId } = message;
+        const controller = controllers.get(callId);
+        if (controller) {
+          controller.abort();
+          controllers.delete(callId);
+        }
+        sendResponse({ success: true });
       }
     } catch (err) {
       console.error('Offscreen execution error:', err);
-      sendResponse({ success: false, error: err.message });
+      sendResponse({ success: false, error: err.message, name: err.name });
     }
   })();
 

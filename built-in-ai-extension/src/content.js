@@ -56,9 +56,11 @@
         ? 'extension-download-progress'
         : message.type === 'stream-chunk'
           ? 'extension-stream-chunk'
-          : message.type === 'quota-overflow'
-            ? 'extension-quota-overflow'
-            : 'extension-stream-done';
+          : message.type === 'stream-error'
+            ? 'extension-stream-error'
+            : message.type === 'quota-overflow'
+              ? 'extension-quota-overflow'
+              : 'extension-stream-done';
 
     const event = new CustomEvent(eventType, {
       detail: message,

@@ -28,7 +28,11 @@
           if (response.success) {
             resolve(response);
           } else {
-            reject(new Error(response.error));
+            const error =
+              response.name === 'AbortError'
+                ? new DOMException(response.error || 'Aborted', 'AbortError')
+                : new Error(response.error);
+            reject(error);
           }
         }
       };
@@ -50,6 +54,25 @@
   const sanitizeOptions = (options) => {
     const { monitor, signal, ...rest } = options;
     return rest;
+  };
+
+  const handleSignal = (signal, requestId, callId) => {
+    if (!signal) return;
+    if (signal.aborted) {
+      throw signal.reason || new DOMException('Aborted', 'AbortError');
+    }
+    signal.addEventListener(
+      'abort',
+      () => {
+        sendMessage({
+          target: 'offscreen',
+          type: 'abort-request',
+          requestId,
+          callId,
+        }).catch(() => { });
+      },
+      { once: true }
+    );
   };
 
   const setClassName = (cls, name) => {
@@ -81,8 +104,19 @@
           return sessionData.get(this).attributes.inputQuota || 0;
         }
 
+        get onquotaoverflow() {
+          return sessionData.get(this).onquotaoverflow || null;
+        }
+
         set onquotaoverflow(handler) {
-          this.addEventListener('quotaoverflow', handler);
+          const data = sessionData.get(this);
+          if (data.onquotaoverflow) {
+            this.removeEventListener('quotaoverflow', data.onquotaoverflow);
+          }
+          data.onquotaoverflow = handler;
+          if (typeof handler === 'function') {
+            this.addEventListener('quotaoverflow', handler);
+          }
         }
 
         destroy() {
@@ -97,10 +131,14 @@
 
         async prompt(text, options = {}) {
           const { requestId } = sessions.get(this);
+          const callId = Math.random().toString(36).slice(2);
+          handleSignal(options.signal, requestId, callId);
+
           const response = await sendMessage({
             target: 'offscreen',
             type: 'prompt',
             requestId,
+            callId,
             text,
             options: sanitizeOptions(options),
           });
@@ -112,16 +150,26 @@
 
         promptStreaming(text, options = {}) {
           const { requestId } = sessions.get(this);
+          const callId = Math.random().toString(36).slice(2);
           const self = this;
+
+          handleSignal(options.signal, requestId, callId);
+
           return new ReadableStream({
             start(controller) {
               const chunkListener = (e) => {
-                if (e.detail.requestId === requestId) {
+                if (
+                  e.detail.requestId === requestId &&
+                  e.detail.callId === callId
+                ) {
                   controller.enqueue(e.detail.text);
                 }
               };
               const doneListener = (e) => {
-                if (e.detail.requestId === requestId) {
+                if (
+                  e.detail.requestId === requestId &&
+                  e.detail.callId === callId
+                ) {
                   if (e.detail.attributes) {
                     sessionData.get(self).attributes = e.detail.attributes;
                   }
@@ -134,15 +182,45 @@
                     'extension-stream-done',
                     doneListener
                   );
+                  window.removeEventListener(
+                    'extension-stream-error',
+                    errorListener
+                  );
+                }
+              };
+              const errorListener = (e) => {
+                if (
+                  e.detail.requestId === requestId &&
+                  e.detail.callId === callId
+                ) {
+                  const error = new DOMException(
+                    e.detail.error || 'Aborted',
+                    e.detail.name || 'AbortError'
+                  );
+                  controller.error(error);
+                  window.removeEventListener(
+                    'extension-stream-chunk',
+                    chunkListener
+                  );
+                  window.removeEventListener(
+                    'extension-stream-done',
+                    doneListener
+                  );
+                  window.removeEventListener(
+                    'extension-stream-error',
+                    errorListener
+                  );
                 }
               };
               window.addEventListener('extension-stream-chunk', chunkListener);
               window.addEventListener('extension-stream-done', doneListener);
+              window.addEventListener('extension-stream-error', errorListener);
 
               sendMessage({
                 target: 'offscreen',
                 type: 'prompt-streaming',
                 requestId,
+                callId,
                 text,
                 options: sanitizeOptions(options),
               })
@@ -161,6 +239,10 @@
                     'extension-stream-done',
                     doneListener
                   );
+                  window.removeEventListener(
+                    'extension-stream-error',
+                    errorListener
+                  );
                 });
             },
           });
@@ -168,10 +250,14 @@
 
         async append(text, options = {}) {
           const { requestId } = sessions.get(this);
+          const callId = Math.random().toString(36).slice(2);
+          handleSignal(options.signal, requestId, callId);
+
           const response = await sendMessage({
             target: 'offscreen',
             type: 'append',
             requestId,
+            callId,
             text,
             options: sanitizeOptions(options),
           });
@@ -182,10 +268,14 @@
 
         async measureInputUsage(text, options = {}) {
           const { requestId } = sessions.get(this);
+          const callId = Math.random().toString(36).slice(2);
+          handleSignal(options.signal, requestId, callId);
+
           const response = await sendMessage({
             target: 'offscreen',
             type: 'execute',
             requestId,
+            callId,
             text,
             method: 'measureInputUsage',
             options: sanitizeOptions(options),
@@ -199,6 +289,9 @@
         async clone(options = {}) {
           const { apiType, requestId } = sessions.get(this);
           const newRequestId = Math.random().toString(36).slice(2);
+          const callId = Math.random().toString(36).slice(2);
+
+          handleSignal(options.signal, requestId, callId);
 
           if (options.monitor) {
             const target = new EventTarget();
@@ -213,6 +306,7 @@
             apiType,
             backend,
             requestId: newRequestId,
+            callId,
             config,
             options: sanitizeOptions(options),
           });
@@ -239,6 +333,9 @@
       }
 
       const requestId = Math.random().toString(36).slice(2);
+      const callId = Math.random().toString(36).slice(2);
+
+      handleSignal(options.signal, requestId, callId);
 
       if (options.monitor) {
         const target = new EventTarget();
@@ -252,6 +349,7 @@
         apiType: 'LanguageModel',
         backend,
         requestId,
+        callId,
         config,
         options: sanitizeOptions(options),
       });
