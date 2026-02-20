@@ -389,7 +389,7 @@
   apiStatuses.push({
     API: 'LanguageModel',
     Source: isLMNative ? 'Native' : 'Extension Proxy (Offscreen)',
-    Backend: backend,
+    Backend: isLMNative ? 'chrome' : backend,
   });
 
   // Set the proxy globally. This must happen BEFORE task APIs are used.
@@ -412,7 +412,7 @@
     apiStatuses.push({
       API: name,
       Source: usePolyfill ? 'Extension Polyfill (Local)' : 'Native',
-      Backend: backend,
+      Backend: usePolyfill ? backend : 'chrome',
     });
 
     if (usePolyfill) {
