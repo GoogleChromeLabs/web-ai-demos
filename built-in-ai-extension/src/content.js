@@ -60,11 +60,6 @@
             ? 'extension-quota-overflow'
             : 'extension-stream-done';
 
-    console.log(`Content script receiving ${message.type} from extension:`, {
-      requestId: message.requestId,
-      eventType,
-    });
-
     const event = new CustomEvent(eventType, {
       detail: message,
     });

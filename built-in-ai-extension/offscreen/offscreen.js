@@ -17,13 +17,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           senderTabId,
           senderFrameId,
         } = message;
-        console.log('Offscreen create-session:', {
-          backend,
-          apiType,
-          hasConfig: !!config,
-          geminiKey: !!config?.geminiApiKey,
-          transformersModel: !!config?.transformersModelName,
-        });
 
         // Apply external configuration to globals for the polyfills to find.
         // First, clear any previous configurations to avoid stale settings.
@@ -76,12 +69,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           };
         }
 
-        console.log('Globals set:', {
-          GEMINI: !!window.GEMINI_CONFIG,
-          FIREBASE: !!window.FIREBASE_CONFIG,
-          TRANSFORMERS: !!window.TRANSFORMERS_CONFIG,
-        });
-
         const lowerApiName = apiType
           ? apiType.charAt(0).toLowerCase() + apiType.slice(1)
           : 'languageModel';
@@ -99,13 +86,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           promptApiModule.default ||
           nativeClass;
 
-        console.log('Offscreen AI context:', {
-          apiType,
-          hasNativeClass: !!nativeClass,
-          hasApiClass: !!ApiClass,
-          promptApiModuleKeys: Object.keys(promptApiModule),
-        });
-
         if (!ApiClass) {
           throw new Error(
             `AI API "LanguageModel" is undefined in offscreen context.`
@@ -119,9 +99,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           nativeClass &&
           typeof nativeClass.create === 'function'
         ) {
-          console.log(
-            `Offscreen: Using native implementation for ${apiType || 'LanguageModel'}`
-          );
           sessionProvider = nativeClass;
         }
 
@@ -269,10 +246,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!session)
           throw new Error('No active session for requestId: ' + requestId);
 
-        console.log(`Offscreen executing ${method || message.type}:`, {
-          requestId,
-          textLength: text?.length,
-        });
         const result = await session[method || message.type](text, options);
         sendResponse({
           success: true,
@@ -292,10 +265,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!session)
           throw new Error('No active session for requestId: ' + requestId);
 
-        console.log(
-          `Offscreen executing streaming ${method || 'promptStreaming'}:`,
-          { requestId, textLength: text?.length }
-        );
         // session[method](text, options) preserves "this"
         const stream = session[method || 'promptStreaming'](text, options);
         const reader = stream.getReader();
@@ -305,7 +274,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
-                console.log(`Offscreen streaming done for ${requestId}`);
                 chrome.runtime.sendMessage({
                   target: senderTabId ? 'content' : 'options',
                   type: 'stream-done',
@@ -320,9 +288,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 });
                 break;
               }
-              console.log(`Offscreen sending chunk for ${requestId}:`, {
-                textLength: value?.length,
-              });
               chrome.runtime.sendMessage({
                 target: senderTabId ? 'content' : 'options',
                 type: 'stream-chunk',

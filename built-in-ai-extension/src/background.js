@@ -43,13 +43,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sender.url?.endsWith('offscreen.html')) &&
     (message.target === 'content' || message.target === 'options')
   ) {
-    console.log(
-      `Relaying ${message.type} from offscreen to ${message.target}:`,
-      {
-        requestId: message.requestId,
-        senderTabId: message.senderTabId,
-      }
-    );
     if (message.target === 'content' && message.senderTabId) {
       chrome.tabs.sendMessage(Number(message.senderTabId), message, {
         frameId: message.senderFrameId,

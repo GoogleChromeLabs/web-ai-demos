@@ -338,6 +338,5 @@
     }
   });
 
-  console.log('Built-in AI Extension: Initialized');
   console.table(apiStatuses);
 })();
