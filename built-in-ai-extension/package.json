@@ -1,0 +1,24 @@
+{
+  "name": "built-in-ai-extension",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "format": "prettier --write .",
+    "lint": "prettier --check .",
+    "prepare": "node scripts/copy-polyfills.js",
+    "build": "node scripts/build.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "built-in-ai-task-apis-polyfills": "^1.0.0",
+    "prompt-api-polyfill": "^1.2.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "prettier": "^3.8.1"
+  }
+}

@@ -142,7 +142,7 @@ npm install prompt-api-polyfill
     dtype: 'q4f16', // Quantization level
     env: {
       // Optional: Pass low-level Transformers.js environment overrides
-      allowRemoteModels: false,
+      allowRemoteModels: true,
       backends: {
         onnx: {
           wasm: {
@@ -239,7 +239,7 @@ This repo ships with a template file:
 
   // Optional library-level overrides:
   "env": {
-    "allowRemoteModels": false,
+    "allowRemoteModels": true,
     "backends": {
       "onnx": {
         "wasm": {
