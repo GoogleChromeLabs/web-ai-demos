@@ -49,8 +49,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           };
         } else if (backend === 'transformers') {
           window.TRANSFORMERS_CONFIG = {
-            // The polyfill strictly requires an apiKey property to discover the config,
-            // even for local backends like Transformers.js.
             apiKey: 'transformers',
             modelName: config.transformersModelName,
             device: config.transformersDevice,
@@ -60,9 +58,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               backends: {
                 onnx: {
                   wasm: {
-                    wasmPaths: chrome.runtime.getURL(
-                      'lib/prompt-api-polyfill/backends/transformers-assets/'
-                    ),
+                    wasmPaths: chrome.runtime.getURL('/src/transformers-assets/'),
                   },
                 },
               },
@@ -76,23 +72,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           TRANSFORMERS: !!window.TRANSFORMERS_CONFIG,
         });
 
-        const promptApiUrl = chrome.runtime.getURL(
-          'lib/prompt-api-polyfill/prompt-api-polyfill.js'
-        );
-        const taskApisUrl = chrome.runtime.getURL(
-          'lib/task-apis-polyfills/index.js'
-        );
-
-        const lowerApiName = apiType ? apiType.charAt(0).toLowerCase() + apiType.slice(1) : 'languageModel';
+        const lowerApiName = apiType
+          ? apiType.charAt(0).toLowerCase() + apiType.slice(1)
+          : 'languageModel';
         const nativeClass =
           window[apiType || 'LanguageModel'] ||
           (window.ai &&
             (window.ai[apiType || 'LanguageModel'] || window.ai[lowerApiName]));
 
-        // Load polyfills as potential providers
+        // Load polyfills as potential providers via standard package imports.
+        // Vite will handle the bundling and resolution.
         const [promptApiModule, taskApisModule] = await Promise.all([
-          import(promptApiUrl),
-          import(taskApisUrl),
+          import('prompt-api-polyfill'),
+          import('built-in-ai-task-apis-polyfills'),
         ]);
 
         let ApiClass;

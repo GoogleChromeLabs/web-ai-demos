@@ -32,7 +32,7 @@
 
   // Inject the entry script as an external file to satisfy CSP
   const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('src/main-world-entry.js');
+  script.src = chrome.runtime.getURL('/src/main-world-entry.js');
 
   // Pass necessary data via data-attribute
   script.dataset.config = JSON.stringify({
