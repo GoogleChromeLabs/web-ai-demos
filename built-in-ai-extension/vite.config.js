@@ -3,6 +3,9 @@ import { resolve } from 'path';
 import fs from 'fs';
 
 export default defineConfig({
+  esbuild: {
+    keepNames: true,
+  },
   build: {
     // Disable hashing so filenames in manifest.json remain valid
     rollupOptions: {

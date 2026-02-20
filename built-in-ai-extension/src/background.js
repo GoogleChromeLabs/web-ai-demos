@@ -26,6 +26,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const response = await chrome.runtime.sendMessage({
           ...message,
           senderTabId: sender.tab ? sender.tab.id : message.senderTabId,
+          senderFrameId: sender.frameId,
         });
         sendResponse(response);
       } catch (error) {
@@ -38,11 +39,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Handle messages FROM offscreen intended for content OR options
   if (
-    sender.contextType === 'OFFSCREEN_DOCUMENT' &&
+    (sender.contextType === 'OFFSCREEN_DOCUMENT' ||
+      sender.url?.endsWith('offscreen.html')) &&
     (message.target === 'content' || message.target === 'options')
   ) {
+    console.log(
+      `Relaying ${message.type} from offscreen to ${message.target}:`,
+      {
+        requestId: message.requestId,
+        senderTabId: message.senderTabId,
+      }
+    );
     if (message.target === 'content' && message.senderTabId) {
-      chrome.tabs.sendMessage(message.senderTabId, message);
+      chrome.tabs.sendMessage(Number(message.senderTabId), message, {
+        frameId: message.senderFrameId,
+      });
     } else {
       // Options page listener or broadcaster
       chrome.runtime.sendMessage(message);

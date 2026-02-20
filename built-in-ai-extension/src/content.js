@@ -30,8 +30,10 @@
   const backend = config.backend || 'gemini';
   const forceInjection = config.forceInjection || false;
 
-  // Inject the entry script as an external file to satisfy CSP
+  // Inject the entry script as a module to support ESM imports
   const script = document.createElement('script');
+  script.id = 'built-in-ai-extension-script';
+  script.type = 'module';
   script.src = chrome.runtime.getURL('/src/main-world-entry.js');
 
   // Pass necessary data via data-attribute
@@ -54,7 +56,14 @@
         ? 'extension-download-progress'
         : message.type === 'stream-chunk'
           ? 'extension-stream-chunk'
-          : 'extension-stream-done';
+          : message.type === 'quota-overflow'
+            ? 'extension-quota-overflow'
+            : 'extension-stream-done';
+
+    console.log(`Content script receiving ${message.type} from extension:`, {
+      requestId: message.requestId,
+      eventType,
+    });
 
     const event = new CustomEvent(eventType, {
       detail: message,

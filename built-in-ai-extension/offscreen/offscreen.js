@@ -8,13 +8,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
       if (message.type === 'create-session') {
-        const { config, options, requestId, apiType, backend, senderTabId } = message;
+        const {
+          config,
+          options,
+          requestId,
+          apiType,
+          backend,
+          senderTabId,
+          senderFrameId,
+        } = message;
         console.log('Offscreen create-session:', {
           backend,
           apiType,
           hasConfig: !!config,
           geminiKey: !!config?.geminiApiKey,
-          transformersModel: !!config?.transformersModelName
+          transformersModel: !!config?.transformersModelName,
         });
 
         // Apply external configuration to globals for the polyfills to find.
@@ -58,7 +66,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               backends: {
                 onnx: {
                   wasm: {
-                    wasmPaths: chrome.runtime.getURL('/src/transformers-assets/'),
+                    wasmPaths: chrome.runtime.getURL(
+                      '/src/transformers-assets/'
+                    ),
                   },
                 },
               },
@@ -75,52 +85,62 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const lowerApiName = apiType
           ? apiType.charAt(0).toLowerCase() + apiType.slice(1)
           : 'languageModel';
-        const nativeClass =
-          window[apiType || 'LanguageModel'] ||
-          (window.ai &&
-            (window.ai[apiType || 'LanguageModel'] || window.ai[lowerApiName]));
+        const nativeClass = window[apiType || 'LanguageModel'];
 
-        // Load polyfills as potential providers via standard package imports.
+        // Load Prompt API polyfill as the provider via standard package imports.
         // Vite will handle the bundling and resolution.
-        const [promptApiModule, taskApisModule] = await Promise.all([
+        const [promptApiModule] = await Promise.all([
           import('prompt-api-polyfill'),
-          import('built-in-ai-task-apis-polyfills'),
         ]);
 
-        let ApiClass;
-        if (apiType === 'LanguageModel' || !apiType) {
-          ApiClass =
-            promptApiModule.LanguageModel ||
-            promptApiModule.default?.LanguageModel ||
-            promptApiModule.default ||
-            nativeClass;
-        } else {
-          ApiClass = taskApisModule[apiType] || nativeClass;
-        }
+        const ApiClass =
+          promptApiModule.LanguageModel ||
+          promptApiModule.default?.LanguageModel ||
+          promptApiModule.default ||
+          nativeClass;
 
         console.log('Offscreen AI context:', {
           apiType,
           hasNativeClass: !!nativeClass,
           hasApiClass: !!ApiClass,
           promptApiModuleKeys: Object.keys(promptApiModule),
-          taskApisModuleKeys: Object.keys(taskApisModule),
         });
 
         if (!ApiClass) {
           throw new Error(
-            `AI API "${apiType || 'LanguageModel'}" is undefined in offscreen context.`
+            `AI API "LanguageModel" is undefined in offscreen context.`
           );
         }
 
         // If forceInjection is false and we have a native class, prefer it
         let sessionProvider = ApiClass;
-        if (!config.forceInjection && nativeClass && typeof nativeClass.create === 'function') {
-          console.log(`Offscreen: Using native implementation for ${apiType || 'LanguageModel'}`);
+        if (
+          !config.forceInjection &&
+          nativeClass &&
+          typeof nativeClass.create === 'function'
+        ) {
+          console.log(
+            `Offscreen: Using native implementation for ${apiType || 'LanguageModel'}`
+          );
           sessionProvider = nativeClass;
         }
 
         const monitor = (target) => {
+          let lastProgressTimestamp = 0;
           target.addEventListener('downloadprogress', (e) => {
+            const now = Date.now();
+            // Always send progress when started or finished (required for WPT),
+            // otherwise throttle intermediate progress updates to at most once per 200ms
+            // to avoid drowning the message bus.
+            if (
+              e.loaded > 0 &&
+              e.loaded < e.total &&
+              now - lastProgressTimestamp < 200
+            ) {
+              return;
+            }
+            lastProgressTimestamp = now;
+
             const progressMessage = {
               target: senderTabId ? 'content' : 'options',
               type: 'download-progress',
@@ -128,6 +148,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               total: e.total,
               requestId: requestId,
               senderTabId: senderTabId,
+              senderFrameId: senderFrameId,
             };
 
             chrome.runtime.sendMessage(progressMessage);
@@ -136,8 +157,74 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         const session = await sessionProvider.create({ ...options, monitor });
 
+        // Relay quotaoverflow events
+        session.addEventListener?.('quotaoverflow', () => {
+          chrome.runtime.sendMessage({
+            target: senderTabId ? 'content' : 'options',
+            type: 'quota-overflow',
+            requestId,
+            senderTabId,
+            senderFrameId,
+          });
+        });
+
         sessions.set(requestId, session);
-        sendResponse({ success: true });
+        sendResponse({
+          success: true,
+          attributes: {
+            inputUsage: session.inputUsage,
+            inputQuota: session.inputQuota,
+          },
+        });
+      } else if (message.type === 'clone-session') {
+        const {
+          sourceRequestId,
+          requestId,
+          options,
+          senderTabId,
+          senderFrameId,
+        } = message;
+        const sourceSession = sessions.get(sourceRequestId);
+        if (!sourceSession) {
+          throw new Error(
+            'No source session found for requestId: ' + sourceRequestId
+          );
+        }
+
+        const monitor = (target) => {
+          let lastProgressTimestamp = 0;
+          target.addEventListener('downloadprogress', (e) => {
+            const now = Date.now();
+            if (
+              e.loaded > 0 &&
+              e.loaded < e.total &&
+              now - lastProgressTimestamp < 200
+            ) {
+              return;
+            }
+            lastProgressTimestamp = now;
+
+            chrome.runtime.sendMessage({
+              target: senderTabId ? 'content' : 'options',
+              type: 'download-progress',
+              loaded: e.loaded,
+              total: e.total,
+              requestId: requestId,
+              senderTabId: senderTabId,
+              senderFrameId: senderFrameId,
+            });
+          });
+        };
+
+        const session = await sourceSession.clone({ ...options, monitor });
+        sessions.set(requestId, session);
+        sendResponse({
+          success: true,
+          attributes: {
+            inputUsage: session.inputUsage,
+            inputQuota: session.inputQuota,
+          },
+        });
       } else if (message.type === 'list-models') {
         const cache = await caches.open('transformers-cache');
         const keys = await cache.keys();
@@ -171,24 +258,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         keysToRemove.forEach((k) => localStorage.removeItem(k));
         sendResponse({ success: true, deletedCount });
-      } else if (message.type === 'prompt' || message.type === 'execute') {
-        const { requestId, text, method, options, senderTabId } = message;
+      } else if (
+        message.type === 'prompt' ||
+        message.type === 'execute' ||
+        message.type === 'append'
+      ) {
+        const { requestId, text, method, options, senderTabId, senderFrameId } =
+          message;
         const session = sessions.get(requestId);
         if (!session)
           throw new Error('No active session for requestId: ' + requestId);
 
-        // session[method](text, options) preserves "this"
-        const result = await session[method || 'prompt'](text, options);
-        sendResponse({ success: true, result });
+        console.log(`Offscreen executing ${method || message.type}:`, {
+          requestId,
+          textLength: text?.length,
+        });
+        const result = await session[method || message.type](text, options);
+        sendResponse({
+          success: true,
+          result,
+          attributes: {
+            inputUsage: session.inputUsage,
+            inputQuota: session.inputQuota,
+          },
+        });
       } else if (
         message.type === 'prompt-streaming' ||
         message.type === 'execute-streaming'
       ) {
-        const { requestId, text, method, options, senderTabId } = message;
+        const { requestId, text, method, options, senderTabId, senderFrameId } =
+          message;
         const session = sessions.get(requestId);
         if (!session)
           throw new Error('No active session for requestId: ' + requestId);
 
+        console.log(
+          `Offscreen executing streaming ${method || 'promptStreaming'}:`,
+          { requestId, textLength: text?.length }
+        );
         // session[method](text, options) preserves "this"
         const stream = session[method || 'promptStreaming'](text, options);
         const reader = stream.getReader();
@@ -198,27 +305,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
+                console.log(`Offscreen streaming done for ${requestId}`);
                 chrome.runtime.sendMessage({
                   target: senderTabId ? 'content' : 'options',
                   type: 'stream-done',
                   requestId,
                   senderTabId,
+                  senderFrameId,
+                  // Also include final usage meta if available
+                  attributes: {
+                    inputUsage: session.inputUsage,
+                    inputQuota: session.inputQuota,
+                  },
                 });
                 break;
               }
+              console.log(`Offscreen sending chunk for ${requestId}:`, {
+                textLength: value?.length,
+              });
               chrome.runtime.sendMessage({
                 target: senderTabId ? 'content' : 'options',
                 type: 'stream-chunk',
                 requestId,
-                text: value,
+                text: String(value), // Ensure it's a string
                 senderTabId,
+                senderFrameId,
               });
             }
           } catch (err) {
-            console.error('Streaming error:', err);
+            console.error('Streaming error in offscreen:', err);
           }
         })();
-        sendResponse({ success: true });
+        sendResponse({
+          success: true,
+          attributes: {
+            inputUsage: session.inputUsage,
+            inputQuota: session.inputQuota,
+          },
+        });
       } else if (message.type === 'destroy-session') {
         const { requestId } = message;
         const session = sessions.get(requestId);

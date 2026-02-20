@@ -3,11 +3,7 @@
   "name": "Built-in AI",
   "version": "1.0.0",
   "description": "Polyfills for the built-in AI APIs like LanguageModel, Summarizer, and Writer.",
-  "permissions": [
-    "storage",
-    "offscreen",
-    "tabs"
-  ],
+  "permissions": ["storage", "offscreen", "tabs"],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   },
@@ -22,28 +18,17 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "src/content.js"
-      ],
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
       "run_at": "document_start",
-      "all_frames": true
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "src/main-world-entry.js",
-        "lib/prompt-api-polyfill/prompt-api-polyfill.js",
-        "lib/prompt-api-polyfill/backends/*.js",
-        "lib/chunks/*.js",
-        "lib/task-apis-polyfills/*.js"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "resources": ["src/main-world-entry.js", "src/chunks/*.js"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

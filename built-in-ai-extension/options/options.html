@@ -1,161 +1,187 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Built-in AI Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Built-in AI Options</title>
-  <link rel="stylesheet" href="options.css" />
-</head>
+  <body>
+    <div class="container">
+      <header>
+        <img src="../icons/icon512.png" alt="Logo" class="logo" />
+        <h1>Built-in AI Settings</h1>
+      </header>
 
-<body>
-  <div class="container">
-    <header>
-      <img src="../icons/icon512.png" alt="Logo" class="logo" />
-      <h1>Built-in AI Settings</h1>
-    </header>
-
-    <section>
-      <h2>General</h2>
-      <div class="field-group checkbox-group">
-        <input type="checkbox" id="forceInjection" />
-        <label for="forceInjection">
-          <strong>Force Injection</strong><br />
-          <small>Overwrite native APIs if they already exist.</small>
-        </label>
-      </div>
-    </section>
-
-    <section>
-      <h2>Backend Configuration</h2>
-      <div class="field-group">
-        <label for="backend">Primary Backend</label>
-        <select id="backend">
-          <option value="gemini">Gemini Developer API</option>
-          <option value="openai">OpenAI</option>
-          <option value="firebase">Firebase AI</option>
-          <option value="transformers">Transformers.js</option>
-        </select>
-      </div>
-
-      <!-- Gemini Config -->
-      <div id="config-gemini" class="config-pane">
-        <div class="field-group">
-          <label for="geminiApiKey">API Key</label>
-          <input type="password" id="geminiApiKey" placeholder="AIza..." />
-        </div>
-        <div class="field-group">
-          <label for="geminiModelName">Model Name (optional)</label>
-          <input type="text" id="geminiModelName" placeholder="gemini-1.5-flash" />
-        </div>
-      </div>
-
-      <!-- OpenAI Config -->
-      <div id="config-openai" class="config-pane hidden">
-        <div class="field-group">
-          <label for="openaiApiKey">API Key</label>
-          <input type="password" id="openaiApiKey" placeholder="sk-..." />
-        </div>
-        <div class="field-group">
-          <label for="openaiModelName">Model Name (optional)</label>
-          <input type="text" id="openaiModelName" placeholder="gpt-4o" />
-        </div>
-      </div>
-
-      <!-- Firebase Config -->
-      <div id="config-firebase" class="config-pane hidden">
-        <div class="field-group">
-          <label for="firebaseApiKey">API Key</label>
-          <input type="password" id="firebaseApiKey" placeholder="AIza..." />
-        </div>
-        <div class="field-group">
-          <label for="firebaseProjectId">Project ID</label>
-          <input type="text" id="firebaseProjectId" placeholder="your-project-id" />
-        </div>
-        <div class="field-group">
-          <label for="firebaseAppId">App ID</label>
-          <input type="text" id="firebaseAppId" placeholder="1:1234567890:web:abcdef..." />
-        </div>
-        <div class="field-group">
-          <label for="firebaseApiProvider">API Provider</label>
-          <select id="firebaseApiProvider">
-            <option value="developer">Developer (Gemini AI Studio)</option>
-            <option value="vertex">Vertex AI (Google Cloud)</option>
-          </select>
-        </div>
-        <div class="field-group">
-          <label for="firebaseModelName">Model Name (optional)</label>
-          <input type="text" id="firebaseModelName" placeholder="gemini-1.5-flash" />
-        </div>
-
-        <h3>App Check (Optional)</h3>
+      <section>
+        <h2>General</h2>
         <div class="field-group checkbox-group">
-          <input type="checkbox" id="firebaseUseAppCheck" />
-          <label for="firebaseUseAppCheck">Enable App Check</label>
+          <input type="checkbox" id="forceInjection" />
+          <label for="forceInjection">
+            <strong>Force Injection</strong><br />
+            <small>Overwrite native APIs if they already exist.</small>
+          </label>
         </div>
-        <div class="field-group">
-          <label for="firebaseReCaptchaSiteKey">reCAPTCHA Enterprise Site Key</label>
-          <input type="text" id="firebaseReCaptchaSiteKey" placeholder="your-site-key" />
-        </div>
-        <div class="field-group checkbox-group">
-          <input type="checkbox" id="firebaseUseLimitedUseAppCheckTokens" />
-          <label for="firebaseUseLimitedUseAppCheckTokens">Use Limited-Use Tokens</label>
-        </div>
-      </div>
+      </section>
 
-      <!-- Transformers.js Config -->
-      <div id="config-transformers" class="config-pane hidden">
+      <section>
+        <h2>Backend Configuration</h2>
         <div class="field-group">
-          <label for="transformersModelName">Model Name</label>
-          <input type="text" id="transformersModelName" placeholder="onnx-community/gemma-3-1b-it-ONNX-GQA" />
-        </div>
-        <div class="field-group">
-          <label for="transformersDevice">Device</label>
-          <select id="transformersDevice">
-            <option value="webgpu">WebGPU (Faster)</option>
-            <option value="cpu">CPU (Fallback)</option>
-          </select>
-        </div>
-        <div class="field-group">
-          <label for="transformersDtype">Dtype (Quantization)</label>
-          <select id="transformersDtype">
-            <option value="q4f16">q4f16 (Recommended)</option>
-            <option value="q8">q8</option>
-            <option value="fp32">fp32</option>
-            <option value="fp16">fp16</option>
-            <option value="q4">q4</option>
+          <label for="backend">Primary Backend</label>
+          <select id="backend">
+            <option value="gemini">Gemini Developer API</option>
+            <option value="openai">OpenAI</option>
+            <option value="firebase">Firebase AI</option>
+            <option value="transformers">Transformers.js</option>
           </select>
         </div>
 
-        <div id="transformers-progress" class="hidden">
-          <div class="progress-container">
-            <div id="progress-bar" class="progress-bar"></div>
+        <!-- Gemini Config -->
+        <div id="config-gemini" class="config-pane">
+          <div class="field-group">
+            <label for="geminiApiKey">API Key</label>
+            <input type="password" id="geminiApiKey" placeholder="AIza..." />
           </div>
-          <div id="progress-text" class="progress-text">
-            Downloading... 0%
+          <div class="field-group">
+            <label for="geminiModelName">Model Name (optional)</label>
+            <input
+              type="text"
+              id="geminiModelName"
+              placeholder="gemini-1.5-flash"
+            />
           </div>
         </div>
 
-        <div class="model-downloader">
-          <button id="download-model" class="btn-secondary">
-            Download/Check Model
-          </button>
+        <!-- OpenAI Config -->
+        <div id="config-openai" class="config-pane hidden">
+          <div class="field-group">
+            <label for="openaiApiKey">API Key</label>
+            <input type="password" id="openaiApiKey" placeholder="sk-..." />
+          </div>
+          <div class="field-group">
+            <label for="openaiModelName">Model Name (optional)</label>
+            <input type="text" id="openaiModelName" placeholder="gpt-4o" />
+          </div>
         </div>
 
-        <div class="cached-models">
-          <h3>Cached Models</h3>
-          <ul id="model-list">
-            <li>Loading cached models...</li>
-          </ul>
+        <!-- Firebase Config -->
+        <div id="config-firebase" class="config-pane hidden">
+          <div class="field-group">
+            <label for="firebaseApiKey">API Key</label>
+            <input type="password" id="firebaseApiKey" placeholder="AIza..." />
+          </div>
+          <div class="field-group">
+            <label for="firebaseProjectId">Project ID</label>
+            <input
+              type="text"
+              id="firebaseProjectId"
+              placeholder="your-project-id"
+            />
+          </div>
+          <div class="field-group">
+            <label for="firebaseAppId">App ID</label>
+            <input
+              type="text"
+              id="firebaseAppId"
+              placeholder="1:1234567890:web:abcdef..."
+            />
+          </div>
+          <div class="field-group">
+            <label for="firebaseApiProvider">API Provider</label>
+            <select id="firebaseApiProvider">
+              <option value="developer">Developer (Gemini AI Studio)</option>
+              <option value="vertex">Vertex AI (Google Cloud)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="firebaseModelName">Model Name (optional)</label>
+            <input
+              type="text"
+              id="firebaseModelName"
+              placeholder="gemini-1.5-flash"
+            />
+          </div>
+
+          <h3>App Check (Optional)</h3>
+          <div class="field-group checkbox-group">
+            <input type="checkbox" id="firebaseUseAppCheck" />
+            <label for="firebaseUseAppCheck">Enable App Check</label>
+          </div>
+          <div class="field-group">
+            <label for="firebaseReCaptchaSiteKey"
+              >reCAPTCHA Enterprise Site Key</label
+            >
+            <input
+              type="text"
+              id="firebaseReCaptchaSiteKey"
+              placeholder="your-site-key"
+            />
+          </div>
+          <div class="field-group checkbox-group">
+            <input type="checkbox" id="firebaseUseLimitedUseAppCheckTokens" />
+            <label for="firebaseUseLimitedUseAppCheckTokens"
+              >Use Limited-Use Tokens</label
+            >
+          </div>
         </div>
-      </div>
-    </section>
 
-    <footer>
-      <span id="status"></span>
-    </footer>
-  </div>
-  <script src="options.js"></script>
-</body>
+        <!-- Transformers.js Config -->
+        <div id="config-transformers" class="config-pane hidden">
+          <div class="field-group">
+            <label for="transformersModelName">Model Name</label>
+            <input
+              type="text"
+              id="transformersModelName"
+              placeholder="onnx-community/gemma-3-1b-it-ONNX-GQA"
+            />
+          </div>
+          <div class="field-group">
+            <label for="transformersDevice">Device</label>
+            <select id="transformersDevice">
+              <option value="webgpu">WebGPU (Faster)</option>
+              <option value="cpu">CPU (Fallback)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="transformersDtype">Dtype (Quantization)</label>
+            <select id="transformersDtype">
+              <option value="q4f16">q4f16 (Recommended)</option>
+              <option value="q8">q8</option>
+              <option value="fp32">fp32</option>
+              <option value="fp16">fp16</option>
+              <option value="q4">q4</option>
+            </select>
+          </div>
 
+          <div id="transformers-progress" class="hidden">
+            <div class="progress-container">
+              <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="progress-text" class="progress-text">
+              Downloading... 0%
+            </div>
+          </div>
+
+          <div class="model-downloader">
+            <button id="download-model" class="btn-secondary">
+              Download/Check Model
+            </button>
+          </div>
+
+          <div class="cached-models">
+            <h3>Cached Models</h3>
+            <ul id="model-list">
+              <li>Loading cached models...</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <span id="status"></span>
+      </footer>
+    </div>
+    <script src="options.js" type="module"></script>
+  </body>
 </html>
