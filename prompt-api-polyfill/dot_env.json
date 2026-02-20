@@ -7,5 +7,15 @@
   "reCaptchaSiteKey": "",
   "useLimitedUseAppCheckTokens": true,
   "device": "webgpu",
-  "dtype": "q4f16"
+  "dtype": "q4f16",
+  "env": {
+    "allowRemoteModels": true,
+    "backends": {
+      "onnx": {
+        "wasm": {
+          "wasmPaths": ""
+        }
+      }
+    }
+  }
 }

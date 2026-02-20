@@ -140,6 +140,17 @@ npm install prompt-api-polyfill
     apiKey: 'dummy', // Required for now by the loader
     device: 'webgpu', // 'webgpu' or 'cpu'
     dtype: 'q4f16', // Quantization level
+    env: {
+      // Optional: Pass low-level Transformers.js environment overrides
+      allowRemoteModels: false,
+      backends: {
+        onnx: {
+          wasm: {
+            wasmPaths: 'https://cdn.example.com/wasm-assets/',
+          },
+        },
+      },
+    },
   };
 
   if (!('LanguageModel' in window)) {
@@ -225,6 +236,18 @@ This repo ships with a template file:
   // For Transformers.js:
   "device": "webgpu",
   "dtype": "q4f16",
+
+  // Optional library-level overrides:
+  "env": {
+    "allowRemoteModels": false,
+    "backends": {
+      "onnx": {
+        "wasm": {
+          "wasmPaths": "https://cdn.example.com/wasm-assets/"
+        }
+      }
+    }
+  }
 }
 ```
 
@@ -281,7 +304,17 @@ Then open `.env.json` and fill in the values.
   "apiKey": "dummy",
   "modelName": "onnx-community/gemma-3-1b-it-ONNX-GQA",
   "device": "webgpu",
-  "dtype": "q4f16"
+  "dtype": "q4f16",
+  "env": {
+    "allowRemoteModels": false,
+    "backends": {
+      "onnx": {
+        "wasm": {
+          "wasmPaths": "https://cdn.example.com/wasm-assets/"
+        }
+      }
+    }
+  }
 }
 ```
 
@@ -304,6 +337,9 @@ Then open `.env.json` and fill in the values.
 
 - `device`: **Transformers.js only**. Either `"webgpu"` or `"cpu"`.
 - `dtype`: **Transformers.js only**. Quantization level (e.g., `"q4f16"`).
+- `env` (optional): **Transformers.js only**. A flexible object to override
+  [Transformers.js environment variables](https://huggingface.co/docs/transformers.js/api/env).
+  This is useful for specifying local `wasmPaths` or proxy settings.
 
 - `modelName` (optional): The model ID to use. If not provided, the polyfill
   uses the defaults defined in [`backends/defaults.js`](backends/defaults.js).
