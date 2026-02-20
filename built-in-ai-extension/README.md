@@ -13,6 +13,13 @@ A Chrome extension that injects polyfills for the built-in AI APIs, namely
 - **Developer Friendly**: Easily enter your API keys and configuration in the
   Options page.
 
+## Privacy
+
+The privacy of your data is a top priority. Depending on your chosen backend, AI
+processing can happen entirely locally or via cloud providers. See our
+[Privacy Policy](PRIVACY.md) for full details on data handling and required
+permissions.
+
 ## Installation
 
 1. Clone this repository.
