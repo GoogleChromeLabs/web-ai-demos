@@ -369,7 +369,16 @@
       if (isNative) {
         return native.availability(options);
       }
-      return 'readily';
+
+      const response = await sendMessage({
+        target: 'offscreen',
+        type: 'availability',
+        apiType: 'LanguageModel',
+        backend,
+        config,
+        options: sanitizeOptions(options),
+      });
+      return response.result;
     }
   };
 

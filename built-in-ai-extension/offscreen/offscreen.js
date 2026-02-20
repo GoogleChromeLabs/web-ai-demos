@@ -25,84 +25,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Actually I should probably include the whole block to be safe or use smaller chunks)
 
         // Apply external configuration to globals for the polyfills to find.
-        // First, clear any previous configurations to avoid stale settings.
-        window.GEMINI_CONFIG = undefined;
-        window.OPENAI_CONFIG = undefined;
-        window.FIREBASE_CONFIG = undefined;
-        window.TRANSFORMERS_CONFIG = undefined;
+        setupConfigs(backend, config);
 
-        // Set the configuration based on the selected backend.
-        if (backend === 'gemini') {
-          window.GEMINI_CONFIG = {
-            apiKey: config.geminiApiKey,
-            modelName: config.geminiModelName,
-          };
-        } else if (backend === 'openai') {
-          window.OPENAI_CONFIG = {
-            apiKey: config.openaiApiKey,
-            modelName: config.openaiModelName,
-          };
-        } else if (backend === 'firebase') {
-          window.FIREBASE_CONFIG = {
-            apiKey: config.firebaseApiKey,
-            projectId: config.firebaseProjectId,
-            appId: config.firebaseAppId,
-            geminiApiProvider: config.firebaseApiProvider,
-            modelName: config.firebaseModelName,
-            useAppCheck: config.firebaseUseAppCheck,
-            reCaptchaSiteKey: config.firebaseReCaptchaSiteKey,
-            useLimitedUseAppCheckTokens:
-              config.firebaseUseLimitedUseAppCheckTokens,
-          };
-        } else if (backend === 'transformers') {
-          window.TRANSFORMERS_CONFIG = {
-            apiKey: 'transformers',
-            modelName: config.transformersModelName,
-            device: config.transformersDevice,
-            dtype: config.transformersDtype,
-            env: {
-              allowRemoteModels: true,
-              backends: {
-                onnx: {
-                  wasm: {
-                    wasmPaths: chrome.runtime.getURL(
-                      '/src/transformers-assets/'
-                    ),
-                  },
-                },
-              },
-            },
-          };
-        }
-
-        const nativeClass = window[apiType || 'LanguageModel'];
-
-        // Load Prompt API polyfill as the provider via standard package imports.
-        // Vite will handle the bundling and resolution.
         const [promptApiModule] = await Promise.all([
           import('prompt-api-polyfill'),
         ]);
 
-        const ApiClass =
-          promptApiModule.LanguageModel ||
-          promptApiModule.default?.LanguageModel ||
-          promptApiModule.default ||
-          nativeClass;
+        const ApiClass = getApiClass(promptApiModule, apiType, config);
 
         if (!ApiClass) {
           throw new Error(
-            `AI API "LanguageModel" is undefined in offscreen context.`
+            `AI API "${apiType || 'LanguageModel'}" is undefined in offscreen context.`
           );
-        }
-
-        // If forceInjection is false and we have a native class, prefer it
-        let sessionProvider = ApiClass;
-        if (
-          !config.forceInjection &&
-          nativeClass &&
-          typeof nativeClass.create === 'function'
-        ) {
-          sessionProvider = nativeClass;
         }
 
         const monitor = (target) => {
@@ -138,7 +72,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const controller = new AbortController();
         if (callId) controllers.set(callId, controller);
         try {
-          const session = await sessionProvider.create({
+          const session = await ApiClass.create({
             ...options,
             monitor,
             signal: controller.signal,
@@ -166,6 +100,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } finally {
           if (callId) controllers.delete(callId);
         }
+      } else if (message.type === 'availability') {
+        const { config, backend, apiType, options } = message;
+
+        setupConfigs(backend, config);
+
+        const [promptApiModule] = await Promise.all([
+          import('prompt-api-polyfill'),
+        ]);
+
+        const ApiClass = getApiClass(promptApiModule, apiType, config);
+
+        if (!ApiClass || typeof ApiClass.availability !== 'function') {
+          // Fallback if the polyfill doesn't have availability (unlikely)
+          sendResponse({ success: true, result: 'available' });
+          return;
+        }
+
+        const result = await ApiClass.availability(options);
+        sendResponse({ success: true, result });
       } else if (message.type === 'clone-session') {
         const {
           sourceRequestId,
@@ -398,3 +351,74 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return true; // Keep channel open for async response
 });
+
+function setupConfigs(backend, config) {
+  // Apply external configuration to globals for the polyfills to find.
+  // First, clear any previous configurations to avoid stale settings.
+  window.GEMINI_CONFIG = undefined;
+  window.OPENAI_CONFIG = undefined;
+  window.FIREBASE_CONFIG = undefined;
+  window.TRANSFORMERS_CONFIG = undefined;
+
+  // Set the configuration based on the selected backend.
+  if (backend === 'gemini') {
+    window.GEMINI_CONFIG = {
+      apiKey: config.geminiApiKey,
+      modelName: config.geminiModelName,
+    };
+  } else if (backend === 'openai') {
+    window.OPENAI_CONFIG = {
+      apiKey: config.openaiApiKey,
+      modelName: config.openaiModelName,
+    };
+  } else if (backend === 'firebase') {
+    window.FIREBASE_CONFIG = {
+      apiKey: config.firebaseApiKey,
+      projectId: config.firebaseProjectId,
+      appId: config.firebaseAppId,
+      geminiApiProvider: config.firebaseApiProvider,
+      modelName: config.firebaseModelName,
+      useAppCheck: config.firebaseUseAppCheck,
+      reCaptchaSiteKey: config.firebaseReCaptchaSiteKey,
+      useLimitedUseAppCheckTokens: config.firebaseUseLimitedUseAppCheckTokens,
+    };
+  } else if (backend === 'transformers') {
+    window.TRANSFORMERS_CONFIG = {
+      apiKey: 'transformers',
+      modelName: config.transformersModelName,
+      device: config.transformersDevice,
+      dtype: config.transformersDtype,
+      env: {
+        allowRemoteModels: true,
+        backends: {
+          onnx: {
+            wasm: {
+              wasmPaths: chrome.runtime.getURL('/src/transformers-assets/'),
+            },
+          },
+        },
+      },
+    };
+  }
+}
+
+function getApiClass(promptApiModule, apiType, config) {
+  const nativeClass = window[apiType || 'LanguageModel'];
+
+  const ApiClass =
+    promptApiModule.LanguageModel ||
+    promptApiModule.default?.LanguageModel ||
+    promptApiModule.default ||
+    nativeClass;
+
+  // If forceInjection is false and we have a native class, prefer it
+  if (
+    !config.forceInjection &&
+    nativeClass &&
+    typeof nativeClass.create === 'function'
+  ) {
+    return nativeClass;
+  }
+
+  return ApiClass;
+}

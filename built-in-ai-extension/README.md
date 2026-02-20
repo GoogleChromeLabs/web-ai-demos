@@ -16,8 +16,7 @@ A Chrome extension that injects polyfills for the built-in AI APIs, namely
 ## Installation
 
 1. Clone this repository.
-2. Run `npm install --ignore-scripts`. This will automatically copy the
-   necessary polyfill files into the `lib/` directory via the `prepare` script.
+2. Run `npm install`.
 3. Open Chrome and go to `chrome://extensions/`.
 4. Enable "Developer mode".
 5. Click "Load unpacked" and select the extension directory.
