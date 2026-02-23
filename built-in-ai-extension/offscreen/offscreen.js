@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // offscreen/offscreen.js
 
 let sessions = new Map(); // requestId -> session instance
