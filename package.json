@@ -5,6 +5,6 @@
   "author": "",
   "license": "Apache-2.0",
   "scripts": {
-    "add-license-headers": "node scripts/add-license-headers.js"
+    "add-license-headers": "node scripts/add-license-headers.cjs"
   }
 }

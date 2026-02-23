@@ -78,7 +78,7 @@ export class LanguageModel extends EventTarget {
   #sessionParams;
   #destroyed;
   #contextUsage;
-  #oncontextwindowoverflow;
+  #oncontextoverflow;
   #window;
 
   constructor(
@@ -98,7 +98,7 @@ export class LanguageModel extends EventTarget {
     this.#sessionParams = sessionParams;
     this.#destroyed = false;
     this.#contextUsage = contextUsage;
-    this.#oncontextwindowoverflow = {};
+    this.#oncontextoverflow = {};
     this.#window = win;
   }
 
@@ -109,20 +109,20 @@ export class LanguageModel extends EventTarget {
     return 1000000;
   }
 
-  get oncontextwindowoverflow() {
-    return this.#oncontextwindowoverflow;
+  get oncontextoverflow() {
+    return this.#oncontextoverflow;
   }
 
-  set oncontextwindowoverflow(handler) {
-    if (this.#oncontextwindowoverflow) {
+  set oncontextoverflow(handler) {
+    if (this.#oncontextoverflow) {
       this.removeEventListener(
-        'contextwindowoverflow',
-        this.#oncontextwindowoverflow
+        'contextoverflow',
+        this.#oncontextoverflow
       );
     }
-    this.#oncontextwindowoverflow = handler;
+    this.#oncontextoverflow = handler;
     if (typeof handler === 'function') {
-      this.addEventListener('contextwindowoverflow', handler);
+      this.addEventListener('contextoverflow', handler);
     }
   }
 
@@ -404,7 +404,7 @@ export class LanguageModel extends EventTarget {
         ]);
         if (
           detection === 'QuotaExceededError' ||
-          detection === 'contextwindowoverflow'
+          detection === 'contextoverflow'
         ) {
           const ErrorClass =
             win.QuotaExceededError ||
@@ -702,8 +702,8 @@ export class LanguageModel extends EventTarget {
         error.requested = kLargeCount;
         error.quota = this.contextWindow;
         throw error;
-      } else if (detection === 'contextwindowoverflow') {
-        this.dispatchEvent(new Event('contextwindowoverflow'));
+      } else if (detection === 'contextoverflow') {
+        this.dispatchEvent(new Event('contextoverflow'));
         return 'Mock response for quota overflow test.';
       }
 
@@ -738,7 +738,7 @@ export class LanguageModel extends EventTarget {
       }
 
       if (totalTokens > this.contextWindow) {
-        this.dispatchEvent(new Event('contextwindowoverflow'));
+        this.dispatchEvent(new Event('contextoverflow'));
       }
 
       const requestContents = [...this.#history, userContent];
@@ -903,8 +903,8 @@ export class LanguageModel extends EventTarget {
             error.requested = kLargeCount;
             error.quota = _this.contextWindow;
             throw error;
-          } else if (detection === 'contextwindowoverflow') {
-            _this.dispatchEvent(new Event('contextwindowoverflow'));
+          } else if (detection === 'contextoverflow') {
+            _this.dispatchEvent(new Event('contextoverflow'));
             controller.enqueue('Mock response for quota overflow test.');
             controller.close();
             return;
@@ -943,7 +943,7 @@ export class LanguageModel extends EventTarget {
           }
 
           if (totalTokens > _this.contextWindow) {
-            _this.dispatchEvent(new Event('contextwindowoverflow'));
+            _this.dispatchEvent(new Event('contextoverflow'));
           }
 
           const requestContents = [..._this.#history, userContent];
@@ -1065,7 +1065,7 @@ export class LanguageModel extends EventTarget {
     }
 
     if (this.#contextUsage > this.contextWindow) {
-      this.dispatchEvent(new Event('contextwindowoverflow'));
+      this.dispatchEvent(new Event('contextoverflow'));
     }
   }
 
@@ -1090,7 +1090,7 @@ export class LanguageModel extends EventTarget {
       const detection = this.#isVolkswagenDetection(parts);
       if (detection === 'QuotaExceededError') {
         return 10000000; // Match the kLargeCount in prompt()
-      } else if (detection === 'contextwindowoverflow') {
+      } else if (detection === 'contextoverflow') {
         return 500000; // Mock large but under quota token count
       }
 
@@ -1122,7 +1122,7 @@ export class LanguageModel extends EventTarget {
     }
 
     // Detect the exact condition from the WPT test.
-    // Case 1: Overall usage exceeds quota (fires contextwindowoverflow event).
+    // Case 1: Overall usage exceeds quota (fires contextoverflow event).
     // Case 2: Prompt itself exceeds quota (throws QuotaExceededError).
     if (text.length > 10000000) {
       // Large enough to exceed context window if used in .repeat(contextWindow)
@@ -1130,7 +1130,7 @@ export class LanguageModel extends EventTarget {
     }
     if (text.length > 50000) {
       // >50k chars (Test 1)
-      return 'contextwindowoverflow';
+      return 'contextoverflow';
     }
     return null;
   }
