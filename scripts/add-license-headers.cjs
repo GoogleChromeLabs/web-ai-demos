@@ -22,17 +22,20 @@ const HTML_HEADER = `<!--
 -->
 `;
 
-const files = execSync(`find . -not -path '*/.*' -not -path './node_modules/*' -not -path '*/node_modules/*' -not -path './dist/*' -not -path '*/dist/*' -not -path './build/*' -not -path '*/build/*' -not -path './tests/*' -not -path '*/tests/*' -not -path './scripts/*' \\( -name "*.js" -o -name "*.ts" -o -name "*.css" -o -name "*.html" -o -name "*.jsx" -o -name "*.tsx" \\) -type f -exec grep -L "SPDX-License-Identifier: Apache-2.0" {} +`)
-  .toString()
-  .trim()
-  .split('\n')
-  .filter(f => f.length > 0);
+const findCommand = `find . -not -path '*/.*' -not -path './node_modules/*' -not -path '*/node_modules/*' -not -path './dist/*' -not -path '*/dist/*' -not -path './build/*' -not -path '*/build/*' -not -path './tests/*' -not -path '*/tests/*' -not -path './scripts/*' \\( -name "*.js" -o -name "*.ts" -o -name "*.css" -o -name "*.html" -o -name "*.jsx" -o -name "*.tsx" \\) -type f`;
+const files = execSync(findCommand).toString().trim().split('\n').filter(f => f.length > 0);
 
-console.log(`Found ${files.length} files to process.`);
+console.log(`Found ${files.length} candidate files.`);
+
+let processedCount = 0;
 
 files.forEach(file => {
-  const ext = path.extname(file);
   const content = fs.readFileSync(file, 'utf8');
+  if (content.includes('SPDX-License-Identifier: Apache-2.0')) {
+    return;
+  }
+
+  const ext = path.extname(file);
   let header = '';
 
   if (['.js', '.ts', '.css', '.jsx', '.tsx'].includes(ext)) {
@@ -44,9 +47,12 @@ files.forEach(file => {
   if (header) {
     console.log(`Adding header to: ${file}`);
     fs.writeFileSync(file, header + content, 'utf8');
+    processedCount++;
   } else {
     console.warn(`No header defined for extension ${ext}: ${file}`);
   }
 });
+
+console.log(`Processed ${processedCount} files.`);
 
 console.log('Done!');
