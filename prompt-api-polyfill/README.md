@@ -151,17 +151,6 @@ npm install prompt-api-polyfill
         },
       },
     },
-    env: {
-      // Optional: Pass low-level Transformers.js environment overrides
-      allowRemoteModels: true,
-      backends: {
-        onnx: {
-          wasm: {
-            wasmPaths: 'https://cdn.example.com/wasm-assets/',
-          },
-        },
-      },
-    },
   };
 
   if (!('LanguageModel' in window)) {
@@ -247,18 +236,6 @@ This repo ships with a template file:
   // For Transformers.js:
   "device": "webgpu",
   "dtype": "q4f16",
-
-  // Optional library-level overrides:
-  "env": {
-    "allowRemoteModels": true,
-    "backends": {
-      "onnx": {
-        "wasm": {
-          "wasmPaths": "https://cdn.example.com/wasm-assets/"
-        }
-      }
-    }
-  }
   // Optional library-level overrides:
   "env": {
     "allowRemoteModels": true,
