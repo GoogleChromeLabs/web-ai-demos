@@ -20,6 +20,7 @@
 import './async-iterator-polyfill.js';
 import MultimodalConverter from './multimodal-converter.js';
 import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
+import { BACKENDS, getBackendClass } from './backends-registry.js';
 
 // --- Helper to convert initial History ---
 async function convertToHistory(prompts, win = globalThis) {
@@ -175,24 +176,7 @@ export class LanguageModel extends EventTarget {
     return backendClass.availability(options);
   }
 
-  static #backends = [
-    {
-      config: 'FIREBASE_CONFIG',
-      path: './backends/firebase.js',
-    },
-    {
-      config: 'GEMINI_CONFIG',
-      path: './backends/gemini.js',
-    },
-    {
-      config: 'OPENAI_CONFIG',
-      path: './backends/openai.js',
-    },
-    {
-      config: 'TRANSFORMERS_CONFIG',
-      path: './backends/transformers.js',
-    },
-  ];
+  static #backends = BACKENDS;
 
   static #getBackendInfo(win = globalThis) {
     for (const b of LanguageModel.#backends) {
@@ -201,32 +185,18 @@ export class LanguageModel extends EventTarget {
         return { ...b, configValue: config };
       }
     }
+    const configNames = LanguageModel.#backends
+      .map((b) => `window.${b.config}`)
+      .join(', ');
     throw new (win.DOMException || globalThis.DOMException)(
-      'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, window.OPENAI_CONFIG, or window.TRANSFORMERS_CONFIG.',
+      `Prompt API Polyfill: No backend configuration found. Please set one of: ${configNames}.`,
       'NotSupportedError'
     );
   }
 
   static async #getBackendClass(win = globalThis) {
     const info = LanguageModel.#getBackendInfo(win);
-    // Explicitly use literal strings for dynamic imports to support static analysis
-    // by CDNs like esm.sh and bundlers like Vite.
-    if (info.path === './backends/firebase.js') {
-      return (await import('./backends/firebase.js')).default;
-    }
-    if (info.path === './backends/gemini.js') {
-      return (await import('./backends/gemini.js')).default;
-    }
-    if (info.path === './backends/openai.js') {
-      return (await import('./backends/openai.js')).default;
-    }
-    if (info.path === './backends/transformers.js') {
-      return (await import('./backends/transformers.js')).default;
-    }
-    throw new (win.DOMException || globalThis.DOMException)(
-      `Prompt API Polyfill: Unknown backend path "${info.path}".`,
-      'NotSupportedError'
-    );
+    return getBackendClass(info.path);
   }
 
   static async #validateOptions(options = {}, win = globalThis) {
