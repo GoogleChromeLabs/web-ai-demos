@@ -168,8 +168,8 @@ including:
 - `LanguageModel.create()` with options
 - `prompt()` and `promptStreaming()`
 - Multimodal inputs (text, image, audio)
-- `append()` and `measureInputUsage()`
-- Quota handling via `onquotaoverflow`
+- `append()` and `measureContextUsage()`
+- Quota handling via `oncontextwindowoverflow`
 - `clone()` and `destroy()`
 
 A simplified version of how it is wired up:
