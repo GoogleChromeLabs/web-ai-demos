@@ -94,8 +94,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse({
             success: true,
             attributes: {
-              inputUsage: session.inputUsage,
-              inputQuota: session.inputQuota,
+              contextUsage: session.contextUsage,
+              contextWindow: session.contextWindow,
             },
           });
         } finally {
@@ -167,8 +167,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse({
             success: true,
             attributes: {
-              inputUsage: session.inputUsage,
-              inputQuota: session.inputQuota,
+              contextUsage: session.contextUsage,
+              contextWindow: session.contextWindow,
             },
           });
         } finally {
@@ -236,8 +236,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             success: true,
             result,
             attributes: {
-              inputUsage: session.inputUsage,
-              inputQuota: session.inputQuota,
+              contextUsage: session.contextUsage,
+              contextWindow: session.contextWindow,
             },
           });
         } finally {
@@ -284,8 +284,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   senderFrameId,
                   // Also include final usage meta if available
                   attributes: {
-                    inputUsage: session.inputUsage,
-                    inputQuota: session.inputQuota,
+                    contextUsage: session.contextUsage,
+                    contextWindow: session.contextWindow,
                   },
                 });
                 break;
@@ -319,8 +319,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({
           success: true,
           attributes: {
-            inputUsage: session.inputUsage,
-            inputQuota: session.inputQuota,
+            contextUsage: session.contextUsage,
+            contextWindow: session.contextWindow,
           },
         });
       } else if (message.type === 'destroy-session') {
