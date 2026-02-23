@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { BaseTaskModel } from './base-task-model.js';
 import { SummarizerPromptBuilder } from './summarizer-prompt-builder.js';
 
@@ -109,11 +114,17 @@ export class Summarizer extends BaseTaskModel {
   }
 
   get expectedInputLanguages() {
-    return this.#options.expectedInputLanguages || null;
+    if (this.#options.expectedInputLanguages) {
+      return Object.freeze([...this.#options.expectedInputLanguages]);
+    }
+    return null;
   }
 
   get expectedContextLanguages() {
-    return this.#options.expectedContextLanguages || null;
+    if (this.#options.expectedContextLanguages) {
+      return Object.freeze([...this.#options.expectedContextLanguages]);
+    }
+    return null;
   }
 
   get outputLanguage() {

@@ -140,6 +140,17 @@ npm install prompt-api-polyfill
     apiKey: 'dummy', // Required for now by the loader
     device: 'webgpu', // 'webgpu' or 'cpu'
     dtype: 'q4f16', // Quantization level
+    env: {
+      // Optional: Pass low-level Transformers.js environment overrides
+      allowRemoteModels: true,
+      backends: {
+        onnx: {
+          wasm: {
+            wasmPaths: 'https://cdn.example.com/wasm-assets/',
+          },
+        },
+      },
+    },
   };
 
   if (!('LanguageModel' in window)) {
@@ -168,8 +179,8 @@ including:
 - `LanguageModel.create()` with options
 - `prompt()` and `promptStreaming()`
 - Multimodal inputs (text, image, audio)
-- `append()` and `measureInputUsage()`
-- Quota handling via `onquotaoverflow`
+- `append()` and `measureContextUsage()`
+- Quota handling via `oncontextwindowoverflow`
 - `clone()` and `destroy()`
 
 A simplified version of how it is wired up:
@@ -225,6 +236,17 @@ This repo ships with a template file:
   // For Transformers.js:
   "device": "webgpu",
   "dtype": "q4f16",
+  // Optional library-level overrides:
+  "env": {
+    "allowRemoteModels": true,
+    "backends": {
+      "onnx": {
+        "wasm": {
+          "wasmPaths": "https://cdn.example.com/wasm-assets/",
+        },
+      },
+    },
+  },
 }
 ```
 
@@ -281,7 +303,17 @@ Then open `.env.json` and fill in the values.
   "apiKey": "dummy",
   "modelName": "onnx-community/gemma-3-1b-it-ONNX-GQA",
   "device": "webgpu",
-  "dtype": "q4f16"
+  "dtype": "q4f16",
+  "env": {
+    "allowRemoteModels": false,
+    "backends": {
+      "onnx": {
+        "wasm": {
+          "wasmPaths": "https://cdn.example.com/wasm-assets/"
+        }
+      }
+    }
+  }
 }
 ```
 
@@ -304,6 +336,9 @@ Then open `.env.json` and fill in the values.
 
 - `device`: **Transformers.js only**. Either `"webgpu"` or `"cpu"`.
 - `dtype`: **Transformers.js only**. Quantization level (e.g., `"q4f16"`).
+- `env` (optional): **Transformers.js only**. A flexible object to override
+  [Transformers.js environment variables](https://huggingface.co/docs/transformers.js/api/env).
+  This is useful for specifying local `wasmPaths` or proxy settings.
 
 - `modelName` (optional): The model ID to use. If not provided, the polyfill
   uses the defaults defined in [`backends/defaults.js`](backends/defaults.js).
@@ -424,20 +459,16 @@ export default class CustomBackend extends PolyfillBackend {
 
 ### Register your backend
 
-The polyfill uses a "First-Match Priority" strategy based on global
-configuration. You need to register your backend in the `prompt-api-polyfill.js`
-file by adding it to the static `#backends` array:
+The polyfill uses an automated registration strategy. To register your new
+backend, simply run the registration script:
 
-```js
-// prompt-api-polyfill.js
-static #backends = [
-  // ... existing backends
-  {
-    config: 'CUSTOM_CONFIG', // The global object to look for on `window`
-    path: './backends/custom.js',
-  },
-];
+```bash
+npm run generate:registry
 ```
+
+This updates the `backends-registry.js` file, which the polyfill imports. The
+registry contains the configuration mapping and a dynamic loader that ensures
+compatibility with bundlers and CDNs.
 
 ### Set a default model
 
@@ -454,15 +485,23 @@ export const DEFAULT_MODELS = {
 
 ### Enable local development and testing
 
-The project uses a discovery script (`scripts/list-backends.js`) to generate
-test matrices. To include your new backend in the test runner, create a
-`.env-[name].json` file (for example, `.env-custom.json`) in the root directory:
+The project uses a discovery script (`scripts/backend-discovery.js`) to generate
+test matrices and list active backends based on the presence of
+`.env-[name].json` files. To include your new backend in the test runner, create
+a `.env-[name].json` file (for example, `.env-custom.json`) in the root
+directory:
 
 ```json
 {
   "apiKey": "your-api-key-here",
   "modelName": "custom-model-pro-v1"
 }
+```
+
+Then run the WPT generation script:
+
+```bash
+npm run generate:wpt
 ```
 
 ### Verify via Web Platform Tests (WPT)

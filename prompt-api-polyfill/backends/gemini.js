@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { GoogleGenAI } from '@google/genai';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';

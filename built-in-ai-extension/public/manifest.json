@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Built-in AI",
+  "version": "1.0.1",
+  "description": "Polyfills for the built-in AI APIs like LanguageModel, Summarizer, and Writer.",
+  "permissions": ["storage", "offscreen", "tabs"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "options_page": "options/options.html",
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "icons": {
+    "128": "icons/icon128.png",
+    "512": "icons/icon512.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/main-world-entry.js", "src/chunks/*.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 if (!('showOpenFilePicker' in window)) {
   await import('https://cdn.jsdelivr.net/npm/show-open-file-picker/polyfill.js');
 }

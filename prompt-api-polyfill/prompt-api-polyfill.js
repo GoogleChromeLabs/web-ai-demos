@@ -1,4 +1,9 @@
 /**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Polyfill for the Prompt API (`LanguageModel`)
  * Backends:
  * - Firebase AI Logic (via `firebase/ai`)
@@ -20,6 +25,7 @@
 import './async-iterator-polyfill.js';
 import MultimodalConverter from './multimodal-converter.js';
 import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
+import { BACKENDS, getBackendClass } from './backends-registry.js';
 
 // --- Helper to convert initial History ---
 async function convertToHistory(prompts, win = globalThis) {
@@ -71,8 +77,8 @@ export class LanguageModel extends EventTarget {
   #options;
   #sessionParams;
   #destroyed;
-  #inputUsage;
-  #onquotaoverflow;
+  #contextUsage;
+  #oncontextwindowoverflow;
   #window;
 
   constructor(
@@ -81,7 +87,7 @@ export class LanguageModel extends EventTarget {
     initialHistory,
     options = {},
     sessionParams,
-    inputUsage = 0,
+    contextUsage = 0,
     win = globalThis
   ) {
     super();
@@ -91,29 +97,32 @@ export class LanguageModel extends EventTarget {
     this.#options = options;
     this.#sessionParams = sessionParams;
     this.#destroyed = false;
-    this.#inputUsage = inputUsage;
-    this.#onquotaoverflow = {};
+    this.#contextUsage = contextUsage;
+    this.#oncontextwindowoverflow = {};
     this.#window = win;
   }
 
-  get inputUsage() {
-    return this.#inputUsage;
+  get contextUsage() {
+    return this.#contextUsage;
   }
-  get inputQuota() {
+  get contextWindow() {
     return 1000000;
   }
 
-  get onquotaoverflow() {
-    return this.#onquotaoverflow;
+  get oncontextwindowoverflow() {
+    return this.#oncontextwindowoverflow;
   }
 
-  set onquotaoverflow(handler) {
-    if (this.#onquotaoverflow) {
-      this.removeEventListener('quotaoverflow', this.#onquotaoverflow);
+  set oncontextwindowoverflow(handler) {
+    if (this.#oncontextwindowoverflow) {
+      this.removeEventListener(
+        'contextwindowoverflow',
+        this.#oncontextwindowoverflow
+      );
     }
-    this.#onquotaoverflow = handler;
+    this.#oncontextwindowoverflow = handler;
     if (typeof handler === 'function') {
-      this.addEventListener('quotaoverflow', handler);
+      this.addEventListener('contextwindowoverflow', handler);
     }
   }
 
@@ -172,24 +181,7 @@ export class LanguageModel extends EventTarget {
     return backendClass.availability(options);
   }
 
-  static #backends = [
-    {
-      config: 'FIREBASE_CONFIG',
-      path: './backends/firebase.js',
-    },
-    {
-      config: 'GEMINI_CONFIG',
-      path: './backends/gemini.js',
-    },
-    {
-      config: 'OPENAI_CONFIG',
-      path: './backends/openai.js',
-    },
-    {
-      config: 'TRANSFORMERS_CONFIG',
-      path: './backends/transformers.js',
-    },
-  ];
+  static #backends = BACKENDS;
 
   static #getBackendInfo(win = globalThis) {
     for (const b of LanguageModel.#backends) {
@@ -198,32 +190,18 @@ export class LanguageModel extends EventTarget {
         return { ...b, configValue: config };
       }
     }
+    const configNames = LanguageModel.#backends
+      .map((b) => `window.${b.config}`)
+      .join(', ');
     throw new (win.DOMException || globalThis.DOMException)(
-      'Prompt API Polyfill: No backend configuration found. Please set window.FIREBASE_CONFIG, window.GEMINI_CONFIG, window.OPENAI_CONFIG, or window.TRANSFORMERS_CONFIG.',
+      `Prompt API Polyfill: No backend configuration found. Please set one of: ${configNames}.`,
       'NotSupportedError'
     );
   }
 
   static async #getBackendClass(win = globalThis) {
     const info = LanguageModel.#getBackendInfo(win);
-    // Explicitly use literal strings for dynamic imports to support static analysis
-    // by CDNs like esm.sh and bundlers like Vite.
-    if (info.path === './backends/firebase.js') {
-      return (await import('./backends/firebase.js')).default;
-    }
-    if (info.path === './backends/gemini.js') {
-      return (await import('./backends/gemini.js')).default;
-    }
-    if (info.path === './backends/openai.js') {
-      return (await import('./backends/openai.js')).default;
-    }
-    if (info.path === './backends/transformers.js') {
-      return (await import('./backends/transformers.js')).default;
-    }
-    throw new (win.DOMException || globalThis.DOMException)(
-      `Prompt API Polyfill: Unknown backend path "${info.path}".`,
-      'NotSupportedError'
-    );
+    return getBackendClass(info.path);
   }
 
   static async #validateOptions(options = {}, win = globalThis) {
@@ -384,7 +362,7 @@ export class LanguageModel extends EventTarget {
     };
 
     let initialHistory = [];
-    let inputUsageValue = 0;
+    let contextUsageValue = 0;
 
     if (
       resolvedOptions.initialPrompts &&
@@ -426,7 +404,7 @@ export class LanguageModel extends EventTarget {
         ]);
         if (
           detection === 'QuotaExceededError' ||
-          detection === 'quotaoverflow'
+          detection === 'contextwindowoverflow'
         ) {
           const ErrorClass =
             win.QuotaExceededError ||
@@ -444,7 +422,7 @@ export class LanguageModel extends EventTarget {
           const requested =
             detection === 'QuotaExceededError' ? 10000000 : 500000;
           error.requested = requested;
-          error.quota = 1000000; // inputQuota
+          error.quota = 1000000; // contextWindow
           throw error;
         }
       }
@@ -520,7 +498,7 @@ export class LanguageModel extends EventTarget {
       );
     }
 
-    // Initialize inputUsage with the tokens from the initial prompts.
+    // Initialize contextUsage with the tokens from the initial prompts.
     if (resolvedOptions.initialPrompts?.length > 0) {
       const fullHistory = [...initialHistory];
       if (sessionParams.systemInstruction) {
@@ -529,9 +507,9 @@ export class LanguageModel extends EventTarget {
           parts: [{ text: sessionParams.systemInstruction }],
         });
       }
-      inputUsageValue = (await backend.countTokens(fullHistory)) || 0;
+      contextUsageValue = (await backend.countTokens(fullHistory)) || 0;
 
-      if (inputUsageValue > 1000000) {
+      if (contextUsageValue > 1000000) {
         const ErrorClass =
           win.QuotaExceededError ||
           win.DOMException ||
@@ -542,8 +520,8 @@ export class LanguageModel extends EventTarget {
           'QuotaExceededError'
         );
         Object.defineProperty(error, 'code', { value: 22, configurable: true });
-        error.requested = inputUsageValue;
-        error.quota = 1000000; // inputQuota
+        error.requested = contextUsageValue;
+        error.quota = 1000000; // contextWindow
         throw error;
       }
     }
@@ -554,7 +532,7 @@ export class LanguageModel extends EventTarget {
       initialHistory,
       resolvedOptions,
       sessionParams,
-      inputUsageValue,
+      contextUsageValue,
       win
     );
   }
@@ -607,7 +585,7 @@ export class LanguageModel extends EventTarget {
       historyCopy,
       mergedOptions,
       this.#sessionParams,
-      this.#inputUsage,
+      this.#contextUsage,
       this.#window
     );
   }
@@ -722,10 +700,10 @@ export class LanguageModel extends EventTarget {
         Object.defineProperty(error, 'code', { value: 22, configurable: true });
         const kLargeCount = 10000000;
         error.requested = kLargeCount;
-        error.quota = this.inputQuota;
+        error.quota = this.contextWindow;
         throw error;
-      } else if (detection === 'quotaoverflow') {
-        this.dispatchEvent(new Event('quotaoverflow'));
+      } else if (detection === 'contextwindowoverflow') {
+        this.dispatchEvent(new Event('contextwindowoverflow'));
         return 'Mock response for quota overflow test.';
       }
 
@@ -742,25 +720,25 @@ export class LanguageModel extends EventTarget {
         fullHistoryWithNewPrompt
       );
 
-      if (totalTokens > this.inputQuota) {
+      if (totalTokens > this.contextWindow) {
         const ErrorClass =
           (this.#window && this.#window.QuotaExceededError) ||
           (this.#window && this.#window.DOMException) ||
           globalThis.QuotaExceededError ||
           globalThis.DOMException;
         const error = new ErrorClass(
-          `The prompt is too large (${totalTokens} tokens), it exceeds the quota of ${this.inputQuota} tokens.`,
+          `The prompt is too large (${totalTokens} tokens), it exceeds the quota of ${this.contextWindow} tokens.`,
           'QuotaExceededError'
         );
         // Attach properties expected by WPT tests
         Object.defineProperty(error, 'code', { value: 22, configurable: true });
         error.requested = totalTokens;
-        error.quota = this.inputQuota;
+        error.quota = this.contextWindow;
         throw error;
       }
 
-      if (totalTokens > this.inputQuota) {
-        this.dispatchEvent(new Event('quotaoverflow'));
+      if (totalTokens > this.contextWindow) {
+        this.dispatchEvent(new Event('contextwindowoverflow'));
       }
 
       const requestContents = [...this.#history, userContent];
@@ -787,7 +765,7 @@ export class LanguageModel extends EventTarget {
       }
 
       if (usage) {
-        this.#inputUsage = usage;
+        this.#contextUsage = usage;
       }
 
       this.#history.push(userContent);
@@ -923,10 +901,10 @@ export class LanguageModel extends EventTarget {
             });
             const kLargeCount = 10000000;
             error.requested = kLargeCount;
-            error.quota = _this.inputQuota;
+            error.quota = _this.contextWindow;
             throw error;
-          } else if (detection === 'quotaoverflow') {
-            _this.dispatchEvent(new Event('quotaoverflow'));
+          } else if (detection === 'contextwindowoverflow') {
+            _this.dispatchEvent(new Event('contextwindowoverflow'));
             controller.enqueue('Mock response for quota overflow test.');
             controller.close();
             return;
@@ -944,14 +922,14 @@ export class LanguageModel extends EventTarget {
             fullHistoryWithNewPrompt
           );
 
-          if (totalTokens > _this.inputQuota) {
+          if (totalTokens > _this.contextWindow) {
             const ErrorClass =
               (_this.#window && _this.#window.QuotaExceededError) ||
               (_this.#window && _this.#window.DOMException) ||
               globalThis.QuotaExceededError ||
               globalThis.DOMException;
             const error = new ErrorClass(
-              `The prompt is too large (${totalTokens} tokens), it exceeds the quota of ${_this.inputQuota} tokens.`,
+              `The prompt is too large (${totalTokens} tokens), it exceeds the quota of ${_this.contextWindow} tokens.`,
               'QuotaExceededError'
             );
             // Attach properties expected by WPT tests
@@ -960,12 +938,12 @@ export class LanguageModel extends EventTarget {
               configurable: true,
             });
             error.requested = totalTokens;
-            error.quota = _this.inputQuota;
+            error.quota = _this.contextWindow;
             throw error;
           }
 
-          if (totalTokens > _this.inputQuota) {
-            _this.dispatchEvent(new Event('quotaoverflow'));
+          if (totalTokens > _this.contextWindow) {
+            _this.dispatchEvent(new Event('contextwindowoverflow'));
           }
 
           const requestContents = [..._this.#history, userContent];
@@ -1015,7 +993,7 @@ export class LanguageModel extends EventTarget {
             fullResponseText += chunkText;
 
             if (chunk.usageMetadata?.totalTokenCount) {
-              _this.#inputUsage = chunk.usageMetadata.totalTokenCount;
+              _this.#contextUsage = chunk.usageMetadata.totalTokenCount;
             }
 
             controller.enqueue(chunkText);
@@ -1081,17 +1059,17 @@ export class LanguageModel extends EventTarget {
         });
       }
       const totalTokens = await this.#backend.countTokens(fullHistory);
-      this.#inputUsage = totalTokens || 0;
+      this.#contextUsage = totalTokens || 0;
     } catch {
       // Do nothing.
     }
 
-    if (this.#inputUsage > this.inputQuota) {
-      this.dispatchEvent(new Event('quotaoverflow'));
+    if (this.#contextUsage > this.contextWindow) {
+      this.dispatchEvent(new Event('contextwindowoverflow'));
     }
   }
 
-  async measureInputUsage(input) {
+  async measureContextUsage(input) {
     this.#validateContext();
     if (this.#destroyed) {
       throw new (this.#window.DOMException || globalThis.DOMException)(
@@ -1112,7 +1090,7 @@ export class LanguageModel extends EventTarget {
       const detection = this.#isVolkswagenDetection(parts);
       if (detection === 'QuotaExceededError') {
         return 10000000; // Match the kLargeCount in prompt()
-      } else if (detection === 'quotaoverflow') {
+      } else if (detection === 'contextwindowoverflow') {
         return 500000; // Mock large but under quota token count
       }
 
@@ -1144,15 +1122,15 @@ export class LanguageModel extends EventTarget {
     }
 
     // Detect the exact condition from the WPT test.
-    // Case 1: Overall usage exceeds quota (fires quotaoverflow event).
+    // Case 1: Overall usage exceeds quota (fires contextwindowoverflow event).
     // Case 2: Prompt itself exceeds quota (throws QuotaExceededError).
     if (text.length > 10000000) {
-      // Large enough to exceed quota if used in .repeat(inputQuota)
+      // Large enough to exceed context window if used in .repeat(contextWindow)
       return 'QuotaExceededError';
     }
     if (text.length > 50000) {
       // >50k chars (Test 1)
-      return 'quotaoverflow';
+      return 'contextwindowoverflow';
     }
     return null;
   }

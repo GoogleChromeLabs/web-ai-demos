@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "description": "This repository contains demos related to client-side (in-browser) AI.",
   "author": "",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "scripts": {
+    "add-license-headers": "node scripts/add-license-headers.js"
+  }
 }

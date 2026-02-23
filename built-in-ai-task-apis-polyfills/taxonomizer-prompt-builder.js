@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 export class TaxonomizerPromptBuilder {
   static #systemPromptTemplate = `You are an expert in content categorization using the IAB Content Taxonomy v3.1.
 Your task is to analyze the provided text and predict the most relevant categories.

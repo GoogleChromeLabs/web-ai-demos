@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { env, pipeline } from '@xenova/transformers';
 import { MODEL_STATUS } from './consts.js';
 

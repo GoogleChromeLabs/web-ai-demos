@@ -1,15 +1,22 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { discoverBackends } from './scripts/backend-discovery.js';
+
+const backends = discoverBackends();
 
 export default defineConfig({
   build: {
     lib: {
       entry: {
         'prompt-api-polyfill': resolve(__dirname, 'prompt-api-polyfill.js'),
-        'backends/firebase': resolve(__dirname, 'backends/firebase.js'),
-        'backends/gemini': resolve(__dirname, 'backends/gemini.js'),
-        'backends/openai': resolve(__dirname, 'backends/openai.js'),
-        'backends/transformers': resolve(__dirname, 'backends/transformers.js'),
+        ...Object.fromEntries(
+          backends.map((b) => [`backends/${b.name}`, b.fullPath])
+        ),
       },
       name: 'PromptAPIPolyfill',
       formats: ['es'],

@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -5,26 +10,13 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WPT_DIR = path.resolve(__dirname, '../tests/wpt');
 
-const backendsDir = path.resolve(__dirname, '../backends');
-const backendFiles = fs
-  .readdirSync(backendsDir)
-  .filter(
-    (file) =>
-      file.endsWith('.js') && file !== 'base.js' && file !== 'defaults.js'
-  );
+import { discoverBackends } from './backend-discovery.js';
 
-const allBackends = backendFiles.map((file) => {
-  const name = file.replace('.js', '');
-  return {
-    name,
-    configKey: `${name.toUpperCase()}_CONFIG`,
-    file: `.env-${name}.json`,
-  };
-});
+const allBackends = discoverBackends();
 
 const backendConfigs = {};
 allBackends.forEach((b) => {
-  const fullPath = path.resolve(__dirname, '../', b.file);
+  const fullPath = path.resolve(__dirname, '../', b.envFile);
   if (fs.existsSync(fullPath)) {
     backendConfigs[b.configKey] = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
   }

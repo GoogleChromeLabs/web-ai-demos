@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { BaseTaskModel } from './base-task-model.js';
 import { RewriterPromptBuilder } from './rewriter-prompt-builder.js';
 
@@ -109,7 +114,17 @@ export class Rewriter extends BaseTaskModel {
   }
 
   get expectedInputLanguages() {
-    return this.#options.expectedInputLanguages || null;
+    if (this.#options.expectedInputLanguages) {
+      return Object.freeze([...this.#options.expectedInputLanguages]);
+    }
+    return null;
+  }
+
+  get expectedContextLanguages() {
+    if (this.#options.expectedContextLanguages) {
+      return Object.freeze([...this.#options.expectedContextLanguages]);
+    }
+    return null;
   }
 
   get outputLanguage() {

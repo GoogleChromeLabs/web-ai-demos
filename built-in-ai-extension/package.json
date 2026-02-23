@@ -1,0 +1,27 @@
+{
+  "name": "built-in-ai-extension",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "fix": "prettier --write .",
+    "lint": "prettier --check .",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "Thomas Steiner (tomac@google.com)",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "built-in-ai-task-apis-polyfills": "^1.2.0",
+    "prompt-api-polyfill": "^1.3.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.1",
+    "vite": "^7.3.1",
+    "node-gyp": "^12.2.0",
+    "node-addon-api": "^8.5.0"
+  }
+}
