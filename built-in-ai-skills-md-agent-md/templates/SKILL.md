@@ -149,7 +149,6 @@ Below are the latest Web IDLs for these APIs, extracted from the official
 specifications.
 
 <!-- BEGIN IDLS -->
-
 ### Translation API
 
 ```webidl
@@ -443,6 +442,7 @@ interface mixin DestroyableModel {
 interface LanguageModel : EventTarget {
   static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
   static Promise<Availability> availability(optional LanguageModelCreateCoreOptions options = {});
+  // **DEPRECATED**: This method is only available in extension contexts.
   static Promise<LanguageModelParams?> params();
 
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
@@ -459,21 +459,37 @@ interface LanguageModel : EventTarget {
     optional LanguageModelAppendOptions options = {}
   );
 
+
+  Promise<double> measureContextUsage(
+    LanguageModelPrompt input,
+    optional LanguageModelPromptOptions options = {}
+  );
+  readonly attribute double contextUsage;
+  readonly attribute unrestricted double contextWindow;
+  attribute EventHandler oncontextoverflow;
+
+  // **DEPRECATED**: This method is only available in extension contexts.
   Promise<double> measureInputUsage(
     LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   readonly attribute double inputUsage;
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   readonly attribute unrestricted double inputQuota;
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   attribute EventHandler onquotaoverflow;
 
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   readonly attribute unsigned long topK;
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   readonly attribute float temperature;
 
   Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
   undefined destroy();
 };
 
+// **DEPRECATED**: This interface and its attributes are only available in extension contexts.
 [Exposed=Window, SecureContext]
 interface LanguageModelParams {
   readonly attribute unsigned long defaultTopK;
@@ -498,7 +514,9 @@ dictionary LanguageModelTool {
 dictionary LanguageModelCreateCoreOptions {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
+  // **DEPRECATED**: This option is only allowed in extension contexts.
   unrestricted double topK;
+  // **DEPRECATED**: This option is only allowed in extension contexts.
   unrestricted double temperature;
 
   sequence<LanguageModelExpected> expectedInputs;

@@ -180,7 +180,7 @@ including:
 - `prompt()` and `promptStreaming()`
 - Multimodal inputs (text, image, audio)
 - `append()` and `measureContextUsage()`
-- Quota handling via `oncontextwindowoverflow`
+- Quota handling via `oncontextoverflow`
 - `clone()` and `destroy()`
 
 A simplified version of how it is wired up:

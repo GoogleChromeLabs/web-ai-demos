@@ -7,7 +7,7 @@
   "scripts": {
     "update-idls": "node scripts/fetch-idls.js",
     "postinstall": "node scripts/install.js",
-    "format": "prettier --write ."
+    "fix": "prettier --write ."
   },
   "keywords": [],
   "author": "",

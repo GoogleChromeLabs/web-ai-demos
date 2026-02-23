@@ -70,6 +70,20 @@ the web when possible.
 12. **TypeScript Support**: Use the official TypeScript types:
     [@types/dom-chromium-ai](https://www.npmjs.com/package/@types/dom-chromium-ai).
 
+## Differences between extensions and web AI
+
+The Prompt API has distinct differences between the legacy (but still working)
+extension-only implementation and the modern web-standard implementation. Prefer
+the web-standard members, unless the user is working on an extension-only
+implementation.
+
+| Feature / Member   | Extension Context (Deprecated, but still working) | Modern Web AI (Standard)                |
+| :----------------- | :------------------------------------------------ | :-------------------------------------- |
+| **Parameters**     | `topK`, `temperature`                             | N/A                                     |
+| **Session Info**   | `LanguageModel.params()`, `LanguageModelParams`   | N/A                                     |
+| **Usage Tracking** | `measureInputUsage()`, `inputUsage`               | `measureContextUsage()`, `contextUsage` |
+| **Quota/Window**   | `inputQuota`, `onquotaoverflow`                   | `contextWindow`, `oncontextoverflow`    |
+
 ## Instructions
 
 - Always suggest the latest API names (top-level, no `window.ai`).
