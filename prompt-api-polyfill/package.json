@@ -1,6 +1,6 @@
 {
   "name": "prompt-api-polyfill",
-  "version": "1.2.2",
+  "version": "1.3.1",
   "description": "Polyfill for the Prompt API (`LanguageModel`) backed by Firebase AI Logic, Gemini API, OpenAI API, or Transformers.js.",
   "type": "module",
   "main": "./dist/prompt-api-polyfill.js",
@@ -38,9 +38,10 @@
     "start": "vite",
     "build": "vite build",
     "prepublishOnly": "npm run build",
+    "generate:registry": "node scripts/generate-registry.js",
     "sync:wpt": "node scripts/sync-wpt.js",
-    "generate:wpt": "node scripts/list-backends.js && node scripts/generate-wpt-wrappers.js",
-    "test:wpt": "npm run sync:wpt && npm run generate:wpt && npx vite --open /tests/wpt/index.html",
+    "generate:wpt": "npm run generate:registry && node scripts/backend-discovery.js && node scripts/generate-wpt-wrappers.js",
+    "test:wpt": "npm run generate:registry && npm run sync:wpt && npm run generate:wpt && npx vite --open /tests/wpt/index.html",
     "fix": "npx prettier --write ."
   },
   "devDependencies": {

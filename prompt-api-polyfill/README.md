@@ -151,6 +151,17 @@ npm install prompt-api-polyfill
         },
       },
     },
+    env: {
+      // Optional: Pass low-level Transformers.js environment overrides
+      allowRemoteModels: true,
+      backends: {
+        onnx: {
+          wasm: {
+            wasmPaths: 'https://cdn.example.com/wasm-assets/',
+          },
+        },
+      },
+    },
   };
 
   if (!('LanguageModel' in window)) {
@@ -179,8 +190,8 @@ including:
 - `LanguageModel.create()` with options
 - `prompt()` and `promptStreaming()`
 - Multimodal inputs (text, image, audio)
-- `append()` and `measureInputUsage()`
-- Quota handling via `onquotaoverflow`
+- `append()` and `measureContextUsage()`
+- Quota handling via `oncontextwindowoverflow`
 - `clone()` and `destroy()`
 
 A simplified version of how it is wired up:
@@ -248,6 +259,17 @@ This repo ships with a template file:
       }
     }
   }
+  // Optional library-level overrides:
+  "env": {
+    "allowRemoteModels": true,
+    "backends": {
+      "onnx": {
+        "wasm": {
+          "wasmPaths": "https://cdn.example.com/wasm-assets/",
+        },
+      },
+    },
+  },
 }
 ```
 
@@ -460,20 +482,16 @@ export default class CustomBackend extends PolyfillBackend {
 
 ### Register your backend
 
-The polyfill uses a "First-Match Priority" strategy based on global
-configuration. You need to register your backend in the `prompt-api-polyfill.js`
-file by adding it to the static `#backends` array:
+The polyfill uses an automated registration strategy. To register your new
+backend, simply run the registration script:
 
-```js
-// prompt-api-polyfill.js
-static #backends = [
-  // ... existing backends
-  {
-    config: 'CUSTOM_CONFIG', // The global object to look for on `window`
-    path: './backends/custom.js',
-  },
-];
+```bash
+npm run generate:registry
 ```
+
+This updates the `backends-registry.js` file, which the polyfill imports. The
+registry contains the configuration mapping and a dynamic loader that ensures
+compatibility with bundlers and CDNs.
 
 ### Set a default model
 
@@ -490,15 +508,23 @@ export const DEFAULT_MODELS = {
 
 ### Enable local development and testing
 
-The project uses a discovery script (`scripts/list-backends.js`) to generate
-test matrices. To include your new backend in the test runner, create a
-`.env-[name].json` file (for example, `.env-custom.json`) in the root directory:
+The project uses a discovery script (`scripts/backend-discovery.js`) to generate
+test matrices and list active backends based on the presence of
+`.env-[name].json` files. To include your new backend in the test runner, create
+a `.env-[name].json` file (for example, `.env-custom.json`) in the root
+directory:
 
 ```json
 {
   "apiKey": "your-api-key-here",
   "modelName": "custom-model-pro-v1"
 }
+```
+
+Then run the WPT generation script:
+
+```bash
+npm run generate:wpt
 ```
 
 ### Verify via Web Platform Tests (WPT)
