@@ -451,9 +451,10 @@ export const DEFAULT_MODELS = {
 ### Enable local development and testing
 
 The project uses a discovery script (`scripts/backend-discovery.js`) to generate
-test matrices and list active backends based on the presence of `.env-[name].json`
-files. To include your new backend in the test runner, create a
-`.env-[name].json` file (for example, `.env-custom.json`) in the root directory:
+test matrices and list active backends based on the presence of
+`.env-[name].json` files. To include your new backend in the test runner, create
+a `.env-[name].json` file (for example, `.env-custom.json`) in the root
+directory:
 
 ```json
 {
