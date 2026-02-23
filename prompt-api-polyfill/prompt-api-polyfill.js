@@ -1,4 +1,9 @@
 /**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Polyfill for the Prompt API (`LanguageModel`)
  * Backends:
  * - Firebase AI Logic (via `firebase/ai`)
