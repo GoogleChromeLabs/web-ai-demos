@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // --- DOM Elements ---
 const newsContainer = document.getElementById('news-container');
 const readingLogList = document.getElementById('reading-log-list');

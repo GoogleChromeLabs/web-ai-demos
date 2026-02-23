@@ -1,4 +1,9 @@
 /**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Base class for Task APIs (Summarizer, Writer, Rewriter)
  */
 export class BaseTaskModel {

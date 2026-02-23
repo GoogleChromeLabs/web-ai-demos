@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { BaseTaskModel } from './base-task-model.js';
 import { TranslatorPromptBuilder } from './translator-prompt-builder.js';
 

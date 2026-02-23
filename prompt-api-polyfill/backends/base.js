@@ -1,4 +1,9 @@
 /**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Abstract class representing a backend for the LanguageModel polyfill.
  */
 export default class PolyfillBackend {
