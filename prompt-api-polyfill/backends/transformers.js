@@ -1,4 +1,4 @@
-import { pipeline, TextStreamer } from '@huggingface/transformers';
+import { pipeline, TextStreamer, env } from '@huggingface/transformers';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
 
@@ -17,6 +17,25 @@ export default class TransformersBackend extends PolyfillBackend {
     this.#device =
       config.device || DEFAULT_MODELS.transformers.device || 'webgpu';
     this.#dtype = config.dtype || DEFAULT_MODELS.transformers.dtype || 'q4f16';
+
+    if (config.env) {
+      const merge = (target, source) => {
+        for (const [key, value] of Object.entries(source)) {
+          if (
+            value &&
+            typeof value === 'object' &&
+            !Array.isArray(value) &&
+            target[key] &&
+            typeof target[key] === 'object'
+          ) {
+            merge(target[key], value);
+          } else {
+            target[key] = value;
+          }
+        }
+      };
+      merge(env, config.env);
+    }
   }
 
   /**
