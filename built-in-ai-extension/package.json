@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "format": "prettier --write .",
+    "fix": "prettier --write .",
     "lint": "prettier --check .",
     "preview": "vite preview"
   },
