@@ -79,15 +79,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (projectRoot !== packageRoot) {
     syncTemplates(projectRoot, false);
   } else {
-    console.log(
-      'Running inside the package root. Cleaning up and skipping sync.'
-    );
-    for (const template of templates) {
-      const targetPath = path.join(packageRoot, template.name);
-      if (fs.existsSync(targetPath)) {
-        fs.unlinkSync(targetPath);
-        console.log(`Deleted ${template.name} from package root.`);
-      }
-    }
+    console.log('Running inside the package root. Regenerating templates.');
+    syncTemplates(packageRoot, true);
   }
 }
