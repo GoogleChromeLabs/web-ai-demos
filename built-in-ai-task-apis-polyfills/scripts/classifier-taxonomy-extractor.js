@@ -8,7 +8,7 @@ import path from 'node:path';
 
 const TAXONOMY_URL =
   'https://raw.githubusercontent.com/InteractiveAdvertisingBureau/Taxonomies/develop/Content%20Taxonomies/Content%20Taxonomy%203.1.tsv';
-const OUTPUT_FILE = path.join(process.cwd(), 'taxonomizer-prompt-builder.js');
+const OUTPUT_FILE = path.join(process.cwd(), 'classifier-prompt-builder.js');
 
 async function fetchTaxonomy() {
   console.log(`Fetching taxonomy from ${TAXONOMY_URL}...`);
@@ -58,7 +58,7 @@ function updateBuilder(taxonomyData) {
       );
     } else {
       throw new Error(
-        'Could not find #taxonomyData in taxonomizer-prompt-builder.js'
+        'Could not find #taxonomyData in classifier-prompt-builder.js'
       );
     }
   } else {
@@ -71,7 +71,7 @@ function updateBuilder(taxonomyData) {
 
   fs.writeFileSync(OUTPUT_FILE, content);
   console.log(
-    'Successfully updated taxonomizer-prompt-builder.js with the latest taxonomy data.'
+    'Successfully updated classifier-prompt-builder.js with the latest taxonomy data.'
   );
 }
 

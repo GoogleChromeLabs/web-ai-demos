@@ -7,7 +7,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Taxonomizer API Polyfill Demo</title>
+    <title>Classifier API Polyfill Demo</title>
     <style>
       :root {
         color-scheme: dark light;
@@ -99,14 +99,14 @@
   </head>
 
   <body>
-    <h1>Taxonomizer API Polyfill Demo</h1>
+    <h1>Classifier API Polyfill Demo</h1>
 
     <textarea id="input">
 The new experimental fusion reactor at the ITER site in France has successfully sustained a stable plasma for 10 minutes, a new world record. This milestone brings us closer to clean, limitless energy. The complex tokamak device uses superconducting magnets to confine the 150 million degree Celsius fuel. Scientists from around the globe are collaborating on this massive physics project, which could revolutionize how we power our world.</textarea
     >
 
     <div id="controls">
-      <button id="categorizeBtn">Categorize Text</button>
+      <button id="classifyBtn">Classify Text</button>
       <progress
         id="progress"
         value="0"
@@ -118,7 +118,7 @@ The new experimental fusion reactor at the ITER site in France has successfully 
 
     <h2>Predicted Categories</h2>
     <div id="output" class="output">
-      Click "Categorize Text" to see results.
+      Click "Classify Text" to see results.
     </div>
 
     <script type="module">
@@ -135,31 +135,31 @@ The new experimental fusion reactor at the ITER site in France has successfully 
       window.FIREBASE_CONFIG = firebaseConfig;
 
       // Import the polyfill
-      import { Taxonomizer } from './taxonomizer-api-polyfill.js';
+      import { Classifier } from './classifier-api-polyfill.js';
 
       const input = document.getElementById('input');
-      const categorizeBtn = document.getElementById('categorizeBtn');
+      const classifyBtn = document.getElementById('classifyBtn');
       const output = document.getElementById('output');
       const progress = document.getElementById('progress');
       const status = document.getElementById('status');
 
-      let taxonomizer = null;
+      let classifier = null;
 
       async function init() {
         try {
           status.textContent = 'Checking availability...';
-          const availability = await Taxonomizer.availability();
+          const availability = await Classifier.availability();
 
           if (availability === 'unavailable') {
             status.textContent =
               'Error: Built-in AI (LanguageModel) not available in this browser.';
-            categorizeBtn.disabled = true;
+            classifyBtn.disabled = true;
             return;
           }
 
           status.textContent =
-            'Creating Taxonomizer instance (this may involve downloading a model)...';
-          taxonomizer = await Taxonomizer.create({
+            'Creating Classifier instance (this may involve downloading a model)...';
+          classifier = await Classifier.create({
             monitor: (m) => {
               progress.style.display = 'block';
               m.addEventListener('downloadprogress', (e) => {
@@ -180,24 +180,24 @@ The new experimental fusion reactor at the ITER site in France has successfully 
         }
       }
 
-      categorizeBtn.onclick = async () => {
-        if (!taxonomizer) {
-          status.textContent = 'Taxonomizer not ready.';
+      classifyBtn.onclick = async () => {
+        if (!classifier) {
+          status.textContent = 'Classifier not ready.';
           return;
         }
 
         const text = input.value.trim();
         if (!text) {
-          alert('Please enter some text to categorize.');
+          alert('Please enter some text to classify.');
           return;
         }
 
         output.textContent = 'Analyzing content...';
-        categorizeBtn.disabled = true;
+        classifyBtn.disabled = true;
 
         try {
           const startTime = performance.now();
-          const results = await taxonomizer.categorize(text);
+          const results = await classifier.classify(text);
           const endTime = performance.now();
           const duration = ((endTime - startTime) / 1000).toFixed(1);
 
@@ -206,7 +206,7 @@ The new experimental fusion reactor at the ITER site in France has successfully 
           } else {
             output.innerHTML = '';
             results.forEach((res) => {
-              const categoryPath = Taxonomizer.getCategoryName(res.id);
+              const categoryPath = Classifier.getCategoryName(res.id);
               const item = document.createElement('div');
               item.className = 'result-item';
               item.innerHTML = `
@@ -219,12 +219,12 @@ The new experimental fusion reactor at the ITER site in France has successfully 
               output.appendChild(item);
             });
           }
-          status.textContent = `Categorization complete in ${duration}s.`;
+          status.textContent = `Classification complete in ${duration}s.`;
         } catch (err) {
           output.textContent = 'Error: ' + err.message;
-          status.textContent = 'An error occurred during categorization.';
+          status.textContent = 'An error occurred during classification.';
         } finally {
-          categorizeBtn.disabled = false;
+          classifyBtn.disabled = false;
         }
       };
 

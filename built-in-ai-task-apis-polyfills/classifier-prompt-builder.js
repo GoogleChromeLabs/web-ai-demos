@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export class TaxonomizerPromptBuilder {
-  static #systemPromptTemplate = `You are an expert in content categorization using the IAB Content Taxonomy v3.1.
+export class ClassifierPromptBuilder {
+  static #systemPromptTemplate = `You are an expert in content classification using the IAB Content Taxonomy v3.1.
 Your task is to analyze the provided text and predict the most relevant categories.
 The taxonomy categories are provided as a flat list of Unique IDs and their corresponding Tiered Category paths.
 
@@ -759,13 +759,13 @@ JSON Schema for output:
   }
 
   buildPrompt(inputText) {
-    const taxonomyMap = TaxonomizerPromptBuilder.getTaxonomy();
+    const taxonomyMap = ClassifierPromptBuilder.getTaxonomy();
     const taxonomyList = Object.entries(taxonomyMap)
       .map(([id, path]) => `${id}: ${path}`)
       .join('\n');
 
     return {
-      systemPrompt: TaxonomizerPromptBuilder.#systemPromptTemplate.replace(
+      systemPrompt: ClassifierPromptBuilder.#systemPromptTemplate.replace(
         '{{taxonomy}}',
         taxonomyList
       ),
@@ -785,7 +785,7 @@ JSON Schema for output:
           ]),
         },
       ],
-      userPrompt: `TEXT TO CATEGORIZE:\n${inputText}`,
+      userPrompt: `TEXT TO CLASSIFY:\n${inputText}`,
     };
   }
 }
