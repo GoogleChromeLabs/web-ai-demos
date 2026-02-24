@@ -20,6 +20,7 @@
     Rewriter: window.Rewriter,
     LanguageDetector: window.LanguageDetector,
     Translator: window.Translator,
+    Classifier: window.Classifier,
   };
 
   // Helper to send messages to the extension via the content script bridge
@@ -405,8 +406,14 @@
   );
 
   // Dynamically import polyfills to ensure we captured native state first
-  const { Summarizer, Writer, Rewriter, LanguageDetector, Translator } =
-    await import('built-in-ai-task-apis-polyfills');
+  const {
+    Summarizer,
+    Writer,
+    Rewriter,
+    LanguageDetector,
+    Translator,
+    Classifier,
+  } = await import('built-in-ai-task-apis-polyfills');
 
   // Expose task APIs, preferring native if available and not forced
   const exposeAPI = (name, polyfillClass) => {
@@ -435,6 +442,7 @@
   exposeAPI('Rewriter', Rewriter);
   exposeAPI('LanguageDetector', LanguageDetector);
   exposeAPI('Translator', Translator);
+  exposeAPI('Classifier', Classifier);
 
   window.addEventListener('extension-download-progress', (e) => {
     const { requestId } = e.detail;
