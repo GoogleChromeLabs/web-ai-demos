@@ -102,25 +102,25 @@
           sessionTargets.set(requestId, this);
         }
 
-        get inputUsage() {
-          return sessionData.get(this).attributes.inputUsage || 0;
+        get contextUsage() {
+          return sessionData.get(this).attributes.contextUsage || 0;
         }
-        get inputQuota() {
-          return sessionData.get(this).attributes.inputQuota || 0;
-        }
-
-        get onquotaoverflow() {
-          return sessionData.get(this).onquotaoverflow || null;
+        get contextWindow() {
+          return sessionData.get(this).attributes.contextWindow || 0;
         }
 
-        set onquotaoverflow(handler) {
+        get oncontextoverflow() {
+          return sessionData.get(this).oncontextoverflow || null;
+        }
+
+        set oncontextoverflow(handler) {
           const data = sessionData.get(this);
-          if (data.onquotaoverflow) {
-            this.removeEventListener('quotaoverflow', data.onquotaoverflow);
+          if (data.oncontextoverflow) {
+            this.removeEventListener('contextoverflow', data.oncontextoverflow);
           }
-          data.onquotaoverflow = handler;
+          data.oncontextoverflow = handler;
           if (typeof handler === 'function') {
-            this.addEventListener('quotaoverflow', handler);
+            this.addEventListener('contextoverflow', handler);
           }
         }
 
@@ -271,7 +271,7 @@
           }
         }
 
-        async measureInputUsage(text, options = {}) {
+        async measureContextUsage(text, options = {}) {
           const { requestId } = sessions.get(this);
           const callId = Math.random().toString(36).slice(2);
           handleSignal(options.signal, requestId, callId);
@@ -282,7 +282,7 @@
             requestId,
             callId,
             text,
-            method: 'measureInputUsage',
+            method: 'measureContextUsage',
             options: sanitizeOptions(options),
           });
           if (response.attributes) {
@@ -444,11 +444,11 @@
     }
   });
 
-  window.addEventListener('extension-quota-overflow', (e) => {
+  window.addEventListener('extension-context-overflow', (e) => {
     const { requestId } = e.detail;
     const target = sessionTargets.get(requestId);
     if (target) {
-      target.dispatchEvent(new Event('quotaoverflow'));
+      target.dispatchEvent(new Event('contextoverflow'));
     }
   });
 
