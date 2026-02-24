@@ -79,11 +79,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             signal: controller.signal,
           });
 
-          // Relay quotaoverflow events
-          session.addEventListener?.('quotaoverflow', () => {
+          // Relay contextoverflow events
+          session.addEventListener?.('contextoverflow', () => {
             chrome.runtime.sendMessage({
               target: senderTabId ? 'content' : 'options',
-              type: 'quota-overflow',
+              type: 'context-overflow',
               requestId,
               senderTabId,
               senderFrameId,

@@ -63,8 +63,8 @@
           ? 'extension-stream-chunk'
           : message.type === 'stream-error'
             ? 'extension-stream-error'
-            : message.type === 'quota-overflow'
-              ? 'extension-quota-overflow'
+            : message.type === 'context-overflow'
+              ? 'extension-context-overflow'
               : 'extension-stream-done';
 
     const event = new CustomEvent(eventType, {

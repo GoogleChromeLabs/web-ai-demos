@@ -109,18 +109,18 @@
           return sessionData.get(this).attributes.contextWindow || 0;
         }
 
-        get onquotaoverflow() {
-          return sessionData.get(this).onquotaoverflow || null;
+        get oncontextoverflow() {
+          return sessionData.get(this).oncontextoverflow || null;
         }
 
-        set onquotaoverflow(handler) {
+        set oncontextoverflow(handler) {
           const data = sessionData.get(this);
-          if (data.onquotaoverflow) {
-            this.removeEventListener('quotaoverflow', data.onquotaoverflow);
+          if (data.oncontextoverflow) {
+            this.removeEventListener('contextoverflow', data.oncontextoverflow);
           }
-          data.onquotaoverflow = handler;
+          data.oncontextoverflow = handler;
           if (typeof handler === 'function') {
-            this.addEventListener('quotaoverflow', handler);
+            this.addEventListener('contextoverflow', handler);
           }
         }
 
@@ -444,11 +444,11 @@
     }
   });
 
-  window.addEventListener('extension-quota-overflow', (e) => {
+  window.addEventListener('extension-context-overflow', (e) => {
     const { requestId } = e.detail;
     const target = sessionTargets.get(requestId);
     if (target) {
-      target.dispatchEvent(new Event('quotaoverflow'));
+      target.dispatchEvent(new Event('contextoverflow'));
     }
   });
 
