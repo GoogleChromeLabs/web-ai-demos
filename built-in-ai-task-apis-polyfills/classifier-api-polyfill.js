@@ -143,11 +143,6 @@ export class Classifier extends BaseTaskModel {
 
     return finalResults;
   }
-
-  // Static helper as requested by the user
-  static getCategoryName(id) {
-    return ClassifierPromptBuilder.getCategoryName(id);
-  }
 }
 
 // Global exposure if in browser

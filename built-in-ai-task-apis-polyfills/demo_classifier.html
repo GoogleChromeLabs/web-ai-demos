@@ -117,9 +117,7 @@ The new experimental fusion reactor at the ITER site in France has successfully 
     </div>
 
     <h2>Predicted Categories</h2>
-    <div id="output" class="output">
-      Click "Classify Text" to see results.
-    </div>
+    <div id="output" class="output">Click "Classify Text" to see results.</div>
 
     <script type="module">
       // Import Firebase config if present (standard pattern for this project)
@@ -143,11 +141,43 @@ The new experimental fusion reactor at the ITER site in France has successfully 
       const progress = document.getElementById('progress');
       const status = document.getElementById('status');
 
+      const TAXONOMY_URL =
+        'https://raw.githubusercontent.com/InteractiveAdvertisingBureau/Taxonomies/develop/Content%20Taxonomies/Content%20Taxonomy%203.1.tsv';
+      let taxonomyMap = {};
+
+      async function fetchTaxonomy() {
+        status.textContent = 'Fetching taxonomy...';
+        const response = await fetch(TAXONOMY_URL);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch taxonomy: ${response.statusText}`);
+        }
+        const tsv = await response.text();
+        return parseTSV(tsv);
+      }
+
+      function parseTSV(tsv) {
+        const lines = tsv.trim().split('\n');
+        const dataLines = lines.slice(1);
+        const taxonomy = {};
+
+        for (const line of dataLines) {
+          const [id, parent, name, t1, t2, t3, t4] = line.split('\t');
+          if (!id) {
+            continue;
+          }
+
+          const tiers = [t1, t2, t3, t4].filter((t) => t && t.trim() !== '');
+          taxonomy[id] = tiers.map((t) => t.trim()).join(' > ');
+        }
+        return taxonomy;
+      }
+
       let classifier = null;
 
       async function init() {
         try {
-          status.textContent = 'Checking availability...';
+          status.textContent = 'Initializing...';
+          taxonomyMap = await fetchTaxonomy();
           const availability = await Classifier.availability();
 
           if (availability === 'unavailable') {
@@ -206,7 +236,7 @@ The new experimental fusion reactor at the ITER site in France has successfully 
           } else {
             output.innerHTML = '';
             results.forEach((res) => {
-              const categoryPath = Classifier.getCategoryName(res.id);
+              const categoryPath = taxonomyMap[res.id] || res.id;
               const item = document.createElement('div');
               item.className = 'result-item';
               item.innerHTML = `

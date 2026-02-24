@@ -749,15 +749,6 @@ JSON Schema for output:
     return this.#taxonomyData;
   }
 
-  static getCategoryName(id) {
-    // This is part of the requirement: helper to lookup category name based on ID.
-    const data = this.#taxonomyData;
-    if (!data || Object.keys(data).length === 0) {
-      return id;
-    }
-    return data[id] || id;
-  }
-
   buildPrompt(inputText) {
     const taxonomyMap = ClassifierPromptBuilder.getTaxonomy();
     const taxonomyList = Object.entries(taxonomyMap)
