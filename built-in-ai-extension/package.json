@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-extension",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -15,7 +15,7 @@
   "author": "Thomas Steiner (tomac@google.com)",
   "license": "Apache-2.0",
   "dependencies": {
-    "built-in-ai-task-apis-polyfills": "^1.3.0",
+    "built-in-ai-task-apis-polyfills": "^1.4.0",
     "prompt-api-polyfill": "^1.4.0"
   },
   "devDependencies": {
