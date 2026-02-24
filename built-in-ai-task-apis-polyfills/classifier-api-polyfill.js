@@ -4,14 +4,14 @@
  */
 
 import { BaseTaskModel } from './base-task-model.js';
-import { TaxonomizerPromptBuilder } from './taxonomizer-prompt-builder.js';
+import { ClassifierPromptBuilder } from './classifier-prompt-builder.js';
 
 /**
- * Taxonomizer API Polyfill
+ * Classifier API Polyfill
  * Backed by Prompt API Polyfill (LanguageModel)
  */
 
-export class Taxonomizer extends BaseTaskModel {
+export class Classifier extends BaseTaskModel {
   #options;
 
   constructor(session, builder, options) {
@@ -30,7 +30,7 @@ export class Taxonomizer extends BaseTaskModel {
     await this.ensureLanguageModel();
     this._checkContext();
 
-    const builder = new TaxonomizerPromptBuilder();
+    const builder = new ClassifierPromptBuilder();
     const { systemPrompt, initialPrompts } = builder.buildPrompt('');
 
     const sessionOptions = {
@@ -44,22 +44,22 @@ export class Taxonomizer extends BaseTaskModel {
 
     const win = this.__window || globalThis;
     const session = await win.LanguageModel.create(sessionOptions);
-    const taxonomizer = new this(session, builder, options);
+    const classifier = new this(session, builder, options);
 
     if (options.signal) {
       options.signal.addEventListener(
         'abort',
         () => {
-          taxonomizer.destroy(options.signal.reason);
+          classifier.destroy(options.signal.reason);
         },
         { once: true }
       );
     }
 
-    return taxonomizer;
+    return classifier;
   }
 
-  async categorize(input, options = {}) {
+  async classify(input, options = {}) {
     this._checkContext();
 
     if (typeof input !== 'string') {
@@ -81,8 +81,8 @@ export class Taxonomizer extends BaseTaskModel {
       } catch (e2) {
         const win = this.constructor.__window || globalThis;
         const EX = win.DOMException || globalThis.DOMException || Error;
-        console.error('Failed to parse Taxonomizer results:', resultString);
-        throw new EX('Failed to parse categorization results.', 'UnknownError');
+        console.error('Failed to parse Classifier results:', resultString);
+        throw new EX('Failed to parse classification results.', 'UnknownError');
       }
     }
   }
@@ -90,7 +90,7 @@ export class Taxonomizer extends BaseTaskModel {
   #parseResults(jsonString) {
     let results = JSON.parse(jsonString);
     if (!Array.isArray(results)) {
-      throw new Error('Categorization results must be an array.');
+      throw new Error('Classification results must be an array.');
     }
 
     // 1. Basic cleaning and validation
@@ -143,16 +143,11 @@ export class Taxonomizer extends BaseTaskModel {
 
     return finalResults;
   }
-
-  // Static helper as requested by the user
-  static getCategoryName(id) {
-    return TaxonomizerPromptBuilder.getCategoryName(id);
-  }
 }
 
 // Global exposure if in browser
 BaseTaskModel.exposeAPIGlobally(
-  'Taxonomizer',
-  Taxonomizer,
-  '__FORCE_TAXONOMIZER_POLYFILL__'
+  'Classifier',
+  Classifier,
+  '__FORCE_CLASSIFIER_POLYFILL__'
 );

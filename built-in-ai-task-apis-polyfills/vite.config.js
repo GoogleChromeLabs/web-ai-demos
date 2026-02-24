@@ -28,7 +28,7 @@ export default defineConfig({
           'language-detector-api-polyfill.js'
         ),
         translator: resolve(__dirname, 'translator-api-polyfill.js'),
-        taxonomizer: resolve(__dirname, 'taxonomizer-api-polyfill.js'),
+        classifier: resolve(__dirname, 'classifier-api-polyfill.js'),
       },
       formats: ['es'],
       fileName: (format, entryName) => `${entryName}.js`,
