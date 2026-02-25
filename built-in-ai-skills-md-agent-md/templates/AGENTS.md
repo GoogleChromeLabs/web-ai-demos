@@ -65,7 +65,7 @@ the web when possible.
   - **System Prompts**: Pass `initialPrompts` with a `system` role to
     `create()`.
   - **Cloning**: Use `session.clone()` to create independent conversations that
-    inherit the initial prompt, parameters (topK, temperature), and history.
+    inherit the initial prompt and history.
     [Read more](https://developer.chrome.com/docs/ai/session-management).
 - **Local vs Cloud**: You understand the benefits of local AI (privacy, cost,
   latency) and advocate for it when appropriate.

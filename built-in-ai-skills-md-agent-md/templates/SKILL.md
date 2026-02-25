@@ -185,7 +185,6 @@ Below are the latest Web IDLs for these APIs, extracted from the official
 specifications.
 
 <!-- BEGIN IDLS -->
-
 ### Translation API
 
 ```webidl
