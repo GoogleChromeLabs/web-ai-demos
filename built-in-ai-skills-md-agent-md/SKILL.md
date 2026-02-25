@@ -24,6 +24,17 @@ Follow these new naming conventions:
 - `window.ai.translator` is DEPRECATED. Use `window.Translator`.
 - `window.ai.languageDetector` is DEPRECATED. Use `window.LanguageDetector`.
 
+There no longer is a single `window.ai` object. Instead, there are separate
+objects for each API.
+
+The old `capabilities()` function is DEPRECATED. Use `availability()` instead.
+
+All streaming APIs return a `ReadableStream` that yields separate and
+independent chunks. It used to be the case that the chunks would each time be
+increasingly larger up until the full response, but this is no longer the case.
+Instead, the chunks are of varying sizes and you need to concatenate them to
+form the full response.
+
 ## 🛠 Polyfills
 
 If you need to use these APIs in environments where they are not yet supported,
@@ -141,6 +152,31 @@ const response2 = await session.prompt([
     ],
   },
 ]);
+```
+
+## 🌊 Streaming Example
+
+```js
+const session = await LanguageModel.create({
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
+});
+
+const stream = session.promptStreaming([
+  {
+    role: 'user',
+    content: [{ type: 'text', value: 'Hello, how are you?' }],
+  },
+]);
+
+let fullResponse = '';
+// Sanitize the chunk and/or the full response before inserting either of them into the DOM.
+// The only exception is when doing so is safe, like when using `textContent`.
+for await (const chunk of stream) {
+  console.log(chunk);
+  fullResponse += chunk;
+}
+console.log(fullResponse);
 ```
 
 ## 📜 Latest IDLs
