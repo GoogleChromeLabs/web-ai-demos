@@ -23,8 +23,32 @@
     Classifier: window.Classifier,
   };
 
+  // Helper to convert Blobs to ArrayBuffers for extension messaging compatibility
+  const prepareForMessaging = async (obj) => {
+    if (obj instanceof Blob) {
+      return await obj.arrayBuffer();
+    }
+    if (Array.isArray(obj)) {
+      return Promise.all(obj.map(prepareForMessaging));
+    }
+    if (obj && typeof obj === 'object') {
+      if (obj instanceof ArrayBuffer || ArrayBuffer.isView(obj)) {
+        return obj;
+      }
+      if (Object.getPrototypeOf(obj) === Object.prototype) {
+        const newObj = {};
+        for (const [key, value] of Object.entries(obj)) {
+          newObj[key] = await prepareForMessaging(value);
+        }
+        return newObj;
+      }
+    }
+    return obj;
+  };
+
   // Helper to send messages to the extension via the content script bridge
-  const sendMessage = (message) => {
+  const sendMessage = async (message) => {
+    const preparedMessage = await prepareForMessaging(message);
     const bridgeId = Math.random().toString(36).slice(2);
     return new Promise((resolve, reject) => {
       const listener = (event) => {
@@ -45,11 +69,12 @@
       window.addEventListener('extension-response', listener);
       window.dispatchEvent(
         new CustomEvent('extension-request', {
-          detail: { ...message, bridgeId },
+          detail: { ...preparedMessage, bridgeId },
         })
       );
     });
   };
+
 
   const sessions = new WeakMap();
   const sessionData = new WeakMap(); // Instance -> { requestId, attributes }

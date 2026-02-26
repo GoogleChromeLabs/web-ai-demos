@@ -115,10 +115,7 @@ export class LanguageModel extends EventTarget {
 
   set oncontextoverflow(handler) {
     if (this.#oncontextoverflow) {
-      this.removeEventListener(
-        'contextoverflow',
-        this.#oncontextoverflow
-      );
+      this.removeEventListener('contextoverflow', this.#oncontextoverflow);
     }
     this.#oncontextoverflow = handler;
     if (typeof handler === 'function') {
@@ -1240,15 +1237,47 @@ export class LanguageModel extends EventTarget {
         }
         return combinedParts;
       }
-      return input.map((s) => {
-        if (!allowedInputs.includes('text')) {
-          throw new (this.#window.DOMException || globalThis.DOMException)(
-            'The content type "text" is not in the expectedInputs.',
-            'NotSupportedError'
-          );
-        }
-        return { text: String(s) };
-      });
+      return Promise.all(
+        input.map(async (s) => {
+          if (typeof s === 'string') {
+            if (!allowedInputs.includes('text')) {
+              throw new (this.#window.DOMException || globalThis.DOMException)(
+                'The content type "text" is not in the expectedInputs.',
+                'NotSupportedError'
+              );
+            }
+            return { text: s === '' ? ' ' : s };
+          }
+          if (typeof s === 'object' && s !== null && s.type && s.value) {
+            const type = s.type || 'text';
+            if (!allowedInputs.includes(type)) {
+              throw new (this.#window.DOMException || globalThis.DOMException)(
+                `The content type "${type}" is not in the expectedInputs.`,
+                'NotSupportedError'
+              );
+            }
+            if (type === 'text') {
+              if (typeof s.value !== 'string') {
+                throw new (
+                  this.#window.DOMException || globalThis.DOMException
+                )(
+                  'The content type "text" must have a string value.',
+                  'SyntaxError'
+                );
+              }
+              return { text: s.value };
+            }
+            return await MultimodalConverter.convert(s.type, s.value);
+          }
+          if (!allowedInputs.includes('text')) {
+            throw new (this.#window.DOMException || globalThis.DOMException)(
+              'The content type "text" is not in the expectedInputs.',
+              'NotSupportedError'
+            );
+          }
+          return { text: String(s) };
+        })
+      );
     }
 
     if (!allowedInputs.includes('text')) {
