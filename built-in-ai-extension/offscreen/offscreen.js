@@ -221,6 +221,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           senderTabId,
           senderFrameId,
         } = message;
+
         const session = sessions.get(requestId);
         if (!session)
           throw new Error('No active session for requestId: ' + requestId);

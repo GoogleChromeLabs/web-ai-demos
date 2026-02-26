@@ -130,8 +130,25 @@
 
             if (isDOMElement) {
               try {
-                // ImageBitmap is cloneable across the MessageChannel bridge.
-                item.value = await createImageBitmap(val);
+                // Blob is more reliably cloneable across the MessageChannel bridge
+                // and chrome.runtime.sendMessage than ImageBitmap in some contexts.
+                if (val instanceof HTMLCanvasElement) {
+                  item.value = await new Promise((resolve) =>
+                    val.toBlob(resolve, 'image/png')
+                  );
+                } else if (val instanceof HTMLImageElement) {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = val.naturalWidth || val.width;
+                  canvas.height = val.naturalHeight || val.height;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(val, 0, 0);
+                  item.value = await new Promise((resolve) =>
+                    canvas.toBlob(resolve, 'image/png')
+                  );
+                } else {
+                  // Fallback for other elements (video, svg)
+                  item.value = await createImageBitmap(val);
+                }
               } catch (e) {
                 // If it fails (e.g., source not loaded), the offscreen page
                 // might still try to handle it or throw a better error.

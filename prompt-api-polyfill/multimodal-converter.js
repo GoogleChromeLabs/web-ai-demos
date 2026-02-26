@@ -19,16 +19,34 @@ export default class MultimodalConverter {
 
   static async processImage(source) {
     // Blob
-    if (source instanceof Blob) {
+    const isBlob =
+      source instanceof Blob ||
+      (source &&
+        typeof source === 'object' &&
+        source.constructor &&
+        source.constructor.name === 'Blob');
+
+    if (isBlob) {
       return this.blobToInlineData(source);
     }
 
     // BufferSource (ArrayBuffer/View) -> Sniff or Default
-    if (ArrayBuffer.isView(source) || source instanceof ArrayBuffer) {
-      const u8 =
-        source instanceof ArrayBuffer
-          ? new Uint8Array(source)
-          : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
+    const isArrayBuffer =
+      source instanceof ArrayBuffer ||
+      (source &&
+        source.constructor &&
+        source.constructor.name === 'ArrayBuffer');
+    const isView =
+      ArrayBuffer.isView(source) ||
+      (source &&
+        source.buffer &&
+        (source.buffer instanceof ArrayBuffer ||
+          source.buffer.constructor.name === 'ArrayBuffer'));
+
+    if (isArrayBuffer || isView) {
+      const u8 = isArrayBuffer
+        ? new Uint8Array(source)
+        : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
       const buffer = u8.buffer.slice(
         u8.byteOffset,
         u8.byteOffset + u8.byteLength
@@ -42,7 +60,7 @@ export default class MultimodalConverter {
       return { inlineData: { data: base64, mimeType } };
     }
 
-    // ImageBitmapSource (Canvas, Image, VideoFrame, etc.)
+    // ImageBitmap/ImageDataSource (Canvas, Image, VideoFrame, etc.)
     // We draw to a canvas to standardize to PNG
     return this.canvasSourceToInlineData(source);
   }
@@ -154,7 +172,14 @@ export default class MultimodalConverter {
 
   static async processAudio(source) {
     // Blob
-    if (source instanceof Blob) {
+    const isBlob =
+      source instanceof Blob ||
+      (source &&
+        typeof source === 'object' &&
+        source.constructor &&
+        source.constructor.name === 'Blob');
+
+    if (isBlob) {
       if (
         source.type &&
         !source.type.startsWith('audio/') &&
@@ -166,7 +191,13 @@ export default class MultimodalConverter {
     }
 
     // AudioBuffer -> WAV
-    if (source instanceof AudioBuffer) {
+    const isAudioBuffer =
+      source instanceof AudioBuffer ||
+      (source &&
+        source.constructor &&
+        source.constructor.name === 'AudioBuffer');
+
+    if (isAudioBuffer) {
       const wavBuffer = this.audioBufferToWav(source);
       const base64 = this.arrayBufferToBase64(wavBuffer);
       return { inlineData: { data: base64, mimeType: 'audio/wav' } };
@@ -307,6 +338,9 @@ export default class MultimodalConverter {
     // More robust ImageData check for cross-context objects
     const isImageData =
       (typeof ImageData !== 'undefined' && source instanceof ImageData) ||
+      (source &&
+        source.constructor &&
+        source.constructor.name === 'ImageData') ||
       (source &&
         typeof source.width === 'number' &&
         typeof source.height === 'number' &&
