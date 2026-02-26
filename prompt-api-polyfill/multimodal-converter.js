@@ -27,7 +27,10 @@ export default class MultimodalConverter {
         source.constructor.name === 'Blob');
 
     if (isBlob) {
-      return this.blobToInlineData(source);
+      if (source.type === 'image/png' || source.type === 'image/jpeg') {
+        return this.blobToInlineData(source);
+      }
+      return this.#convertToPngPart(source);
     }
 
     // BufferSource (ArrayBuffer/View) -> Sniff or Default
@@ -51,18 +54,40 @@ export default class MultimodalConverter {
         u8.byteOffset,
         u8.byteOffset + u8.byteLength
       );
-      const base64 = this.arrayBufferToBase64(buffer);
       const mimeType = this.#sniffImageMimeType(u8);
       if (!mimeType) {
         throw new DOMException('Invalid image data', 'InvalidStateError');
       }
 
-      return { inlineData: { data: base64, mimeType } };
+      if (mimeType === 'image/png' || mimeType === 'image/jpeg') {
+        const base64 = await this.arrayBufferToBase64(buffer);
+        return { inlineData: { data: base64, mimeType } };
+      }
+
+      const blob = new Blob([buffer], { type: mimeType });
+      return this.#convertToPngPart(blob);
     }
 
     // ImageBitmap/ImageDataSource (Canvas, Image, VideoFrame, etc.)
     // We draw to a canvas to standardize to PNG
     return this.canvasSourceToInlineData(source);
+  }
+
+  static async #convertToPngPart(blob) {
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode().catch((e) => {
+        throw new DOMException(
+          `The source image cannot be decoded: ${e.message}`,
+          'InvalidStateError'
+        );
+      });
+      return await this.canvasSourceToInlineData(img);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
   }
 
   static #sniffImageMimeType(u8) {
@@ -90,82 +115,22 @@ export default class MultimodalConverter {
       return 'image/png';
     }
 
-    // GIF: GIF87a / GIF89a
-    if (u8[0] === 0x47 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x38) {
-      return 'image/gif';
-    }
-
-    // WebP: RIFF (offset 0) + WEBP (offset 8)
-    if (
-      u8[0] === 0x52 &&
-      u8[1] === 0x49 &&
-      u8[2] === 0x46 &&
-      u8[3] === 0x46 &&
-      u8[8] === 0x57 &&
-      u8[9] === 0x45 &&
-      u8[10] === 0x42 &&
-      u8[11] === 0x50
-    ) {
-      return 'image/webp';
-    }
-
-    // BMP: BM
-    if (u8[0] === 0x42 && u8[1] === 0x4d) {
-      return 'image/bmp';
-    }
-
-    // ICO: 00 00 01 00
-    if (u8[0] === 0x00 && u8[1] === 0x00 && u8[2] === 0x01 && u8[3] === 0x00) {
-      return 'image/x-icon';
-    }
-
-    // TIFF: II* (LE) / MM* (BE)
-    if (
-      (u8[0] === 0x49 && u8[1] === 0x49 && u8[2] === 0x2a) ||
-      (u8[0] === 0x4d && u8[1] === 0x4d && u8[2] === 0x2a)
-    ) {
-      return 'image/tiff';
-    }
-
-    // ISOBMFF (AVIF / HEIC / HEIF)
-    // "ftyp" at offset 4
-    if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) {
-      const type = String.fromCharCode(u8[8], u8[9], u8[10], u8[11]);
-      if (type === 'avif' || type === 'avis') {
-        return 'image/avif';
-      }
-      if (
-        type === 'heic' ||
-        type === 'heix' ||
-        type === 'hevc' ||
-        type === 'hevx'
-      ) {
-        return 'image/heic';
-      }
-      if (type === 'mif1' || type === 'msf1') {
-        return 'image/heif';
-      }
-    }
-
-    // JPEG XL: FF 0A or container bits
-    if (u8[0] === 0xff && u8[1] === 0x0a) {
-      return 'image/jxl';
-    }
-    // Container: 00 00 00 0c 4a 58 4c 20 0d 0a 87 0a (JXL )
-    if (u8[0] === 0x00 && u8[4] === 0x4a && u8[5] === 0x58 && u8[6] === 0x4c) {
-      return 'image/jxl';
-    }
-
-    // JPEG 2000
-    if (u8[0] === 0x00 && u8[4] === 0x6a && u8[5] === 0x50 && u8[6] === 0x20) {
-      return 'image/jp2';
-    }
-
     // SVG: Check for <svg or <?xml (heuristics)
     const preview = String.fromCharCode(...u8.slice(0, 100)).toLowerCase();
     if (preview.includes('<svg') || preview.includes('<?xml')) {
       return 'image/svg+xml';
     }
+
+    // Common web formats to help decoding
+    if (u8[0] === 0x47 && u8[1] === 0x49 && u8[2] === 0x46) {
+      return 'image/gif';
+    }
+    if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) {
+      return 'image/webp';
+    }
+    if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) {
+      return 'image/avif';
+    } // simplified
 
     return null;
   }
@@ -199,7 +164,7 @@ export default class MultimodalConverter {
 
     if (isAudioBuffer) {
       const wavBuffer = this.audioBufferToWav(source);
-      const base64 = this.arrayBufferToBase64(wavBuffer);
+      const base64 = await this.arrayBufferToBase64(wavBuffer);
       return { inlineData: { data: base64, mimeType: 'audio/wav' } };
     }
 
@@ -220,7 +185,7 @@ export default class MultimodalConverter {
       const buffer = isArrayBuffer ? source : source.buffer;
       return {
         inlineData: {
-          data: this.arrayBufferToBase64(buffer),
+          data: await this.arrayBufferToBase64(buffer),
           mimeType: 'audio/wav', // Fallback assumption
         },
       };
@@ -280,23 +245,24 @@ export default class MultimodalConverter {
 
     const getDimension = (name) => {
       const val = source[name];
+      if (typeof val === 'number') {
+        return val;
+      }
       if (typeof val === 'object' && val !== null && 'baseVal' in val) {
         return val.baseVal.value;
       }
-      return typeof val === 'number' ? val : 0;
+      return 0;
     };
 
     let w =
       source.displayWidth ||
       source.naturalWidth ||
       source.videoWidth ||
-      source.width ||
       getDimension('width');
     let h =
       source.displayHeight ||
       source.naturalHeight ||
       source.videoHeight ||
-      source.height ||
       getDimension('height');
 
     // Fallback for SVG elements (like SVGImageElement in DOM)
@@ -362,14 +328,14 @@ export default class MultimodalConverter {
     };
   }
 
-  static arrayBufferToBase64(buffer) {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
+  static async arrayBufferToBase64(buffer) {
+    const blob = new Blob([buffer]);
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   // Simple WAV Encoder for AudioBuffer

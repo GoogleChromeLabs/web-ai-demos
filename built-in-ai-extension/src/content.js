@@ -58,9 +58,50 @@
   window.addEventListener('message', (event) => {
     if (event.data?.type === 'AI_EXTENSION_INIT_BRIDGE' && event.ports[0]) {
       bridgePort = event.ports[0];
-      bridgePort.onmessage = (e) => {
+      bridgePort.onmessage = async (e) => {
         const { id, message } = e.data;
-        chrome.runtime.sendMessage(message, (response) => {
+        console.log('[ContentScript] Received message from bridge:', message);
+
+        // Recursively find and process ArrayBuffers into blobURLs
+        const processArrayBuffers = async (obj) => {
+          if (!obj || typeof obj !== 'object') return obj;
+
+          // Handle the new descriptor from Main World that includes MIME type
+          if (obj.__extension_bin_data__) {
+            const { __extension_bin_data__: buffer, mimeType } = obj;
+            const blob = new Blob([buffer], { type: mimeType });
+            const blobURL = URL.createObjectURL(blob);
+            console.log(
+              `[ContentScript] Converted wrapped ArrayBuffer (${buffer.byteLength} bytes, type: ${mimeType}) to blobURL: ${blobURL}`
+            );
+            return { __extension_blob_url__: blobURL };
+          }
+
+          if (obj instanceof ArrayBuffer) {
+            const blob = new Blob([obj]);
+            const blobURL = URL.createObjectURL(blob);
+            console.log(
+              `[ContentScript] Converted raw ArrayBuffer (${obj.byteLength} bytes) to blobURL: ${blobURL}`
+            );
+            // Return a special descriptor that the offscreen page will recognize
+            return { __extension_blob_url__: blobURL };
+          }
+
+          if (Array.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+              obj[i] = await processArrayBuffers(obj[i]);
+            }
+          } else {
+            for (const key in obj) {
+              obj[key] = await processArrayBuffers(obj[key]);
+            }
+          }
+          return obj;
+        };
+
+        const processedMessage = await processArrayBuffers(message);
+
+        chrome.runtime.sendMessage(processedMessage, (response) => {
           bridgePort.postMessage({ id, response });
         });
       };

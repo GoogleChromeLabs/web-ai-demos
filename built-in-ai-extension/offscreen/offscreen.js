@@ -11,9 +11,61 @@ let controllers = new Map(); // callId -> AbortController
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.target !== 'offscreen') return;
 
+  console.log('[Offscreen] Received message:', message);
+
   (async () => {
+    let processedMessage;
     try {
-      if (message.type === 'create-session') {
+      // Recursively find and process blobURLs into Blobs
+      const processBlobURLs = async (obj) => {
+        if (!obj || typeof obj !== 'object') return obj;
+
+        // More robust identification for the specific bridge descriptor
+        if (obj.__extension_blob_url__) {
+          const url = obj.__extension_blob_url__;
+          console.log(`[Offscreen] Found blobURL to fetch: ${url}`);
+          try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            console.log(
+              `[Offscreen] Successfully fetched Blob (${blob.size} bytes, type: ${blob.type}) from ${url}`
+            );
+            URL.revokeObjectURL(url);
+            return blob;
+          } catch (e) {
+            console.error(`[Offscreen] Failed to fetch blobURL (${url}):`, e);
+            URL.revokeObjectURL(url);
+            throw e;
+          }
+        }
+
+        // Avoid recursing into Blobs, ArrayBuffers, or other special objects
+        const constructorName = obj.constructor?.name;
+        if (
+          constructorName === 'Blob' ||
+          constructorName === 'File' ||
+          constructorName === 'ArrayBuffer' ||
+          ArrayBuffer.isView(obj)
+        ) {
+          return obj;
+        }
+
+        if (Array.isArray(obj)) {
+          for (let i = 0; i < obj.length; i++) {
+            obj[i] = await processBlobURLs(obj[i]);
+          }
+        } else {
+          for (const key in obj) {
+            obj[key] = await processBlobURLs(obj[key]);
+          }
+        }
+        return obj;
+      };
+
+      processedMessage = await processBlobURLs(message);
+      const { type } = processedMessage;
+
+      if (type === 'create-session') {
         const {
           config,
           options,
@@ -23,7 +75,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           backend,
           senderTabId,
           senderFrameId,
-        } = message;
+        } = processedMessage;
 
         // Apply external configuration to globals for the polyfills to find.
         setupConfigs(backend, config);
@@ -32,7 +84,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           import('prompt-api-polyfill'),
         ]);
 
-        const ApiClass = getApiClass(promptApiModule, apiType, config);
+        const ApiClass = getApiClass(promptApiModule, apiType, config, backend);
+        console.log(`[Offscreen] Creating session with ApiClass: ${ApiClass?.name || 'unknown'}, backend: ${backend}`);
 
         if (!ApiClass) {
           throw new Error(
@@ -101,8 +154,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } finally {
           if (callId) controllers.delete(callId);
         }
-      } else if (message.type === 'availability') {
-        const { config, backend, apiType, options } = message;
+      } else if (processedMessage.type === 'availability') {
+        const { config, backend, apiType, options } = processedMessage;
 
         setupConfigs(backend, config);
 
@@ -110,11 +163,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           import('prompt-api-polyfill'),
         ]);
 
-        const ApiClass = getApiClass(promptApiModule, apiType, config);
+        const ApiClass = getApiClass(promptApiModule, apiType, config, backend);
 
         const result = await ApiClass.availability(options);
+        console.log(
+          `[Offscreen] Availability for ${apiType || 'LanguageModel'} (${backend}): ${result}`
+        );
         sendResponse({ success: true, result });
-      } else if (message.type === 'clone-session') {
+      } else if (processedMessage.type === 'clone-session') {
         const {
           sourceRequestId,
           requestId,
@@ -122,7 +178,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           options,
           senderTabId,
           senderFrameId,
-        } = message;
+        } = processedMessage;
         const sourceSession = sessions.get(sourceRequestId);
         if (!sourceSession) {
           throw new Error(
@@ -174,7 +230,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } finally {
           if (callId) controllers.delete(callId);
         }
-      } else if (message.type === 'list-models') {
+      } else if (processedMessage.type === 'list-models') {
         const cache = await caches.open('transformers-cache');
         const keys = await cache.keys();
         const models = new Set();
@@ -184,8 +240,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (match) models.add(match[1]);
         }
         sendResponse({ success: true, models: Array.from(models) });
-      } else if (message.type === 'delete-model') {
-        const { modelName } = message;
+      } else if (processedMessage.type === 'delete-model') {
+        const { modelName } = processedMessage;
         const cache = await caches.open('transformers-cache');
         const keys = await cache.keys();
         let deletedCount = 0;
@@ -208,9 +264,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         keysToRemove.forEach((k) => localStorage.removeItem(k));
         sendResponse({ success: true, deletedCount });
       } else if (
-        message.type === 'prompt' ||
-        message.type === 'execute' ||
-        message.type === 'append'
+        processedMessage.type === 'prompt' ||
+        processedMessage.type === 'execute' ||
+        processedMessage.type === 'append'
       ) {
         const {
           requestId,
@@ -220,7 +276,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           options,
           senderTabId,
           senderFrameId,
-        } = message;
+        } = processedMessage;
 
         const session = sessions.get(requestId);
         if (!session)
@@ -229,7 +285,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const controller = new AbortController();
         if (callId) controllers.set(callId, controller);
         try {
-          const result = await session[method || message.type](text, {
+          const result = await session[method || processedMessage.type](text, {
             ...options,
             signal: controller.signal,
           });
@@ -245,8 +301,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (callId) controllers.delete(callId);
         }
       } else if (
-        message.type === 'prompt-streaming' ||
-        message.type === 'execute-streaming'
+        processedMessage.type === 'prompt-streaming' ||
+        processedMessage.type === 'execute-streaming'
       ) {
         const {
           requestId,
@@ -256,7 +312,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           options,
           senderTabId,
           senderFrameId,
-        } = message;
+        } = processedMessage;
         const session = sessions.get(requestId);
         if (!session)
           throw new Error('No active session for requestId: ' + requestId);
@@ -324,14 +380,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             contextWindow: session.contextWindow,
           },
         });
-      } else if (message.type === 'destroy-session') {
-        const { requestId } = message;
+      } else if (processedMessage.type === 'destroy-session') {
+        const { requestId } = processedMessage;
         const session = sessions.get(requestId);
         if (session && session.destroy) session.destroy();
         sessions.delete(requestId);
         sendResponse({ success: true });
-      } else if (message.type === 'abort-request') {
-        const { callId } = message;
+      } else if (processedMessage.type === 'abort-request') {
+        const { callId } = processedMessage;
         const controller = controllers.get(callId);
         if (controller) {
           controller.abort();
@@ -341,9 +397,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     } catch (err) {
       console.error('Offscreen execution error:', err);
+      // Use message instead of processedMessage here because processedMessage might be undefined if processBlobURLs failed
+      const apiType = (typeof processedMessage !== 'undefined' ? processedMessage.apiType : message.apiType);
       const errorMsg =
-        message.apiType && !err.message.includes(message.apiType)
-          ? `[${message.apiType}] ${err.message}`
+        apiType && !err.message.includes(apiType)
+          ? `[${apiType}] ${err.message}`
           : err.message;
       sendResponse({ success: false, error: errorMsg, name: err.name });
     }
@@ -402,7 +460,7 @@ function setupConfigs(backend, config) {
   }
 }
 
-function getApiClass(promptApiModule, apiType, config) {
+function getApiClass(promptApiModule, apiType, config, backend) {
   const nativeClass = window[apiType || 'LanguageModel'];
 
   const ApiClass =
@@ -411,14 +469,18 @@ function getApiClass(promptApiModule, apiType, config) {
     promptApiModule.default ||
     nativeClass;
 
-  // If forceInjection is false and we have a native class, prefer it
+  // If forceInjection is false and we have a native class, prefer it,
+  // BUT only if the requested backend is 'native'.
   if (
     !config.forceInjection &&
+    backend === 'native' &&
     nativeClass &&
     typeof nativeClass.create === 'function'
   ) {
+    console.log('[Offscreen] Backend is NOT forced and native requested, using NATIVE class');
     return nativeClass;
   }
 
+  console.log(`[Offscreen] Using POLYFILL class for backend: ${backend}`);
   return ApiClass;
 }

@@ -70,6 +70,7 @@
 
   // Helper to send messages to the extension via the MessagePort bridge
   const sendMessage = async (message) => {
+    console.log('[MainWorld] Sending message over bridge:', message);
     return new Promise((resolve, reject) => {
       const id = Math.random().toString(36).slice(2);
       pendingRequests.set(id, { resolve, reject });
@@ -109,60 +110,120 @@
   };
 
   const preprocessInput = async (input) => {
-    if (!input || typeof input === 'string') return input;
-    if (!Array.isArray(input)) return input;
+    if (!input || typeof input !== 'object') return input;
 
-    return Promise.all(
-      input.map(async (item) => {
-        if (typeof item === 'string') return item;
-        if (typeof item === 'object' && item !== null) {
-          if (
-            (item.type === 'image' || item.type === 'video') &&
-            item.value &&
-            typeof item.value === 'object'
-          ) {
-            const val = item.value;
-            // Check if it's a DOM element that's not cloneable
-            const isDOMElement =
-              (typeof HTMLElement !== 'undefined' &&
-                val instanceof HTMLElement) ||
-              (typeof SVGElement !== 'undefined' && val instanceof SVGElement);
+    // Detect if we're in an array or a single object (options or prompt items)
+    const items = Array.isArray(input) ? input : [input];
 
-            if (isDOMElement) {
-              try {
-                // Blob is more reliably cloneable across the MessageChannel bridge
-                // and chrome.runtime.sendMessage than ImageBitmap in some contexts.
-                if (val instanceof HTMLCanvasElement) {
-                  item.value = await new Promise((resolve) =>
-                    val.toBlob(resolve, 'image/png')
-                  );
-                } else if (val instanceof HTMLImageElement) {
-                  const canvas = document.createElement('canvas');
-                  canvas.width = val.naturalWidth || val.width;
-                  canvas.height = val.naturalHeight || val.height;
-                  const ctx = canvas.getContext('2d');
-                  ctx.drawImage(val, 0, 0);
-                  item.value = await new Promise((resolve) =>
-                    canvas.toBlob(resolve, 'image/png')
-                  );
-                } else {
-                  // Fallback for other elements (video, svg)
-                  item.value = await createImageBitmap(val);
-                }
-              } catch (e) {
-                // If it fails (e.g., source not loaded), the offscreen page
-                // might still try to handle it or throw a better error.
-                console.warn(
-                  `Failed to pre-process ${item.type} element for bridge:`,
-                  e
+    console.log(`[MainWorld] Pre-processing ${items.length} items for bridge`);
+
+    const processObject = async (obj) => {
+      // Basic recursive processing for objects/arrays
+      if (!obj || typeof obj !== 'object') return obj;
+
+      // Avoid recursing into binary types
+      if (
+        obj instanceof Blob ||
+        obj instanceof ArrayBuffer ||
+        ArrayBuffer.isView(obj) ||
+        (typeof ImageBitmap !== 'undefined' && obj instanceof ImageBitmap)
+      ) {
+        return obj;
+      }
+
+      if (Array.isArray(obj)) {
+        for (let i = 0; i < obj.length; i++) {
+          obj[i] = await processObject(obj[i]);
+          obj[i] = await finalizeBinary(obj[i]);
+        }
+      } else {
+        for (const key in obj) {
+          const val = obj[key];
+
+          // Handle DOM elements (Canvas, Image, etc.)
+          const isDOMElement =
+            (typeof HTMLElement !== 'undefined' && val instanceof HTMLElement) ||
+            (typeof SVGElement !== 'undefined' && val instanceof SVGElement);
+
+          if (isDOMElement) {
+            try {
+              let w = val.naturalWidth || val.width || 0;
+              let h = val.naturalHeight || val.height || 0;
+              if (val instanceof HTMLCanvasElement) {
+                w = val.width;
+                h = val.height;
+              }
+
+              if (w > 0 && h > 0) {
+                console.log(`[MainWorld] Pre-processing ${key} (${val.constructor.name})`);
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(val, 0, 0);
+                obj[key] = await new Promise((resolve) =>
+                  canvas.toBlob(resolve, 'image/png')
                 );
               }
+            } catch (e) {
+              console.warn(`[MainWorld] Failed to pre-process ${key} element:`, e);
             }
+          } else {
+            obj[key] = await processObject(val);
           }
+
+          // Ensure any Blobs or ImageBitmaps (including those just created)
+          // are converted to ArrayBuffers for the bridge.
+          obj[key] = await finalizeBinary(obj[key]);
         }
-        return item;
-      })
-    );
+      }
+      return obj;
+    };
+
+    const finalizeBinary = async (val) => {
+      if (!val || typeof val !== 'object') return val;
+
+      const isBlob =
+        val instanceof Blob ||
+        (val && val.constructor && val.constructor.name === 'Blob');
+
+      const isImageBitmap =
+        (typeof ImageBitmap !== 'undefined' && val instanceof ImageBitmap) ||
+        (val && val.constructor && val.constructor.name === 'ImageBitmap');
+
+      if (isBlob) {
+        const type = val.type || 'application/octet-stream';
+        const buffer = await val.arrayBuffer();
+        console.log(
+          `[MainWorld] Converting Blob (${val.size} bytes, type: ${type}) to ArrayBuffer (${buffer.byteLength} bytes)`
+        );
+        return { __extension_bin_data__: buffer, mimeType: type };
+      } else if (isImageBitmap) {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = val.width;
+          canvas.height = val.height;
+          if (canvas.width > 0 && canvas.height > 0) {
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(val, 0, 0);
+            const blob = await new Promise((resolve) =>
+              canvas.toBlob(resolve, 'image/png')
+            );
+            const buffer = await blob.arrayBuffer();
+            console.log(
+              `[MainWorld] Converting ImageBitmap to ArrayBuffer (${buffer.byteLength} bytes, type: image/png)`
+            );
+            return { __extension_bin_data__: buffer, mimeType: 'image/png' };
+          }
+        } catch (e) {
+          console.warn('[MainWorld] Failed to convert ImageBitmap to ArrayBuffer:', e);
+        }
+      }
+      return val;
+    };
+
+    const results = await Promise.all(items.map((item) => processObject(item)));
+    return Array.isArray(input) ? results : results[0];
   };
 
   const setClassName = (cls, name) => {
