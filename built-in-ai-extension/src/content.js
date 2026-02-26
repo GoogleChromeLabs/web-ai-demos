@@ -52,10 +52,32 @@
   (document.head || document.documentElement).appendChild(script);
   script.onload = () => script.remove();
 
-  // Listen for messages from background/offscreen and dispatch to MAIN world
+  let bridgePort = null;
+
+  // Listen for the bridge initialization from the MAIN world
+  window.addEventListener('message', (event) => {
+    if (event.data?.type === 'AI_EXTENSION_INIT_BRIDGE' && event.ports[0]) {
+      bridgePort = event.ports[0];
+      bridgePort.onmessage = (e) => {
+        const { id, message } = e.data;
+        chrome.runtime.sendMessage(message, (response) => {
+          bridgePort.postMessage({ id, response });
+        });
+      };
+    }
+  });
+
+  // Listen for messages from background/offscreen and relay to MAIN world
   chrome.runtime.onMessage.addListener((message) => {
     if (message.target !== 'content') return;
 
+    // Relay over the bridge port if available (supports binary)
+    if (bridgePort) {
+      bridgePort.postMessage({ type: 'EVENT', message });
+      return;
+    }
+
+    // Fallback/Legacy event dispatching (only if bridge is not ready)
     const eventType =
       message.type === 'download-progress'
         ? 'extension-download-progress'
@@ -73,22 +95,5 @@
     window.dispatchEvent(event);
   });
 
-  // Listen for requests from the MAIN world and relay to extension
-  window.addEventListener('extension-request', (event) => {
-    const { detail } = event;
-    if (!detail) return;
-    const { bridgeId } = detail;
 
-    chrome.runtime.sendMessage(detail, (response) => {
-      // Send the response back to the MAIN world
-      window.dispatchEvent(
-        new CustomEvent('extension-response', {
-          detail: {
-            bridgeId,
-            response,
-          },
-        })
-      );
-    });
-  });
 })();

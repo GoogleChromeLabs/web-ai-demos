@@ -220,12 +220,31 @@ export default class MultimodalConverter {
   }
 
   static async canvasSourceToInlineData(source) {
+    if (!source) {
+      throw new DOMException('Invalid image source', 'InvalidStateError');
+    }
+
     if (
       typeof HTMLImageElement !== 'undefined' &&
       source instanceof HTMLImageElement &&
       !source.complete
     ) {
       await source.decode().catch(() => {});
+    }
+
+    if (
+      typeof HTMLVideoElement !== 'undefined' &&
+      source instanceof HTMLVideoElement &&
+      source.readyState < 2
+    ) {
+      await new Promise((resolve) => {
+        source.addEventListener('loadeddata', resolve, { once: true });
+        // Fallback for already loaded or error
+        if (source.readyState >= 2) {
+          resolve();
+        }
+        setTimeout(resolve, 1000);
+      });
     }
 
     const getDimension = (name) => {
@@ -240,11 +259,13 @@ export default class MultimodalConverter {
       source.displayWidth ||
       source.naturalWidth ||
       source.videoWidth ||
+      source.width ||
       getDimension('width');
     let h =
       source.displayHeight ||
       source.naturalHeight ||
       source.videoHeight ||
+      source.height ||
       getDimension('height');
 
     // Fallback for SVG elements (like SVGImageElement in DOM)
@@ -268,7 +289,14 @@ export default class MultimodalConverter {
     }
 
     if (!w || !h) {
-      throw new DOMException('Invalid image dimensions', 'InvalidStateError');
+      const typeStr =
+        source.constructor && source.constructor.name
+          ? source.constructor.name
+          : typeof source;
+      throw new DOMException(
+        `Invalid image dimensions (${w}x${h}) for source type ${typeStr}`,
+        'InvalidStateError'
+      );
     }
 
     const canvas = document.createElement('canvas');
@@ -276,7 +304,16 @@ export default class MultimodalConverter {
     canvas.height = h;
 
     const ctx = canvas.getContext('2d');
-    if (typeof ImageData !== 'undefined' && source instanceof ImageData) {
+    // More robust ImageData check for cross-context objects
+    const isImageData =
+      (typeof ImageData !== 'undefined' && source instanceof ImageData) ||
+      (source &&
+        typeof source.width === 'number' &&
+        typeof source.height === 'number' &&
+        source.data &&
+        source.data.buffer);
+
+    if (isImageData) {
       ctx.putImageData(source, 0, 0);
     } else {
       ctx.drawImage(source, 0, 0);

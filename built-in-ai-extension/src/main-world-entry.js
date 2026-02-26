@@ -23,55 +23,57 @@
     Classifier: window.Classifier,
   };
 
-  // Helper to convert Blobs to ArrayBuffers for extension messaging compatibility
-  const prepareForMessaging = async (obj) => {
-    if (obj instanceof Blob) {
-      return await obj.arrayBuffer();
+  // Binary Bridge setup for efficient communication with content script
+  const channel = new MessageChannel();
+  const bridgePort = channel.port1;
+  const pendingRequests = new Map();
+
+  // Listen for responses and events back from the content script bridge
+  bridgePort.onmessage = (event) => {
+    if (event.data.type === 'EVENT') {
+      const { message } = event.data;
+      const eventType =
+        message.type === 'download-progress'
+          ? 'extension-download-progress'
+          : message.type === 'stream-chunk'
+            ? 'extension-stream-chunk'
+            : message.type === 'stream-error'
+              ? 'extension-stream-error'
+              : message.type === 'context-overflow'
+                ? 'extension-context-overflow'
+                : 'extension-stream-done';
+
+      window.dispatchEvent(new CustomEvent(eventType, { detail: message }));
+      return;
     }
-    if (Array.isArray(obj)) {
-      return Promise.all(obj.map(prepareForMessaging));
-    }
-    if (obj && typeof obj === 'object') {
-      if (obj instanceof ArrayBuffer || ArrayBuffer.isView(obj)) {
-        return obj;
+
+    const { id, response } = event.data;
+    const request = pendingRequests.get(id);
+    if (request) {
+      pendingRequests.delete(id);
+      if (response.success) {
+        request.resolve(response);
+      } else {
+        const error =
+          response.name === 'AbortError'
+            ? new DOMException(response.error || 'Aborted', 'AbortError')
+            : new Error(response.error);
+        request.reject(error);
       }
-      if (Object.getPrototypeOf(obj) === Object.prototype) {
-        const newObj = {};
-        for (const [key, value] of Object.entries(obj)) {
-          newObj[key] = await prepareForMessaging(value);
-        }
-        return newObj;
-      }
     }
-    return obj;
   };
 
-  // Helper to send messages to the extension via the content script bridge
+  // Initialize the bridge by sending the second port to the content script
+  window.postMessage({ type: 'AI_EXTENSION_INIT_BRIDGE' }, '*', [
+    channel.port2,
+  ]);
+
+  // Helper to send messages to the extension via the MessagePort bridge
   const sendMessage = async (message) => {
-    const preparedMessage = await prepareForMessaging(message);
-    const bridgeId = Math.random().toString(36).slice(2);
     return new Promise((resolve, reject) => {
-      const listener = (event) => {
-        if (event.detail.bridgeId === bridgeId) {
-          window.removeEventListener('extension-response', listener);
-          const response = event.detail.response;
-          if (response.success) {
-            resolve(response);
-          } else {
-            const error =
-              response.name === 'AbortError'
-                ? new DOMException(response.error || 'Aborted', 'AbortError')
-                : new Error(response.error);
-            reject(error);
-          }
-        }
-      };
-      window.addEventListener('extension-response', listener);
-      window.dispatchEvent(
-        new CustomEvent('extension-request', {
-          detail: { ...preparedMessage, bridgeId },
-        })
-      );
+      const id = Math.random().toString(36).slice(2);
+      pendingRequests.set(id, { resolve, reject });
+      bridgePort.postMessage({ id, message });
     });
   };
 
@@ -103,6 +105,46 @@
         }).catch(() => {});
       },
       { once: true }
+    );
+  };
+
+  const preprocessInput = async (input) => {
+    if (!input || typeof input === 'string') return input;
+    if (!Array.isArray(input)) return input;
+
+    return Promise.all(
+      input.map(async (item) => {
+        if (typeof item === 'string') return item;
+        if (typeof item === 'object' && item !== null) {
+          if (
+            (item.type === 'image' || item.type === 'video') &&
+            item.value &&
+            typeof item.value === 'object'
+          ) {
+            const val = item.value;
+            // Check if it's a DOM element that's not cloneable
+            const isDOMElement =
+              (typeof HTMLElement !== 'undefined' &&
+                val instanceof HTMLElement) ||
+              (typeof SVGElement !== 'undefined' && val instanceof SVGElement);
+
+            if (isDOMElement) {
+              try {
+                // ImageBitmap is cloneable across the MessageChannel bridge.
+                item.value = await createImageBitmap(val);
+              } catch (e) {
+                // If it fails (e.g., source not loaded), the offscreen page
+                // might still try to handle it or throw a better error.
+                console.warn(
+                  `Failed to pre-process ${item.type} element for bridge:`,
+                  e
+                );
+              }
+            }
+          }
+        }
+        return item;
+      })
     );
   };
 
@@ -165,12 +207,14 @@
           const callId = Math.random().toString(36).slice(2);
           handleSignal(options.signal, requestId, callId);
 
+          const processedText = await preprocessInput(text);
+
           const response = await sendMessage({
             target: 'offscreen',
             type: 'prompt',
             requestId,
             callId,
-            text,
+            text: processedText,
             options: sanitizeOptions(options),
           });
           if (response.attributes) {
@@ -187,7 +231,7 @@
           handleSignal(options.signal, requestId, callId);
 
           return new ReadableStream({
-            start(controller) {
+            async start(controller) {
               const chunkListener = (e) => {
                 if (
                   e.detail.requestId === requestId &&
@@ -247,12 +291,14 @@
               window.addEventListener('extension-stream-done', doneListener);
               window.addEventListener('extension-stream-error', errorListener);
 
+              const processedText = await preprocessInput(text);
+
               sendMessage({
                 target: 'offscreen',
                 type: 'prompt-streaming',
                 requestId,
                 callId,
-                text,
+                text: processedText,
                 options: sanitizeOptions(options),
               })
                 .then((response) => {
@@ -284,12 +330,14 @@
           const callId = Math.random().toString(36).slice(2);
           handleSignal(options.signal, requestId, callId);
 
+          const processedText = await preprocessInput(text);
+
           const response = await sendMessage({
             target: 'offscreen',
             type: 'append',
             requestId,
             callId,
-            text,
+            text: processedText,
             options: sanitizeOptions(options),
           });
           if (response.attributes) {
@@ -302,12 +350,14 @@
           const callId = Math.random().toString(36).slice(2);
           handleSignal(options.signal, requestId, callId);
 
+          const processedText = await preprocessInput(text);
+
           const response = await sendMessage({
             target: 'offscreen',
             type: 'execute',
             requestId,
             callId,
-            text,
+            text: processedText,
             method: 'measureContextUsage',
             options: sanitizeOptions(options),
           });

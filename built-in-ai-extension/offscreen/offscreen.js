@@ -340,7 +340,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     } catch (err) {
       console.error('Offscreen execution error:', err);
-      sendResponse({ success: false, error: err.message, name: err.name });
+      const errorMsg =
+        message.apiType && !err.message.includes(message.apiType)
+          ? `[${message.apiType}] ${err.message}`
+          : err.message;
+      sendResponse({ success: false, error: errorMsg, name: err.name });
     }
   })();
 
