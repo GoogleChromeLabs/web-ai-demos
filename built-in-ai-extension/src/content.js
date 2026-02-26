@@ -60,7 +60,6 @@
       bridgePort = event.ports[0];
       bridgePort.onmessage = async (e) => {
         const { id, message } = e.data;
-        console.log('[ContentScript] Received message from bridge:', message);
 
         // Recursively find and process ArrayBuffers into blobURLs
         const processArrayBuffers = async (obj) => {
@@ -71,18 +70,12 @@
             const { __extension_bin_data__: buffer, mimeType } = obj;
             const blob = new Blob([buffer], { type: mimeType });
             const blobURL = URL.createObjectURL(blob);
-            console.log(
-              `[ContentScript] Converted wrapped ArrayBuffer (${buffer.byteLength} bytes, type: ${mimeType}) to blobURL: ${blobURL}`
-            );
             return { __extension_blob_url__: blobURL };
           }
 
           if (obj instanceof ArrayBuffer) {
             const blob = new Blob([obj]);
             const blobURL = URL.createObjectURL(blob);
-            console.log(
-              `[ContentScript] Converted raw ArrayBuffer (${obj.byteLength} bytes) to blobURL: ${blobURL}`
-            );
             // Return a special descriptor that the offscreen page will recognize
             return { __extension_blob_url__: blobURL };
           }
@@ -135,6 +128,4 @@
     });
     window.dispatchEvent(event);
   });
-
-
 })();

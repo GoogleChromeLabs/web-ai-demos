@@ -70,14 +70,12 @@
 
   // Helper to send messages to the extension via the MessagePort bridge
   const sendMessage = async (message) => {
-    console.log('[MainWorld] Sending message over bridge:', message);
     return new Promise((resolve, reject) => {
       const id = Math.random().toString(36).slice(2);
       pendingRequests.set(id, { resolve, reject });
       bridgePort.postMessage({ id, message });
     });
   };
-
 
   const sessions = new WeakMap();
   const sessionData = new WeakMap(); // Instance -> { requestId, attributes }
@@ -115,8 +113,6 @@
     // Detect if we're in an array or a single object (options or prompt items)
     const items = Array.isArray(input) ? input : [input];
 
-    console.log(`[MainWorld] Pre-processing ${items.length} items for bridge`);
-
     const processObject = async (obj) => {
       // Basic recursive processing for objects/arrays
       if (!obj || typeof obj !== 'object') return obj;
@@ -142,7 +138,8 @@
 
           // Handle DOM elements (Canvas, Image, etc.)
           const isDOMElement =
-            (typeof HTMLElement !== 'undefined' && val instanceof HTMLElement) ||
+            (typeof HTMLElement !== 'undefined' &&
+              val instanceof HTMLElement) ||
             (typeof SVGElement !== 'undefined' && val instanceof SVGElement);
 
           if (isDOMElement) {
@@ -155,7 +152,6 @@
               }
 
               if (w > 0 && h > 0) {
-                console.log(`[MainWorld] Pre-processing ${key} (${val.constructor.name})`);
                 const canvas = document.createElement('canvas');
                 canvas.width = w;
                 canvas.height = h;
@@ -166,7 +162,10 @@
                 );
               }
             } catch (e) {
-              console.warn(`[MainWorld] Failed to pre-process ${key} element:`, e);
+              console.warn(
+                `[MainWorld] Failed to pre-process ${key} element:`,
+                e
+              );
             }
           } else {
             obj[key] = await processObject(val);
@@ -194,9 +193,6 @@
       if (isBlob) {
         const type = val.type || 'application/octet-stream';
         const buffer = await val.arrayBuffer();
-        console.log(
-          `[MainWorld] Converting Blob (${val.size} bytes, type: ${type}) to ArrayBuffer (${buffer.byteLength} bytes)`
-        );
         return { __extension_bin_data__: buffer, mimeType: type };
       } else if (isImageBitmap) {
         try {
@@ -210,13 +206,13 @@
               canvas.toBlob(resolve, 'image/png')
             );
             const buffer = await blob.arrayBuffer();
-            console.log(
-              `[MainWorld] Converting ImageBitmap to ArrayBuffer (${buffer.byteLength} bytes, type: image/png)`
-            );
             return { __extension_bin_data__: buffer, mimeType: 'image/png' };
           }
         } catch (e) {
-          console.warn('[MainWorld] Failed to convert ImageBitmap to ArrayBuffer:', e);
+          console.warn(
+            '[MainWorld] Failed to convert ImageBitmap to ArrayBuffer:',
+            e
+          );
         }
       }
       return val;

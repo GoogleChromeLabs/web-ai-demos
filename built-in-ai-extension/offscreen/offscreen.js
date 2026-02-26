@@ -11,8 +11,6 @@ let controllers = new Map(); // callId -> AbortController
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.target !== 'offscreen') return;
 
-  console.log('[Offscreen] Received message:', message);
-
   (async () => {
     let processedMessage;
     try {
@@ -23,13 +21,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // More robust identification for the specific bridge descriptor
         if (obj.__extension_blob_url__) {
           const url = obj.__extension_blob_url__;
-          console.log(`[Offscreen] Found blobURL to fetch: ${url}`);
           try {
             const response = await fetch(url);
             const blob = await response.blob();
-            console.log(
-              `[Offscreen] Successfully fetched Blob (${blob.size} bytes, type: ${blob.type}) from ${url}`
-            );
             URL.revokeObjectURL(url);
             return blob;
           } catch (e) {
@@ -85,7 +79,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ]);
 
         const ApiClass = getApiClass(promptApiModule, apiType, config, backend);
-        console.log(`[Offscreen] Creating session with ApiClass: ${ApiClass?.name || 'unknown'}, backend: ${backend}`);
 
         if (!ApiClass) {
           throw new Error(
@@ -166,9 +159,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const ApiClass = getApiClass(promptApiModule, apiType, config, backend);
 
         const result = await ApiClass.availability(options);
-        console.log(
-          `[Offscreen] Availability for ${apiType || 'LanguageModel'} (${backend}): ${result}`
-        );
         sendResponse({ success: true, result });
       } else if (processedMessage.type === 'clone-session') {
         const {
@@ -398,7 +388,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } catch (err) {
       console.error('Offscreen execution error:', err);
       // Use message instead of processedMessage here because processedMessage might be undefined if processBlobURLs failed
-      const apiType = (typeof processedMessage !== 'undefined' ? processedMessage.apiType : message.apiType);
+      const apiType =
+        typeof processedMessage !== 'undefined'
+          ? processedMessage.apiType
+          : message.apiType;
       const errorMsg =
         apiType && !err.message.includes(apiType)
           ? `[${apiType}] ${err.message}`
@@ -477,10 +470,8 @@ function getApiClass(promptApiModule, apiType, config, backend) {
     nativeClass &&
     typeof nativeClass.create === 'function'
   ) {
-    console.log('[Offscreen] Backend is NOT forced and native requested, using NATIVE class');
     return nativeClass;
   }
 
-  console.log(`[Offscreen] Using POLYFILL class for backend: ${backend}`);
   return ApiClass;
 }
