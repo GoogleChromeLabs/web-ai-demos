@@ -25,7 +25,7 @@ function parseTSV(tsv) {
   const taxonomy = {};
 
   for (const line of dataLines) {
-    const [id, parent, name, t1, t2, t3, t4] = line.split('\t');
+    const [id, parent, name, t1, t2, t3, t4] = line.split('\t'); // eslint-disable-line no-unused-vars
     if (!id) {
       continue;
     }

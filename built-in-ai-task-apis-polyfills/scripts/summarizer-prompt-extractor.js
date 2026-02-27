@@ -6,7 +6,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { homedir } from 'node:os';
 import { copyToClipboard, ask } from './utils.js';
 
 const rl = readline.createInterface({

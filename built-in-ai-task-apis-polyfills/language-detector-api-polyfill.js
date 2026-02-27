@@ -257,12 +257,12 @@ export class LanguageDetector extends BaseTaskModel {
       }
       try {
         return this.#parseResults(resultString);
-      } catch (e) {
+      } catch {
         // Try again with code fence removal
         try {
           const cleaned = resultString.replace(/```json\n?|\n?```/g, '').trim();
           return this.#parseResults(cleaned);
-        } catch (e2) {
+        } catch {
           const win = this.constructor.__window || globalThis;
           const EX = win.DOMException || globalThis.DOMException || Error;
           console.error(resultString);

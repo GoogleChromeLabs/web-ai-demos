@@ -22,7 +22,7 @@ export class BaseTaskModel {
   static _validateLanguageTag(tag) {
     try {
       return Intl.getCanonicalLocales(tag)[0];
-    } catch (e) {
+    } catch {
       throw new RangeError(`Invalid language tag: ${tag}`);
     }
   }
@@ -39,7 +39,7 @@ export class BaseTaskModel {
       ) {
         isDestroyed = true;
       }
-    } catch (e) {
+    } catch {
       isDestroyed = true;
     }
 
@@ -47,7 +47,7 @@ export class BaseTaskModel {
       let EX;
       try {
         EX = win?.DOMException || globalThis.DOMException || Error;
-      } catch (e) {
+      } catch {
         EX = globalThis.DOMException || Error;
       }
       throw new EX('The execution context is not valid.', 'InvalidStateError');
@@ -260,7 +260,7 @@ export class BaseTaskModel {
             controller.error(
               combinedSignal.reason || new DOMException('Aborted', 'AbortError')
             );
-          } catch (e) {
+          } catch {
             // Ignore if already closed/errored
           }
         };
@@ -406,7 +406,7 @@ export class BaseTaskModel {
             win.QuotaExceededError = win.DOMException;
           }
         }
-      } catch (e) {
+      } catch {
         // Ignore cross-origin errors
       }
     };
@@ -433,7 +433,7 @@ export class BaseTaskModel {
             configurable: true,
           });
         }
-      } catch (e) {
+      } catch {
         // Ignore
       }
     }

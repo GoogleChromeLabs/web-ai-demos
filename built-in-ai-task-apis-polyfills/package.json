@@ -30,6 +30,7 @@
     "sync:wpt": "node scripts/sync-wpt.js",
     "generate:wpt": "node scripts/generate-wpt-wrappers.js",
     "test:wpt": "npm run sync:wpt && npm run generate:wpt && vite --open /tests/wpt/index.html",
+    "lint": "eslint .",
     "fix": "npx prettier --write ."
   },
   "repository": {
@@ -57,9 +58,13 @@
     "prompt-api-polyfill": "^1.4.0"
   },
   "devDependencies": {
-    "prettier-plugin-curly": "^0.4.1",
-    "node-gyp": "^12.2.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.3.0",
     "node-addon-api": "^8.5.0",
+    "node-gyp": "^12.2.0",
+    "prettier-plugin-curly": "^0.4.1",
     "vite": "^7.3.1"
   }
 }
