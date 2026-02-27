@@ -21,7 +21,7 @@ export function copyToClipboard(text) {
           : 'xclip -selection clipboard';
     execSync(cmd, { input: text });
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 }

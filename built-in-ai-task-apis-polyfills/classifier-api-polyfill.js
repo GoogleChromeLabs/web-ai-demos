@@ -12,11 +12,9 @@ import { ClassifierPromptBuilder } from './classifier-prompt-builder.js';
  */
 
 export class Classifier extends BaseTaskModel {
-  #options;
 
-  constructor(session, builder, options) {
+  constructor(session, builder) {
     super(session, builder);
-    this.#options = options;
   }
 
   static availability(options = {}) {
@@ -73,12 +71,12 @@ export class Classifier extends BaseTaskModel {
     const resultString = await this._runTask(input, options);
     try {
       return this.#parseResults(resultString);
-    } catch (e) {
+    } catch {
       // Try again with code fence removal
       try {
         const cleaned = resultString.replace(/```json\n?|\n?```/g, '').trim();
         return this.#parseResults(cleaned);
-      } catch (e2) {
+      } catch {
         const win = this.constructor.__window || globalThis;
         const EX = win.DOMException || globalThis.DOMException || Error;
         console.error('Failed to parse Classifier results:', resultString);
