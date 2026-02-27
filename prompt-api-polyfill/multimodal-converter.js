@@ -19,32 +19,75 @@ export default class MultimodalConverter {
 
   static async processImage(source) {
     // Blob
-    if (source instanceof Blob) {
-      return this.blobToInlineData(source);
+    const isBlob =
+      source instanceof Blob ||
+      (source &&
+        typeof source === 'object' &&
+        source.constructor &&
+        source.constructor.name === 'Blob');
+
+    if (isBlob) {
+      if (source.type === 'image/png' || source.type === 'image/jpeg') {
+        return this.blobToInlineData(source);
+      }
+      return this.#convertToPngPart(source);
     }
 
     // BufferSource (ArrayBuffer/View) -> Sniff or Default
-    if (ArrayBuffer.isView(source) || source instanceof ArrayBuffer) {
-      const u8 =
-        source instanceof ArrayBuffer
-          ? new Uint8Array(source)
-          : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
+    const isArrayBuffer =
+      source instanceof ArrayBuffer ||
+      (source &&
+        source.constructor &&
+        source.constructor.name === 'ArrayBuffer');
+    const isView =
+      ArrayBuffer.isView(source) ||
+      (source &&
+        source.buffer &&
+        (source.buffer instanceof ArrayBuffer ||
+          source.buffer.constructor.name === 'ArrayBuffer'));
+
+    if (isArrayBuffer || isView) {
+      const u8 = isArrayBuffer
+        ? new Uint8Array(source)
+        : new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
       const buffer = u8.buffer.slice(
         u8.byteOffset,
         u8.byteOffset + u8.byteLength
       );
-      const base64 = this.arrayBufferToBase64(buffer);
       const mimeType = this.#sniffImageMimeType(u8);
       if (!mimeType) {
         throw new DOMException('Invalid image data', 'InvalidStateError');
       }
 
-      return { inlineData: { data: base64, mimeType } };
+      if (mimeType === 'image/png' || mimeType === 'image/jpeg') {
+        const base64 = await this.arrayBufferToBase64(buffer);
+        return { inlineData: { data: base64, mimeType } };
+      }
+
+      const blob = new Blob([buffer], { type: mimeType });
+      return this.#convertToPngPart(blob);
     }
 
-    // ImageBitmapSource (Canvas, Image, VideoFrame, etc.)
+    // ImageBitmap/ImageDataSource (Canvas, Image, VideoFrame, etc.)
     // We draw to a canvas to standardize to PNG
     return this.canvasSourceToInlineData(source);
+  }
+
+  static async #convertToPngPart(blob) {
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode().catch((e) => {
+        throw new DOMException(
+          `The source image cannot be decoded: ${e.message}`,
+          'InvalidStateError'
+        );
+      });
+      return await this.canvasSourceToInlineData(img);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
   }
 
   static #sniffImageMimeType(u8) {
@@ -72,89 +115,36 @@ export default class MultimodalConverter {
       return 'image/png';
     }
 
-    // GIF: GIF87a / GIF89a
-    if (u8[0] === 0x47 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x38) {
-      return 'image/gif';
-    }
-
-    // WebP: RIFF (offset 0) + WEBP (offset 8)
-    if (
-      u8[0] === 0x52 &&
-      u8[1] === 0x49 &&
-      u8[2] === 0x46 &&
-      u8[3] === 0x46 &&
-      u8[8] === 0x57 &&
-      u8[9] === 0x45 &&
-      u8[10] === 0x42 &&
-      u8[11] === 0x50
-    ) {
-      return 'image/webp';
-    }
-
-    // BMP: BM
-    if (u8[0] === 0x42 && u8[1] === 0x4d) {
-      return 'image/bmp';
-    }
-
-    // ICO: 00 00 01 00
-    if (u8[0] === 0x00 && u8[1] === 0x00 && u8[2] === 0x01 && u8[3] === 0x00) {
-      return 'image/x-icon';
-    }
-
-    // TIFF: II* (LE) / MM* (BE)
-    if (
-      (u8[0] === 0x49 && u8[1] === 0x49 && u8[2] === 0x2a) ||
-      (u8[0] === 0x4d && u8[1] === 0x4d && u8[2] === 0x2a)
-    ) {
-      return 'image/tiff';
-    }
-
-    // ISOBMFF (AVIF / HEIC / HEIF)
-    // "ftyp" at offset 4
-    if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) {
-      const type = String.fromCharCode(u8[8], u8[9], u8[10], u8[11]);
-      if (type === 'avif' || type === 'avis') {
-        return 'image/avif';
-      }
-      if (
-        type === 'heic' ||
-        type === 'heix' ||
-        type === 'hevc' ||
-        type === 'hevx'
-      ) {
-        return 'image/heic';
-      }
-      if (type === 'mif1' || type === 'msf1') {
-        return 'image/heif';
-      }
-    }
-
-    // JPEG XL: FF 0A or container bits
-    if (u8[0] === 0xff && u8[1] === 0x0a) {
-      return 'image/jxl';
-    }
-    // Container: 00 00 00 0c 4a 58 4c 20 0d 0a 87 0a (JXL )
-    if (u8[0] === 0x00 && u8[4] === 0x4a && u8[5] === 0x58 && u8[6] === 0x4c) {
-      return 'image/jxl';
-    }
-
-    // JPEG 2000
-    if (u8[0] === 0x00 && u8[4] === 0x6a && u8[5] === 0x50 && u8[6] === 0x20) {
-      return 'image/jp2';
-    }
-
     // SVG: Check for <svg or <?xml (heuristics)
     const preview = String.fromCharCode(...u8.slice(0, 100)).toLowerCase();
     if (preview.includes('<svg') || preview.includes('<?xml')) {
       return 'image/svg+xml';
     }
 
+    // Common web formats to help decoding
+    if (u8[0] === 0x47 && u8[1] === 0x49 && u8[2] === 0x46) {
+      return 'image/gif';
+    }
+    if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) {
+      return 'image/webp';
+    }
+    if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) {
+      return 'image/avif';
+    } // simplified
+
     return null;
   }
 
   static async processAudio(source) {
     // Blob
-    if (source instanceof Blob) {
+    const isBlob =
+      source instanceof Blob ||
+      (source &&
+        typeof source === 'object' &&
+        source.constructor &&
+        source.constructor.name === 'Blob');
+
+    if (isBlob) {
       if (
         source.type &&
         !source.type.startsWith('audio/') &&
@@ -166,9 +156,15 @@ export default class MultimodalConverter {
     }
 
     // AudioBuffer -> WAV
-    if (source instanceof AudioBuffer) {
+    const isAudioBuffer =
+      source instanceof AudioBuffer ||
+      (source &&
+        source.constructor &&
+        source.constructor.name === 'AudioBuffer');
+
+    if (isAudioBuffer) {
       const wavBuffer = this.audioBufferToWav(source);
-      const base64 = this.arrayBufferToBase64(wavBuffer);
+      const base64 = await this.arrayBufferToBase64(wavBuffer);
       return { inlineData: { data: base64, mimeType: 'audio/wav' } };
     }
 
@@ -189,7 +185,7 @@ export default class MultimodalConverter {
       const buffer = isArrayBuffer ? source : source.buffer;
       return {
         inlineData: {
-          data: this.arrayBufferToBase64(buffer),
+          data: await this.arrayBufferToBase64(buffer),
           mimeType: 'audio/wav', // Fallback assumption
         },
       };
@@ -220,6 +216,10 @@ export default class MultimodalConverter {
   }
 
   static async canvasSourceToInlineData(source) {
+    if (!source) {
+      throw new DOMException('Invalid image source', 'InvalidStateError');
+    }
+
     if (
       typeof HTMLImageElement !== 'undefined' &&
       source instanceof HTMLImageElement &&
@@ -228,12 +228,30 @@ export default class MultimodalConverter {
       await source.decode().catch(() => {});
     }
 
+    if (
+      typeof HTMLVideoElement !== 'undefined' &&
+      source instanceof HTMLVideoElement &&
+      source.readyState < 2
+    ) {
+      await new Promise((resolve) => {
+        source.addEventListener('loadeddata', resolve, { once: true });
+        // Fallback for already loaded or error
+        if (source.readyState >= 2) {
+          resolve();
+        }
+        setTimeout(resolve, 1000);
+      });
+    }
+
     const getDimension = (name) => {
       const val = source[name];
+      if (typeof val === 'number') {
+        return val;
+      }
       if (typeof val === 'object' && val !== null && 'baseVal' in val) {
         return val.baseVal.value;
       }
-      return typeof val === 'number' ? val : 0;
+      return 0;
     };
 
     let w =
@@ -268,7 +286,14 @@ export default class MultimodalConverter {
     }
 
     if (!w || !h) {
-      throw new DOMException('Invalid image dimensions', 'InvalidStateError');
+      const typeStr =
+        source.constructor && source.constructor.name
+          ? source.constructor.name
+          : typeof source;
+      throw new DOMException(
+        `Invalid image dimensions (${w}x${h}) for source type ${typeStr}`,
+        'InvalidStateError'
+      );
     }
 
     const canvas = document.createElement('canvas');
@@ -276,7 +301,19 @@ export default class MultimodalConverter {
     canvas.height = h;
 
     const ctx = canvas.getContext('2d');
-    if (typeof ImageData !== 'undefined' && source instanceof ImageData) {
+    // More robust ImageData check for cross-context objects
+    const isImageData =
+      (typeof ImageData !== 'undefined' && source instanceof ImageData) ||
+      (source &&
+        source.constructor &&
+        source.constructor.name === 'ImageData') ||
+      (source &&
+        typeof source.width === 'number' &&
+        typeof source.height === 'number' &&
+        source.data &&
+        source.data.buffer);
+
+    if (isImageData) {
       ctx.putImageData(source, 0, 0);
     } else {
       ctx.drawImage(source, 0, 0);
@@ -291,14 +328,14 @@ export default class MultimodalConverter {
     };
   }
 
-  static arrayBufferToBase64(buffer) {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
+  static async arrayBufferToBase64(buffer) {
+    const blob = new Blob([buffer]);
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   // Simple WAV Encoder for AudioBuffer
