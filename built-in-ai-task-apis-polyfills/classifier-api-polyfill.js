@@ -103,7 +103,7 @@ export class Classifier extends BaseTaskModel {
     results.sort((a, b) => b.confidence - a.confidence);
 
     // 3. Handle sum to 1
-    let finalResults = [];
+    const finalResults = [];
     let unknownResult = null;
     let currentSum = 0;
 
