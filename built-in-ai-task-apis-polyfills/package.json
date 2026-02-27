@@ -62,7 +62,7 @@
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.3.0",
-    "node-addon-api": "^8.5.0",
+    "node-addon-api": "^8.6.0",
     "node-gyp": "^12.2.0",
     "prettier-plugin-curly": "^0.4.1",
     "vite": "^7.3.1"
