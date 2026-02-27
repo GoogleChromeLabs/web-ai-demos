@@ -377,10 +377,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.error('Offscreen execution error:', err);
       // Use message instead of processedMessage here because processedMessage
       // might be undefined if processBlobURLs failed
-      const apiType =
-        typeof processedMessage !== 'undefined'
-          ? processedMessage.apiType
-          : message.apiType;
+      const apiType = processedMessage?.apiType ?? message.apiType;
       const errorMsg =
         apiType && !err.message.includes(apiType)
           ? `[${apiType}] ${err.message}`
