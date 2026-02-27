@@ -42,9 +42,14 @@
     "sync:wpt": "node scripts/sync-wpt.js",
     "generate:wpt": "npm run generate:registry && node scripts/backend-discovery.js && node scripts/generate-wpt-wrappers.js",
     "test:wpt": "npm run generate:registry && npm run sync:wpt && npm run generate:wpt && npx vite --open /tests/wpt/index.html",
+    "lint": "eslint .",
     "fix": "npx prettier --write ."
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.3.0",
     "prettier": "^3.8.1",
     "prettier-plugin-curly": "^0.4.1",
     "vite": "^7.3.1",
