@@ -8,7 +8,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const backendSelect = document.getElementById('backend');
   const panes = document.querySelectorAll('.config-pane');
-  const saveBtn = document.getElementById('save');
   const statusSpan = document.getElementById('status');
   const forceInjectionCheckbox = document.getElementById('forceInjection');
 
@@ -108,41 +107,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Model Management Logic
   const refreshModels = async () => {
-    chrome.runtime.sendMessage(
-      { target: 'offscreen', type: 'list-models' },
-      (response) => {
-        if (response && response.success) {
-          if (response.models.length === 0) {
-            modelList.innerHTML = '<li>No models cached.</li>';
-            return;
-          }
-          modelList.innerHTML = '';
-          response.models.forEach((model) => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-            <span>${model}</span>
-            <button class="btn-delete" data-model="${model}">Delete</button>
-          `;
-            modelList.appendChild(li);
-
-            li.querySelector('.btn-delete').addEventListener(
-              'click',
-              async () => {
-                const modelName = model;
-                if (confirm(`Delete cached files for ${modelName}?`)) {
-                  chrome.runtime.sendMessage(
-                    { target: 'offscreen', type: 'delete-model', modelName },
-                    () => refreshModels()
-                  );
-                }
-              }
-            );
-          });
-        } else {
-          modelList.innerHTML = '<li>Failed to load models.</li>';
-        }
+    const response = await chrome.runtime.sendMessage({
+      target: 'offscreen',
+      type: 'list-models',
+    });
+    if (response && response.success) {
+      if (response.models.length === 0) {
+        modelList.innerHTML = '<li>No models cached.</li>';
+        return;
       }
-    );
+      modelList.innerHTML = '';
+      response.models.forEach((model) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+        <span>${model}</span>
+        <button class="btn-delete" data-model="${model}">Delete</button>
+      `;
+        modelList.appendChild(li);
+
+        li.querySelector('.btn-delete').addEventListener('click', async () => {
+          const modelName = model;
+          if (confirm(`Delete cached files for ${modelName}?`)) {
+            await chrome.runtime.sendMessage({
+              target: 'offscreen',
+              type: 'delete-model',
+              modelName,
+            });
+            refreshModels();
+          }
+        });
+      });
+    } else {
+      modelList.innerHTML = '<li>Failed to load models.</li>';
+    }
   };
 
   // Initial load of models
@@ -159,32 +156,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     progressBar.style.width = '0%';
     progressText.textContent = 'Checking model...';
 
-    chrome.runtime.sendMessage(
-      {
-        target: 'offscreen',
-        type: 'create-session',
-        config: {
-          apiKey: 'dummy',
-          modelName: modelName,
-          device: document.getElementById('transformersDevice').value,
-          dtype: document.getElementById('transformersDtype').value,
-        },
-        options: {},
+    const response = await chrome.runtime.sendMessage({
+      target: 'offscreen',
+      type: 'create-session',
+      config: {
+        apiKey: 'dummy',
+        modelName: modelName,
+        device: document.getElementById('transformersDevice').value,
+        dtype: document.getElementById('transformersDtype').value,
       },
-      (response) => {
-        if (response && response.success) {
-          progressText.textContent = 'Model ready!';
-          progressBar.style.width = '100%';
-          refreshModels();
-          setTimeout(() => progressContainer.classList.add('hidden'), 10000);
-        } else {
-          alert(
-            'Download failed: ' + (response ? response.error : 'Unknown error')
-          );
-          progressContainer.classList.add('hidden');
-        }
-      }
-    );
+      options: {},
+    });
+    if (response && response.success) {
+      progressText.textContent = 'Model ready!';
+      progressBar.style.width = '100%';
+      refreshModels();
+      setTimeout(() => progressContainer.classList.add('hidden'), 10000);
+    } else {
+      alert(
+        'Download failed: ' + (response ? response.error : 'Unknown error')
+      );
+      progressContainer.classList.add('hidden');
+    }
   });
 
   // Listen for progress messages

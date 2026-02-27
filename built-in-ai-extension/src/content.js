@@ -52,10 +52,66 @@
   (document.head || document.documentElement).appendChild(script);
   script.onload = () => script.remove();
 
-  // Listen for messages from background/offscreen and dispatch to MAIN world
+  let bridgePort = null;
+
+  // Listen for the bridge initialization from the MAIN world
+  window.addEventListener('message', (event) => {
+    if (event.data?.type === 'AI_EXTENSION_INIT_BRIDGE' && event.ports[0]) {
+      bridgePort = event.ports[0];
+      bridgePort.onmessage = async (e) => {
+        const { id, message } = e.data;
+
+        // Recursively find and process ArrayBuffers into blobURLs
+        const processArrayBuffers = async (obj) => {
+          if (!obj || typeof obj !== 'object') return obj;
+
+          // Handle the new descriptor from Main World that includes MIME type
+          if (obj.__extension_bin_data__) {
+            const { __extension_bin_data__: buffer, mimeType } = obj;
+            const blob = new Blob([buffer], { type: mimeType });
+            const blobURL = URL.createObjectURL(blob);
+            return { __extension_blob_url__: blobURL };
+          }
+
+          if (obj instanceof ArrayBuffer) {
+            const blob = new Blob([obj]);
+            const blobURL = URL.createObjectURL(blob);
+            // Return a special descriptor that the offscreen page will recognize
+            return { __extension_blob_url__: blobURL };
+          }
+
+          if (Array.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+              obj[i] = await processArrayBuffers(obj[i]);
+            }
+          } else {
+            for (const key of Object.keys(obj)) {
+              obj[key] = await processArrayBuffers(obj[key]);
+            }
+          }
+          return obj;
+        };
+
+        const processedMessage = await processArrayBuffers(message);
+
+        chrome.runtime.sendMessage(processedMessage, (response) => {
+          bridgePort.postMessage({ id, response });
+        });
+      };
+    }
+  });
+
+  // Listen for messages from background/offscreen and relay to MAIN world
   chrome.runtime.onMessage.addListener((message) => {
     if (message.target !== 'content') return;
 
+    // Relay over the bridge port if available (supports binary)
+    if (bridgePort) {
+      bridgePort.postMessage({ type: 'EVENT', message });
+      return;
+    }
+
+    // Fallback/Legacy event dispatching (only if bridge is not ready)
     const eventType =
       message.type === 'download-progress'
         ? 'extension-download-progress'
@@ -71,24 +127,5 @@
       detail: message,
     });
     window.dispatchEvent(event);
-  });
-
-  // Listen for requests from the MAIN world and relay to extension
-  window.addEventListener('extension-request', (event) => {
-    const { detail } = event;
-    if (!detail) return;
-    const { bridgeId } = detail;
-
-    chrome.runtime.sendMessage(detail, (response) => {
-      // Send the response back to the MAIN world
-      window.dispatchEvent(
-        new CustomEvent('extension-response', {
-          detail: {
-            bridgeId,
-            response,
-          },
-        })
-      );
-    });
   });
 })();
