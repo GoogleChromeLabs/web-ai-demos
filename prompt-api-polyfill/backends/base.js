@@ -7,7 +7,6 @@
  * Abstract class representing a backend for the LanguageModel polyfill.
  */
 export default class PolyfillBackend {
-  #model;
 
   /**
    * @param {string} modelName - The name of the model.
@@ -21,7 +20,7 @@ export default class PolyfillBackend {
    * @param {Object} options - LanguageModel options.
    * @returns {string} 'available', 'unavailable', 'downloadable', or 'downloading'.
    */
-  static availability(options) {
+  static availability(_options) {
     return 'available';
   }
 
@@ -32,7 +31,7 @@ export default class PolyfillBackend {
    * @param {EventTarget} [monitorTarget] - The event target to dispatch download progress events to.
    * @returns {any} The created session object.
    */
-  createSession(options, sessionParams, monitorTarget) {
+  createSession(_options, _sessionParams, _monitorTarget) {
     throw new Error('Not implemented');
   }
 
@@ -41,7 +40,7 @@ export default class PolyfillBackend {
    * @param {Array} content - The history + new message content.
    * @returns {Promise<{text: string, usage: number}>}
    */
-  async generateContent(content) {
+  async generateContent(_content) {
     throw new Error('Not implemented');
   }
 
@@ -50,7 +49,7 @@ export default class PolyfillBackend {
    * @param {Array} content - The history + new content.
    * @returns {Promise<AsyncIterable>} Stream of chunks.
    */
-  async generateContentStream(content) {
+  async generateContentStream(_content) {
     throw new Error('Not implemented');
   }
 
@@ -59,7 +58,7 @@ export default class PolyfillBackend {
    * @param {Array} content - The content to count.
    * @returns {Promise<number>} Total tokens.
    */
-  async countTokens(content) {
+  async countTokens(_content) {
     throw new Error('Not implemented');
   }
 }

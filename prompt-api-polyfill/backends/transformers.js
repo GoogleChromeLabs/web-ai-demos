@@ -405,7 +405,7 @@ async function resolveModelFiles(modelId, options = {}) {
   // --- 3. ONNX Model Resolution ---
   const onnxFolder = 'onnx';
 
-  let suffixes = [];
+  let suffixes;
   if (dtype === 'fp32') {
     suffixes = [''];
   } else if (dtype === 'quantized') {

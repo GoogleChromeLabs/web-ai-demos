@@ -249,7 +249,6 @@ export default class OpenAIBackend extends PolyfillBackend {
 
       // Convert OpenAI stream to an AsyncIterable that yields chunks
       return (async function* () {
-        let firstChunk = true;
         for await (const chunk of stream) {
           let text = chunk.choices[0]?.delta?.content;
           if (text) {

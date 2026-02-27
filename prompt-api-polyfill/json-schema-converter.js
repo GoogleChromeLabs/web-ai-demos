@@ -56,7 +56,7 @@ export function convertJsonSchemaToVertexSchema(jsonSchema) {
         items: convertJsonSchemaToVertexSchema(jsonSchema.items),
       });
 
-    case 'object':
+    case 'object': {
       const properties = {};
       const allPropertyKeys = jsonSchema.properties
         ? Object.keys(jsonSchema.properties)
@@ -81,6 +81,7 @@ export function convertJsonSchemaToVertexSchema(jsonSchema) {
         properties: properties,
         optionalProperties: optionalProperties,
       });
+    }
 
     default:
       // Fallback for unknown types or complex types not fully supported (like oneOf)

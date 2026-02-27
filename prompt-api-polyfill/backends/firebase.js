@@ -23,7 +23,6 @@ import { DEFAULT_MODELS } from './defaults.js';
  */
 export default class FirebaseBackend extends PolyfillBackend {
   #model;
-  #sessionParams;
 
   constructor(config) {
     const {
@@ -53,7 +52,6 @@ export default class FirebaseBackend extends PolyfillBackend {
   }
 
   createSession(_options, sessionParams) {
-    this.#sessionParams = sessionParams;
     this.#model = getGenerativeModel(this.ai, {
       mode: InferenceMode.ONLY_IN_CLOUD,
       inCloudParams: sessionParams,
