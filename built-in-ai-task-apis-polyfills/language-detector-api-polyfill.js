@@ -290,7 +290,7 @@ export class LanguageDetector extends BaseTaskModel {
     results.sort((a, b) => b.confidence - a.confidence);
 
     // 3. Handle "und" and confidence sum
-    const finalResults = [];
+    let finalResults = [];
     let undResult = null;
     let currentSum = 0;
 

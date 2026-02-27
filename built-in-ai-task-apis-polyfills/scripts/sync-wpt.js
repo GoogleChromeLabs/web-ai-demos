@@ -121,7 +121,7 @@ async function main() {
   }
 
   try {
-    const allFiles = [];
+    let allFiles = [];
     for (const source of SOURCES) {
       if (source.api) {
         const files = await syncDir(source.api, source.local);
