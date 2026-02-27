@@ -72,7 +72,6 @@ async function convertToHistory(prompts, win = globalThis) {
  */
 export class LanguageModel extends EventTarget {
   #backend;
-  #model;
   #history;
   #options;
   #sessionParams;
@@ -92,7 +91,6 @@ export class LanguageModel extends EventTarget {
   ) {
     super();
     this.#backend = backend;
-    this.#model = model;
     this.#history = initialHistory || [];
     this.#options = options;
     this.#sessionParams = sessionParams;
@@ -136,7 +134,7 @@ export class LanguageModel extends EventTarget {
       ) {
         throw new Error();
       }
-    } catch (e) {
+    } catch {
       const DOMExceptionClass = win?.DOMException || globalThis.DOMException;
       throw new DOMExceptionClass(
         'The execution context is not valid.',
@@ -292,7 +290,7 @@ export class LanguageModel extends EventTarget {
       }
       try {
         Intl.getCanonicalLocales(lang);
-      } catch (e) {
+      } catch {
         throw new RangeError(`Invalid language tag: "${lang}"`);
       }
     }
@@ -428,11 +426,7 @@ export class LanguageModel extends EventTarget {
     let monitorTarget = null;
     if (typeof resolvedOptions.monitor === 'function') {
       monitorTarget = new EventTarget();
-      try {
-        resolvedOptions.monitor(monitorTarget);
-      } catch (e) {
-        throw e;
-      }
+      resolvedOptions.monitor(monitorTarget);
     }
 
     if (monitorTarget) {
@@ -638,7 +632,7 @@ export class LanguageModel extends EventTarget {
       this.#sessionParams.generationConfig.responseSchema = schema;
 
       // Re-create model with new config/schema (stored in backend)
-      this.#model = this.#backend.createSession(
+      this.#backend.createSession(
         this.#options,
         this.#sessionParams
       );
@@ -866,7 +860,7 @@ export class LanguageModel extends EventTarget {
             _this.#sessionParams.generationConfig.responseMimeType =
               'application/json';
             _this.#sessionParams.generationConfig.responseSchema = schema;
-            _this.#model = _this.#backend.createSession(
+            _this.#backend.createSession(
               _this.#options,
               _this.#sessionParams
             );
@@ -1096,7 +1090,7 @@ export class LanguageModel extends EventTarget {
         { role: 'user', parts },
       ]);
       return totalTokens || 0;
-    } catch (e) {
+    } catch {
       console.warn(
         'The underlying API call failed, quota usage (0) is not reported accurately.'
       );
@@ -1139,7 +1133,7 @@ export class LanguageModel extends EventTarget {
     }
     try {
       JSON.stringify(constraint);
-    } catch (e) {
+    } catch {
       throw new (win.DOMException || globalThis.DOMException)(
         'Response json schema is invalid - it should be an object that can be stringified into a JSON string.',
         'NotSupportedError'
@@ -1354,7 +1348,7 @@ const inject = (win) => {
     if (win.DOMException) {
       win.QuotaExceededError = win.DOMException;
     }
-  } catch (e) {
+  } catch {
     // Ignore cross-origin errors
   }
 };
@@ -1378,7 +1372,7 @@ if (typeof HTMLIFrameElement !== 'undefined') {
         configurable: true,
       });
     }
-  } catch (e) {
+  } catch {
     // Ignore
   }
 }

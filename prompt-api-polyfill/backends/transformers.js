@@ -182,6 +182,11 @@ export default class TransformersBackend extends PolyfillBackend {
     return this.#generator;
   }
 
+  /**
+   * Generates content (non-streaming).
+   * @param {Array} contents - The history + new message content.
+   * @returns {Promise<{text: string, usage: number}>}
+   */
   async generateContent(contents) {
     const generator = await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
@@ -201,6 +206,11 @@ export default class TransformersBackend extends PolyfillBackend {
     return { text, usage };
   }
 
+  /**
+   * Generates content stream.
+   * @param {Array} contents - The history + new content.
+   * @returns {Promise<AsyncIterable>} Stream of chunks.
+   */
   async generateContentStream(contents) {
     const generator = await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
@@ -275,6 +285,11 @@ export default class TransformersBackend extends PolyfillBackend {
     })();
   }
 
+  /**
+   * Counts tokens.
+   * @param {Array} contents - The content to count.
+   * @returns {Promise<number>} Total tokens.
+   */
   async countTokens(contents) {
     await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
@@ -405,7 +420,7 @@ async function resolveModelFiles(modelId, options = {}) {
   // --- 3. ONNX Model Resolution ---
   const onnxFolder = 'onnx';
 
-  let suffixes = [];
+  let suffixes;
   if (dtype === 'fp32') {
     suffixes = [''];
   } else if (dtype === 'quantized') {

@@ -55,14 +55,14 @@
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",
   "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "dependencies": {
-    "prompt-api-polyfill": "^1.10.0"
+    "prompt-api-polyfill": "^1.11.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.3.0",
-    "node-addon-api": "^8.5.0",
+    "node-addon-api": "^8.6.0",
     "node-gyp": "^12.2.0",
     "prettier-plugin-curly": "^0.4.1",
     "vite": "^7.3.1"

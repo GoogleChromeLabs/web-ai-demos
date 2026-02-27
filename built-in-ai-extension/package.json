@@ -15,8 +15,8 @@
   "author": "Thomas Steiner (tomac@google.com)",
   "license": "Apache-2.0",
   "dependencies": {
-    "built-in-ai-task-apis-polyfills": "^1.4.0",
-    "prompt-api-polyfill": "^1.10.0"
+    "built-in-ai-task-apis-polyfills": "^1.5.0",
+    "prompt-api-polyfill": "^1.11.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -24,7 +24,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.3.0",
-    "node-addon-api": "^8.5.0",
+    "node-addon-api": "^8.6.0",
     "node-gyp": "^12.2.0",
     "prettier": "^3.8.1",
     "vite": "^7.3.1"

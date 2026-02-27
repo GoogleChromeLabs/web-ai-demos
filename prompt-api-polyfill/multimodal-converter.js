@@ -271,7 +271,7 @@ export default class MultimodalConverter {
         const box = source.getBBox();
         w = w || box.width;
         h = h || box.height;
-      } catch (e) {
+      } catch {
         // SVG might not be in DOM or not ready
       }
     }
@@ -282,7 +282,9 @@ export default class MultimodalConverter {
         const rect = source.getBoundingClientRect();
         w = w || rect.width;
         h = h || rect.height;
-      } catch (e) {}
+      } catch {
+        // ignore
+      }
     }
 
     if (!w || !h) {

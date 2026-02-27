@@ -7,7 +7,6 @@
  * Abstract class representing a backend for the LanguageModel polyfill.
  */
 export default class PolyfillBackend {
-  #model;
 
   /**
    * @param {string} modelName - The name of the model.
@@ -18,48 +17,48 @@ export default class PolyfillBackend {
 
   /**
    * Checks if the backend is available given the options.
-   * @param {Object} options - LanguageModel options.
+   * @param {Object} _options - LanguageModel options.
    * @returns {string} 'available', 'unavailable', 'downloadable', or 'downloading'.
    */
-  static availability(options) {
+  static availability(_options) {
     return 'available';
   }
 
   /**
    * Creates a model session and stores it.
-   * @param {Object} options - LanguageModel options.
-   * @param {Object} sessionParams - Parameters for the cloud or local model.
-   * @param {EventTarget} [monitorTarget] - The event target to dispatch download progress events to.
+   * @param {Object} _options - LanguageModel options.
+   * @param {Object} _sessionParams - Parameters for the cloud or local model.
+   * @param {EventTarget} [_monitorTarget] - The event target to dispatch download progress events to.
    * @returns {any} The created session object.
    */
-  createSession(options, sessionParams, monitorTarget) {
+  createSession(_options, _sessionParams, _monitorTarget) {
     throw new Error('Not implemented');
   }
 
   /**
    * Generates content (non-streaming).
-   * @param {Array} content - The history + new message content.
+   * @param {Array} _content - The history + new message content.
    * @returns {Promise<{text: string, usage: number}>}
    */
-  async generateContent(content) {
+  async generateContent(_content) {
     throw new Error('Not implemented');
   }
 
   /**
    * Generates content stream.
-   * @param {Array} content - The history + new content.
+   * @param {Array} _content - The history + new content.
    * @returns {Promise<AsyncIterable>} Stream of chunks.
    */
-  async generateContentStream(content) {
+  async generateContentStream(_content) {
     throw new Error('Not implemented');
   }
 
   /**
    * Counts tokens.
-   * @param {Array} content - The content to count.
+   * @param {Array} _content - The content to count.
    * @returns {Promise<number>} Total tokens.
    */
-  async countTokens(content) {
+  async countTokens(_content) {
     throw new Error('Not implemented');
   }
 }
