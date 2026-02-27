@@ -17,7 +17,7 @@ export default class PolyfillBackend {
 
   /**
    * Checks if the backend is available given the options.
-   * @param {Object} options - LanguageModel options.
+   * @param {Object} _options - LanguageModel options.
    * @returns {string} 'available', 'unavailable', 'downloadable', or 'downloading'.
    */
   static availability(_options) {
@@ -26,9 +26,9 @@ export default class PolyfillBackend {
 
   /**
    * Creates a model session and stores it.
-   * @param {Object} options - LanguageModel options.
-   * @param {Object} sessionParams - Parameters for the cloud or local model.
-   * @param {EventTarget} [monitorTarget] - The event target to dispatch download progress events to.
+   * @param {Object} _options - LanguageModel options.
+   * @param {Object} _sessionParams - Parameters for the cloud or local model.
+   * @param {EventTarget} [_monitorTarget] - The event target to dispatch download progress events to.
    * @returns {any} The created session object.
    */
   createSession(_options, _sessionParams, _monitorTarget) {
@@ -37,7 +37,7 @@ export default class PolyfillBackend {
 
   /**
    * Generates content (non-streaming).
-   * @param {Array} content - The history + new message content.
+   * @param {Array} _content - The history + new message content.
    * @returns {Promise<{text: string, usage: number}>}
    */
   async generateContent(_content) {
@@ -46,7 +46,7 @@ export default class PolyfillBackend {
 
   /**
    * Generates content stream.
-   * @param {Array} content - The history + new content.
+   * @param {Array} _content - The history + new content.
    * @returns {Promise<AsyncIterable>} Stream of chunks.
    */
   async generateContentStream(_content) {
@@ -55,7 +55,7 @@ export default class PolyfillBackend {
 
   /**
    * Counts tokens.
-   * @param {Array} content - The content to count.
+   * @param {Array} _content - The content to count.
    * @returns {Promise<number>} Total tokens.
    */
   async countTokens(_content) {

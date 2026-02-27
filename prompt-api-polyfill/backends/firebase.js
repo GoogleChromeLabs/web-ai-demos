@@ -51,6 +51,12 @@ export default class FirebaseBackend extends PolyfillBackend {
     });
   }
 
+  /**
+   * Creates a model session and stores it.
+   * @param {Object} _options - LanguageModel options.
+   * @param {Object} sessionParams - Parameters for the cloud or local model.
+   * @returns {any} The created session object.
+   */
   createSession(_options, sessionParams) {
     this.#model = getGenerativeModel(this.ai, {
       mode: InferenceMode.ONLY_IN_CLOUD,
@@ -59,17 +65,32 @@ export default class FirebaseBackend extends PolyfillBackend {
     return this.#model;
   }
 
+  /**
+   * Generates content (non-streaming).
+   * @param {Array} contents - The history + new message content.
+   * @returns {Promise<{text: string, usage: number}>}
+   */
   async generateContent(contents) {
     const result = await this.#model.generateContent({ contents });
     const usage = result.response.usageMetadata?.promptTokenCount || 0;
     return { text: result.response.text(), usage };
   }
 
+  /**
+   * Generates content stream.
+   * @param {Array} contents - The history + new content.
+   * @returns {Promise<AsyncIterable>} Stream of chunks.
+   */
   async generateContentStream(contents) {
     const result = await this.#model.generateContentStream({ contents });
     return result.stream;
   }
 
+  /**
+   * Counts tokens.
+   * @param {Array} contents - The content to count.
+   * @returns {Promise<number>} Total tokens.
+   */
   async countTokens(contents) {
     const { totalTokens } = await this.#model.countTokens({
       contents,

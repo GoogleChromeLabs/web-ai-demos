@@ -7,7 +7,7 @@ import { Schema } from 'firebase/ai';
 
 /**
  * Converts a standard JSON Schema object into a Firebase Vertex AI Schema class instance.
- * * @param {Object} jsonSchema - The standard JSON Schema object.
+ * @param {Object} jsonSchema - The standard JSON Schema object.
  * @returns {Schema} - The Firebase Vertex AI Schema instance.
  */
 export function convertJsonSchemaToVertexSchema(jsonSchema) {

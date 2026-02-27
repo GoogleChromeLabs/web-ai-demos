@@ -37,6 +37,12 @@ export default class OpenAIBackend extends PolyfillBackend {
     return 'available';
   }
 
+  /**
+   * Creates a model session and stores it.
+   * @param {Object} options - LanguageModel options.
+   * @param {Object} sessionParams - Parameters for the cloud or local model.
+   * @returns {any} The created session object.
+   */
   createSession(options, sessionParams) {
     // OpenAI doesn't have a "session" object like Gemini, so we return a context object
     // tailored for our generate methods.
@@ -155,6 +161,11 @@ export default class OpenAIBackend extends PolyfillBackend {
     return hasAudio ? `${this.modelName}-audio-preview` : this.modelName;
   }
 
+  /**
+   * Generates content (non-streaming).
+   * @param {Array} contents - The history + new message content.
+   * @returns {Promise<{text: string, usage: number}>}
+   */
   async generateContent(contents) {
     const { messages } = this.#convertContentsToInput(
       contents,
@@ -212,6 +223,11 @@ export default class OpenAIBackend extends PolyfillBackend {
     }
   }
 
+  /**
+   * Generates content stream.
+   * @param {Array} contents - The history + new content.
+   * @returns {Promise<AsyncIterable>} Stream of chunks.
+   */
   async generateContentStream(contents) {
     const { messages } = this.#convertContentsToInput(
       contents,
@@ -267,6 +283,11 @@ export default class OpenAIBackend extends PolyfillBackend {
     }
   }
 
+  /**
+   * Counts tokens.
+   * @param {Array} contents - The content to count.
+   * @returns {Promise<number>} Total tokens.
+   */
   async countTokens(contents) {
     // OpenAI does not provide a public API endpoint for counting tokens before generation.
     // Implementing countTokens strictly requires a tokenizer like `tiktoken`.
