@@ -85,7 +85,7 @@
               obj[i] = await processArrayBuffers(obj[i]);
             }
           } else {
-            for (const key in obj) {
+            for (const key of Object.keys(obj)) {
               obj[key] = await processArrayBuffers(obj[key]);
             }
           }

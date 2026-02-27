@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "fix": "prettier --write .",
-    "lint": "prettier --check .",
+    "fix": "eslint . --fix && prettier --write .",
+    "lint": "eslint . && prettier --check .",
     "preview": "vite preview"
   },
   "keywords": [],
@@ -19,9 +19,14 @@
     "prompt-api-polyfill": "^1.10.0"
   },
   "devDependencies": {
-    "prettier": "^3.8.1",
-    "vite": "^7.3.1",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.2",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.3.0",
+    "node-addon-api": "^8.5.0",
     "node-gyp": "^12.2.0",
-    "node-addon-api": "^8.5.0"
+    "prettier": "^3.8.1",
+    "vite": "^7.3.1"
   }
 }

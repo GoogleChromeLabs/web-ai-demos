@@ -5,8 +5,8 @@
 
 // offscreen/offscreen.js
 
-let sessions = new Map(); // requestId -> session instance
-let controllers = new Map(); // callId -> AbortController
+const sessions = new Map(); // requestId -> session instance
+const controllers = new Map(); // callId -> AbortController
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.target !== 'offscreen') return;
@@ -49,7 +49,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             obj[i] = await processBlobURLs(obj[i]);
           }
         } else {
-          for (const key in obj) {
+          for (const key of Object.keys(obj)) {
             obj[key] = await processBlobURLs(obj[key]);
           }
         }
@@ -74,9 +74,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Apply external configuration to globals for the polyfills to find.
         setupConfigs(backend, config);
 
-        const [promptApiModule] = await Promise.all([
-          import('prompt-api-polyfill'),
-        ]);
+        const promptApiModule = await import('prompt-api-polyfill');
 
         const ApiClass = getApiClass(promptApiModule, apiType, config, backend);
 
@@ -152,9 +150,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         setupConfigs(backend, config);
 
-        const [promptApiModule] = await Promise.all([
-          import('prompt-api-polyfill'),
-        ]);
+        const promptApiModule = await import('prompt-api-polyfill');
 
         const ApiClass = getApiClass(promptApiModule, apiType, config, backend);
 
@@ -258,15 +254,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         processedMessage.type === 'execute' ||
         processedMessage.type === 'append'
       ) {
-        const {
-          requestId,
-          callId,
-          text,
-          method,
-          options,
-          senderTabId,
-          senderFrameId,
-        } = processedMessage;
+        const { requestId, callId, text, method, options } = processedMessage;
 
         const session = sessions.get(requestId);
         if (!session)
@@ -387,7 +375,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     } catch (err) {
       console.error('Offscreen execution error:', err);
-      // Use message instead of processedMessage here because processedMessage might be undefined if processBlobURLs failed
+      // Use message instead of processedMessage here because processedMessage
+      // might be undefined if processBlobURLs failed
       const apiType =
         typeof processedMessage !== 'undefined'
           ? processedMessage.apiType

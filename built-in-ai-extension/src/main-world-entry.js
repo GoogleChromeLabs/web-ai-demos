@@ -84,6 +84,7 @@
 
   const apiStatuses = [];
   const sanitizeOptions = (options) => {
+    // eslint-disable-next-line no-unused-vars
     const { monitor, signal, ...rest } = options;
     return rest;
   };
@@ -133,7 +134,7 @@
           obj[i] = await finalizeBinary(obj[i]);
         }
       } else {
-        for (const key in obj) {
+        for (const key of Object.keys(obj)) {
           const val = obj[key];
 
           // Handle DOM elements (Canvas, Image, etc.)
