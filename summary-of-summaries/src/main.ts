@@ -60,7 +60,11 @@ splitItButton.addEventListener('click', async () => {
 
 const checkSummarizerSupport = async (): Promise<boolean> => {
     // Checks model availability.
-    let availability = await window.Summarizer.availability();
+    let availability = await window.Summarizer.availability({
+        expectedInputLanguages: ['en'],
+        expectedContextLanguages: ['en'],
+        outputLanguage: 'en',
+    });
     return availability === 'available' || availability === 'downloadable';
  }
 
@@ -68,7 +72,11 @@ setupButton.addEventListener('click', async () => {
   if (window.Summarizer) {
     if (await checkSummarizerSupport()) {
         // Check availaiblity of the model so the user can be warned about the model download.
-        const availability = await self.Summarizer.availability();
+        const availability = await self.Summarizer.availability({
+            expectedInputLanguages: ['en'],
+            expectedContextLanguages: ['en'],
+            outputLanguage: 'en',
+        });
         if (availability === 'downloadable') {
             statusSpan.innerText = `Hold on, Chrome is downloading the model. This can take a few minutes..`;    
         } else {
