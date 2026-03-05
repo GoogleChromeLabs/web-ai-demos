@@ -27,19 +27,20 @@ export default class BuiltinPrompting {
     }
 
     static isBuiltinAiSupported(): boolean {
-        return (window.ai !== undefined && window.ai.languageModel !== undefined) || window.LanguageModel !== undefined;
+        return window.LanguageModel !== undefined;
     }
 
     static async createPrompting(): Promise<BuiltinPrompting> {
-        // The newer version of the API, currently in Chrome Canary, uses `window.LanguageModel`,
-        // while the version currently on stable uses window.ai.languageModel. So we this code
-        // handles the two paths. This method also expects `isBuiltinAiSupported()` to have been
+        // This method also expects `isBuiltinAiSupported()` to have been
         // called first.
-        if (window.LanguageModel && (await window.LanguageModel.availability()) === 'available') {
-            let session = await window.LanguageModel.create();
-            return new BuiltinPrompting(session);
-        } else if (window.ai.languageModel && (await window.ai.languageModel.capabilities()).available === 'readily') {
-            let session = await window.ai.languageModel.create();
+        if (window.LanguageModel && (await window.LanguageModel.availability({
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        })) === 'available') {
+            let session = await window.LanguageModel.create({
+                expectedInputs: [{ type: 'text', languages: ['en'] }],
+                expectedOutputs: [{ type: 'text', languages: ['en'] }],
+            });
             return new BuiltinPrompting(session);
         } else {
             throw new Error("Built-in prompting not supported");

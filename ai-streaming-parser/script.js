@@ -16,7 +16,10 @@ const pre = document.querySelector('pre');
 const input = document.querySelector('input');
 const output = document.querySelector('output');
 
-const assistant = await LanguageModel.create();
+const assistant = await LanguageModel.create({
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
+});
 
 const renderer = smd.default_renderer(output);
 const parser = smd.parser(renderer);

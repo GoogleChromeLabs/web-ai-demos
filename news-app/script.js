@@ -368,7 +368,10 @@ const createSession = async (options = {}) => {
     if (!('LanguageModel' in self)) {
       throw new Error('The Prompt API is not supported by your browser.');
     }
-    const availability = await LanguageModel.availability();
+    const availability = await LanguageModel.availability({
+      expectedInputs: [{ type: 'text', languages: ['en'] }],
+      expectedOutputs: [{ type: 'text', languages: ['en'] }],
+    });
     if (availability === 'unavailable') {
       throw new Error('The large language model is not available.');
     }

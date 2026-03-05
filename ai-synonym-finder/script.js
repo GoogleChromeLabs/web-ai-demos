@@ -14,22 +14,9 @@ const getPrompt = (word) =>
 (async () => {
   let isAvailable = false;
 
-  if ('LanguageModel' in self ) {
-    const availability = await LanguageModel.availability();
-    console.log(availability);
-    if (availability !== 'unavailable') {
-      isAvailable = true;
-    }
-  }
-  console.log(isAvailable)
-
-  if (!isAvailable) {
-    document.querySelector('div').hidden = false;
-    return;
-  }
-
-  document.querySelector('main').hidden = false;
   const createOptions = {
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
     initialPrompts: [
       {
         role: 'system',
@@ -68,6 +55,22 @@ Each synonym may only occur once in the list.`,
       },
     ],
   };
+
+  if ('LanguageModel' in self) {
+    const availability = await LanguageModel.availability(createOptions);
+    console.log(availability);
+    if (availability !== 'unavailable') {
+      isAvailable = true;
+    }
+  }
+  console.log(isAvailable)
+
+  if (!isAvailable) {
+    document.querySelector('div').hidden = false;
+    return;
+  }
+
+  document.querySelector('main').hidden = false;
 
   // Creates the model using either the new API shape available in Canary or the previous shape
   // available in Chrome stable.

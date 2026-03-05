@@ -60,7 +60,11 @@ const createSummarizationSession = async (
  * when it is not.
  */
 const checkSummarizerSupport = async (): Promise<boolean> => {
-  let availability = await window.Summarizer.availability();
+  let availability = await window.Summarizer.availability({
+    expectedInputLanguages: ['en'],
+    expectedContextLanguages: ['en'],
+    outputLanguage: 'en',
+  });
   return availability === 'available' || availability === 'downloadable';
 }
 
