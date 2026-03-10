@@ -4,11 +4,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
   {
-    ignores: [
-      'dumps/',
-      'dist/',
-      'tests/',
-    ],
+    ignores: ['dumps/', 'dist/', 'tests/'],
   },
   js.configs.recommended,
   {
@@ -21,9 +17,9 @@ export default [
       },
     },
     rules: {
-      'no-unused-vars': ['warn', { 'argsIgnorePattern': '^_' }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-console': 'off',
-      'curly': ['error', 'all'],
+      curly: ['error', 'all'],
       'no-useless-escape': 'off',
       'no-control-regex': 'off',
     },

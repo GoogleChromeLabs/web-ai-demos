@@ -632,10 +632,7 @@ export class LanguageModel extends EventTarget {
       this.#sessionParams.generationConfig.responseSchema = schema;
 
       // Re-create model with new config/schema (stored in backend)
-      this.#backend.createSession(
-        this.#options,
-        this.#sessionParams
-      );
+      this.#backend.createSession(this.#options, this.#sessionParams);
     }
 
     // Process Input (Async conversion of Blob/Canvas/AudioBuffer)
@@ -860,10 +857,7 @@ export class LanguageModel extends EventTarget {
             _this.#sessionParams.generationConfig.responseMimeType =
               'application/json';
             _this.#sessionParams.generationConfig.responseSchema = schema;
-            _this.#backend.createSession(
-              _this.#options,
-              _this.#sessionParams
-            );
+            _this.#backend.createSession(_this.#options, _this.#sessionParams);
           }
 
           const workaroundPrefix = _this.#getWorkaroundPrefix(input);

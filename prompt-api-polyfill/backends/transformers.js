@@ -23,6 +23,9 @@ export default class TransformersBackend extends PolyfillBackend {
       config.device || DEFAULT_MODELS.transformers.device || 'webgpu';
     this.#dtype = config.dtype || DEFAULT_MODELS.transformers.dtype || 'q4f16';
 
+    // Use the Cross-Origin Storage API if it's supported.
+    env.experimental_useCrossOriginStorage = true;
+
     if (config.env) {
       const merge = (target, source) => {
         for (const [key, value] of Object.entries(source)) {
@@ -41,6 +44,7 @@ export default class TransformersBackend extends PolyfillBackend {
       };
       merge(env, config.env);
     }
+    console.log('env', env);
   }
 
   /**
