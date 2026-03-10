@@ -17,6 +17,8 @@ your project root. These files:
 
 ## Usage
 
+### With npm
+
 Simply install the package:
 
 ```bash
@@ -25,6 +27,14 @@ npm install built-in-ai-skills-md-agent-md
 
 The `SKILL.md` and `AGENTS.md` files will be automatically created or updated in
 your project root.
+
+### With the `skills` command
+
+Run the [`skills` command](https://skills.sh/) and follow the wizard:
+
+```bash
+npx skills add googleChromeLabs/web-ai-demos
+```
 
 ## Updating IDLs
 
