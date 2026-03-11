@@ -33,7 +33,7 @@ your project root.
 Run the [`skills` command](https://skills.sh/) and follow the wizard:
 
 ```bash
-npx skills add googleChromeLabs/web-ai-demos
+npx skills add GoogleChromeLabs/web-ai-demos
 ```
 
 ## Updating IDLs
