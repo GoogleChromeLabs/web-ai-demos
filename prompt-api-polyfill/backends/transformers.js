@@ -17,7 +17,7 @@ export default class TransformersBackend extends PolyfillBackend {
   #dtype;
   #systemInstruction;
 
-    constructor(config = {}) {
+  constructor(config = {}) {
     super(config.modelName || DEFAULT_MODELS.transformers.modelName);
     this.#device =
       config.device || DEFAULT_MODELS.transformers.device || 'webgpu';

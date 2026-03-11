@@ -52,7 +52,8 @@ configured, the polyfill will use Transformers.js with the default model.
 
 - **Uses**: `@huggingface/transformers` SDK.
 - **Select by setting**: `window.TRANSFORMERS_CONFIG`.
-- **Note**: This is the **default backend** if no other configuration is provided.
+- **Note**: This is the **default backend** if no other configuration is
+  provided.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 

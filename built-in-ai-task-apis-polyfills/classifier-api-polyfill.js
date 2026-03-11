@@ -12,7 +12,6 @@ import { ClassifierPromptBuilder } from './classifier-prompt-builder.js';
  */
 
 export class Classifier extends BaseTaskModel {
-
   constructor(session, builder) {
     super(session, builder);
   }

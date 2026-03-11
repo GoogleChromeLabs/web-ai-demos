@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -31,10 +31,10 @@
   <body>
     <h1>Prompt API Firebase Test</h1>
     <p>This page tests the Firebase AI Logic backend configuration.</p>
-    
+
     <label for="progress">Model Download Progress:</label>
     <progress id="progress" value="0" max="1"></progress>
-    
+
     <div id="status">Ready</div>
     <pre id="output"></pre>
 
@@ -42,7 +42,7 @@
       // Firebase backend configuration imported from a JSON file
       import firebaseConfig from './.env-firebase.json' with { type: 'json' };
       window.FIREBASE_CONFIG = firebaseConfig;
-      
+
       import './prompt-api-polyfill.js';
 
       const status = document.getElementById('status');
@@ -59,11 +59,13 @@
                 progressBar.value = e.loaded;
                 status.textContent = `Downloading model: ${Math.round(e.loaded * 100)}%`;
               });
-            }
+            },
           });
 
           status.textContent = 'Session created. Sending prompt...';
-          const response = await session.prompt('What is 2+2? Answer in one word.');
+          const response = await session.prompt(
+            'What is 2+2? Answer in one word.'
+          );
           output.textContent = response;
           status.textContent = 'Done!';
         } catch (err) {

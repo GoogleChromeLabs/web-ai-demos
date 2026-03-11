@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -30,17 +30,20 @@
   </head>
   <body>
     <h1>Prompt API Defaulting Test</h1>
-    <p>This page tests if the polyfill defaults to Transformers.js when no configuration is provided.</p>
-    
+    <p>
+      This page tests if the polyfill defaults to Transformers.js when no
+      configuration is provided.
+    </p>
+
     <label for="progress">Model Download Progress:</label>
     <progress id="progress" value="0" max="1"></progress>
-    
+
     <div id="status">Ready</div>
     <pre id="output"></pre>
 
     <script type="module">
       // NO backend configuration here!
-      
+
       import './prompt-api-polyfill.js';
 
       const status = document.getElementById('status');
@@ -57,11 +60,13 @@
                 progressBar.value = e.loaded;
                 status.textContent = `Downloading model: ${Math.round(e.loaded * 100)}%`;
               });
-            }
+            },
           });
 
           status.textContent = 'Session created. Sending prompt...';
-          const response = await session.prompt('What is 2+2? Answer in one word.');
+          const response = await session.prompt(
+            'What is 2+2? Answer in one word.'
+          );
           output.textContent = response;
           status.textContent = 'Done!';
         } catch (err) {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -30,11 +30,13 @@
   </head>
   <body>
     <h1>Prompt API Gemini Test</h1>
-    <p>This page tests the Gemini backend configuration with an explicit API key.</p>
-    
+    <p>
+      This page tests the Gemini backend configuration with an explicit API key.
+    </p>
+
     <label for="progress">Model Download Progress:</label>
     <progress id="progress" value="0" max="1"></progress>
-    
+
     <div id="status">Ready</div>
     <pre id="output"></pre>
 
@@ -42,7 +44,7 @@
       // Gemini backend configuration imported from a JSON file to avoid committing the API key
       import geminiConfig from './.env-gemini.json' with { type: 'json' };
       window.GEMINI_CONFIG = geminiConfig;
-      
+
       import './prompt-api-polyfill.js';
 
       const status = document.getElementById('status');
@@ -59,11 +61,13 @@
                 progressBar.value = e.loaded;
                 status.textContent = `Downloading model: ${Math.round(e.loaded * 100)}%`;
               });
-            }
+            },
           });
 
           status.textContent = 'Session created. Sending prompt...';
-          const response = await session.prompt('What is 2+2? Answer in one word.');
+          const response = await session.prompt(
+            'What is 2+2? Answer in one word.'
+          );
           output.textContent = response;
           status.textContent = 'Done!';
         } catch (err) {
