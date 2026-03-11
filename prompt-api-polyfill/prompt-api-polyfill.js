@@ -861,10 +861,7 @@ export class LanguageModel extends EventTarget {
             _this.#sessionParams.generationConfig.responseMimeType =
               'application/json';
             _this.#sessionParams.generationConfig.responseSchema = schema;
-            _this.#backend.createSession(
-              _this.#options,
-              _this.#sessionParams
-            );
+            _this.#backend.createSession(_this.#options, _this.#sessionParams);
           }
 
           const workaroundPrefix = _this.#getWorkaroundPrefix(input);

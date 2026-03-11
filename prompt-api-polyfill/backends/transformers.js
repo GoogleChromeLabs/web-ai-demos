@@ -151,7 +151,6 @@ export default class TransformersBackend extends PolyfillBackend {
     return 'available';
   }
 
-
   /**
    * Creates a new session.
    * @param {Object} options - LanguageModel options.
@@ -186,15 +185,7 @@ export default class TransformersBackend extends PolyfillBackend {
     const generator = await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
 
-    // Append JSON Schema constraint if present
-    if (this.responseSchema) {
-      const constraint = `The response must be valid JSON and strictly adhere to this JSON Schema:\n${JSON.stringify(this.responseSchema, null, 2)}`;
-      if (messages[0].role === 'system') {
-        messages[0].content += `\n\n${constraint}`;
-      } else {
-        messages.unshift({ role: 'system', content: constraint });
-      }
-    }
+    // messages already have schema appended via #contentsToMessages
 
     const prompt = this.#tokenizer.apply_chat_template(messages, {
       tokenize: false,
@@ -221,15 +212,7 @@ export default class TransformersBackend extends PolyfillBackend {
     const generator = await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
 
-    // Append JSON Schema constraint if present
-    if (this.responseSchema) {
-      const constraint = `The response must be valid JSON and strictly adhere to this JSON Schema:\n${JSON.stringify(this.responseSchema, null, 2)}`;
-      if (messages[0].role === 'system') {
-        messages[0].content += `\n\n${constraint}`;
-      } else {
-        messages.unshift({ role: 'system', content: constraint });
-      }
-    }
+    // messages already have schema appended via #contentsToMessages
 
     const prompt = this.#tokenizer.apply_chat_template(messages, {
       tokenize: false,
@@ -334,6 +317,9 @@ export default class TransformersBackend extends PolyfillBackend {
       messages.unshift({ role: 'system', content: this.#systemInstruction });
     }
 
+    // Append JSON Schema constraint if present
+    this.#appendResponseSchema(messages);
+
     if (this.modelName.toLowerCase().includes('gemma')) {
       const systemIndex = messages.findIndex((m) => m.role === 'system');
       if (systemIndex !== -1) {
@@ -355,6 +341,28 @@ export default class TransformersBackend extends PolyfillBackend {
     }
 
     return messages;
+  }
+
+  #appendResponseSchema(messages) {
+    if (this.responseSchema) {
+      const constraint = `Respond ONLY with a raw JSON object matching this JSON Schema:
+
+\`\`\`json
+${JSON.stringify(this.responseSchema, null, 2)}
+\`\`\`
+
+DO NOT include Markdown code blocks, explanations, or any other text.`;
+
+      console.warn(
+        'Transformers.js: `responseConstraint` is not natively supported by this backend and is implemented via prompt engineering, which may fail. For better results, consider adding few-shot examples to your prompt.'
+      );
+
+      if (messages.length > 0 && messages[0].role === 'system') {
+        messages[0].content = constraint + '\n\n' + messages[0].content;
+      } else {
+        messages.unshift({ role: 'system', content: constraint });
+      }
+    }
   }
 }
 
