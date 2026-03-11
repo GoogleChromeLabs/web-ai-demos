@@ -25,7 +25,7 @@ export default class TransformersBackend extends PolyfillBackend {
 
     if (config.isDefault) {
       console.log(
-        `Prompt API Polyfill: No backend configuration found. Defaulting to Transformers.js with model: ${this.modelName}`
+        `Polyfill: No backend configuration found. Defaulting to Transformers.js with model: ${this.modelName}`
       );
     }
 

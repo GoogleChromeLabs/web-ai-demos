@@ -193,7 +193,6 @@ export class LanguageModel extends EventTarget {
       return {
         ...transformersInfo,
         configValue: { apiKey: 'dummy', isDefault: true },
-        isDefault: true,
       };
     }
     const configNames = LanguageModel.#backends
