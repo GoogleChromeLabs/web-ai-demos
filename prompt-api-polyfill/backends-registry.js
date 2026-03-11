@@ -5,35 +5,27 @@
 
 export const BACKENDS = [
   {
-    config: 'FIREBASE_CONFIG',
-    path: './backends/firebase.js',
+    "config": "FIREBASE_CONFIG",
+    "path": "./backends/firebase.js"
   },
   {
-    config: 'GEMINI_CONFIG',
-    path: './backends/gemini.js',
+    "config": "GEMINI_CONFIG",
+    "path": "./backends/gemini.js"
   },
   {
-    config: 'OPENAI_CONFIG',
-    path: './backends/openai.js',
+    "config": "OPENAI_CONFIG",
+    "path": "./backends/openai.js"
   },
   {
-    config: 'TRANSFORMERS_CONFIG',
-    path: './backends/transformers.js',
-  },
+    "config": "TRANSFORMERS_CONFIG",
+    "path": "./backends/transformers.js"
+  }
 ];
 
 export async function getBackendClass(path) {
-  if (path === './backends/firebase.js') {
-    return (await import('./backends/firebase.js')).default;
-  }
-  if (path === './backends/gemini.js') {
-    return (await import('./backends/gemini.js')).default;
-  }
-  if (path === './backends/openai.js') {
-    return (await import('./backends/openai.js')).default;
-  }
-  if (path === './backends/transformers.js') {
-    return (await import('./backends/transformers.js')).default;
-  }
+  if (path === './backends/firebase.js') { return (await import('./backends/firebase.js')).default; }
+  if (path === './backends/gemini.js') { return (await import('./backends/gemini.js')).default; }
+  if (path === './backends/openai.js') { return (await import('./backends/openai.js')).default; }
+  if (path === './backends/transformers.js') { return (await import('./backends/transformers.js')).default; }
   throw new Error(`Unknown backend path "${path}"`);
 }

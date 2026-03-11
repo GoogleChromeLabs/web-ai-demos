@@ -61,4 +61,12 @@ export default class PolyfillBackend {
   async countTokens(_content) {
     throw new Error('Not implemented');
   }
+  /**
+   * Translates a standard JSON Schema into a backend-specific format.
+   * @param {Object} schema - The standard JSON Schema.
+   * @returns {any} The backend-specific schema.
+   */
+  convertSchema(schema) {
+    return schema;
+  }
 }

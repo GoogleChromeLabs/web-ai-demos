@@ -151,6 +151,7 @@ export default class TransformersBackend extends PolyfillBackend {
     return 'available';
   }
 
+
   /**
    * Creates a new session.
    * @param {Object} options - LanguageModel options.
@@ -159,11 +160,6 @@ export default class TransformersBackend extends PolyfillBackend {
    * @returns {Promise<Object>} The generator.
    */
   async createSession(options, sessionParams, monitorTarget) {
-    if (options.responseConstraint) {
-      console.warn(
-        "The `responseConstraint` flag isn't supported by the Transformers.js backend and was ignored."
-      );
-    }
     // Initializing the generator can be slow, so we do it lazily or here.
     // For now, let's trigger the loading.
     await this.#ensureGenerator(monitorTarget);
@@ -172,12 +168,11 @@ export default class TransformersBackend extends PolyfillBackend {
     // but we can store the generation config.
     this.generationConfig = {
       max_new_tokens: 512, // Default limit
-      temperature: sessionParams.generationConfig?.temperature ?? 1.0,
-      top_p: 1.0,
-      do_sample: sessionParams.generationConfig?.temperature !== 0,
+      do_sample: false,
       return_full_text: false,
     };
     this.#systemInstruction = sessionParams.systemInstruction;
+    this.responseSchema = sessionParams.generationConfig?.responseSchema;
 
     return this.#generator;
   }
@@ -190,6 +185,17 @@ export default class TransformersBackend extends PolyfillBackend {
   async generateContent(contents) {
     const generator = await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
+
+    // Append JSON Schema constraint if present
+    if (this.responseSchema) {
+      const constraint = `The response must be valid JSON and strictly adhere to this JSON Schema:\n${JSON.stringify(this.responseSchema, null, 2)}`;
+      if (messages[0].role === 'system') {
+        messages[0].content += `\n\n${constraint}`;
+      } else {
+        messages.unshift({ role: 'system', content: constraint });
+      }
+    }
+
     const prompt = this.#tokenizer.apply_chat_template(messages, {
       tokenize: false,
       add_generation_prompt: true,
@@ -214,6 +220,17 @@ export default class TransformersBackend extends PolyfillBackend {
   async generateContentStream(contents) {
     const generator = await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
+
+    // Append JSON Schema constraint if present
+    if (this.responseSchema) {
+      const constraint = `The response must be valid JSON and strictly adhere to this JSON Schema:\n${JSON.stringify(this.responseSchema, null, 2)}`;
+      if (messages[0].role === 'system') {
+        messages[0].content += `\n\n${constraint}`;
+      } else {
+        messages.unshift({ role: 'system', content: constraint });
+      }
+    }
+
     const prompt = this.#tokenizer.apply_chat_template(messages, {
       tokenize: false,
       add_generation_prompt: true,

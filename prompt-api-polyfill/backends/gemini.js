@@ -40,8 +40,7 @@ export default class GeminiBackend extends PolyfillBackend {
   async generateContent(contents) {
     const config = {
       systemInstruction: this.#sessionParams.systemInstruction,
-      temperature: this.#sessionParams.generationConfig?.temperature,
-      topK: this.#sessionParams.generationConfig?.topK,
+      ...this.#sessionParams.generationConfig,
     };
 
     const response = await this.#ai.models.generateContent({
@@ -62,8 +61,7 @@ export default class GeminiBackend extends PolyfillBackend {
   async generateContentStream(contents) {
     const config = {
       systemInstruction: this.#sessionParams.systemInstruction,
-      temperature: this.#sessionParams.generationConfig?.temperature,
-      topK: this.#sessionParams.generationConfig?.topK,
+      ...this.#sessionParams.generationConfig,
     };
 
     const response = await this.#ai.models.generateContentStream({
