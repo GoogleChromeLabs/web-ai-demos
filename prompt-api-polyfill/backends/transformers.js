@@ -17,11 +17,17 @@ export default class TransformersBackend extends PolyfillBackend {
   #dtype;
   #systemInstruction;
 
-  constructor(config = {}) {
+    constructor(config = {}) {
     super(config.modelName || DEFAULT_MODELS.transformers.modelName);
     this.#device =
       config.device || DEFAULT_MODELS.transformers.device || 'webgpu';
     this.#dtype = config.dtype || DEFAULT_MODELS.transformers.dtype || 'q4f16';
+
+    if (config.isDefault) {
+      console.log(
+        `Prompt API Polyfill: No backend configuration found. Defaulting to Transformers.js with model: ${this.modelName}`
+      );
+    }
 
     // Use the Cross-Origin Storage API if it's supported.
     env.experimental_useCrossOriginStorage = true;
@@ -44,7 +50,6 @@ export default class TransformersBackend extends PolyfillBackend {
       };
       merge(env, config.env);
     }
-    console.log('env', env);
   }
 
   /**
