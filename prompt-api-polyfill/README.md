@@ -7,7 +7,7 @@ supporting dynamic backends:
 - **Firebase AI Logic** (cloud)
 - **Google Gemini API** (cloud)
 - **OpenAI API** (cloud)
-- **Transformers.js** (local after initial model download)
+- **Transformers.js** (local after initial model download, **default backend**)
 
 When loaded in the browser, it defines a global:
 
@@ -19,6 +19,9 @@ so you can use the Prompt API shape even in environments where it is not yet
 natively available.
 
 ## Supported Backends
+
+You can choose between multiple cloud and local backends. If no backend is
+configured, the polyfill will use Transformers.js with the default model.
 
 ### Firebase AI Logic (cloud)
 
@@ -49,6 +52,8 @@ natively available.
 
 - **Uses**: `@huggingface/transformers` SDK.
 - **Select by setting**: `window.TRANSFORMERS_CONFIG`.
+- **Note**: This is the **default backend** if no other configuration is
+  provided.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 

@@ -7,7 +7,6 @@
  * Abstract class representing a backend for the LanguageModel polyfill.
  */
 export default class PolyfillBackend {
-
   /**
    * @param {string} modelName - The name of the model.
    */

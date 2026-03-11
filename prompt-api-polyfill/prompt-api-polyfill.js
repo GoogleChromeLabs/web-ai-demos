@@ -185,6 +185,16 @@ export class LanguageModel extends EventTarget {
         return { ...b, configValue: config };
       }
     }
+    // If no backend is configured, default to Transformers.js
+    const transformersInfo = LanguageModel.#backends.find(
+      (b) => b.config === 'TRANSFORMERS_CONFIG'
+    );
+    if (transformersInfo) {
+      return {
+        ...transformersInfo,
+        configValue: { apiKey: 'dummy', isDefault: true },
+      };
+    }
     const configNames = LanguageModel.#backends
       .map((b) => `window.${b.config}`)
       .join(', ');
@@ -632,10 +642,7 @@ export class LanguageModel extends EventTarget {
       this.#sessionParams.generationConfig.responseSchema = schema;
 
       // Re-create model with new config/schema (stored in backend)
-      this.#backend.createSession(
-        this.#options,
-        this.#sessionParams
-      );
+      this.#backend.createSession(this.#options, this.#sessionParams);
     }
 
     // Process Input (Async conversion of Blob/Canvas/AudioBuffer)
@@ -860,10 +867,7 @@ export class LanguageModel extends EventTarget {
             _this.#sessionParams.generationConfig.responseMimeType =
               'application/json';
             _this.#sessionParams.generationConfig.responseSchema = schema;
-            _this.#backend.createSession(
-              _this.#options,
-              _this.#sessionParams
-            );
+            _this.#backend.createSession(_this.#options, _this.#sessionParams);
           }
 
           const workaroundPrefix = _this.#getWorkaroundPrefix(input);
