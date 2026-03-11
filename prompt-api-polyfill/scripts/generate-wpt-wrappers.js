@@ -24,29 +24,20 @@ allBackends.forEach((b) => {
 
 // Helper to get injected config for a specific backend or default
 function getInjectedConfig(backendKey = null) {
-  const backendName = backendKey
-    ? backendKey.replace('_CONFIG', '').toLowerCase()
-    : null;
-  const configUrl = backendName ? `/.env-${backendName}.json` : null;
+  const config = backendKey ? backendConfigs[backendKey] : null;
+
+  if (config) {
+    return `
+    <script type="module">
+        window.__FORCE_PROMPT_API_POLYFILL__ = true;
+        window['${backendKey}'] = ${JSON.stringify(config, null, 2)};
+    </script>
+`;
+  }
 
   return `
     <script type="module">
         window.__FORCE_PROMPT_API_POLYFILL__ = true;
-        const backendKey = ${backendKey ? `'${backendKey}'` : 'null'};
-        const configUrl = ${configUrl ? `'${configUrl}'` : 'null'};
-
-        if (backendKey && configUrl) {
-          try {
-            const response = await fetch(configUrl);
-            if (response.ok) {
-              window[backendKey] = await response.json();
-            } else {
-              console.error(\`Failed to load config from \${configUrl}: \${response.status}\`);
-            }
-          } catch (e) {
-            console.error(\`Error fetching config from \${configUrl}:\`, e);
-          }
-        }
     </script>
 `;
 }
