@@ -42,7 +42,7 @@ function convertJsonSchemaToVertexSchema(jsonSchema) {
     jsonSchema.type = jsonSchema.type.find((t) => t !== 'null');
   }
 
-  // SWITCH based on schema type
+  // Switch based on schema type
   switch (jsonSchema.type) {
     case 'string':
       // Check for Enums
