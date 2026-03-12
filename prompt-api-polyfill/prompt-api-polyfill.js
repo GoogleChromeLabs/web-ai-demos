@@ -345,22 +345,11 @@ export class LanguageModel extends EventTarget {
     const backend = new BackendClass(info.configValue);
 
     const resolvedOptions = { ...options };
-    LanguageModel.#validateResponseConstraint(
-      resolvedOptions.responseConstraint,
-      win
-    );
 
     const sessionParams = {
       model: backend.modelName,
       generationConfig: {},
     };
-
-    if (resolvedOptions.responseConstraint) {
-      sessionParams.generationConfig.responseMimeType = 'application/json';
-      sessionParams.generationConfig.responseSchema = backend.convertSchema(
-        resolvedOptions.responseConstraint
-      );
-    }
 
     let initialHistory = [];
     let contextUsageValue = 0;
