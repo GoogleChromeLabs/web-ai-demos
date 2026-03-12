@@ -140,6 +140,11 @@ export default class TransformersBackend extends PolyfillBackend {
     };
     this.#systemInstruction = sessionParams.systemInstruction;
     this.responseSchema = sessionParams.generationConfig?.responseSchema;
+    if (this.responseSchema) {
+      console.warn(
+        'Polyfill: `responseConstraint` is not natively supported by the Transformers.js backend and is implemented via prompt engineering, which may fail. For better results, consider adding few-shot examples to your prompt.'
+      );
+    }
 
     return this.#generator;
   }
@@ -320,10 +325,6 @@ ${JSON.stringify(this.responseSchema, null, 2)}
 \`\`\`
 
 DO NOT include Markdown code blocks, explanations, or any other text.`;
-
-      console.warn(
-        'Transformers.js: `responseConstraint` is not natively supported by this backend and is implemented via prompt engineering, which may fail. For better results, consider adding few-shot examples to your prompt.'
-      );
 
       if (messages.length > 0 && messages[0].role === 'system') {
         messages[0].content = constraint + '\n\n' + messages[0].content;
