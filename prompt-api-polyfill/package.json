@@ -48,13 +48,12 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.0.3",
+    "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.4.0",
     "prettier": "^3.8.1",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^7.3.1",
-    "node-gyp": "^12.2.0",
-    "node-addon-api": "^8.6.0"
+    "vite": "^7.3.1"
   },
   "dependencies": {
     "@google/genai": "^1.44.0",

@@ -184,6 +184,16 @@ export class LanguageModel extends EventTarget {
         return { ...b, configValue: config };
       }
     }
+    // If no backend is configured, default to Transformers.js
+    const transformersInfo = LanguageModel.#backends.find(
+      (b) => b.config === 'TRANSFORMERS_CONFIG'
+    );
+    if (transformersInfo) {
+      return {
+        ...transformersInfo,
+        configValue: { apiKey: 'dummy', isDefault: true },
+      };
+    }
     const configNames = LanguageModel.#backends
       .map((b) => `window.${b.config}`)
       .join(', ');
