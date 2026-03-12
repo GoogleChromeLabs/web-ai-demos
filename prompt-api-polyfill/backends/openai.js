@@ -38,49 +38,15 @@ export default class OpenAIBackend extends PolyfillBackend {
   }
 
   /**
-   * Creates a model session and stores it.
-   * @param {Object} options - LanguageModel options.
-   * @param {Object} sessionParams - Parameters for the cloud or local model.
-   * @returns {any} The created session object.
-   */
-  createSession(options, sessionParams) {
-    // OpenAI doesn't have a "session" object like Gemini, so we return a context object
-    // tailored for our generate methods.
-    this.#model = {
-      model: options.modelName || this.modelName,
-      temperature: sessionParams.generationConfig?.temperature,
-      top_p: 1.0, // Default to 1.0 as topK is not directly supported the same way
-      systemInstruction: sessionParams.systemInstruction,
-    };
-
-    const config = sessionParams.generationConfig || {};
-    if (config.responseSchema) {
-      const { schema, wrapped } = this.#fixSchemaForOpenAI(
-        config.responseSchema
-      );
-      this.#model.response_format = {
-        type: 'json_schema',
-        json_schema: {
-          name: 'response',
-          strict: true,
-          schema: schema,
-        },
-      };
-      this.#model.response_wrapped = wrapped;
-    } else if (config.responseMimeType === 'application/json') {
-      this.#model.response_format = { type: 'json_object' };
-    }
-
-    return this.#model;
-  }
-
-  /**
+   * Translates a standard JSON Schema into a backend-specific format.
    * OpenAI Structured Outputs require:
    * 1. All fields in objects to be marked as 'required'.
    * 2. Objects to have 'additionalProperties: false'.
    * 3. The root must be an 'object'.
+   * @param {Object} schema - The standard JSON Schema.
+   * @returns {any} The backend-specific schema.
    */
-  #fixSchemaForOpenAI(schema) {
+  convertSchema(schema) {
     if (typeof schema !== 'object' || schema === null) {
       return { schema, wrapped: false };
     }
@@ -123,6 +89,39 @@ export default class OpenAIBackend extends PolyfillBackend {
       wrapped: false,
       schema: processNode(cloned),
     };
+  }
+
+  /**
+   * Creates a model session and stores it.
+   * @param {Object} options - LanguageModel options.
+   * @param {Object} sessionParams - Parameters for the cloud or local model.
+   * @returns {any} The created session object.
+   */
+  createSession(options, sessionParams) {
+    // OpenAI doesn't have a "session" object like Gemini, so we return a context object
+    // tailored for our generate methods.
+    this.#model = {
+      model: options.modelName || this.modelName,
+      systemInstruction: sessionParams.systemInstruction,
+    };
+
+    const config = sessionParams.generationConfig || {};
+    if (config.responseSchema) {
+      const { schema, wrapped } = config.responseSchema;
+      this.#model.response_format = {
+        type: 'json_schema',
+        json_schema: {
+          name: 'response',
+          strict: true,
+          schema: schema,
+        },
+      };
+      this.#model.response_wrapped = wrapped;
+    } else if (config.responseMimeType === 'application/json') {
+      this.#model.response_format = { type: 'json_object' };
+    }
+
+    return this.#model;
   }
 
   #validateContent(messages) {

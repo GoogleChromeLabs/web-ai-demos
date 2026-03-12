@@ -127,11 +127,6 @@ export default class TransformersBackend extends PolyfillBackend {
    * @returns {Promise<Object>} The generator.
    */
   async createSession(options, sessionParams, monitorTarget) {
-    if (options.responseConstraint) {
-      console.warn(
-        "The `responseConstraint` flag isn't supported by the Transformers.js backend and was ignored."
-      );
-    }
     // Initializing the generator can be slow, so we do it lazily or here.
     // For now, let's trigger the loading.
     await this.#ensureGenerator(monitorTarget);
@@ -140,12 +135,16 @@ export default class TransformersBackend extends PolyfillBackend {
     // but we can store the generation config.
     this.generationConfig = {
       max_new_tokens: 512, // Default limit
-      temperature: sessionParams.generationConfig?.temperature ?? 1.0,
-      top_p: 1.0,
-      do_sample: sessionParams.generationConfig?.temperature !== 0,
+      do_sample: false,
       return_full_text: false,
     };
     this.#systemInstruction = sessionParams.systemInstruction;
+    this.responseSchema = sessionParams.generationConfig?.responseSchema;
+    if (this.responseSchema) {
+      console.warn(
+        'Polyfill: `responseConstraint` is not natively supported by the Transformers.js backend and is implemented via prompt engineering, which may fail. For better results, consider adding few-shot examples to your prompt.'
+      );
+    }
 
     return this.#generator;
   }
@@ -158,6 +157,9 @@ export default class TransformersBackend extends PolyfillBackend {
   async generateContent(contents) {
     const generator = await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
+
+    // messages already have schema appended via #contentsToMessages
+
     const prompt = this.#tokenizer.apply_chat_template(messages, {
       tokenize: false,
       add_generation_prompt: true,
@@ -182,6 +184,9 @@ export default class TransformersBackend extends PolyfillBackend {
   async generateContentStream(contents) {
     const generator = await this.#ensureGenerator();
     const messages = this.#contentsToMessages(contents);
+
+    // messages already have schema appended via #contentsToMessages
+
     const prompt = this.#tokenizer.apply_chat_template(messages, {
       tokenize: false,
       add_generation_prompt: true,
@@ -285,6 +290,9 @@ export default class TransformersBackend extends PolyfillBackend {
       messages.unshift({ role: 'system', content: this.#systemInstruction });
     }
 
+    // Append JSON Schema constraint if present
+    this.#appendResponseSchema(messages);
+
     if (this.modelName.toLowerCase().includes('gemma')) {
       const systemIndex = messages.findIndex((m) => m.role === 'system');
       if (systemIndex !== -1) {
@@ -306,5 +314,23 @@ export default class TransformersBackend extends PolyfillBackend {
     }
 
     return messages;
+  }
+
+  #appendResponseSchema(messages) {
+    if (this.responseSchema) {
+      const constraint = `Respond ONLY with a raw JSON object matching this JSON Schema:
+
+\`\`\`json
+${JSON.stringify(this.responseSchema, null, 2)}
+\`\`\`
+
+DO NOT include Markdown code blocks, explanations, or any other text.`;
+
+      if (messages.length > 0 && messages[0].role === 'system') {
+        messages[0].content = constraint + '\n\n' + messages[0].content;
+      } else {
+        messages.unshift({ role: 'system', content: constraint });
+      }
+    }
   }
 }

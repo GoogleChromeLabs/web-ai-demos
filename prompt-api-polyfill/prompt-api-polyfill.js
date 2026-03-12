@@ -24,7 +24,6 @@
 
 import './async-iterator-polyfill.js';
 import MultimodalConverter from './multimodal-converter.js';
-import { convertJsonSchemaToVertexSchema } from './json-schema-converter.js';
 import { BACKENDS, getBackendClass } from './backends-registry.js';
 
 // --- Helper to convert initial History ---
@@ -356,10 +355,6 @@ export class LanguageModel extends EventTarget {
     const backend = new BackendClass(info.configValue);
 
     const resolvedOptions = { ...options };
-    LanguageModel.#validateResponseConstraint(
-      resolvedOptions.responseConstraint,
-      win
-    );
 
     const sessionParams = {
       model: backend.modelName,
@@ -634,9 +629,7 @@ export class LanguageModel extends EventTarget {
         this.#window
       );
       // Update Schema
-      const schema = convertJsonSchemaToVertexSchema(
-        options.responseConstraint
-      );
+      const schema = this.#backend.convertSchema(options.responseConstraint);
       this.#sessionParams.generationConfig.responseMimeType =
         'application/json';
       this.#sessionParams.generationConfig.responseSchema = schema;
@@ -861,7 +854,7 @@ export class LanguageModel extends EventTarget {
               options.responseConstraint,
               _this.#window
             );
-            const schema = convertJsonSchemaToVertexSchema(
+            const schema = _this.#backend.convertSchema(
               options.responseConstraint
             );
             _this.#sessionParams.generationConfig.responseMimeType =
