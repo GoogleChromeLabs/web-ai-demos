@@ -182,8 +182,8 @@ console.log(fullResponse);
 ## 📃 Authoritative Reference Documentation
 
 Use the authoritative reference documentation to ensure that you are using the
-APIs correctly. You have access to the MDN MCP server and the Developer
-Knowledge MCP server.
+APIs correctly. You have access to the [MDN MCP server](https://mdn-mcp-0445ad8e765a.herokuapp.com/mcp) for Mozilla docs and the [Developer
+Knowledge MCP server](https://developerknowledge.googleapis.com/mcp) for Chrome docs.
 
 - [Summarizer API](https://developer.mozilla.org/en-US/docs/Web/API/Summarizer)
 - [Language Detector API](https://developer.mozilla.org/en-US/docs/Web/API/LanguageDetector)
@@ -199,7 +199,6 @@ Below are the latest Web IDLs for these APIs, extracted from the official
 specifications.
 
 <!-- BEGIN IDLS -->
-
 ### Translation API
 
 ```webidl
