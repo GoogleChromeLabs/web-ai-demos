@@ -179,6 +179,20 @@ for await (const chunk of stream) {
 console.log(fullResponse);
 ```
 
+## 📃 Authoritative Reference Documentation
+
+Use the authoritative reference documentation to ensure that you are using the
+APIs correctly. You have access to the [MDN MCP server](https://mdn-mcp-0445ad8e765a.herokuapp.com/mcp) for Mozilla docs and the [Developer
+Knowledge MCP server](https://developerknowledge.googleapis.com/mcp) for Chrome docs.
+
+- [Summarizer API](https://developer.mozilla.org/en-US/docs/Web/API/Summarizer)
+- [Language Detector API](https://developer.mozilla.org/en-US/docs/Web/API/LanguageDetector)
+- [Translator API](https://developer.mozilla.org/en-US/docs/Web/API/Translator)
+- [Prompt API](https://developer.chrome.com/docs/ai/prompt-api)
+- [Writer API](https://developer.chrome.com/docs/ai/writer-api)
+- [Rewriter API](https://developer.chrome.com/docs/ai/rewriter-api)
+- [Proofreader API](https://developer.chrome.com/docs/ai/proofreader-api)
+
 ## 📜 Latest IDLs
 
 Below are the latest Web IDLs for these APIs, extracted from the official
@@ -293,6 +307,7 @@ interface Summarizer {
   readonly attribute SummarizerType type;
   readonly attribute SummarizerFormat format;
   readonly attribute SummarizerLength length;
+  readonly attribute PerformancePreference preference;
 
   readonly attribute FrozenArray<DOMString>? expectedInputLanguages;
   readonly attribute FrozenArray<DOMString>? expectedContextLanguages;
@@ -310,6 +325,7 @@ dictionary SummarizerCreateCoreOptions {
   SummarizerType type = "key-points";
   SummarizerFormat format = "markdown";
   SummarizerLength length = "short";
+  PerformancePreference preference = "auto";
 
   sequence<DOMString> expectedInputLanguages;
   sequence<DOMString> expectedContextLanguages;
@@ -331,6 +347,7 @@ dictionary SummarizerSummarizeOptions {
 enum SummarizerType { "tldr", "teaser", "key-points", "headline" };
 enum SummarizerFormat { "plain-text", "markdown" };
 enum SummarizerLength { "short", "medium", "long" };
+enum PerformancePreference { "auto", "speed", "capability" };
 ```
 
 ```webidl
