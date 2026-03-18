@@ -30,7 +30,7 @@ const legendContainer = document.querySelector('p:has(.legend)');
     preposition: null,
     'missing-words': null,
     grammar: null,
-     // Fallback for when `includeCorrectionTypes` is `false`.
+    // Fallback for when `includeCorrectionTypes` is `false`.
     other: null,
   };
   const errorTypes = Object.keys(errorHighlights);
@@ -76,11 +76,23 @@ const legendContainer = document.querySelector('p:has(.legend)');
     });
 
   if ('highlightsFromPoint' in self.HighlightRegistry.prototype) {
-    document.addEventListener('click', (event) => {
-      const mouseX = event.clientX;
-      const mouseY = event.clientY;
-      // ToDo: Make the error clicking logic based on CSS Highlights.
-      console.log(CSS.highlights.highlightsFromPoint(mouseX, mouseY));
+    input.addEventListener('click', (event) => {
+      const hits = CSS.highlights.highlightsFromPoint(
+        event.clientX,
+        event.clientY
+      );
+      if (hits.length > 0) {
+        const hitRange = hits[0].ranges[0];
+        // Find the correction that matches this range.
+        currentCorrection = corrections.find(
+          (c) =>
+            c.range.startOffset === hitRange.startOffset &&
+            c.range.endOffset === hitRange.endOffset
+        );
+        if (currentCorrection) {
+          showCorrectionsAtCaretPosition(currentCorrection);
+        }
+      }
     });
   }
 
@@ -117,60 +129,92 @@ const legendContainer = document.querySelector('p:has(.legend)');
       return;
     }
 
-    if (proofreaderAPISupported) {
-      // Work with `innerText` here.
-      ({ correctedInput, corrections } = await proofreader.proofread(
-        input.innerText
-      ));
-    } else {
-      // Use fake data.
-      ({ correctedInput, corrections } = await (
-        await fetch('fake.json')
-      ).json());
+    let result;
+    try {
+      if (proofreaderAPISupported) {
+        // Work with `innerText` here.
+        result = await proofreader.proofread(input.innerText);
+      } else {
+        // Use fake data.
+        result = await (await fetch('fake.json')).json();
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('Proofreading aborted.');
+        return;
+      }
+      throw err;
     }
+
+    const { correctedInput: newCorrectedInput, corrections: newCorrections } =
+      result;
+
     activityIndicator.textContent = '';
-    if (!corrections) {
-      corrections = [];
-    }
+    const tempCorrections = newCorrections || [];
+
     // Highlight all corrections by type.
     const textNode = input.firstChild;
-    for (const correction of corrections) {
+    for (const correction of tempCorrections) {
       const range = new Range();
       range.setStart(textNode, correction.startIndex);
       range.setEnd(textNode, correction.endIndex);
-      correction.type ||= 'other';
-      errorHighlights[correction.type].add(range);
+
+      // Defensively handle both `type` and `types`.
+      if (!correction.types && correction.type) {
+        correction.types = [correction.type];
+      }
+      correction.types ||= ['other'];
+
+      // Store the range in the correction object for later use in clicking and positioning.
+      correction.range = range;
+
+      // Apply highlighting for all matching types.
+      for (const type of correction.types) {
+        const highlightKey = errorHighlights[type] ? type : 'other';
+        errorHighlights[highlightKey].add(range);
+      }
+
+      // Store the joined types as a string for display in the popover.
+      correction.typesString = correction.types.join(', ');
     }
+
+    // Only update global state after processing is complete.
+    corrections = tempCorrections;
+    correctedInput = newCorrectedInput;
 
     if (correctedInput) {
       output.textContent = correctedInput;
     }
   });
 
-  const showCorrectionsAtCaretPosition = () => {
+  const showCorrectionsAtCaretPosition = (hitCorrection) => {
     if (!corrections || !Array.isArray(corrections)) {
       return;
     }
 
-    // Find the caret position index and coordinates to position the popup.
+    // Find the current selection or hit.
     let selection = window.getSelection();
+    if (!selection.rangeCount) return;
     let range = selection.getRangeAt(0);
-    let preCaretRange = range.cloneRange();
-    preCaretRange.selectNodeContents(input);
-    preCaretRange.setEnd(range.endContainer, range.endOffset);
-    const caretPosition = preCaretRange.toString().length;
-    let rect = preCaretRange.getBoundingClientRect();
-    let { left, width, top, height } = rect;
-    left += width / 2;
-    top += height;
 
-    // Find corrections at caret.
-    currentCorrection =
-      corrections.find(
-        (correction) =>
-          correction.startIndex <= caretPosition &&
-          caretPosition <= correction.endIndex
-      ) || null;
+    // If a hitCorrection was passed (from a click), use it.
+    // Otherwise, find it by caret position.
+    currentCorrection = hitCorrection;
+    if (!currentCorrection) {
+      let preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(input);
+      preCaretRange.setEnd(range.endContainer, range.endOffset);
+      const caretPosition = preCaretRange.toString().length;
+
+      // Find corrections at caret.
+      currentCorrection =
+        corrections.find(
+          (correction) =>
+            correction.startIndex <= caretPosition &&
+            caretPosition <= correction.endIndex
+        ) || null;
+    }
+
     if (!currentCorrection) {
       popover.hidePopover();
       form
@@ -179,15 +223,35 @@ const legendContainer = document.querySelector('p:has(.legend)');
       return;
     }
 
+    // Calculate position based on the correction's range.
+    if (!currentCorrection.range) {
+      return;
+    }
+    const rect = currentCorrection.range.getBoundingClientRect();
+    let { left, width, top, height } = rect;
+    left += width / 2;
+    top += height;
+
     // Show the popup.
-    const { type, correction, explanation } = currentCorrection;
-    const heading = type[0].toUpperCase() + type.substring(1).replace(/-/, ' ');
+    const { typesString, correction, explanation, types } = currentCorrection;
+    const heading =
+      typesString[0].toUpperCase() +
+      typesString.substring(1).replace(/-/g, ' ');
     popover.querySelector('h1').textContent = heading;
     const text = popover.querySelector('h1').firstChild;
     const highlightRange = new Range();
     highlightRange.setStart(text, 0);
     highlightRange.setEnd(text, heading.length);
-    errorHighlights[type].add(highlightRange);
+
+    // Apply all highlights to the heading in the popover.
+    if (Array.isArray(types)) {
+      for (const type of types) {
+        const highlightKey = errorHighlights[type] ? type : 'other';
+        errorHighlights[highlightKey].add(highlightRange);
+      }
+    } else {
+      errorHighlights['other'].add(highlightRange);
+    }
     popover.querySelector('.correction').textContent =
       correction || '[Remove word]';
     if (explanation) {
@@ -230,6 +294,13 @@ const legendContainer = document.querySelector('p:has(.legend)');
     )}${correction}${input.textContent.substring(endIndex)}`;
     popover.hidePopover();
     submit.click();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && popover.matches(':popover-open')) {
+      e.preventDefault();
+      button.focus();
+    }
   });
 
   input.addEventListener('keyup', (e) => {
