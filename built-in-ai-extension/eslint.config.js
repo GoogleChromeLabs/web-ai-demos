@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import js from '@eslint/js';
 import google from 'eslint-config-google';
 import prettier from 'eslint-config-prettier';
