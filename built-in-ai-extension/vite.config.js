@@ -12,6 +12,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   base: './',
+  resolve: {
+    alias: {
+      // Avoid including remotely hosted code in a Manifest V3 item
+      // to pass Chrome Web Store validation.
+      'firebase/app-check': resolve(
+        __dirname,
+        'node_modules/prompt-api-polyfill/dist/backends/firebase-mock-appcheck.js'
+      ),
+    },
+  },
   esbuild: {
     keepNames: true,
   },

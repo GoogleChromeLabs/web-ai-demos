@@ -15,8 +15,8 @@
   "author": "Thomas Steiner (tomac@google.com)",
   "license": "Apache-2.0",
   "dependencies": {
-    "built-in-ai-task-apis-polyfills": "^1.8.1",
-    "prompt-api-polyfill": "^1.14.2"
+    "built-in-ai-task-apis-polyfills": "^1.8.2",
+    "prompt-api-polyfill": "^1.14.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
