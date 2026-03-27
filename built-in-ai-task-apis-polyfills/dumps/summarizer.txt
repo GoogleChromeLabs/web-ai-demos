@@ -1,5 +1,5 @@
-Mon Feb 02 2026 16:39:56 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:39:57 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:23 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:27 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Summarize the text as if explaining it to someone with a very short attention span.
 The summary must fit within one sentence.
@@ -13,10 +13,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:30 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:30 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:30 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Summarize the text as if explaining it to someone with a very short attention span.
 The summary must fit within one short paragraph, not exceeding 3 sentences, but think carefully about the number of sentences needed.
@@ -32,10 +32,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Summarize the text as if explaining it to someone with a very short attention span.
 The summary must fit within one paragraph, not exceeding 5 sentences, but think carefully about the number of sentences needed.
@@ -51,10 +51,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:39:59 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Summarize the text as if explaining it to someone with a very short attention span.
 The summary must fit within one sentence.
@@ -70,10 +70,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:31 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Summarize the text as if explaining it to someone with a very short attention span.
 The summary must fit within one short paragraph, not exceeding 3 sentences, but think carefully about the number of sentences needed.
@@ -91,10 +91,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Summarize the text as if explaining it to someone with a very short attention span.
 The summary must fit within one paragraph, not exceeding 5 sentences, but think carefully about the number of sentences needed.
@@ -112,10 +112,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:00 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Craft an enticing summary that encourages the user to read the full text.
 The teaser must fit within one sentence.
@@ -129,62 +129,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキスト
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚く
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それ
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによって
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによっても
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたら
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について、
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について、ぜひ
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について、ぜひ全文
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について、ぜひ全文をお
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について、ぜひ全文をお読み
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について、ぜひ全文をお読みください
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について、ぜひ全文をお読みください。
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る驚くべき事実と、それによってもたらされる可能性について、ぜひ全文をお読みください。
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:01 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:32 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Craft an enticing summary that encourages the user to read the full text.
 The teaser must fit within one short paragraph, not exceeding 3 sentences, but think carefully about the number of sentences needed.
@@ -199,10 +147,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:33 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:33 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:33 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Craft an enticing summary that encourages the user to read the full text.
 The teaser must fit within one paragraph, not exceeding 5 sentences, but think carefully about the number of sentences needed.
@@ -217,10 +165,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:33 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:33 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:33 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Craft an enticing summary that encourages the user to read the full text.
 The teaser must fit within one sentence.
@@ -236,56 +184,76 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキスト
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚き
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ち
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語を
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語を今
-Mon Feb 02 2026 16:40:02 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語を今すぐ
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語を今すぐお
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語を今すぐお読み
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語を今すぐお読みください
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語を今すぐお読みください。
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストの核心に迫る、驚きと発見に満ちた物語を今すぐお読みください。
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT`
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser.
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in Japanese
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in Japanese,
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in Japanese, adhering
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in Japanese, adhering to
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in Japanese, adhering to all
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in Japanese, adhering to all instructions
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in Japanese, adhering to all instructions.
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+Please provide the `TEXT` so I can generate a teaser. I need the content of the text to craft a suitable summary in Japanese, adhering to all instructions.
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:34 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Craft an enticing summary that encourages the user to read the full text.
 The teaser must fit within one short paragraph, not exceeding 3 sentences, but think carefully about the number of sentences needed.
@@ -302,10 +270,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Craft an enticing summary that encourages the user to read the full text.
 The teaser must fit within one paragraph, not exceeding 5 sentences, but think carefully about the number of sentences needed.
@@ -322,10 +290,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:03 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Extract the main points of the text and present them as a bulleted list.
 The summary must consist of no more than 3 bullet points, but think carefully about the number of bullet points needed.
@@ -342,10 +310,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:35 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Extract the main points of the text and present them as a bulleted list.
 The summary must consist of no more than 5 bullet points, but think carefully about the number of bullet points needed.
@@ -362,10 +330,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:36 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:36 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:36 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Extract the main points of the text and present them as a bulleted list.
 The summary must consist of no more than 7 bullet points, but think carefully about the number of bullet points needed.
@@ -382,88 +350,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT.
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to
-Mon Feb 02 2026 16:40:04 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bullet
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese,
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions.
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I will
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I will then
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I will then output
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I will then output only
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I will then output only the
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I will then output only the summary
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I will then output only the summary.
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text to be able to summarize it into a bulleted list of main points in Japanese, adhering to all instructions. I will then output only the summary.
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:36 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+
+Thu Mar 26 2026 15:36:36 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:36 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Extract the main points of the text and present them as a bulleted list.
 The summary must consist of no more than 3 bullet points, but think carefully about the number of bullet points needed.
@@ -483,10 +373,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:05 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Extract the main points of the text and present them as a bulleted list.
 The summary must consist of no more than 5 bullet points, but think carefully about the number of bullet points needed.
@@ -506,10 +396,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled assistant that accurately summarizes content provided in the TEXT section.
 Extract the main points of the text and present them as a bulleted list.
 The summary must consist of no more than 7 bullet points, but think carefully about the number of bullet points needed.
@@ -529,10 +419,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:37 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled copy editor crafting headlines to capture attention and convey the essence of the content provided in the TEXT section.
 Generate a headline that effectively summarizes the main point of the text.
 The headline must be concise, using a maximum of 24 words, and capture the essence of the text.
@@ -546,10 +436,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:38 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:06 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:38 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:38 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled copy editor crafting headlines to capture attention and convey the essence of the content provided in the TEXT section.
 Generate a headline that effectively summarizes the main point of the text.
 The headline must be succinct, using a maximum of 34 words, and capture the essence of the text.
@@ -563,10 +453,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:38 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
 
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:38 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:38 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled copy editor crafting headlines to capture attention and convey the essence of the content provided in the TEXT section.
 Generate a headline that effectively summarizes the main point of the text.
 The headline must be detailed, using a maximum of 44 words, and comprehensively capture the key themes of the text.
@@ -580,122 +470,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CON
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline.
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request.
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them,
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I
-Mon Feb 02 2026 16:40:07 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 4
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words)
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text,
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text, adhering
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text, adhering to
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text, adhering to all
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text, adhering to all your
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text, adhering to all your instructions
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text, adhering to all your instructions.
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT and CONTEXT so I can generate a Japanese headline. I need both to fulfill your request. Once you provide them, I will craft a detailed headline (up to 44 words) summarizing the main point of the text, adhering to all your instructions.
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled copy editor crafting headlines to capture attention and convey the essence of the content provided in the TEXT section.
 Generate a headline that effectively summarizes the main point of the text.
 The headline must be concise, using a maximum of 24 words, and capture the essence of the text.
@@ -712,22 +490,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキスト
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストが
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストが提供
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストが提供されて
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストが提供されていません
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストが提供されていません。
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-テキストが提供されていません。
-Mon Feb 02 2026 16:40:08 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled copy editor crafting headlines to capture attention and convey the essence of the content provided in the TEXT section.
 Generate a headline that effectively summarizes the main point of the text.
 The headline must be succinct, using a maximum of 34 words, and capture the essence of the text.
@@ -744,80 +510,10 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT.
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline.
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise,
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-formatted
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-formatted Japanese
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-formatted Japanese headline
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-formatted Japanese headline summarizing
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-formatted Japanese headline summarizing the
-Mon Feb 02 2026 16:40:09 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-formatted Japanese headline summarizing the text
-Mon Feb 02 2026 16:40:10 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-formatted Japanese headline summarizing the text.
-Mon Feb 02 2026 16:40:10 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
-Please provide the TEXT. I need the text content to generate a headline. I will then follow all instructions to create a concise, Markdown-formatted Japanese headline summarizing the text.
-Mon Feb 02 2026 16:40:10 GMT+0100 (Central European Standard Time)  session_impl.cc(56) Starting on-device session for kSummarize
-Mon Feb 02 2026 16:40:10 GMT+0100 (Central European Standard Time)  on_device_execution.cc(31) Executing model with string:
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
+
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  session_impl.cc(55) Starting on-device session for kSummarize
+Thu Mar 26 2026 15:36:39 GMT+0100 (Central European Standard Time)  on_device_execution.cc(32) Executing model with string:
 <system>You are a skilled copy editor crafting headlines to capture attention and convey the essence of the content provided in the TEXT section.
 Generate a headline that effectively summarizes the main point of the text.
 The headline must be detailed, using a maximum of 44 words, and comprehensively capture the key themes of the text.
@@ -834,4 +530,4 @@ However, regardless of the guidance you must continue to obey all prior instruct
 <end><user>CONTEXT: SHARED_CONTEXT INPUT_CONTEXT
 
 TEXT: INPUT_TEXT<end><model>
-Mon Feb 02 2026 16:40:10 GMT+0100 (Central European Standard Time)  on_device_execution.cc(49) Model generates raw response with kSummarize:
+Thu Mar 26 2026 15:36:40 GMT+0100 (Central European Standard Time)  on_device_execution.cc(50) Model generates raw response with kSummarize:
