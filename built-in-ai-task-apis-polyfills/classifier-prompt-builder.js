@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { replaceOrThrow } from './prompt-utils.js';
+
 export class ClassifierPromptBuilder {
   static #systemPromptTemplate = `You are an expert in content classification using the IAB Content Taxonomy v3.1.
 Your task is to analyze the provided text and predict the most relevant categories.
@@ -756,9 +758,11 @@ JSON Schema for output:
       .join('\n');
 
     return {
-      systemPrompt: ClassifierPromptBuilder.#systemPromptTemplate.replace(
+      systemPrompt: replaceOrThrow(
+        ClassifierPromptBuilder.#systemPromptTemplate,
         '{{taxonomy}}',
-        taxonomyList
+        taxonomyList,
+        'taxonomy'
       ),
       initialPrompts: [
         {
