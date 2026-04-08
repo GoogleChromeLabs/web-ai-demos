@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-extension",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -15,18 +15,18 @@
   "author": "Thomas Steiner (tomac@google.com)",
   "license": "Apache-2.0",
   "dependencies": {
-    "built-in-ai-task-apis-polyfills": "^1.8.2",
-    "prompt-api-polyfill": "^1.14.3"
+    "built-in-ai-task-apis-polyfills": "^1.9.0",
+    "prompt-api-polyfill": "^1.15.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.1.0",
+    "eslint": "^10.2.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.4.0",
     "node-addon-api": "^8.7.0",
     "node-gyp": "^12.2.0",
     "prettier": "^3.8.1",
-    "vite": "^8.0.3"
+    "vite": "^8.0.7"
   }
 }

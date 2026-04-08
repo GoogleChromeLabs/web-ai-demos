@@ -18,7 +18,7 @@ export default defineConfig({
       // to pass Chrome Web Store validation.
       'firebase/app-check': resolve(
         __dirname,
-        'node_modules/prompt-api-polyfill/dist/backends/firebase-mock-appcheck.js'
+        'src/firebase-mock-appcheck.js'
       ),
     },
   },
@@ -26,6 +26,7 @@ export default defineConfig({
     keepNames: true,
   },
   build: {
+    chunkSizeWarningLimit: 600,
     // Disable hashing so filenames in manifest.json remain valid
     rollupOptions: {
       input: {
