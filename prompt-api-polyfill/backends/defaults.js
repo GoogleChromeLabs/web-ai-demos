@@ -11,7 +11,7 @@ export const DEFAULT_MODELS = {
   gemini: { modelName: 'gemini-2.5-flash-lite' },
   openai: { modelName: 'gpt-4o' },
   transformers: {
-    modelName: 'onnx-community/gemma-4-E2B-it-ONNX',
+    modelName: 'onnx-community/gemma-3-1b-it-ONNX-GQA',
     device: 'webgpu',
     dtype: 'q4f16',
   },
