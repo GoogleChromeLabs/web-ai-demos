@@ -29,7 +29,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
   let session = null;
 
-  if (!('LanguageModel' in self)) {
+  if (!("LanguageModel" in self)) {
     errorMessage.style.display = "block";
     errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> to enable it.`;
     return;
@@ -62,11 +62,12 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       }
       const stream = await session.promptStreaming(prompt);
 
-      let result = '';
-      let previousChunk = '';
+      let result = "";
+      let previousChunk = "";
       for await (const chunk of stream) {
         const newChunk = chunk.startsWith(previousChunk)
-            ? chunk.slice(previousChunk.length) : chunk;
+          ? chunk.slice(previousChunk.length)
+          : chunk;
         result += newChunk;
         p.innerHTML = DOMPurify.sanitize(marked.parse(result));
         rawResponse.innerText = result;
@@ -92,19 +93,24 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     }
 
     const numberFormat = new Intl.NumberFormat(NUMBER_FORMAT_LANGUAGE);
-    const decimalNumberFormat = new Intl.NumberFormat(
-      NUMBER_FORMAT_LANGUAGE,
-      { minimumFractionDigits: 1, maximumFractionDigits: 1 },
-    );
+    const decimalNumberFormat = new Intl.NumberFormat(NUMBER_FORMAT_LANGUAGE, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
 
     // In the new API shape, currently in Chrome Canary, `session.maxTokens` was renamed to
     // `session.inputQuota` and `session.tokensSoFar` was renamed to `session.inputUsage`.
     // `session.tokensSoFar` was removed, but the value can be calculated by subtracting
     // `inputUsage` from `inputQuota`. Both APIs shapes are checked in the code below.
-    maxTokensInfo.textContent = numberFormat.format(session.inputQuota || session.maxTokens);
-    tokensLeftInfo.textContent =
-        numberFormat.format(session.tokensSoFar || session.inputQuota - session.inputUsage);
-    tokensSoFarInfo.textContent = numberFormat.format(session.inputUsage || session.tokensSoFar);
+    maxTokensInfo.textContent = numberFormat.format(
+      session.inputQuota || session.maxTokens,
+    );
+    tokensLeftInfo.textContent = numberFormat.format(
+      session.tokensSoFar || session.inputQuota - session.inputUsage,
+    );
+    tokensSoFarInfo.textContent = numberFormat.format(
+      session.inputUsage || session.tokensSoFar,
+    );
   };
 
   const params = new URLSearchParams(location.search);
@@ -151,7 +157,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     if (!cost) {
       return;
     }
-    costSpan.textContent = `${cost} token${cost === 1 ? '' : 's'}`;
+    costSpan.textContent = `${cost} token${cost === 1 ? "" : "s"}`;
   });
 
   const resetUI = () => {
@@ -201,9 +207,9 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       session = await LanguageModel.create({
         initialPrompts: [
           {
-            role: 'system',
+            role: "system",
             content: SYSTEM_PROMPT,
-          }
+          },
         ],
       });
     }

@@ -2,18 +2,21 @@
   Copyright 2024 Google LLC
   SPDX-License-Identifier: Apache-2.0
  -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="dark light">
-    <meta http-equiv="origin-trial" content="AoXwZGsUZlGEyuueX5nR6tujynrCfWhNWQnZcHTy3AZkXtCMULt/UJs6+/1Bp5jVw7Ue96Tcyf1IO8IRUMimAgcAAABeeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvbXB0QVBJTXVsdGltb2RhbElucHV0IiwiZXhwaXJ5IjoxNzc0MzEwNDAwfQ==">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta
+      http-equiv="origin-trial"
+      content="AoXwZGsUZlGEyuueX5nR6tujynrCfWhNWQnZcHTy3AZkXtCMULt/UJs6+/1Bp5jVw7Ue96Tcyf1IO8IRUMimAgcAAABeeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvbXB0QVBJTXVsdGltb2RhbElucHV0IiwiZXhwaXJ5IjoxNzc0MzEwNDAwfQ=="
+    />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>"
-    >
-    <link rel="stylesheet" href="style.css">
+    />
+    <link rel="stylesheet" href="style.css" />
     <title>Prompt API Playground</title>
     <script>
       if (!isSecureContext) location.protocol = "https:";
@@ -24,9 +27,9 @@
     <h1>✨ Prompt API Playground</h1>
     <p>
       This is a demo of Chrome's
-      <a
-        href="https://developer.chrome.com/docs/ai/built-in"
-      >built-in Prompt API</a>
+      <a href="https://developer.chrome.com/docs/ai/built-in"
+        >built-in Prompt API</a
+      >
       powered by Gemini Nano.
     </p>
     <div id="error-message"></div>
@@ -65,8 +68,9 @@
       </details>
       <button id="copy-link-button">Copy link</button>
       <small
-      >💡 If there's a problem with the response, select the problematic text
-         with your mouse before clicking the button.</small>
+        >💡 If there's a problem with the response, select the problematic text
+        with your mouse before clicking the button.</small
+      >
       <div id="problematic-area">
         <h2>Problematic:</h2>
         <pre id="problem"></pre>
