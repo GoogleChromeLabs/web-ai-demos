@@ -98,18 +98,22 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       maximumFractionDigits: 1,
     });
 
-    // In the new API shape, currently in Chrome Canary, `session.maxTokens` was renamed to
+    // In the latest API shape, currently in Chrome Canary, `session.inputQuota` was
+    // renamed to `session.contextWindow` and `session.inputUsage` was renamed to
+    // `session.contextUsage`. Previously `session.maxTokens` was renamed to
     // `session.inputQuota` and `session.tokensSoFar` was renamed to `session.inputUsage`.
     // `session.tokensSoFar` was removed, but the value can be calculated by subtracting
-    // `inputUsage` from `inputQuota`. Both APIs shapes are checked in the code below.
+    // `inputUsage` from `inputQuota`. All APIs shapes are checked in the code below.
     maxTokensInfo.textContent = numberFormat.format(
-      session.inputQuota || session.maxTokens,
+      session.contextWindow || session.inputQuota || session.maxTokens,
     );
     tokensLeftInfo.textContent = numberFormat.format(
-      session.tokensSoFar || session.inputQuota - session.inputUsage,
+      session.tokensSoFar ||
+        session.contextWindow - session.contextUsage ||
+        session.inputQuota - session.inputUsage,
     );
     tokensSoFarInfo.textContent = numberFormat.format(
-      session.inputUsage || session.tokensSoFar,
+      session.contextUsage || session.inputUsage || session.tokensSoFar,
     );
   };
 
@@ -145,11 +149,14 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
     let cost;
 
-    // The API that returns the token count for a prompt changed between Chrome Stable and Canary
-    // and the method was renamed from `countPromptTokens(input)` to `measureInputUsage(input)`.
-    // The code below ensures both cases are handled.
+    // The API that returns the token count for a prompt has been renamed
+    // from `countPromptTokens(input)` to `measureInputUsage(input)` to
+    // `measureContextUsage(input)`.
+    // The code below ensures all cases are handled.
     if (session.countPromptTokens) {
       cost = await session.countPromptTokens(value);
+    } else if (session.measureContextUsage) {
+      cost = await session.measureContextUsage(value);
     } else if (session.measureInputUsage) {
       cost = await session.measureInputUsage(value);
     }
