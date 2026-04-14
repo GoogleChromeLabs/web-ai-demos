@@ -142,6 +142,10 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   });
 
   promptInput.addEventListener("input", async () => {
+    if (!session) {
+      return;
+    }
+
     const value = promptInput.value.trim();
     if (!value) {
       return;
