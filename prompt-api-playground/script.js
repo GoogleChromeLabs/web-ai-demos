@@ -29,7 +29,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
   let session = null;
 
-  if (!('LanguageModel' in self)) {
+  if (!("LanguageModel" in self)) {
     errorMessage.style.display = "block";
     errorMessage.innerHTML = `Your browser doesn't support the Prompt API. If you're on Chrome, join the <a href="https://goo.gle/chrome-ai-dev-preview-join">Early Preview Program</a> to enable it.`;
     return;
@@ -62,11 +62,12 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       }
       const stream = await session.promptStreaming(prompt);
 
-      let result = '';
-      let previousChunk = '';
+      let result = "";
+      let previousChunk = "";
       for await (const chunk of stream) {
         const newChunk = chunk.startsWith(previousChunk)
-            ? chunk.slice(previousChunk.length) : chunk;
+          ? chunk.slice(previousChunk.length)
+          : chunk;
         result += newChunk;
         p.innerHTML = DOMPurify.sanitize(marked.parse(result));
         rawResponse.innerText = result;
@@ -92,19 +93,28 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     }
 
     const numberFormat = new Intl.NumberFormat(NUMBER_FORMAT_LANGUAGE);
-    const decimalNumberFormat = new Intl.NumberFormat(
-      NUMBER_FORMAT_LANGUAGE,
-      { minimumFractionDigits: 1, maximumFractionDigits: 1 },
-    );
+    const decimalNumberFormat = new Intl.NumberFormat(NUMBER_FORMAT_LANGUAGE, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
 
-    // In the new API shape, currently in Chrome Canary, `session.maxTokens` was renamed to
+    // In the latest API shape, currently in Chrome Canary, `session.inputQuota` was
+    // renamed to `session.contextWindow` and `session.inputUsage` was renamed to
+    // `session.contextUsage`. Previously `session.maxTokens` was renamed to
     // `session.inputQuota` and `session.tokensSoFar` was renamed to `session.inputUsage`.
     // `session.tokensSoFar` was removed, but the value can be calculated by subtracting
-    // `inputUsage` from `inputQuota`. Both APIs shapes are checked in the code below.
-    maxTokensInfo.textContent = numberFormat.format(session.inputQuota || session.maxTokens);
-    tokensLeftInfo.textContent =
-        numberFormat.format(session.tokensSoFar || session.inputQuota - session.inputUsage);
-    tokensSoFarInfo.textContent = numberFormat.format(session.inputUsage || session.tokensSoFar);
+    // `inputUsage` from `inputQuota`. All APIs shapes are checked in the code below.
+    maxTokensInfo.textContent = numberFormat.format(
+      session.contextWindow || session.inputQuota || session.maxTokens,
+    );
+    tokensLeftInfo.textContent = numberFormat.format(
+      session.tokensSoFar ||
+        session.contextWindow - session.contextUsage ||
+        session.inputQuota - session.inputUsage,
+    );
+    tokensSoFarInfo.textContent = numberFormat.format(
+      session.contextUsage || session.inputUsage || session.tokensSoFar,
+    );
   };
 
   const params = new URLSearchParams(location.search);
@@ -132,6 +142,10 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   });
 
   promptInput.addEventListener("input", async () => {
+    if (!session) {
+      return;
+    }
+
     const value = promptInput.value.trim();
     if (!value) {
       return;
@@ -139,11 +153,14 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
     let cost;
 
-    // The API that returns the token count for a prompt changed between Chrome Stable and Canary
-    // and the method was renamed from `countPromptTokens(input)` to `measureInputUsage(input)`.
-    // The code below ensures both cases are handled.
+    // The API that returns the token count for a prompt has been renamed
+    // from `countPromptTokens(input)` to `measureInputUsage(input)` to
+    // `measureContextUsage(input)`.
+    // The code below ensures all cases are handled.
     if (session.countPromptTokens) {
       cost = await session.countPromptTokens(value);
+    } else if (session.measureContextUsage) {
+      cost = await session.measureContextUsage(value);
     } else if (session.measureInputUsage) {
       cost = await session.measureInputUsage(value);
     }
@@ -151,7 +168,7 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     if (!cost) {
       return;
     }
-    costSpan.textContent = `${cost} token${cost === 1 ? '' : 's'}`;
+    costSpan.textContent = `${cost} token${cost === 1 ? "" : "s"}`;
   });
 
   const resetUI = () => {
@@ -201,9 +218,9 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
       session = await LanguageModel.create({
         initialPrompts: [
           {
-            role: 'system',
+            role: "system",
             content: SYSTEM_PROMPT,
-          }
+          },
         ],
       });
     }
