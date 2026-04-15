@@ -16,10 +16,7 @@ export default defineConfig({
     alias: {
       // Avoid including remotely hosted code in a Manifest V3 item
       // to pass Chrome Web Store validation.
-      'firebase/app-check': resolve(
-        __dirname,
-        'src/firebase-mock-appcheck.js'
-      ),
+      'firebase/app-check': resolve(__dirname, 'src/firebase-mock-appcheck.js'),
     },
   },
   esbuild: {
@@ -59,11 +56,11 @@ export default defineConfig({
         }
         const transformersDistDir = resolve(
           __dirname,
-          'node_modules/@huggingface/transformers/dist'
+          'node_modules/onnxruntime-web/dist'
         );
         if (fs.existsSync(transformersDistDir)) {
           fs.readdirSync(transformersDistDir)
-            .filter((file) => file.startsWith('ort-wasm-simd-threaded.jsep.'))
+            .filter((file) => file.startsWith('ort-wasm-simd-threaded.'))
             .forEach((file) => {
               console.log(`Copying ${file} to ${transformersAssetsDir}...`);
               fs.copyFileSync(
