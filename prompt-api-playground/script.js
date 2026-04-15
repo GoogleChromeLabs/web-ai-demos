@@ -105,15 +105,15 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
     // `session.tokensSoFar` was removed, but the value can be calculated by subtracting
     // `inputUsage` from `inputQuota`. All APIs shapes are checked in the code below.
     maxTokensInfo.textContent = numberFormat.format(
-      session.contextWindow || session.inputQuota || session.maxTokens,
+      session.contextWindow ?? session.inputQuota ?? session.maxTokens,
     );
     tokensLeftInfo.textContent = numberFormat.format(
-      session.tokensSoFar ||
-        session.contextWindow - session.contextUsage ||
+      session.tokensSoFar ??
+        session.contextWindow - session.contextUsage ??
         session.inputQuota - session.inputUsage,
     );
     tokensSoFarInfo.textContent = numberFormat.format(
-      session.contextUsage || session.inputUsage || session.tokensSoFar,
+      session.contextUsage ?? session.inputUsage ?? session.tokensSoFar,
     );
   };
 
