@@ -3,5 +3,5 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const initializeAppCheck = () => { };
-export const ReCaptchaEnterpriseProvider = class { };
+export const initializeAppCheck = () => {};
+export const ReCaptchaEnterpriseProvider = class {};
