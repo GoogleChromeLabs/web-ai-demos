@@ -16,9 +16,6 @@ export default defineConfig({
     alias: {
       // Avoid including remotely hosted code in a Manifest V3 item
       // to pass Chrome Web Store validation.
-      // NOTE: The alias below alone isn't sufficient — the published dist of
-      // prompt-api-polyfill pre-bundles @firebase/app-check inline, so there
-      // is no 'firebase/app-check' import statement left to intercept.
       // Pointing prompt-api-polyfill at its monorepo source makes Vite process
       // the source from scratch, at which point this alias fires correctly.
       'firebase/app-check': resolve(__dirname, 'src/firebase-mock-appcheck.js'),
