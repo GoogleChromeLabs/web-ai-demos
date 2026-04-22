@@ -16,7 +16,13 @@ export default defineConfig({
     alias: {
       // Avoid including remotely hosted code in a Manifest V3 item
       // to pass Chrome Web Store validation.
+      // Pointing prompt-api-polyfill at its monorepo source makes Vite process
+      // the source from scratch, at which point this alias fires correctly.
       'firebase/app-check': resolve(__dirname, 'src/firebase-mock-appcheck.js'),
+      'prompt-api-polyfill': resolve(
+        __dirname,
+        '../prompt-api-polyfill/prompt-api-polyfill.js'
+      ),
     },
   },
   esbuild: {
