@@ -1,56 +1,78 @@
-# Applied evals for web developers
+# Evals 101 for web developers
 
-Example evals system that evaluates AI-generated outputs, including rule-based checks and LLM-as-a-judge checks.
+This is the companion code for [Evals 101 for web developers](https://developer.chrome.com/docs/ai/evals).
+This repo includes an example evals system that evaluates AI-generated outputs, including rule-based  and LLM-as-a-judge evals.
 
-## Running the eval service
+## Overview
+
+This repo includes:
+* A simple web application, ThemeBuilder, that generates a brand identity (motto, color palette, typography) based on a company description and target audience.
+* A rule-based evaluator for the application's outputs.
+* An LLM-as-a-judge evaluator for the application's outputs.
+* Tests for the evaluators themselves.
+* Tests for the application's outputs, based on the evaluator.
+
+```mermaid
+graph TD
+    UI[User Prompt constraints] --> TB[ThemeBuilder service]
+    TB --> Output["App output: motto, color palette)"]
+    Output --> RB[Rule-based evals: data format, contrast]
+    Output --> LLM[LLM judge evals: brand fit, toxicity]
+    RB --> R[eval result PASS/FAIL]
+    LLM --> R
+```
+
+
+## Set up
+
 1. Create a [Gemini API key](https://ai.google.dev/gemini-api/docs/api-key).
 2. Create an `.env` file in the `evals-service` directory with your `GEMINI_API_KEY`.
 3. Install dependencies: `npm install` (run from the root of `evals-course`)
-4. Run the service: `npm start` (or `npm run dev` for development)
-   -  Note: The service runs on **port 8080** by default.
 
-## Evals tests
+## Testing and running evals
 
 Running evaluations from the `evals-course` root:
 
-Run rule-based evaluations:
+### 1. Testing the evaluators (= testing the evaluators themselves)
+
+These scripts test the **evaluator functions themselves** and assess the correctness of the criteria and LLM scoring logic. You'd typically run these tests when you're developing the evaluators.
+
+Run tests for rule-based evaluators:
 ```bash
 npm run test:rule-based-evals
 ```
 
-Run LLM-as-a-judge evaluations:
-```bash
-npm run test:llm-judge-evals
-```
-
-Run basic LLM-as-a-judge evaluations (alignment% only):
+Run basic tests for LLM-as-a-judge evaluators (alignment% only):
 ```bash
 npm run test:llm-judge-basic-evals
 ```
 
-Run unit testing:
+Run advanced tests for LLM-as-a-judge evaluators (alignment%, Cohen's Kappa, precision, recall):
+```bash
+npm run test:llm-judge-evals
+```
+
+### 2. Evaluating application outputs
+
+This executes the real `ThemeBuilder` application service against a dataset of prompts, using both static rules and our evaluators (rule-based and LLM judge) to grade the final AI-generated outputs.
+
+Run unit testing for the AI application:
 ```bash
 npm run test:unit-evals
 ```
 
-### Running LLM evals with a custom dataset
+### Fast mode
 
-The LLM evaluation scripts use a default dataset, but you can override this by passing a custom path either as a CLI argument or via the `DATASET_PATH` environment variable.
+You can append `-fast` to any script to run in **fast mode** (e.g., `npm run test:unit-evals-fast` or `npm run test:all-fast`).
 
-**Option 1: CLI argument**
-You can pass the file path directly to the script:
-```bash
-npx ts-node test/test-llm-judge-alignment-bootstrap.ts ../data/my-custom-dataset.jsonc
-```
-*(You can also use the `--fast` flag for quick debugging: `npx ts-node test/test-llm-judge-alignment-bootstrap.ts --fast ../data/my-custom-dataset.jsonc`)*
+Fast mode caps evaluation scenarios to a small number of samples per suite. Recommended for rapid local iteration and debugging to avoid long wait times.
 
-**Option 2: Environment variable**
-You can also set the `DATASET_PATH` variable:
-```bash
-DATASET_PATH="../data/my-custom-dataset.jsonc" npx ts-node test/test-llm-judge-alignment.ts
-```
 
-## Example usage
+
+## Running the eval service
+
+Run the service: `npm start` (or `npm run dev` for development)
+   -  Note: The service runs on **port 8080** by default.
 
 Once the service is running, you can evaluate data by sending a POST request to `/api/evaluate`.
 
