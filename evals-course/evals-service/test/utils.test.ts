@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { EvalLabel, Mismatch, FinalStatsAcrossMetrics, FinalStatsPerMetric, FinalAlignmentResults, EvalItemInput, RawConsistencyResults, ConsistencyStatsPerItemMetric, ConsistencyVerdict, FinalConsistencyResults, BasicAlignmentResults, EVAL_CRITERIA, METRIC_TO_RESULT_KEY } from "../src/types";

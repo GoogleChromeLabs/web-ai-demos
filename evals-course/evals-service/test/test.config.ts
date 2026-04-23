@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 export const TEST_DEFAULT_DATASET_PATH_ALIGNMENT = '../data/judge-alignment-dataset.jsonc';
 export const TEST_DEFAULT_DATASET_PATH_CONSISTENCY = '../data/judge-alignment-dataset.jsonc';
 

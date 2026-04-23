@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { EvalLabel, EvalResult, EvalItemResults, EvalResponse, EvalItemInput, UserInput, AppOutput } from "./types";
 import { JUDGE_MODEL, MIN_CONTRAST_RATIO } from "./app.config";

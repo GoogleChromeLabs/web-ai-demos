@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Classification label for an evaluation (PASS/FAIL is the judge's verdict)
 export enum EvalLabel {
     PASS = "PASS",

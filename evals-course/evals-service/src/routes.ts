@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Router, Request, Response } from 'express';
 import { evalAll } from './eval.service';
 

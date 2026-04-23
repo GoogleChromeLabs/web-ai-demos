@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { EvalLabel } from "./types";
 
 export function getMottoBrandFitJudgePrompt(companyName: string, description: string, audience: string, tone: string | string[], motto: string) {
