@@ -1,0 +1,21 @@
+{
+  "name": "evals-course",
+  "private": true,
+  "workspaces": [
+    "evals-service"
+  ],
+  "scripts": {
+    "test:rule-based-evals": "npm run test:rule-based-evals -w evals-service",
+    "test:llm-judge-evals-fast": "npm run test:llm-judge-evals-fast -w evals-service",
+    "test:llm-judge-evals": "npm run test:llm-judge-evals -w evals-service",
+    "test:llm-judge-basic-evals-fast": "npm run test:llm-judge-basic-evals-fast -w evals-service",
+    "test:llm-judge-basic-evals": "npm run test:llm-judge-basic-evals -w evals-service",
+    "test:unit-evals": "npm run test:unit-evals -w evals-service",
+    "test:unit-evals-fast": "npm run test:unit-evals-fast -w evals-service",
+    "test:all": "npm run test:all -w evals-service",
+    "test:all-fast": "npm run test:all-fast -w evals-service",
+    "build": "npm run build -w evals-service",
+    "start": "npm run start -w evals-service",
+    "dev": "npm run dev -w evals-service"
+  }
+}

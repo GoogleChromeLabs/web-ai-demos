@@ -3,19 +3,15 @@
 Example evals system that evaluates AI-generated outputs, including rule-based checks and LLM-as-a-judge checks.
 
 ## Running the eval service
-
-> [!IMPORTANT]
-> All commands must be run from within the `evals-service` directory.
-
-1. Navigate to the evals service directory: `cd evals-service`
-2. Create an `.env` file with your `GEMINI_API_KEY`.
-3. Install dependencies: `npm install`
+1. Create a [Gemini API key](https://ai.google.dev/gemini-api/docs/api-key).
+2. Create an `.env` file in the `evals-service` directory with your `GEMINI_API_KEY`.
+3. Install dependencies: `npm install` (run from the root of `evals-course`)
 4. Run the service: `npm start` (or `npm run dev` for development)
    -  Note: The service runs on **port 8080** by default.
 
 ## Evals tests
 
-Make sure you are inside the `evals-service` directory before running these commands.
+Running evaluations from the `evals-course` root:
 
 Run rule-based evaluations:
 ```bash
