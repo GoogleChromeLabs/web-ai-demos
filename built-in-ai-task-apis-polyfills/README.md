@@ -107,7 +107,7 @@ for await (const chunk of stream) {
 
 ```js
 const writer = await Writer.create({
-  tone: 'professional',
+  tone: 'formal',
   format: 'plain-text',
 });
 
