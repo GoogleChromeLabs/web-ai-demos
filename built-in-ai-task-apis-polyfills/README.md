@@ -118,7 +118,7 @@ const result = await writer.write('Draft of an email to my boss telling her I wi
 
 ```js
 const rewriter = await Rewriter.create({
-  tone: 'casual',
+  tone: 'more-casual',
 });
 
 const result = await rewriter.rewrite('I am writing to inform you that I will be late.');
