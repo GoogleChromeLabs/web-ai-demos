@@ -5,7 +5,13 @@
 
 import './style.css';
 import { initializeApp } from 'firebase/app';
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from 'firebase/app-check';
 import { getAI, getGenerativeModel, GoogleAIBackend } from 'firebase/ai';
+
+// window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,18 +20,30 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  recaptchaSiteKey: import.meta.env.VITE_RECAPTCHA_SITE_KEY,
 };
 
 // Initialize FirebaseApp
 const firebaseApp = initializeApp(firebaseConfig);
+const appCheck = initializeAppCheck(firebaseApp, {
+  provider: new ReCaptchaEnterpriseProvider(
+    import.meta.env.VITE_RECAPTCHA_SITE_KEY
+  ),
+  isTokenAutoRefreshEnabled: true,
+});
 
 // Initialize the Google AI service
-const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
+const ai = getAI(firebaseApp, {
+  backend: new GoogleAIBackend(),
+  useLimitedUseAppCheckTokens: true,
+});
 
 // Create a `GenerativeModel` instance with a model that supports your use case
 const model = getGenerativeModel(ai, {
   mode: 'prefer_on_device',
-  model: 'gemini-2.5-flash',
+  inCloudParams: {
+    model: 'gemini-3.1-flash-lite-preview',
+  },
 });
 
 const [pre1, pre2] = Array.from(document.querySelectorAll('pre'));
