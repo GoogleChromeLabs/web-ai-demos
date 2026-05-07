@@ -107,28 +107,28 @@ for await (const chunk of stream) {
 
 ```js
 const writer = await Writer.create({
-  tone: 'professional',
+  tone: 'formal',
   format: 'plain-text',
 });
 
-const result = await writer.write('Draft of an email to my boss');
+const result = await writer.write('Draft of an email to my boss telling her I will be late.');
 ```
 
 #### Rewriter API
 
 ```js
 const rewriter = await Rewriter.create({
-  tone: 'casual',
+  tone: 'more-casual',
 });
 
-const result = await rewriter.rewrite('I am writing to inform you that...');
+const result = await rewriter.rewrite('I am writing to inform you that I will be late.');
 ```
 
 #### Language Detector API
 
 ```js
 const detector = await LanguageDetector.create();
-const results = await detector.detect('C'est la vie');
+const results = await detector.detect('C\'est la vie');
 
 for (const { detectedLanguage, confidence } of results) {
   console.log(`${detectedLanguage} (${(confidence * 100).toFixed(1)}%)`);
