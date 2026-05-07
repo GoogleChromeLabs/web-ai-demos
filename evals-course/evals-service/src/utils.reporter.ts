@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { EvalResponse, TestCaseResult, EvalLabel, MetricResult, EvalResult } from './types';
+import { EvalResponse, TestCaseResult, EvalLabel, MetricResult, EvalResult, ExpectedOutcome } from './types';
 import { EVALS_STABILITY_THRESHOLD } from './app.config';
 
 /**
@@ -30,23 +30,23 @@ export function generateHtmlReport(response: EvalResponse, outputDir: string): s
     const outputPath = path.join(outputDir, filename);
 
     // Calculate Summary Stats
-    const totalTests = response.results.length;
-    const iterationsCount = response.results.find(r => r.mottoBrandFit?.evalResults)?.mottoBrandFit?.evalResults?.length ?? 5;
+    const totalTests = response.testCaseResults.length;
+    const iterationsCount = response.testCaseResults.find(r => r.mottoBrandFit?.evalResults)?.mottoBrandFit?.evalResults?.length ?? 5;
     let totalPassedCases = 0;
     let totalEvalsCount = 0;
     let passedEvalsCount = 0;
 
-    response.results.forEach(res => {
+    response.testCaseResults.forEach(res => {
         const evals = [res.dataFormat, res.contrast, res.mottoBrandFit, res.colorBrandFit, res.mottoToxicity];
-        const isCasePassed = evals.every(e => e.label === EvalLabel.PASS);
+        const isCasePassed = evals.every(e => e.label === EvalLabel.PASS || e.label === EvalLabel.SKIPPED) && res.appGateResult.label === EvalLabel.PASS;
         if (isCasePassed) totalPassedCases++;
 
         evals.forEach(e => {
-            const isSkipped = e.rationale && (
+            const isSkipped = e.label === EvalLabel.SKIPPED || (e.rationale && (
                 e.rationale.includes('SKIPPED') ||
                 e.rationale.includes('Blocked') ||
                 e.rationale.includes('N/A')
-            );
+            ));
 
             // Exclude API Errors and skipped/short-circuited evaluations from accuracy denominators
             if (e.label !== EvalLabel.ERROR && !isSkipped) {
@@ -105,9 +105,9 @@ export function generateHtmlReport(response: EvalResponse, outputDir: string): s
 
 
     // Render Results Rows into specific 4 columns: TEST CASE ID, EXPECTED OUTCOME, ACTUAL OUTCOME, TEST STATUS
-    const rows = response.results.map((res: TestCaseResult) => {
+    const rows = response.testCaseResults.map((res: TestCaseResult) => {
         const evals = [res.dataFormat, res.contrast, res.mottoBrandFit, res.colorBrandFit, res.mottoToxicity];
-        const isCasePassed = evals.every(e => e.label === EvalLabel.PASS) && res.appGateResult.label === EvalLabel.PASS;
+        const isCasePassed = evals.every(e => e.label === EvalLabel.PASS || e.label === EvalLabel.SKIPPED) && res.appGateResult.label === EvalLabel.PASS;
         const hasErrors = evals.some(e => e.label === EvalLabel.ERROR) || res.appGateResult.label === EvalLabel.ERROR;
         const hasFailures = evals.some(e => e.label === EvalLabel.FAIL || e.label === EvalLabel.ERROR) ||
             (res.appGateResult.label === EvalLabel.FAIL || res.appGateResult.label === EvalLabel.ERROR);
@@ -116,18 +116,31 @@ export function generateHtmlReport(response: EvalResponse, outputDir: string): s
 
         const gateResult = res.appGateResult;
         const isGatePass = gateResult.label === EvalLabel.PASS;
-        const gateRationale = gateResult.rationale || 'NONE';
 
+        let gateDescription = '';
         let gateBadgeHtml = '';
+
         if (isGatePass) {
-            if (gateRationale === 'NONE') {
+            if (res.expectedOutcome === ExpectedOutcome.SUCCESS) {
+                gateDescription = 'No app gate triggered, as expected';
                 gateBadgeHtml = `<span class="badge pass" style="background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size: 0.7rem; padding: 0.15rem 0.4rem;">PASS</span>`;
             } else {
+                gateDescription = `App gate:  <code class="font-mono" style="font-size: 0.75rem; color: #166534;">${res.expectedOutcome}</code>  triggered as expected`;
                 gateBadgeHtml = `<span class="badge pass" style="background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size: 0.7rem; padding: 0.15rem 0.4rem;">PASS</span>`;
             }
         } else {
-            const labelText = gateResult.label === EvalLabel.ERROR ? 'ERROR' : 'FAIL';
-            gateBadgeHtml = `<span class="badge fail" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">${labelText}</span>`;
+            if (gateResult.label === EvalLabel.ERROR) {
+                gateDescription = `App gate error (${escapeHtml(gateResult.rationale || 'Execution failed')})`;
+                gateBadgeHtml = `<span class="badge fail" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">ERROR</span>`;
+            } else {
+                if (res.expectedOutcome === ExpectedOutcome.SUCCESS) {
+                    gateDescription = `<span style="color: #b91c1c; font-weight: 600;">App gate mistakenly triggered</span>`;
+                    gateBadgeHtml = `<span class="badge fail" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">FAIL</span>`;
+                } else {
+                    gateDescription = `<span style="color: #b91c1c; font-weight: 600;">App gate failed to trigger</span>`;
+                    gateBadgeHtml = `<span class="badge fail" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">FAIL</span>`;
+                }
+            }
         }
 
         const overallStatusBadge = isCasePassed
@@ -139,7 +152,7 @@ export function generateHtmlReport(response: EvalResponse, outputDir: string): s
             : (`App gate: ${res.expectedOutcome || 'SUCCESS'}`);
 
         // Tab navigation buttons
-        const totalIterCount = res.appOutputs.length;
+        const totalIterCount = Object.keys(res.appOutputs).length;
         let tabsButtonsHtml = `
             <div class="case-tabs-header">
                 <button class="case-tab-btn tab-btn-${res.id} active" id="btn-${res.id}-summary" onclick="selectCaseTab('${res.id}', 'summary')">
@@ -159,7 +172,7 @@ export function generateHtmlReport(response: EvalResponse, outputDir: string): s
         const summaryContentHtml = `
             <div class="case-tab-content tab-content-${res.id}" id="content-${res.id}-summary" style="display: block;">
                 <div class="vertical-outcome-list">
-                    <div class="outcome-item"><span class="outcome-lbl">App gate:</span> ${gateBadgeHtml}</div>
+                    <div class="outcome-item"><span class="outcome-lbl">App gate:</span> ${gateBadgeHtml}: ${gateDescription} </div>
                     <div class="outcome-item"><span class="outcome-lbl">Data format:</span> ${renderBadge(res.dataFormat)}</div>
                     <div class="outcome-item"><span class="outcome-lbl">Contrast ratio:</span> ${renderBadge(res.contrast)}</div>
                     <div class="outcome-item"><span class="outcome-lbl">Motto brand fit:</span> ${renderBadge(res.mottoBrandFit, true)}</div>
@@ -172,7 +185,8 @@ export function generateHtmlReport(response: EvalResponse, outputDir: string): s
         // Tab Content: Indiv Iterations
         let iterContentsHtml = '';
         for (let j = 0; j < totalIterCount; j++) {
-            const out = res.appOutputs[j] || res.appOutputs[0] || { success: false, errorCode: "NO_OUTPUT" };
+            const key = `output-${(j + 1).toString().padStart(3, '0')}`;
+            const out = res.appOutputs[key] || Object.values(res.appOutputs)[0] || { success: false, errorCode: "NO_OUTPUT" };
             const isBlocked = out.success === false || out.errorCode !== undefined;
 
             iterContentsHtml += `
@@ -245,27 +259,27 @@ export function generateHtmlReport(response: EvalResponse, outputDir: string): s
                     ">
                         <div class="mini-eval-item" style="font-size: 0.7rem; display: flex; align-items: center; justify-content: space-between;">
                             <span class="mini-eval-lbl" style="color: var(--text-muted); font-weight: 500;">App Gate check:</span>
-                            ${renderIterBadge(res.appGateResult.evalResults?.[j])}
+                            ${renderIterBadge(res.appGateResult.evalResults?.[key])}
                         </div>
                         <div class="mini-eval-item" style="font-size: 0.7rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 2px;">
                             <span class="mini-eval-lbl" style="color: var(--text-muted); font-weight: 500;">Data format check:</span>
-                            ${renderIterBadge(res.dataFormat.evalResults?.[j])}
+                            ${renderIterBadge(res.dataFormat.evalResults?.[key])}
                         </div>
                         <div class="mini-eval-item" style="font-size: 0.7rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 2px;">
                             <span class="mini-eval-lbl" style="color: var(--text-muted); font-weight: 500;">Contrast ratio:</span>
-                            ${renderIterBadge(res.contrast.evalResults?.[j])}
+                            ${renderIterBadge(res.contrast.evalResults?.[key])}
                         </div>
                         <div class="mini-eval-item" style="font-size: 0.7rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 2px;">
                             <span class="mini-eval-lbl" style="color: var(--text-muted); font-weight: 500;">Motto brand fit:</span>
-                            ${renderIterBadge(res.mottoBrandFit.evalResults?.[j])}
+                            ${renderIterBadge(res.mottoBrandFit.evalResults?.[key])}
                         </div>
                         <div class="mini-eval-item" style="font-size: 0.7rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 2px;">
                             <span class="mini-eval-lbl" style="color: var(--text-muted); font-weight: 500;">Color brand fit:</span>
-                            ${renderIterBadge(res.colorBrandFit.evalResults?.[j])}
+                            ${renderIterBadge(res.colorBrandFit.evalResults?.[key])}
                         </div>
                         <div class="mini-eval-item" style="font-size: 0.7rem; display: flex; align-items: center; justify-content: space-between;">
                             <span class="mini-eval-lbl" style="color: var(--text-muted); font-weight: 500;">Motto toxicity:</span>
-                            ${renderIterBadge(res.mottoToxicity.evalResults?.[j])}
+                            ${renderIterBadge(res.mottoToxicity.evalResults?.[key])}
                         </div>
                     </div>
                 </div>
@@ -683,7 +697,7 @@ export function generateHtmlReport(response: EvalResponse, outputDir: string): s
             <div>
                 <a href="index.html" class="back-link">← All reports</a>
                 <h1 style="text-transform: none;">Evaluation report</h1>
-                <div class="timestamp">Generated at: ${humanTimestamp} | Judge system: <code>v${response.judgeVersion ?? '1.0'}</code> | Model: <code>${response.modelVersion ?? 'N/A'}</code></div>
+                <div class="timestamp">Generated at: ${humanTimestamp} | Judge system: <code>v${response.judgeMetadata?.judgeVersion ?? '1.0'}</code> | Model: <code>${response.judgeMetadata?.modelVersion ?? 'N/A'}</code></div>
             </div>
         </header>
 
@@ -806,12 +820,12 @@ function renderIterBadge(evalRes?: EvalResult): string {
         return `<span class="badge skipped" style="background-color: #edf2f7; color: #4a5568; border: 1px solid #cbd5e1; font-size: 0.65rem; padding: 1px 4px;">N/A</span>`;
     }
 
-    const isSkipped = evalRes.rationale && (
+    const isSkipped = evalRes.label === EvalLabel.SKIPPED || (evalRes.rationale && (
         evalRes.rationale.includes('Blocked in front') ||
         evalRes.rationale.includes('N/A') ||
         evalRes.rationale.includes('Security gate triggered') ||
         evalRes.rationale.toLowerCase().includes('skipped')
-    );
+    ));
 
     if (isSkipped) {
         return `<span class="badge skipped" style="background-color: #edf2f7; color: #4a5568; border: 1px solid #cbd5e1; font-size: 0.65rem; padding: 1px 4px;">SKIPPED</span>`;
@@ -832,12 +846,12 @@ function renderBadge(result: MetricResult, showStability = false): string {
     }
 
     // Check if this was short-circuited/skipped due to front-end refusal/safety blocking
-    const isSkipped = result.rationale && (
+    const isSkipped = result.label === EvalLabel.SKIPPED || (result.rationale && (
         result.rationale.includes('Blocked in front') ||
         result.rationale.includes('N/A') ||
         result.rationale.includes('Security gate triggered') ||
         result.rationale.toLowerCase().includes('skipped')
-    );
+    ));
     if (isSkipped) {
         return `<span class="badge skipped" style="background-color: #edf2f7; color: #4a5568; border: 1px solid #cbd5e1; font-size: 0.7rem;">SKIPPED</span>`;
     }
@@ -852,8 +866,9 @@ function renderBadge(result: MetricResult, showStability = false): string {
         if (result.stabilityRate !== undefined) {
             stabilityText = `<span class="stability-tag">${(result.stabilityRate * 100).toFixed(0)}%</span>`;
         }
-        if (result.evalResults && result.evalResults.length > 0) {
-            const dots = result.evalResults.map((iter: any, idx: number) => {
+        const evalResultsVal = result.evalResults ? Object.values(result.evalResults) : [];
+        if (evalResultsVal.length > 0) {
+            const dots = evalResultsVal.map((iter: EvalResult, idx: number) => {
                 const title = `Iteration ${idx + 1}: ${iter.label}${iter.rationale ? ` - ${escapeHtml(iter.rationale)}` : ''}`;
                 if (iter.label === EvalLabel.PASS) return `<span class="iter-dot pass" title="${title}">P</span>`;
                 if (iter.label === EvalLabel.FAIL) return `<span class="iter-dot fail" title="${title}">F</span>`;

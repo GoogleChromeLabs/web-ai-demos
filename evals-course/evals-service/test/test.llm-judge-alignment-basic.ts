@@ -49,7 +49,7 @@ async function run() {
     onProgress: (current, total) => logProgress(startTime, current, total)
   });
   const { mismatches, totalSampleCount, alignedSampleCount } =
-    computeBasicAlignmentStats(evalResponse.results, humanLabelsMap);
+    computeBasicAlignmentStats(evalResponse.testCaseResults, humanLabelsMap);
   logMismatches(mismatches);
   const alignment = calculatePercentage(alignedSampleCount, totalSampleCount);
 

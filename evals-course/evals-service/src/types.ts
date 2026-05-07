@@ -72,20 +72,19 @@ export interface TestCaseInput {
 export interface EvalResult {
     label: EvalLabel;
     rationale?: string;
-    appOutput?: AppOutput;
 }
 
 export interface MetricResult {
     label: EvalLabel;
     rationale?: string;
     stabilityRate?: number;
-    evalResults?: EvalResult[];
+    evalResults?: Record<string, EvalResult>;
 }
 
 export interface TestCaseResult {
     id: string;
     userInput: UserInput;
-    appOutputs: AppOutput[];
+    appOutputs: Record<string, AppOutput>;
     expectedOutcome: ExpectedOutcome;
     appGateResult: MetricResult;
     dataFormat: MetricResult;
@@ -103,6 +102,11 @@ export interface AppMetadata {
     thinkingLevel?: string;
 }
 
+export interface JudgeMetadata {
+    modelVersion: string;
+    judgeVersion: string;
+}
+
 export interface EvalOptions {
     onProgress?: (index: number, total: number) => void;
     iterations?: number;
@@ -110,9 +114,8 @@ export interface EvalOptions {
 }
 
 export interface EvalResponse {
-    results: TestCaseResult[];
-    modelVersion: string;
-    judgeVersion: string;
+    testCaseResults: TestCaseResult[];
+    judgeMetadata: JudgeMetadata;
     appMetadata?: AppMetadata;
 }
 

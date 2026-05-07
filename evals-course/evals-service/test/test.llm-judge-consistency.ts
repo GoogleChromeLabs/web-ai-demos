@@ -97,8 +97,8 @@ async function run() {
     }));
 
     responses.forEach((response, index) => {
-      if (response.results && response.results.length > 0) {
-        const res = response.results[0];
+      if (response.testCaseResults && response.testCaseResults.length > 0) {
+        const res = response.testCaseResults[0];
         const tcId = testCases[index].id;
         const mapped = rawResultsMap.get(tcId)!;
         mapped.mottoToxicity.push(res.mottoToxicity.label);

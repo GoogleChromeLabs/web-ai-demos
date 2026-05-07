@@ -5,7 +5,7 @@
 
 import dotenv from 'dotenv';
 dotenv.config({ quiet: true });
-import { evalContrastRatio } from '../src/eval.service';
+import { evalContrastRatio } from '../src/utils.evals';
 import { EvalLabel } from '../src/types';
 import { CONTRAST_RATIO_MIN } from '../src/app.config';
 import { TEST_SAMPLE_COUNT_FAST_DEBUG } from './test.config';

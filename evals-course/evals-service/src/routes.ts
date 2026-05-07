@@ -10,7 +10,7 @@ export const router = Router();
 
 router.post('/evaluate', async (req: Request, res: Response) => {
     try {
-        const { data } = req.body;
+        const { data, appMetadata } = req.body;
         if (!data) {
             res.status(400).json({ error: 'Data payload is required' });
             return;
@@ -18,7 +18,7 @@ router.post('/evaluate', async (req: Request, res: Response) => {
 
         // Ensure data is always an array
         const itemsToEvaluate = Array.isArray(data) ? data : [data];
-        const evaluationResults = await evalAll(itemsToEvaluate);
+        const evaluationResults = await evalAll(itemsToEvaluate, { appMetadata });
         res.json(evaluationResults);
     } catch (error: any) {
         console.error("Evaluation failed:", error);

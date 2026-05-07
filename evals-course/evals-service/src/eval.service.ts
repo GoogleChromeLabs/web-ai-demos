@@ -150,6 +150,8 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
     const modelVersion = process.env.JUDGE_MODEL || JUDGE_MODEL;
     const iterations = options?.iterations || EVALS_ITERATION_COUNT_DEFAULT;
 
+    const pad = (num: number, size: number) => num.toString().padStart(size, "0");
+
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const id = item.id;
@@ -158,6 +160,13 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
 
         const expectedOutcome = item.expectedOutcome || ExpectedOutcome.SUCCESS;
 
+        // Construct stable keyed mapping of appOutputs
+        const appOutputsMap: Record<string, AppOutput> = {};
+        for (let idx = 0; idx < appOutputs.length; idx++) {
+            const key = `output-${pad(idx + 1, 3)}`;
+            appOutputsMap[key] = appOutputs[idx];
+        }
+
         const appGateResults: EvalResult[] = [];
         const dataFormatResults: EvalResult[] = [];
         const contrastResults: EvalResult[] = [];
@@ -165,15 +174,17 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
         const colorBrandFitResults: EvalResult[] = [];
         const mottoBrandFitResults: EvalResult[] = [];
 
-        // Aggregate results helper function
+        // Aggregate results helper function producing Record<string, EvalResult>
         const aggregateResult = (resList: EvalResult[]): MetricResult => {
-            const validResults = resList.filter(r => r.label !== EvalLabel.ERROR);
+            const validResults = resList.filter(r => r.label !== EvalLabel.ERROR && r.label !== EvalLabel.SKIPPED);
             const errorResults = resList.filter(r => r.label === EvalLabel.ERROR);
+            const skippedResults = resList.filter(r => r.label === EvalLabel.SKIPPED);
 
             const passCount = validResults.filter(r => r.label === EvalLabel.PASS).length;
             const errorCount = errorResults.length;
+            const skippedCount = skippedResults.length;
 
-            const denominator = iterations - errorCount;
+            const denominator = iterations - errorCount - skippedCount;
 
             let stabilityRate = 0;
             let label = EvalLabel.FAIL;
@@ -181,6 +192,8 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
             if (denominator > 0) {
                 stabilityRate = passCount / denominator;
                 label = stabilityRate >= EVALS_STABILITY_THRESHOLD ? EvalLabel.PASS : EvalLabel.FAIL;
+            } else if (skippedCount > 0) {
+                label = EvalLabel.SKIPPED;
             } else {
                 label = EvalLabel.ERROR;
             }
@@ -197,6 +210,8 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
             let rationaleText = "";
             if (label === EvalLabel.ERROR) {
                 rationaleText = `All iterations errored out. Details:\n${failingRationales.join("\n")}`;
+            } else if (label === EvalLabel.SKIPPED) {
+                rationaleText = "Skipped (App gate triggered)";
             } else {
                 const errorsNote = errorCount > 0 ? ` (Ignored ${errorCount} API errors)` : '';
                 const issueDetails = failingRationales.length > 0
@@ -206,11 +221,17 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
                 rationaleText = `Stability: ${(stabilityRate * 100).toFixed(0)}% (${passCount}/${denominator})${errorsNote}${issueDetails}`;
             }
 
+            const evalResultsRecord: Record<string, EvalResult> = {};
+            resList.forEach((r, idx) => {
+                const key = `output-${pad(idx + 1, 3)}`;
+                evalResultsRecord[key] = r;
+            });
+
             return {
                 label,
                 rationale: rationaleText,
                 stabilityRate: denominator > 0 ? stabilityRate : undefined,
-                evalResults: resList
+                evalResults: evalResultsRecord
             };
         };
 
@@ -226,35 +247,31 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
                 if (errorCode === expectedOutcome) {
                     currentAppGateRes = {
                         label: EvalLabel.PASS,
-                        rationale: `Successfully triggered expected blocker: ${errorCode}`,
-                        appOutput: currentOutput
+                        rationale: `Successfully triggered expected blocker: ${errorCode}`
                     };
                 } else {
                     currentAppGateRes = {
                         label: EvalLabel.FAIL,
-                        rationale: `Unexpected block code: ${errorCode} (expected ${expectedOutcome})`,
-                        appOutput: currentOutput
+                        rationale: `Unexpected block code: ${errorCode} (expected ${expectedOutcome})`
                     };
                 }
             } else {
                 if (expectedOutcome !== ExpectedOutcome.SUCCESS) {
                     currentAppGateRes = {
                         label: EvalLabel.FAIL,
-                        rationale: `Failed to block request. Allowed input through (expected ${expectedOutcome})`,
-                        appOutput: currentOutput
+                        rationale: `Failed to block request. Allowed input through (expected ${expectedOutcome})`
                     };
                 } else {
                     currentAppGateRes = {
                         label: EvalLabel.PASS,
-                        rationale: "NONE",
-                        appOutput: currentOutput
+                        rationale: "NONE"
                     };
                 }
             }
             appGateResults.push(currentAppGateRes);
 
             if (isBlocked) {
-                const skipResult: EvalResult = { label: EvalLabel.SKIPPED, rationale: "Skipped due to app gate trigger.", appOutput: currentOutput };
+                const skipResult: EvalResult = { label: EvalLabel.SKIPPED, rationale: "Skipped due to app gate trigger." };
                 dataFormatResults.push(skipResult);
                 contrastResults.push(skipResult);
                 mottoToxicityResults.push(skipResult);
@@ -263,27 +280,27 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
             } else {
                 // 2. Rule-based Data Format Check
                 const formatRes = evalDataFormat(currentOutput);
-                dataFormatResults.push({ ...formatRes, appOutput: currentOutput });
+                dataFormatResults.push(formatRes);
 
                 // 3. Rule-based Contrast Check
                 const colorPalette = currentOutput.colorPalette;
                 const contrastRes = colorPalette
                     ? evalContrastRatio(colorPalette, CONTRAST_RATIO_MIN)
                     : { label: EvalLabel.FAIL, rationale: "Missing color palette." };
-                contrastResults.push({ ...contrastRes, appOutput: currentOutput });
+                contrastResults.push(contrastRes);
 
                 // 4. LLM-based Brand Fit & Toxicity (evaluates single iteration's current output once)
                 const { mottoToxicity, colorBrandFit, mottoBrandFit } = await evalBrandFitAndToxicity(modelVersion, id, userInput, currentOutput);
-                mottoToxicityResults.push({ ...mottoToxicity, appOutput: currentOutput });
-                colorBrandFitResults.push({ ...colorBrandFit, appOutput: currentOutput });
-                mottoBrandFitResults.push({ ...mottoBrandFit, appOutput: currentOutput });
+                mottoToxicityResults.push(mottoToxicity);
+                colorBrandFitResults.push(colorBrandFit);
+                mottoBrandFitResults.push(mottoBrandFit);
             }
         }
 
         results.push({
             id,
             userInput,
-            appOutputs,
+            appOutputs: appOutputsMap,
             expectedOutcome,
             appGateResult: aggregateResult(appGateResults),
             dataFormat: aggregateResult(dataFormatResults),
@@ -299,9 +316,11 @@ export async function evalAll(items: TestCaseInput[], options?: EvalOptions): Pr
     }
 
     return {
-        results,
-        modelVersion,
-        judgeVersion: loadedJudgeVersion,
+        testCaseResults: results,
+        judgeMetadata: {
+            modelVersion,
+            judgeVersion: loadedJudgeVersion
+        },
         appMetadata: options?.appMetadata
     };
 }
