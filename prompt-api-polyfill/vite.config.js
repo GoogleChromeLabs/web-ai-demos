@@ -26,6 +26,7 @@ export default defineConfig({
       // into your library
       external: [
         'firebase/app',
+        'firebase/app-check',
         'firebase/ai',
         'openai',
         '@google/genai',
