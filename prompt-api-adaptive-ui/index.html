@@ -32,6 +32,7 @@
             --text: #0f172a;
             --text-muted: #64748b;
             --accent: #ef4444;
+            --highlight-color: #ffe000;
         }
 
         body {
@@ -209,7 +210,7 @@
         }
 
         mark, .glow-highlight {
-            background-color: #ffe000;
+            background-color: var(--highlight-color);
             color: #0f172a;
         }
 
@@ -235,7 +236,7 @@
             margin: 0;
             font-size: 1.1rem;
             font-weight: 700;
-            color: var(--text-muted);
+            color: white;
         }
 
         .log-container {
@@ -286,12 +287,12 @@
         .toast {
             position: fixed;
             bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
+            left: 2rem;
+            transform: translateY(100px);
             background: rgba(255, 255, 255, 0.9);
             color: var(--text);
-            padding: 0.75rem 1.5rem;
-            border-radius: 24px;
+            padding: 1rem 1.25rem;
+            border-radius: 18px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
             opacity: 0;
@@ -300,18 +301,25 @@
             -webkit-backdrop-filter: blur(16px);
             backdrop-filter: blur(16px);
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
             gap: 0.75rem;
+            max-width: 280px;
             pointer-events: auto;
         }
         .toast.show {
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
             opacity: 1;
         }
         .toast-title {
             font-weight: 600;
             font-size: 0.875rem;
-            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .toast-title mark {
+            background-color: var(--highlight-color);
+            color: #0f172a;
+            padding: 0 0.2rem;
         }
         .badge-container {
             display: flex;
@@ -904,7 +912,7 @@ Analyze the Product Data and find text snippets that match the User Interests. P
 
                 const titleSpan = document.createElement('span');
                 titleSpan.className = 'toast-title';
-                titleSpan.textContent = 'Highlighting based on what you care about:';
+                titleSpan.innerHTML = '<mark>Highlighting</mark> what matters to you:';
                 toast.appendChild(titleSpan);
 
                 const badgeContainer = document.createElement('div');
