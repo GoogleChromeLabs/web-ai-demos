@@ -73,6 +73,9 @@
         .product-selector {
             display: flex;
             gap: 1rem;
+            button {
+                font-family: 'Fugaz One', cursive, sans-serif;
+            }
         }
 
         button {
@@ -206,7 +209,7 @@
         }
 
         mark, .glow-highlight {
-            background-color: #fef08a;
+            background-color: #ffe000;
             color: #0f172a;
         }
 
@@ -261,8 +264,8 @@
         }
 
         .log-entry.tracker { border-color: #34d399; color: #34d399; }
-        .log-entry.ai-in { border-color: #a5b4fc; color: #a5b4fc; }
-        .log-entry.ai-out { border-color: #c084fc; color: #e879f9; }
+        .log-entry.ai-input { border-color: #a5b4fc; color: #a5b4fc; }
+        .log-entry.ai-output { border-color: #c084fc; color: #e879f9; }
         .log-entry.system { border-color: #6b7280; color: #9ca3af; }
         .log-entry.loading { animation: pulse 1.5s infinite; }
 
@@ -285,20 +288,77 @@
             bottom: 2rem;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
             color: var(--text);
             padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
             opacity: 0;
             z-index: 1000;
-            font-weight: 600;
-            border: 1px solid var(--primary);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            pointer-events: auto;
         }
         .toast.show {
             transform: translateX(-50%) translateY(0);
             opacity: 1;
+        }
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        .badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .interest-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .interest-badge:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            transform: translateY(-1px);
+        }
+        .interest-badge-remove {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            transition: background 0.2s, color 0.2s;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+        .interest-badge-remove:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #b91c1c;
+            transform: none;
         }
         @keyframes pulse {
             0% { opacity: 0.6; }
@@ -558,8 +618,8 @@
 
             logEvent(type, value) {
                 // CRITICAL: User requirement to use specific log format
-                console.log(`[TRACKER] Event: ${type}, Value: ${value}`);
-                app.appendLog(`[TRACKER] Event: ${type}, Value: "${value}"`, 'tracker');
+                console.log(`Event: ${type}, Value: ${value}`);
+                app.appendLog(`Event: ${type}, Value: "${value}"`, 'tracker');
             }
         }
 
@@ -569,6 +629,8 @@
                 this.currentProduct = null;
                 this.tracker = new BehaviorTracker();
                 this.aiSession = null;
+                this.removedCategories = new Set();
+                this.lastHighlightTargets = [];
                 this.init();
             }
 
@@ -581,15 +643,15 @@
                 try {
                     // CRITICAL: Check availability using recorded docs syntax
                     if (typeof LanguageModel === 'undefined') {
-                         this.appendLog('System: LanguageModel not found. Check flags!', 'system');
+                         this.appendLog('LanguageModel not found. Check flags!', 'system');
                          return;
                     }
                     
                     const availability = await LanguageModel.availability();
-                    this.appendLog(`System: AI Availability = ${availability}`, 'system');
+                    this.appendLog(`AI Availability = ${availability}`, 'system');
                     
                     if (availability === 'unavailable') {
-                        this.appendLog('System: Model not available.', 'system');
+                        this.appendLog('Model not available.', 'system');
                         return;
                     }
 
@@ -602,17 +664,17 @@
                             }
                         ]
                     });
-                    this.appendLog('System: AI Session initialized.', 'system');
+                    this.appendLog('AI Session initialized.', 'system');
 
                 } catch (e) {
-                    this.appendLog(`System error: ${e.message}`, 'system');
+                    this.appendLog(`Error: ${e.message}`, 'system');
                 }
             }
 
             loadProduct(id) {
                 const product = products.find(p => p.id === id);
                 // CRITICAL: User requirement to use word "chosen" instead of "sticking with"
-                this.appendLog(`System: User has chosen product: ${product.name}`, 'system');
+                this.appendLog(`User has chosen product: ${product.name}`, 'system');
                 this.currentProduct = product;
                 this.renderProduct(product);
                 
@@ -694,13 +756,13 @@
 
             async triggerPersonalization() {
                 if (!this.aiSession) {
-                    this.appendLog('System: AI Session not ready.', 'system');
+                    this.appendLog('AI Session not ready.', 'system');
                     return;
                 }
 
                 const interests = this.tracker.userInterests;
                 if (interests.length === 0) {
-                    this.appendLog('System: No user interests tracked yet. Click or dwell on features!', 'system');
+                    this.appendLog('No user interests tracked yet. Click or dwell on features!', 'system');
                     return;
                 }
 
@@ -721,7 +783,7 @@
                 });
 
                 // CRITICAL: Logging format reqs
-                this.appendLog(`[AI INPUT] Tab Clicks: ${JSON.stringify(tabClicks)} | Other: ${JSON.stringify(otherInterests)} | Context: "${this.currentProduct.name} text..."`, 'ai-in');
+                this.appendLog(`Tab Clicks: ${JSON.stringify(tabClicks)} | Other: ${JSON.stringify(otherInterests)} | Context: "${this.currentProduct.name} text..."`, 'ai-input');
 
                 const prompt = `
 User Explicit Tab Clicks (Indicating high interest in these categories):
@@ -764,19 +826,19 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                     });
 
                     // CRITICAL: Logging format reqs
-                    this.appendLog(`[AI OUTPUT] Raw JSON: ${response}`, 'ai-out');
+                    this.appendLog(`Raw JSON: ${response}`, 'ai-output');
 
                     const result = JSON.parse(response);
                     
                     if (result.highlight_targets) {
+                        // Store highlight targets and clear previous removed categories state
+                        this.lastHighlightTargets = result.highlight_targets;
+                        this.removedCategories.clear();
+
                         this.applyHighlights(result.highlight_targets);
                         
-                        // Extract unique categories for toast
-                        const categories = [...new Set(result.highlight_targets.map(t => t.category))];
-                        this.appendLog(`[TOAST DEBUG] Categories: ${JSON.stringify(categories)}`, 'system');
-                        if (categories.length > 0) {
-                            this.showToast(`Highlighted based on what you care about: ${categories.join(', ')}`);
-                        }
+                        // Update toast interface with new badges
+                        this.updateToastUI();
                     }
                     this.appendLog('✨ AI Personalization complete.', 'system');
 
@@ -793,8 +855,8 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                 const view = document.querySelector('.product-info') || document.getElementById('product-view');
                 let html = view.innerHTML;
 
-                // Filter targets threshold > 0.7
-                const filtered = targets.filter(t => t.relevance_score > 0.7);
+                // Filter targets threshold > 0.7 and exclude removed categories
+                const filtered = targets.filter(t => t.relevance_score > 0.7 && !this.removedCategories.has(t.category));
 
                 filtered.forEach(target => {
                     const snippet = target.text_snippet;
@@ -808,7 +870,7 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                     // a string replace on specific parts or text nodes is safer.
                     // Here we do a simple replace, warning: might break if snippet is inside an attr.
                     
-                    this.appendLog(`[UI UPDATE] Highlighting "${snippet}" with score ${target.relevance_score}.`, 'system');
+                    this.appendLog(`UI update: Highlighting "${snippet}" with score ${target.relevance_score}.`, 'system');
 
                     html = html.replace(regex, '<mark>$1</mark>');
                 });
@@ -819,18 +881,75 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                 setTimeout(() => this.tracker.initHoverListeners(), 100);
             }
 
-            showToast(message) {
-                const toast = document.createElement('div');
-                toast.className = 'toast';
-                toast.textContent = message;
-                document.body.appendChild(toast);
-                
-                setTimeout(() => toast.classList.add('show'), 10);
-                
-                setTimeout(() => {
+            updateToastUI() {
+                let toast = document.querySelector('.toast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.className = 'toast';
+                    document.body.appendChild(toast);
+                }
+
+                const activeCategories = [...new Set(
+                    this.lastHighlightTargets
+                        .filter(t => !this.removedCategories.has(t.category))
+                        .map(t => t.category)
+                )];
+
+                if (activeCategories.length === 0) {
                     toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
+                    return;
+                }
+
+                toast.innerHTML = '';
+
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'toast-title';
+                titleSpan.textContent = 'Highlighting based on what you care about:';
+                toast.appendChild(titleSpan);
+
+                const badgeContainer = document.createElement('div');
+                badgeContainer.className = 'badge-container';
+
+                activeCategories.forEach(cat => {
+                    const badge = document.createElement('span');
+                    badge.className = 'interest-badge';
+                    badge.textContent = cat + ' ';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'interest-badge-remove';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.removeInterest(cat);
+                    });
+
+                    badge.appendChild(removeBtn);
+                    badgeContainer.appendChild(badge);
+                });
+
+                toast.appendChild(badgeContainer);
+
+                // Trigger class after DOM insertion to play transition
+                setTimeout(() => toast.classList.add('show'), 10);
+            }
+
+            removeInterest(category) {
+                this.removedCategories.add(category);
+
+                const beforeCount = this.tracker.userInterests.length;
+                this.tracker.userInterests = this.tracker.userInterests.filter(interest => {
+                    const term = category.toLowerCase();
+                    return !interest.toLowerCase().includes(term);
+                });
+                this.appendLog(`State update: Removed "${category}" from tracking history (Interests: ${beforeCount} -> ${this.tracker.userInterests.length}).`, 'system');
+
+                // Re-render current product and apply remaining highlights
+                this.renderProduct(this.currentProduct);
+                const filteredTargets = this.lastHighlightTargets.filter(t => !this.removedCategories.has(t.category));
+                this.applyHighlights(filteredTargets);
+
+                // Update toast view
+                this.updateToastUI();
             }
 
             escapeRegex(string) {
@@ -841,7 +960,7 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                 const container = document.getElementById('log-container');
                 const el = document.createElement('div');
                 el.className = `log-entry ${type}`;
-                el.textContent = text;
+                el.textContent = `[${type.toUpperCase()}]: ${text}`;
                 container.appendChild(el);
                 container.scrollTop = container.scrollHeight;
             }
