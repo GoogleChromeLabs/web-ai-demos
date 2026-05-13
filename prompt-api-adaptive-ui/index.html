@@ -21,6 +21,7 @@
     <title>HyperAudio - Intelligent Speaker Store</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔊</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Fugaz+One&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -69,6 +70,22 @@
             background: linear-gradient(to right, #ef4444, #f43f5e);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+        .header-subtitle {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        .header-subtitle a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .header-subtitle a:hover {
+            color: #b91c1c;
+            text-decoration: underline;
         }
 
         .product-selector {
@@ -461,7 +478,10 @@
 
     <main>
         <header>
-            <h1>HyperAudio</h1>
+            <div>
+                <h1>HyperAudio</h1>
+                <span class="header-subtitle">Demo <a href="https://github.com/maudnals" target="_blank">@maudnals</a>.</span>
+            </div>
             <div class="product-selector">
                 <button id="btn-prod-1" class="active" onclick="app.loadProduct(1)">Product A</button>
                 <button id="btn-prod-2" onclick="app.loadProduct(2)">Product B</button>
