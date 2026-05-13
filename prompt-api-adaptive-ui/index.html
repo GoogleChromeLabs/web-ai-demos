@@ -197,6 +197,10 @@
             letter-spacing: 0.02em;
         }
 
+        .tabs-content {
+            height: 220px;
+        }
+
         .specs-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -338,7 +342,7 @@
             flex-direction: column;
             align-items: flex-start;
             gap: 0.75rem;
-            max-width: 280px;
+            width: 280px;
             pointer-events: auto;
         }
         .toast.show {
@@ -378,6 +382,170 @@
             background: rgba(239, 68, 68, 0.15);
             border-color: rgba(239, 68, 68, 0.4);
             transform: translateY(-1px);
+        }
+
+        /* Personalization Tuning Panel Styles */
+        .toast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            gap: 1.5rem;
+        }
+        .toast-tune-toggle {
+            background: rgba(239, 68, 68, 0.06);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            padding: 0.4rem;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--primary);
+            cursor: pointer;
+            display: block;
+            width: calc(100% - 0.5rem);
+            text-align: center;
+            box-sizing: border-box;
+            margin-top: 0.5rem;
+            transition: all 0.2s ease;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+        .toast-tune-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .toast-tune-panel {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+            border-top: 1px dashed rgba(239, 68, 68, 0.15);
+            padding-top: 0.75rem;
+            max-height: 250px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .toast.expanded {
+            max-width: 320px;
+        }
+        .toast.expanded .toast-tune-panel {
+            display: flex;
+        }
+        .toast-tune-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+        .toast-tune-panel::-webkit-scrollbar-thumb {
+            background: rgba(239, 68, 68, 0.25);
+            border-radius: 4px;
+        }
+        .tune-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            width: 100%;
+        }
+        .tune-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.15rem;
+            text-align: left;
+        }
+        .tune-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            padding: 0.4rem 0.6rem;
+            border-radius: 8px;
+            gap: 0.5rem;
+            width: calc(100% - 1.2rem);
+        }
+        .tune-item-text {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-grow: 1;
+            text-align: left;
+        }
+        .tune-item-category {
+            font-size: 0.62rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-muted);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            margin-left: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .tune-item-remove {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            transition: background 0.2s, color 0.2s;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+        .tune-item-remove:hover {
+            background: rgba(239, 68, 68, 0.15);
+        }
+        .tune-add-box {
+            display: flex;
+            gap: 0.35rem;
+            width: calc(100% - 0.5rem);
+            margin-top: 0.25rem;
+        }
+        .tune-add-input {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            padding: 0.35rem 0.6rem;
+            font-size: 0.75rem;
+            outline: none;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+        .tune-add-input:focus {
+            border-color: var(--primary);
+        }
+        .tune-add-btn {
+            background: var(--primary);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            padding: 0 0.6rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+        .tune-add-btn:hover {
+            background: #b91c1c;
         }
         .interest-badge-remove {
             background: none;
@@ -674,14 +842,17 @@
                 this.currentProduct = null;
                 this.tracker = new BehaviorTracker();
                 this.aiSession = null;
+                this.customInterests = [];
                 this.removedCategories = new Set();
                 this.lastHighlightTargets = [];
+                this.isTunePanelExpanded = false;
                 this.init();
             }
 
             async init() {
                 this.loadProduct(1); // Load Product A by default
                 this.initAI();
+                this.updateToastUI();
                 
                 // Setup event delegation for product specs tabs inside #product-view
                 const view = document.getElementById('product-view');
@@ -724,16 +895,7 @@
                         return;
                     }
 
-                    // Create main session
-                    this.aiSession = await LanguageModel.create({
-                        initialPrompts: [
-                            {
-                                role: 'system',
-                                content: 'You are a shopping assistant. Based on the user\'s past interactions, identify specific text in the current product\'s specs or reviews that matches their interests. Return ONLY valid JSON.'
-                            }
-                        ]
-                    });
-                    this.appendLog('AI Session initialized.', 'system');
+                    this.appendLog('AI Personalization ready.', 'system');
 
                 } catch (e) {
                     this.appendLog(`Error: ${e.message}`, 'system');
@@ -806,8 +968,8 @@
 
 
             async triggerPersonalization() {
-                if (!this.aiSession) {
-                    this.appendLog('AI Session not ready.', 'system');
+                if (typeof LanguageModel === 'undefined') {
+                    this.appendLog('LanguageModel not found. Check flags!', 'system');
                     return;
                 }
 
@@ -870,9 +1032,19 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                     additionalProperties: false
                 };
 
+                let session = null;
                 try {
-                    // Use the session to prompt
-                    const response = await this.aiSession.prompt(prompt, {
+                    // Create a clean, fresh one-shot session for this run to prevent kErrorUnknown
+                    session = await LanguageModel.create({
+                        initialPrompts: [
+                            {
+                                role: 'system',
+                                content: 'You are a shopping assistant. Based on the user\'s past interactions, identify specific text in the current product\'s specs or reviews that matches their interests. Return ONLY valid JSON.'
+                            }
+                        ]
+                    });
+
+                    const response = await session.prompt(prompt, {
                         responseConstraint: schema // Using responseConstraint as per docs
                     });
 
@@ -886,7 +1058,36 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                         this.lastHighlightTargets = result.highlight_targets;
                         this.removedCategories.clear();
 
-                        this.applyHighlights(result.highlight_targets);
+                        // Scan the new product specs and reviews for any persisted custom interest keywords
+                        this.customInterests.forEach(term => {
+                            let resolvedCategory = 'Custom';
+                            const lowerTerm = term.toLowerCase();
+
+                            if (this.currentProduct && this.currentProduct.specs) {
+                                for (const [cat, specs] of Object.entries(this.currentProduct.specs)) {
+                                    for (const [specKey, specVal] of Object.entries(specs)) {
+                                        if (specKey.toLowerCase().includes(lowerTerm) || specVal.toLowerCase().includes(lowerTerm)) {
+                                            resolvedCategory = cat;
+                                            break;
+                                        }
+                                    }
+                                    if (resolvedCategory !== 'Custom') break;
+                                }
+                            }
+
+                            const exists = this.lastHighlightTargets.some(
+                                t => t.text_snippet.toLowerCase() === term.toLowerCase()
+                            );
+                            if (!exists) {
+                                this.lastHighlightTargets.push({
+                                    text_snippet: term,
+                                    relevance_score: 1.0,
+                                    category: resolvedCategory
+                                });
+                            }
+                        });
+
+                        this.applyHighlights(this.lastHighlightTargets);
                         
                         // Update toast interface with new badges
                         this.updateToastUI();
@@ -898,6 +1099,15 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                     console.error('AI Error:', e);
                 } finally {
                     loadingEl.remove();
+                    if (session) {
+                        try {
+                            if (typeof session.destroy === 'function') {
+                                session.destroy();
+                            }
+                        } catch (err) {
+                            console.warn('Failed to destroy session:', err);
+                        }
+                    }
                 }
             }
 
@@ -957,43 +1167,155 @@ Analyze the Product Data and find text snippets that match the User Interests. P
 
                 const activeCategories = [...new Set(
                     this.lastHighlightTargets
-                        .filter(t => !this.removedCategories.has(t.category))
+                        .filter(t => !this.removedCategories.has(t.category) && t.relevance_score > 0.7)
                         .map(t => t.category)
                 )];
 
-                if (activeCategories.length === 0) {
-                    toast.classList.remove('show');
-                    return;
+                // Retain expanded state class
+                if (this.isTunePanelExpanded) {
+                    toast.classList.add('expanded');
+                } else {
+                    toast.classList.remove('expanded');
                 }
 
                 toast.innerHTML = '';
 
+                // --- Header Area ---
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'toast-header';
+
                 const titleSpan = document.createElement('span');
                 titleSpan.className = 'toast-title';
                 titleSpan.innerHTML = '<mark>Highlighting</mark> what matters to you:';
-                toast.appendChild(titleSpan);
+                headerDiv.appendChild(titleSpan);
 
+                toast.appendChild(headerDiv);
+
+                // --- Badges Container ---
                 const badgeContainer = document.createElement('div');
                 badgeContainer.className = 'badge-container';
 
-                activeCategories.forEach(cat => {
-                    const badge = document.createElement('span');
-                    badge.className = 'interest-badge';
-                    badge.textContent = cat + ' ';
+                if (activeCategories.length === 0) {
+                    const emptyMsg = document.createElement('span');
+                    emptyMsg.style.fontSize = '0.72rem';
+                    emptyMsg.style.color = 'var(--text-muted)';
+                    emptyMsg.style.fontStyle = 'italic';
+                    emptyMsg.style.padding = '0.2rem 0';
+                    emptyMsg.textContent = 'No active highlights. Start browsing to teach HyperAudio what to highlight for you, or customize manually.';
+                    badgeContainer.appendChild(emptyMsg);
+                } else {
+                    activeCategories.forEach(cat => {
+                        const badge = document.createElement('span');
+                        badge.className = 'interest-badge';
+                        badge.textContent = cat + ' ';
 
-                    const removeBtn = document.createElement('button');
-                    removeBtn.className = 'interest-badge-remove';
-                    removeBtn.innerHTML = '&times;';
-                    removeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.removeInterest(cat);
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'interest-badge-remove';
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.removeInterest(cat);
+                        });
+
+                        badge.appendChild(removeBtn);
+                        badgeContainer.appendChild(badge);
                     });
-
-                    badge.appendChild(removeBtn);
-                    badgeContainer.appendChild(badge);
-                });
+                }
 
                 toast.appendChild(badgeContainer);
+
+                // --- Toggle Button ("Customize highlights ▾ / ▴") ---
+                const tuneToggle = document.createElement('button');
+                tuneToggle.className = 'toast-tune-toggle';
+                tuneToggle.innerHTML = this.isTunePanelExpanded ? 'Customize highlights &and;' : 'Customize highlights &or;';
+                tuneToggle.addEventListener('click', () => {
+                    this.isTunePanelExpanded = !this.isTunePanelExpanded;
+                    this.updateToastUI();
+                });
+                toast.appendChild(tuneToggle);
+
+                // --- Tuning Control Panel (Drawer) ---
+                const tunePanel = document.createElement('div');
+                tunePanel.className = 'toast-tune-panel';
+
+                // 1. Active Personalization Rules (Currently highlighted)
+                const activeTargets = this.lastHighlightTargets.filter(
+                    t => t.relevance_score > 0.7 && !this.removedCategories.has(t.category)
+                );
+
+                if (activeTargets.length > 0) {
+                    const activeSection = document.createElement('div');
+                    activeSection.className = 'tune-section';
+                    
+                    const activeTitle = document.createElement('div');
+                    activeTitle.className = 'tune-section-title';
+                    activeTitle.textContent = 'Currently highlighted';
+                    activeSection.appendChild(activeTitle);
+
+                    activeTargets.forEach(target => {
+                        const item = document.createElement('div');
+                        item.className = 'tune-item';
+
+                        const text = document.createElement('span');
+                        text.className = 'tune-item-text';
+                        text.innerHTML = `${target.text_snippet} <span class="tune-item-category">${target.category}</span>`;
+                        text.title = `${target.text_snippet} (${target.category})`;
+                        item.appendChild(text);
+
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'tune-item-remove';
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.title = 'Remove Highlight';
+                        removeBtn.addEventListener('click', () => this.removeSignalTarget(target.text_snippet));
+                        item.appendChild(removeBtn);
+
+                        activeSection.appendChild(item);
+                    });
+
+                    tunePanel.appendChild(activeSection);
+                }
+
+                // 2. Add Custom Interest Signal (Add custom highlight)
+                const addSection = document.createElement('div');
+                addSection.className = 'tune-section';
+
+                const addTitle = document.createElement('div');
+                addTitle.className = 'tune-section-title';
+                addTitle.textContent = 'Add custom highlight';
+                addSection.appendChild(addTitle);
+
+                const addBox = document.createElement('div');
+                addBox.className = 'tune-add-box';
+
+                const addInput = document.createElement('input');
+                addInput.type = 'text';
+                addInput.className = 'tune-add-input';
+                addInput.placeholder = 'Type keyword to highlight...';
+                addInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const kw = addInput.value.trim();
+                        if (kw.length > 0) {
+                            this.addCustomInterest(kw);
+                        }
+                    }
+                });
+                addBox.appendChild(addInput);
+
+                const addBtn = document.createElement('button');
+                addBtn.className = 'tune-add-btn';
+                addBtn.innerHTML = '+';
+                addBtn.addEventListener('click', () => {
+                    const kw = addInput.value.trim();
+                    if (kw.length > 0) {
+                        this.addCustomInterest(kw);
+                    }
+                });
+                addBox.appendChild(addBtn);
+
+                addSection.appendChild(addBox);
+                tunePanel.appendChild(addSection);
+
+                toast.appendChild(tunePanel);
 
                 // Trigger class after DOM insertion to play transition
                 setTimeout(() => toast.classList.add('show'), 10);
@@ -1016,6 +1338,95 @@ Analyze the Product Data and find text snippets that match the User Interests. P
 
                 // Update toast view
                 this.updateToastUI();
+            }
+
+            removeSignalTarget(snippet) {
+                const beforeCount = this.lastHighlightTargets.length;
+                this.lastHighlightTargets = this.lastHighlightTargets.filter(t => t.text_snippet !== snippet);
+                
+                // Clean up from persisted custom interests
+                this.customInterests = this.customInterests.filter(term => term.toLowerCase() !== snippet.toLowerCase());
+                
+                // Clean up from tracker history
+                this.tracker.userInterests = this.tracker.userInterests.filter(term => term.toLowerCase() !== snippet.toLowerCase());
+
+                this.appendLog(`Tuning: Removed signal "${snippet}" from rules list (Rules: ${beforeCount} -> ${this.lastHighlightTargets.length}).`, 'system');
+
+                // Re-apply highlights with updated rules list
+                this.renderProduct(this.currentProduct);
+                this.applyHighlights(this.lastHighlightTargets);
+                this.updateToastUI();
+            }
+
+            addCustomInterest(keyword) {
+                // Clean keyword
+                const term = keyword.trim();
+                if (!term) return;
+
+                // Persist custom interest
+                if (!this.customInterests.includes(term)) {
+                    this.customInterests.push(term);
+                }
+
+                // Push to behavior tracker to train the model context
+                if (!this.tracker.userInterests.includes(term)) {
+                    this.tracker.userInterests.push(term);
+                }
+
+                // 1. Resolve category based on product specs matching
+                let resolvedCategory = 'Custom';
+                const lowerTerm = term.toLowerCase();
+
+                if (this.currentProduct && this.currentProduct.specs) {
+                    for (const [cat, specs] of Object.entries(this.currentProduct.specs)) {
+                        for (const [specKey, specVal] of Object.entries(specs)) {
+                            if (specKey.toLowerCase().includes(lowerTerm) || specVal.toLowerCase().includes(lowerTerm)) {
+                                resolvedCategory = cat;
+                                break;
+                            }
+                        }
+                        if (resolvedCategory !== 'Custom') break;
+                    }
+                }
+
+                // Fallback to active tab if not matched in spec scan
+                if (resolvedCategory === 'Custom') {
+                    const activeTabBtn = document.querySelector('.tab-btn.active');
+                    if (activeTabBtn) {
+                        const activeIndex = activeTabBtn.getAttribute('data-index');
+                        const tabKeys = Object.keys(this.currentProduct.specs);
+                        if (tabKeys[activeIndex]) {
+                            resolvedCategory = tabKeys[activeIndex];
+                        }
+                    }
+                }
+
+                // Make sure this category is no longer listed as "removed"
+                this.removedCategories.delete(resolvedCategory);
+
+                // 2. Add custom target to active personalization rules
+                const newTarget = {
+                    text_snippet: term,
+                    relevance_score: 1.0,
+                    category: resolvedCategory
+                };
+
+                // Check if already exists
+                const exists = this.lastHighlightTargets.some(
+                    t => t.text_snippet.toLowerCase() === term.toLowerCase()
+                );
+
+                if (!exists) {
+                    this.lastHighlightTargets.push(newTarget);
+                    this.appendLog(`Tuning: Added custom highlight target "${term}" in category "${resolvedCategory}" with score 1.0.`, 'system');
+
+                    // Re-apply highlights with the new rules
+                    this.renderProduct(this.currentProduct);
+                    this.applyHighlights(this.lastHighlightTargets);
+                    this.updateToastUI();
+                } else {
+                    this.appendLog(`Tuning: Signal "${term}" already exists in interest graph.`, 'system');
+                }
             }
 
             escapeRegex(string) {
