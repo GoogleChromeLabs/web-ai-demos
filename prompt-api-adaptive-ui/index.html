@@ -19,6 +19,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HyperAudio - Intelligent Speaker Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fugaz+One&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #f8fafc;
@@ -59,8 +62,8 @@
         }
 
         h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
+            font-family: 'Fugaz One', cursive, sans-serif;
+            font-size: 2.6rem;
             margin: 0;
             background: linear-gradient(to right, #ef4444, #f43f5e);
             -webkit-background-clip: text;
@@ -150,9 +153,10 @@
         }
 
         .product-title {
-            font-size: 2rem;
+            font-family: 'Fugaz One', cursive, sans-serif;
+            font-size: 2.2rem;
             margin: 0;
-            font-weight: 700;
+            letter-spacing: 0.02em;
         }
 
         .specs-grid {
@@ -301,6 +305,88 @@
             50% { opacity: 1; }
             100% { opacity: 0.6; }
         }
+
+        /* Product Layout - Premium Split Column */
+        .product-layout {
+            display: grid;
+            grid-template-columns: 45% 50%;
+            gap: 5%;
+            align-items: start;
+        }
+
+        .product-image-container {
+            position: sticky;
+            top: 2rem;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            aspect-ratio: 1.2;
+        }
+
+        .product-image-container:hover {
+            transform: scale(1.02) translateY(-6px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .product-image-container:hover .product-image {
+            transform: scale(1.06);
+        }
+
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .reviews-section h3 {
+            font-family: 'Fugaz One', cursive, sans-serif;
+            font-size: 1.3rem;
+            margin: 0 0 1rem 0;
+            color: var(--text);
+        }
+
+        /* Sidebar Clear Button Style */
+        .clear-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.9);
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 1024px) {
+            .product-layout {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .product-image-container {
+                position: relative;
+                aspect-ratio: 16/10;
+            }
+        }
     </style>
 </head>
 <body>
@@ -323,7 +409,7 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-title">Debugging logs</h2>
-            <button onclick="app.clearLogs()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Clear</button>
+            <button class="clear-btn" onclick="app.clearLogs()">Clear</button>
         </div>
         <div class="log-container" id="log-container">
             <!-- Logs will appear here -->
@@ -336,6 +422,7 @@
             {
                 id: 1,
                 name: "SonicBlast Go",
+                image: "img/speaker-3.png",
                 specs: {
                     "Power": {
                         battery: "12 hours Runtime",
@@ -363,6 +450,7 @@
             {
                 id: 2,
                 name: "AuraWave Pro",
+                image: "img/speaker-1.png",
                 specs: {
                     "Power": {
                         battery: "24 hours Runtime",
@@ -390,6 +478,7 @@
             {
                 id: 3,
                 name: "LiteBeat Mini",
+                image: "img/speaker-2.png",
                 specs: {
                     "Power": {
                         battery: "6 hours Runtime",
@@ -499,7 +588,7 @@
                     const availability = await LanguageModel.availability();
                     this.appendLog(`System: AI Availability = ${availability}`, 'system');
                     
-                    if (availability === 'no') {
+                    if (availability === 'unavailable') {
                         this.appendLog('System: Model not available.', 'system');
                         return;
                     }
@@ -546,32 +635,39 @@
                 const categories = Object.keys(product.specs);
                 
                 view.innerHTML = `
-                    <h2 class="product-title">${product.name}</h2>
-                    
-                    <div class="tabs-container">
-                        ${categories.map((cat, index) => `
-                            <button class="tab-btn ${index === 0 ? 'active' : ''}" data-index="${index}">${cat}</button>
-                        `).join('')}
-                    </div>
-
-                    <div class="tabs-content">
-                        ${Object.entries(product.specs).map(([cat, specs], index) => `
-                            <div class="tab-pane ${index === 0 ? 'active' : ''}" data-pane-index="${index}">
-                                <div class="specs-grid">
-                                    ${Object.entries(specs).map(([key, val]) => `
-                                        <div class="spec-row" data-spec-value="${val}">
-                                            <div class="spec-label">${key}</div>
-                                            <div class="spec-value">${val}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
+                    <div class="product-layout">
+                        <div class="product-image-container">
+                            <img src="${product.image}" alt="${product.name}" class="product-image">
+                        </div>
+                        <div class="product-info">
+                            <h2 class="product-title">${product.name}</h2>
+                            
+                            <div class="tabs-container">
+                                ${categories.map((cat, index) => `
+                                    <button class="tab-btn ${index === 0 ? 'active' : ''}" data-index="${index}">${cat}</button>
+                                `).join('')}
                             </div>
-                        `).join('')}
-                    </div>
 
-                    <div class="reviews-section">
-                        <h3>Community Reviews</h3>
-                        ${product.reviews.map(r => `<div class="review-card">${r}</div>`).join('')}
+                            <div class="tabs-content">
+                                ${Object.entries(product.specs).map(([cat, specs], index) => `
+                                    <div class="tab-pane ${index === 0 ? 'active' : ''}" data-pane-index="${index}">
+                                        <div class="specs-grid">
+                                            ${Object.entries(specs).map(([key, val]) => `
+                                                <div class="spec-row" data-spec-value="${val}">
+                                                    <div class="spec-label">${key}</div>
+                                                    <div class="spec-value">${val}</div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <div class="reviews-section">
+                                <h3>Community Reviews</h3>
+                                ${product.reviews.map(r => `<div class="review-card">${r}</div>`).join('')}
+                            </div>
+                        </div>
                     </div>
                 `;
 
@@ -694,7 +790,7 @@ Analyze the Product Data and find text snippets that match the User Interests. P
 
             // --- 4. UI/UX Highlights ---
             applyHighlights(targets) {
-                const view = document.getElementById('product-view');
+                const view = document.querySelector('.product-info') || document.getElementById('product-view');
                 let html = view.innerHTML;
 
                 // Filter targets threshold > 0.7
