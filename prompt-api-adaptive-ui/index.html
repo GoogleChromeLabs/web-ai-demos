@@ -665,6 +665,30 @@
             async init() {
                 this.loadProduct(1); // Load Product A by default
                 this.initAI();
+                
+                // Setup event delegation for product specs tabs inside #product-view
+                const view = document.getElementById('product-view');
+                view.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.tab-btn');
+                    if (!btn) return;
+                    
+                    const index = btn.getAttribute('data-index');
+                    const catName = btn.textContent.trim();
+                    
+                    // Update active tab button state
+                    view.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Update active content specs pane state
+                    view.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                    const targetPane = view.querySelector(`.tab-pane[data-pane-index="${index}"]`);
+                    if (targetPane) {
+                        targetPane.classList.add('active');
+                    }
+                    
+                    // Track tab click
+                    this.tracker.trackTabClick(catName);
+                });
             }
 
             async initAI() {
@@ -761,24 +785,6 @@
                     </div>
                 `;
 
-                // Add event listeners for tabs
-                view.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const index = btn.getAttribute('data-index');
-                        const catName = btn.textContent;
-                        
-                        // Update active button
-                        view.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        
-                        // Update active pane
-                        view.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-                        view.querySelector(`.tab-pane[data-pane-index="${index}"]`).classList.add('active');
-                        
-                        // Track tab click
-                        this.tracker.trackTabClick(catName);
-                    });
-                });
             }
 
 
