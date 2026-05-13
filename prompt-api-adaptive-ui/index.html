@@ -34,6 +34,7 @@
             --text-muted: #64748b;
             --accent: #ef4444;
             --highlight-color: #ffe000;
+            --highlight-color-dark: #ffbf00;
         }
 
         body {
@@ -148,6 +149,22 @@
             background: rgba(255, 255, 255, 0.1);
             border-color: var(--glass-border);
             color: var(--text);
+        }
+
+        /* Glowing pulsing gold indicator for highlighted tabs */
+        .tab-btn.has-highlight {
+            position: relative;
+        }
+        .tab-btn.has-highlight::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #fbd700;
+            box-shadow: 0 0 8px #ffe005;
         }
 
         .tab-pane {
@@ -910,6 +927,21 @@ Analyze the Product Data and find text snippets that match the User Interests. P
                 });
 
                 view.innerHTML = html;
+
+                // Update tab highlight indicators
+                const panes = view.querySelectorAll('.tab-pane');
+                panes.forEach(pane => {
+                    const index = pane.getAttribute('data-pane-index');
+                    const hasHighlight = pane.querySelector('mark') !== null;
+                    const btn = view.querySelector(`.tab-btn[data-index="${index}"]`);
+                    if (btn) {
+                        if (hasHighlight) {
+                            btn.classList.add('has-highlight');
+                        } else {
+                            btn.classList.remove('has-highlight');
+                        }
+                    }
+                });
 
                 // Re-attach hover listeners since innerHTML destroyed them
                 setTimeout(() => this.tracker.initHoverListeners(), 100);
