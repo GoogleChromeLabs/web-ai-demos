@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, FileText, Loader2, Plus, Trash2, AlertCircle, Bot, Scan, Info, CheckCircle2 } from 'lucide-react';
+import exampleInvoiceUrl from '../invoice-example.png';
 
 // Helper: use the top-level LanguageModel (Chrome 138+)
 const getLanguageModelAPI = (): any => {
@@ -90,7 +91,15 @@ export default function App() {
     }
   };
 
-  const [debugInfo, setDebugInfo] = useState<{ ocrText: string; aiResponse: string } | null>(null);
+  const useExampleInvoice = async () => {
+    const res = await fetch(exampleInvoiceUrl);
+    const blob = await res.blob();
+    const file = new File([blob], 'invoice-example.png', { type: blob.type || 'image/png' });
+    processFile(file);
+  };
+
+  const [debugInfo, setDebugInfo] = useState<{ ocrText: string; aiResponse: string; imageUrl: string } | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const processFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -156,6 +165,8 @@ Use "" for missing string fields, 0 for missing numbers. JSON only, no text.` },
           },
         });
 
+        setOcrStatus({ step: 'ai', message: 'Analyzing invoice…' });
+
         // Multimodal prompt() call
         aiResponseText = await session.prompt(prompt as any);
       } finally {
@@ -169,7 +180,7 @@ Use "" for missing string fields, 0 for missing numbers. JSON only, no text.` },
       console.log('=== AI RAW RESPONSE END ===');
 
       // Save debug info for the UI panel
-      setDebugInfo({ ocrText: '[Multimodal Image Input]', aiResponse: aiResponseText });
+      setDebugInfo({ ocrText: '[Multimodal Image Input]', aiResponse: aiResponseText, imageUrl: URL.createObjectURL(file) });
 
       // The model may wrap JSON in ```json ... ``` — strip that
       let jsonStr = aiResponseText.trim();
@@ -363,6 +374,14 @@ Use "" for missing string fields, 0 for missing numbers. JSON only, no text.` },
               </div>
             </div>
 
+            <button
+              onClick={useExampleInvoice}
+              disabled={ocrStatus.step === 'ocr' || ocrStatus.step === 'ai'}
+              className="mt-2 w-full text-center text-[11px] text-indigo-600 hover:text-indigo-800 font-medium underline underline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed bg-transparent border-0 cursor-pointer"
+            >
+              Use an example
+            </button>
+
             {/* Status Monitor for Error/Success */}
             {(ocrStatus.step === 'error' || ocrStatus.step === 'success') && (
               <div className={`mt-3 p-3 rounded text-xs font-medium flex items-center gap-2 ${ocrStatus.step === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
@@ -377,10 +396,15 @@ Use "" for missing string fields, 0 for missing numbers. JSON only, no text.` },
                 <summary className="px-3 py-2 bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100">
                   🔍 Debug: OCR &amp; AI Output
                 </summary>
-                <div className="p-3 space-y-3 max-h-48 overflow-y-auto">
+                <div className="p-3 space-y-3 max-h-64 overflow-y-auto">
                   <div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">OCR Text</div>
-                    <pre className="text-[10px] text-slate-600 bg-slate-50 p-2 rounded whitespace-pre-wrap break-all max-h-24 overflow-y-auto border">{debugInfo.ocrText}</pre>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Input Image</div>
+                    <img
+                      src={debugInfo.imageUrl}
+                      alt="Invoice input"
+                      onClick={() => setLightboxOpen(true)}
+                      className="max-h-36 w-full object-contain rounded border border-slate-200 bg-slate-50 cursor-zoom-in"
+                    />
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">AI Response</div>
@@ -572,6 +596,19 @@ Use "" for missing string fields, 0 for missing numbers. JSON only, no text.` },
         </section>
 
       </main>
+
+      {lightboxOpen && debugInfo?.imageUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center cursor-zoom-out p-6"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <img
+            src={debugInfo.imageUrl}
+            alt="Invoice input"
+            className="max-h-full max-w-full rounded-lg shadow-2xl object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }
