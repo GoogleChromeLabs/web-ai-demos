@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="Demo that uses Chrome's local AI to detect sensitive data (credit cards, passwords, API keys, SSNs, etc.) in chat messages before sending." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>Sensitive Data Validator — Local AI Chat Guard</title>
+    <script src="script.js" type="module"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div class="header-left">
+          <h1>🛡️ Chat Guard</h1>
+          <span class="subtitle">Sensitive data validator powered by local AI</span>
+        </div>
+        <div class="header-right">
+          <span id="ai-badge" class="badge badge-checking">Initializing…</span>
+          <button id="info-btn" class="icon-btn" title="How it works">ℹ️</button>
+        </div>
+      </header>
+
+      <div id="error-banner" class="error-banner hidden">
+        Your browser doesn't support the Prompt API. Use <a href="https://developer.chrome.com/docs/ai/prompt-api" target="_blank">Chrome 148+</a> with the API enabled.
+      </div>
+
+      <main id="chat-area" class="chat-area">
+        <div class="welcome-message">
+          <div class="welcome-icon">💬</div>
+          <h2>Write to support</h2>
+          <p>Type anything below. The local AI will scan for sensitive data <strong>before</strong> the message is "sent". Try the examples:</p>
+          <div class="example-cards">
+            <button class="example-card" data-text="Hi, I can't log into my account. My username is john_doe and I keep getting an error on the dashboard page.">
+              <span class="example-icon">✅</span>
+              <span>Safe message</span>
+            </button>
+            <button class="example-card" data-text="My credit card number is 4532 0150 1234 5678, expiry 12/26, CVV 321.">
+              <span class="example-icon">💳</span>
+              <span>Credit card</span>
+            </button>
+            <button class="example-card" data-text="I can't log in. My email is john@example.com and my password is SuperSecret123!">
+              <span class="example-icon">🔑</span>
+              <span>Password</span>
+            </button>
+            <button class="example-card" data-text="Here is my API key for debugging: sk-proj-abc123def456ghi789jkl012mno345pqr678">
+              <span class="example-icon">🔐</span>
+              <span>API key</span>
+            </button>
+            <button class="example-card" data-text="My SSN is 123-45-6789, you might need it to verify my identity.">
+              <span class="example-icon">🆔</span>
+              <span>SSN</span>
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <form id="chat-form" class="chat-form">
+        <div class="input-wrapper">
+          <textarea id="message-input" placeholder="Type your message to support…" rows="1"></textarea>
+          <button type="submit" id="send-btn" title="Send message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <div class="form-footer">
+          <span id="status-text" class="status-text"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="info-modal" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>🛡️ How It Works</h3>
+          <button id="modal-close" class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="step">
+            <div class="step-num">1</div>
+            <p>You type a message in the support chat.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <p>Chrome's <strong>built-in Gemini Nano</strong> scans the text locally — no data leaves your device.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <p>If sensitive data is detected, the message is <strong>blocked</strong> with a specific warning. Otherwise, it's "sent" normally.</p>
+          </div>
+
+          <div class="detection-list">
+            <h4>Detects:</h4>
+            <ul>
+              <li>💳 Credit / debit card numbers</li>
+              <li>🔑 Passwords, PINs, security codes</li>
+              <li>🆔 Social Security / national ID numbers</li>
+              <li>🔐 API keys and access tokens</li>
+              <li>🗝️ Private keys and certificates</li>
+              <li>🏦 Bank account / routing numbers</li>
+              <li>🛂 Passport numbers</li>
+              <li>📱 Phone numbers</li>
+              <li>📧 Email + password combos</li>
+            </ul>
+          </div>
+
+          <div class="info-box">
+            <strong>Requirements:</strong> Chrome 148+ with the <a href="https://developer.chrome.com/docs/ai/prompt-api" target="_blank">Prompt API</a> enabled.
+          </div>
+          <button id="modal-ok" class="modal-ok-btn">Got it</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
