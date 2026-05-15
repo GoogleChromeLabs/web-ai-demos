@@ -44,6 +44,10 @@
     <div id="status">Ready</div>
     <pre id="output"></pre>
 
+    <script>
+      // Force the polyfill even if a native LanguageModel implementation exists.
+      window.__FORCE_PROMPT_API_POLYFILL__ = true;
+    </script>
     <script type="module">
       // Gemini backend configuration imported from a JSON file to avoid committing the API key
       import geminiConfig from './.env-gemini.json' with { type: 'json' };

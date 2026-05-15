@@ -54,12 +54,13 @@
     "node-gyp": "^12.3.0",
     "prettier": "^3.8.3",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^8.0.11"
+    "vite": "^8.0.13"
   },
   "dependencies": {
-    "@google/genai": "^1.52.0",
+    "@google/genai": "^2.3.0",
     "@huggingface/transformers": "^4.2.0",
-    "firebase": "^12.12.1",
-    "openai": "^6.36.0"
+    "@mlc-ai/web-llm": "^0.2.83",
+    "firebase": "^12.13.0",
+    "openai": "^6.37.0"
   }
 }

@@ -20,6 +20,10 @@ export const BACKENDS = [
     config: 'TRANSFORMERS_CONFIG',
     path: './backends/transformers.js',
   },
+  {
+    config: 'WEBLLM_CONFIG',
+    path: './backends/webllm.js',
+  },
 ];
 
 export async function getBackendClass(path) {
@@ -34,6 +38,9 @@ export async function getBackendClass(path) {
   }
   if (path === './backends/transformers.js') {
     return (await import('./backends/transformers.js')).default;
+  }
+  if (path === './backends/webllm.js') {
+    return (await import('./backends/webllm.js')).default;
   }
   throw new Error(`Unknown backend path "${path}"`);
 }

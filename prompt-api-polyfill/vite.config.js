@@ -31,6 +31,7 @@ export default defineConfig({
         'openai',
         '@google/genai',
         '@huggingface/transformers',
+        '@mlc-ai/web-llm',
       ],
       output: {
         entryFileNames: '[name].js',
