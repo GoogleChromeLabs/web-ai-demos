@@ -8,6 +8,7 @@ supporting dynamic backends:
 - **Google Gemini API** (cloud)
 - **OpenAI API** (cloud)
 - **Transformers.js** (local after initial model download, **default backend**)
+- **WebLLM** (local after initial model download)
 
 When loaded in the browser, it defines a global:
 
@@ -54,6 +55,13 @@ configured, the polyfill will use Transformers.js with the default model.
 - **Select by setting**: `window.TRANSFORMERS_CONFIG`.
 - **Note**: This is the **default backend** if no other configuration is
   provided.
+- **Model**: Uses default if not specified (see
+  [`backends/defaults.js`](backends/defaults.js)).
+
+### WebLLM (local after initial model download)
+
+- **Uses**: `@mlc-ai/web-llm` SDK (MLC engine, runs via WebGPU).
+- **Select by setting**: `window.WEBLLM_CONFIG`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
@@ -156,6 +164,28 @@ npm install prompt-api-polyfill
         },
       },
     },
+  };
+
+  if (!('LanguageModel' in window)) {
+    await import('prompt-api-polyfill');
+  }
+
+  const session = await LanguageModel.create();
+</script>
+```
+
+### Backed by WebLLM (local after initial model download)
+
+1. **Only a dummy API Key required** (runs locally in the browser via WebGPU).
+2. **Provide configuration** on `window.WEBLLM_CONFIG`.
+3. **Import the polyfill**.
+
+```html
+<script type="module">
+  // Set WEBLLM_CONFIG to select the WebLLM backend
+  window.WEBLLM_CONFIG = {
+    apiKey: 'dummy', // Required for now by the loader
+    modelName: 'Llama-3.2-3B-Instruct-q4f32_1-MLC', // Optional: override default
   };
 
   if (!('LanguageModel' in window)) {
@@ -322,13 +352,22 @@ Then open `.env.json` and fill in the values.
 }
 ```
 
+**For WebLLM:**
+
+```json
+{
+  "apiKey": "dummy",
+  "modelName": "Llama-3.2-3B-Instruct-q4f32_1-MLC"
+}
+```
+
 ### Field-by-field explanation
 
 - `apiKey`:
   - **Firebase AI Logic**: Your Firebase Web API key.
   - **Gemini**: Your Gemini API Key.
   - **OpenAI**: Your OpenAI API Key.
-  - **Transformers.js**: Use `"dummy"`.
+  - **Transformers.js** / **WebLLM**: Use `"dummy"`.
 - `projectId` / `appId`: **Firebase AI Logic only**.
 - `geminiApiProvider`: **Firebase AI Logic only**. Either `"developer"` (Gemini
   Developer API, default) or `"vertex"` (Vertex AI).
@@ -344,6 +383,10 @@ Then open `.env.json` and fill in the values.
 - `env` (optional): **Transformers.js only**. A flexible object to override
   [Transformers.js environment variables](https://huggingface.co/docs/transformers.js/api/env).
   This is useful for specifying local `wasmPaths` or proxy settings.
+- **WebLLM** only requires `apiKey: "dummy"` and an optional `modelName`. Model
+  IDs must be valid
+  [MLC model identifiers](https://github.com/mlc-ai/web-llm?tab=readme-ov-file#list-available-models)
+  (e.g., `"Llama-3.2-3B-Instruct-q4f32_1-MLC"`).
 
 - `modelName` (optional): The model ID to use. If not provided, the polyfill
   uses the defaults defined in [`backends/defaults.js`](backends/defaults.js).

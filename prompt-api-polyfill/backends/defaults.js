@@ -15,4 +15,7 @@ export const DEFAULT_MODELS = {
     device: 'webgpu',
     dtype: 'q4f16',
   },
+  webllm: {
+    modelName: 'Llama-3.2-3B-Instruct-q4f32_1-MLC',
+  },
 };
