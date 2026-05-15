@@ -62,11 +62,6 @@ configured, the polyfill will use Transformers.js with the default model.
 
 - **Uses**: `@mlc-ai/web-llm` SDK (MLC engine, runs via WebGPU).
 - **Select by setting**: `window.WEBLLM_CONFIG`.
-- **Structured output**: Natively supported via XGrammar — `responseConstraint`
-  enforces the JSON schema at the token level.
-- **Model caching**: Uses the
-  [Cross-Origin Storage API](https://developer.chrome.com/docs/capabilities/cross-origin-storage)
-  so cached model weights can be shared across origins.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
