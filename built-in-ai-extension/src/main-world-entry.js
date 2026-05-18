@@ -20,7 +20,7 @@
     Rewriter: window.Rewriter,
     LanguageDetector: window.LanguageDetector,
     Translator: window.Translator,
-    Classifier: window.Classifier,
+    // Classifier: window.Classifier,
   };
 
   // Binary Bridge setup for efficient communication with content script
@@ -562,7 +562,7 @@
     Rewriter,
     LanguageDetector,
     Translator,
-    Classifier,
+    // Classifier,
   } = await import('built-in-ai-task-apis-polyfills');
 
   // Expose task APIs, preferring native if available and not forced
@@ -592,7 +592,7 @@
   exposeAPI('Rewriter', Rewriter);
   exposeAPI('LanguageDetector', LanguageDetector);
   exposeAPI('Translator', Translator);
-  exposeAPI('Classifier', Classifier);
+  // exposeAPI('Classifier', Classifier);
 
   window.addEventListener('extension-download-progress', (e) => {
     const { requestId } = e.detail;

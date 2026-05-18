@@ -9,7 +9,6 @@ specifically:
 - **Rewriter API**
 - **Language Detector API**
 - **Translator API**
-- **Classifier API**
 
 These polyfills are backed by the
 [`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill),
@@ -25,7 +24,6 @@ window.Writer;
 window.Rewriter;
 window.LanguageDetector;
 window.Translator;
-window.Classifier;
 ```
 
 so you can use these Task APIs even in environments where they are not yet
@@ -69,9 +67,6 @@ defensive dynamic import strategy:
   }
   if (!('Translator' in window)) {
     polyfills.push(import('built-in-ai-task-apis-polyfills/translator'));
-  }
-  if (!('Classifier' in window)) {
-    polyfills.push(import('built-in-ai-task-apis-polyfills/classifier'));
   }
   await Promise.all(polyfills);
 
@@ -146,17 +141,6 @@ const translator = await Translator.create({
 const result = await translator.translate('Hello world');
 ```
 
-#### Classifier API
-
-```js
-const classifier = await Classifier.create();
-const results = await classifier.classify('A story about a cat');
-
-for (const { id, confidence } of results) {
-  console.log(`${id} (${(confidence * 100).toFixed(1)}%)`);
-}
-```
-
 ---
 
 ## Configuration
@@ -194,7 +178,6 @@ For complete examples, see:
 - [`demo_rewriter.html`](demo_rewriter.html)
 - [`demo_language_detector.html`](demo_language_detector.html)
 - [`demo_translator.html`](demo_translator.html)
-- [`demo_classifier.html`](demo_classifier.html)
 
 ---
 
