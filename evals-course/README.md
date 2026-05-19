@@ -103,6 +103,22 @@ You can append `-fast` to any script to run in **fast mode** (e.g., `npm run tes
 
 Fast mode caps evaluation scenarios to a small number of samples per suite. Recommended for rapid local iteration and debugging to avoid long wait times.
 
+## Evals Dashboard UI & Reports
+
+Every time you run `npm run test:unit-evals` (or `npm run test:unit-evals-fast`), the evaluation suite generates a detailed HTML report and updates the multi-run dashboard index at `evals-service/reports`.
+
+### Viewing the Dashboard
+
+1. **Automatic Startup**: The test runner automatically attempts to serve the dashboard upon completion on port **8085**:
+   ```
+   🌐 Live Dashboard served at: http://localhost:8085
+   ```
+
+2. **Manual Startup**: If you want to start the dashboard server manually without running the tests again, run the following command from the `evals-service` directory:
+   ```bash
+   npx http-server reports -p 8085
+   ```
+   Then open your browser at [http://localhost:8085](http://localhost:8085).
 
 
 ## Running the eval service

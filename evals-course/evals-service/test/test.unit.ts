@@ -7,6 +7,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ quiet: true });
 import * as fs from 'fs';
 import * as path from 'path';
+import { exec } from 'child_process';
 import { evalAll, loadedJudgeVersion } from '../src/eval.service';
 import { EvalLabel, TestCaseResult, EvalResponse, MetricResult, EvalResult, ExpectedOutcome, TestCase } from '../src/types';
 import { themeBuilder, THEME_BUILDER_SYSTEM_INSTRUCTION, THEME_BUILDER_PROMPT_TEMPLATE } from '../../theme-builder/theme-builder';
@@ -85,7 +86,7 @@ async function runUnitTests() {
          );
          stopJudgeSpinner();
 
-         const res = evalResponse.results[0];
+         const res = evalResponse.testCaseResults[0];
          allEvalResults.push(res);
 
          // Print results per metric
@@ -107,7 +108,7 @@ async function runUnitTests() {
          const logMetric = (name: string, result: MetricResult, showDetails = false) => {
             const label = result.label;
             const details = showDetails && result.stabilityRate !== undefined
-               ? ` (Stability: ${(result.stabilityRate * 100).toFixed(0)}% | Iterations: [${result.evalResults?.map(it => (it as any).label).join(', ')}])`
+               ? ` (Stability: ${(result.stabilityRate * 100).toFixed(0)}% | Iterations: [${Object.values(result.evalResults || {}).map(it => it.label).join(', ')}])`
                : '';
             if (label === EvalLabel.PASS) {
                console.log(`  ${name}: \x1b[32mPASS\x1b[0m${details}`);
@@ -135,13 +136,13 @@ async function runUnitTests() {
             id: testCase.id,
             userInput: testCase.userInput,
             expectedOutcome: testCase.expected,
-            appOutputs: [],
+            appOutputs: {},
             appGateResult: { label: EvalLabel.FAIL, rationale: `Runner crashed: ${e.message}` },
-            dataFormat: { label: EvalLabel.FAIL, rationale: `Crashed during execution: ${e.message}`, stabilityRate: 0, evalResults: [] },
-            colorBrandFit: { label: EvalLabel.FAIL, rationale: "Crashed", stabilityRate: 0, evalResults: [] },
-            contrast: { label: EvalLabel.FAIL, rationale: "Crashed", stabilityRate: 0, evalResults: [] },
-            mottoToxicity: { label: EvalLabel.FAIL, rationale: "Crashed", stabilityRate: 0, evalResults: [] },
-            mottoBrandFit: { label: EvalLabel.FAIL, rationale: "Crashed", stabilityRate: 0, evalResults: [] }
+            dataFormat: { label: EvalLabel.FAIL, rationale: `Crashed during execution: ${e.message}`, stabilityRate: 0, evalResults: {} },
+            colorBrandFit: { label: EvalLabel.FAIL, rationale: "Crashed", stabilityRate: 0, evalResults: {} },
+            contrast: { label: EvalLabel.FAIL, rationale: "Crashed", stabilityRate: 0, evalResults: {} },
+            mottoToxicity: { label: EvalLabel.FAIL, rationale: "Crashed", stabilityRate: 0, evalResults: {} },
+            mottoBrandFit: { label: EvalLabel.FAIL, rationale: "Crashed", stabilityRate: 0, evalResults: {} }
          });
       }
 
@@ -175,9 +176,11 @@ async function runUnitTests() {
    const promptTemplateInfo = THEME_BUILDER_PROMPT_TEMPLATE;
 
    const evalResponseForReport: EvalResponse = {
-      results: allEvalResults,
-      modelVersion: process.env.JUDGE_MODEL || JUDGE_MODEL,
-      judgeVersion: loadedJudgeVersion,
+      testCaseResults: allEvalResults,
+      judgeMetadata: {
+         modelVersion: process.env.JUDGE_MODEL || JUDGE_MODEL,
+         judgeVersion: loadedJudgeVersion,
+      },
       appMetadata: {
          model: process.env.AI_MODEL || APP_MODEL,
          systemInstruction: systemInstructionInfo,
@@ -189,6 +192,20 @@ async function runUnitTests() {
       const reportPath = generateHtmlReport(evalResponseForReport, reportDir);
       console.log(`📊 Evals HTML Report generated at: ${reportPath}`);
       console.log(`🌐 Multi-run dashboard index updated at: ${path.join(reportDir, 'index.html')}`);
+      
+      console.log("\n⚡ Starting local dashboard server automatically...");
+      const serverProcess = exec(`npx -y http-server "${reportDir}" -p 8085`, (err) => {
+         if (err && !err.message.includes("EADDRINUSE")) {
+            console.error(`❌ Failed to start dashboard server: ${err.message}`);
+         }
+      });
+      serverProcess.stdout?.on('data', (data) => {
+         if (data.includes("Available on:")) {
+            console.log(`🌐 Live Dashboard served at: http://localhost:8085`);
+         }
+      });
+      // Unreference the child process to allow Node to exit cleanly
+      serverProcess.unref();
    } catch (reportError: any) {
       console.error(`❌ Failed to generate HTML report: ${reportError.message}`);
    }

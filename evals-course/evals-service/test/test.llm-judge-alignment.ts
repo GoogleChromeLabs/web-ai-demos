@@ -48,7 +48,7 @@ async function run() {
     onProgress: (current, total) => logProgress(startTime, current, total)
   });
   const { rawStatsAllMetrics, mismatches, total, aligned } =
-    computeAlignmentStats(evalResponse.results, humanLabelsMap);
+    computeAlignmentStats(evalResponse.testCaseResults, humanLabelsMap);
   logMismatches(mismatches);
   const finalResults = calculateFinalAlignmentResults(rawStatsAllMetrics, total, aligned);
   logFinalResults(sampleCount, finalResults);

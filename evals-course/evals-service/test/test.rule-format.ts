@@ -6,7 +6,7 @@
 import dotenv from 'dotenv';
 dotenv.config({ quiet: true });
 
-import { evalDataFormat } from '../src/eval.service';
+import { evalDataFormat } from '../src/utils.evals';
 import { EvalLabel, AppOutput, ColorPalette } from '../src/types';
 import { TEST_SAMPLE_COUNT_FAST_DEBUG } from './test.config';
 

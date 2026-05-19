@@ -108,7 +108,7 @@ async function run() {
     onProgress: (current, total) => logProgress(startTime, current, total)
   });
   const llmResultsMap = new Map();
-  for (const result of allEvalResults.results) {
+  for (const result of allEvalResults.testCaseResults) {
     llmResultsMap.set(result.id, result);
   }
 
