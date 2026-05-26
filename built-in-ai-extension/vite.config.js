@@ -51,6 +51,21 @@ export default defineConfig({
   },
   plugins: [
     {
+      name: 'virtual-url-stub',
+      // 'pre' forces this plugin to run before Vite's core resolution logic
+      enforce: 'pre',
+      resolveId(id) {
+        if (id === 'url') {
+          return '\0virtual:url-stub';
+        }
+      },
+      load(id) {
+        if (id === '\0virtual:url-stub') {
+          return 'export default {}; export const fileURLToPath = (url) => "/";';
+        }
+      },
+    },
+    {
       name: 'copy-transformers-assets',
       closeBundle() {
         const transformersAssetsDir = resolve(
