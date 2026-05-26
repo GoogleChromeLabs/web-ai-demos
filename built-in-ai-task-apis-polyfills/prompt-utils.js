@@ -14,7 +14,9 @@
  */
 export function replaceOrThrow(str, pattern, replacement, label) {
   const found =
-    typeof pattern === 'string' ? str.includes(pattern) : str.search(pattern) !== -1;
+    typeof pattern === 'string'
+      ? str.includes(pattern)
+      : str.search(pattern) !== -1;
   if (!found) {
     throw new Error(`Prompt template substitution failed for "${label}"`);
   }
