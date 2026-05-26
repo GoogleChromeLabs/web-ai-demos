@@ -9,7 +9,6 @@ specifically:
 - **Rewriter API**
 - **Language Detector API**
 - **Translator API**
-- **Classifier API**
 
 These polyfills are backed by the
 [`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill),
@@ -25,7 +24,6 @@ window.Writer;
 window.Rewriter;
 window.LanguageDetector;
 window.Translator;
-window.Classifier;
 ```
 
 so you can use these Task APIs even in environments where they are not yet
@@ -70,9 +68,6 @@ defensive dynamic import strategy:
   if (!('Translator' in window)) {
     polyfills.push(import('built-in-ai-task-apis-polyfills/translator'));
   }
-  if (!('Classifier' in window)) {
-    polyfills.push(import('built-in-ai-task-apis-polyfills/classifier'));
-  }
   await Promise.all(polyfills);
 
   // Now you can use the APIs
@@ -111,7 +106,9 @@ const writer = await Writer.create({
   format: 'plain-text',
 });
 
-const result = await writer.write('Draft of an email to my boss telling her I will be late.');
+const result = await writer.write(
+  'Draft of an email to my boss telling her I will be late.'
+);
 ```
 
 #### Rewriter API
@@ -121,14 +118,16 @@ const rewriter = await Rewriter.create({
   tone: 'more-casual',
 });
 
-const result = await rewriter.rewrite('I am writing to inform you that I will be late.');
+const result = await rewriter.rewrite(
+  'I am writing to inform you that I will be late.'
+);
 ```
 
 #### Language Detector API
 
 ```js
 const detector = await LanguageDetector.create();
-const results = await detector.detect('C\'est la vie');
+const results = await detector.detect("C'est la vie");
 
 for (const { detectedLanguage, confidence } of results) {
   console.log(`${detectedLanguage} (${(confidence * 100).toFixed(1)}%)`);
@@ -144,17 +143,6 @@ const translator = await Translator.create({
 });
 
 const result = await translator.translate('Hello world');
-```
-
-#### Classifier API
-
-```js
-const classifier = await Classifier.create();
-const results = await classifier.classify('A story about a cat');
-
-for (const { id, confidence } of results) {
-  console.log(`${id} (${(confidence * 100).toFixed(1)}%)`);
-}
 ```
 
 ---
@@ -194,7 +182,6 @@ For complete examples, see:
 - [`demo_rewriter.html`](demo_rewriter.html)
 - [`demo_language_detector.html`](demo_language_detector.html)
 - [`demo_translator.html`](demo_translator.html)
-- [`demo_classifier.html`](demo_classifier.html)
 
 ---
 

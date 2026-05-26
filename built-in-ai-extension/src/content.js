@@ -29,6 +29,8 @@
     'transformersModelName',
     'transformersDevice',
     'transformersDtype',
+    // WebLLM
+    'webllmModelName',
   ]);
 
   // Default values

@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     'transformersModelName',
     'transformersDevice',
     'transformersDtype',
+    // WebLLM
+    'webllmModelName',
   ]);
 
   if (config.backend) backendSelect.value = config.backend;
@@ -94,6 +96,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (config.transformersDtype)
     document.getElementById('transformersDtype').value =
       config.transformersDtype;
+
+  // WebLLM
+  if (config.webllmModelName)
+    document.getElementById('webllmModelName').value = config.webllmModelName;
 
   // Show correct pane
   const updatePanes = () => {
@@ -219,6 +225,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         .value,
       transformersDevice: document.getElementById('transformersDevice').value,
       transformersDtype: document.getElementById('transformersDtype').value,
+      // WebLLM
+      webllmModelName: document.getElementById('webllmModelName').value,
     };
 
     await chrome.storage.local.set(settings);

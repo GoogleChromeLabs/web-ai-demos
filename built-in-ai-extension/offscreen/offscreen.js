@@ -396,6 +396,7 @@ function setupConfigs(backend, config) {
   window.OPENAI_CONFIG = undefined;
   window.FIREBASE_CONFIG = undefined;
   window.TRANSFORMERS_CONFIG = undefined;
+  window.WEBLLM_CONFIG = undefined;
 
   // Set the configuration based on the selected backend.
   if (backend === 'gemini') {
@@ -418,6 +419,10 @@ function setupConfigs(backend, config) {
       useAppCheck: config.firebaseUseAppCheck,
       reCaptchaSiteKey: config.firebaseReCaptchaSiteKey,
       useLimitedUseAppCheckTokens: config.firebaseUseLimitedUseAppCheckTokens,
+    };
+  } else if (backend === 'webllm') {
+    window.WEBLLM_CONFIG = {
+      modelName: config.webllmModelName,
     };
   } else if (backend === 'transformers') {
     window.TRANSFORMERS_CONFIG = {

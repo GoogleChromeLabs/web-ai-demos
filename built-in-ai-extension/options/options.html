@@ -38,6 +38,7 @@
             <option value="openai">OpenAI</option>
             <option value="firebase">Firebase AI</option>
             <option value="transformers">Transformers.js</option>
+            <option value="webllm">WebLLM</option>
           </select>
         </div>
 
@@ -128,6 +129,18 @@
                 >Use Limited-Use Tokens</label
               >
             </div>
+          </div>
+        </div>
+
+        <!-- WebLLM Config -->
+        <div id="config-webllm" class="config-pane hidden">
+          <div class="field-group">
+            <label for="webllmModelName">Model Name (optional)</label>
+            <input
+              type="text"
+              id="webllmModelName"
+              placeholder="Llama-3.2-3B-Instruct-q4f32_1-MLC"
+            />
           </div>
         </div>
 

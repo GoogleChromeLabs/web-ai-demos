@@ -87,7 +87,6 @@ export class WriterPromptBuilder {
     let systemPrompt =
       PROMPT_LOOKUP[key] || PROMPT_LOOKUP['neutral|plain-text|short'];
 
-
     // 2. Parametrize Language
     systemPrompt = replaceOrThrow(
       systemPrompt,
