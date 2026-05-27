@@ -1,0 +1,439 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SemanticEmbedder API Polyfill Demo</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+      }
+
+      html {
+        box-sizing: border-box;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: clamp(320px, 90%, 900px);
+        margin: auto;
+        padding-bottom: 2rem;
+      }
+
+      textarea {
+        width: 100%;
+        height: 80px;
+        font-family: inherit;
+        resize: vertical;
+      }
+
+      .corpus-item {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+      }
+
+      .corpus-item textarea {
+        flex: 1;
+        height: 60px;
+      }
+
+      .corpus-item button {
+        flex-shrink: 0;
+      }
+
+      button {
+        cursor: pointer;
+        padding: 0.4rem 0.8rem;
+      }
+
+      progress {
+        width: 100%;
+      }
+
+      #status {
+        font-style: italic;
+        color: gray;
+        min-height: 1.4em;
+      }
+
+      .results {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        min-height: 80px;
+      }
+
+      .result-row {
+        display: flex;
+        gap: 1rem;
+        align-items: baseline;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .result-row:last-child {
+        border-bottom: none;
+      }
+
+      .result-score {
+        font-weight: bold;
+        font-variant-numeric: tabular-nums;
+        min-width: 5ch;
+        color: #0070f3;
+      }
+
+      .result-text {
+        flex: 1;
+      }
+
+      .similarity-bar {
+        height: 6px;
+        border-radius: 3px;
+        background: #0070f3;
+        transition: width 0.3s ease;
+      }
+
+      .similarity-bar-bg {
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+        width: 80px;
+        flex-shrink: 0;
+      }
+
+      .embed-output {
+        font-family: monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        word-break: break-all;
+        border: 1px solid #ccc;
+        padding: 0.75rem;
+        min-height: 60px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      section {
+        margin-top: 2rem;
+      }
+
+      h2 {
+        margin-bottom: 0.5rem;
+      }
+
+      .controls {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>SemanticEmbedder API Polyfill Demo</h1>
+    <p>
+      Demonstrates the proposed
+      <a
+        href="https://github.com/explainers-by-googlers/embedding-api"
+        target="_blank"
+        >SemanticEmbedder API</a
+      >
+      backed by
+      <a
+        href="https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX"
+        target="_blank"
+        >EmbeddingGemma 300M</a
+      >
+      — the same model Chrome's built-in API uses — running in-browser via
+      <code>@huggingface/transformers</code>.
+    </p>
+
+    <progress id="progress" value="0" max="1" style="display: none"></progress>
+    <div id="status"></div>
+    <div class="controls">
+      <span id="availability"></span>
+    </div>
+
+    <!-- Semantic Search Section -->
+    <section>
+      <h2>Semantic Search</h2>
+      <p>
+        Embed a corpus of texts, then find which are most semantically similar
+        to your query.
+      </p>
+
+      <h3>Corpus</h3>
+      <div id="corpus"></div>
+      <div class="controls" style="margin-top: 0.5rem">
+        <input
+          id="addCorpusInput"
+          type="text"
+          placeholder="New sentence…"
+          style="
+            flex: 1;
+            padding: 0.4rem 0.6rem;
+            font-family: inherit;
+            font-size: inherit;
+          "
+        />
+        <button id="addCorpusBtn">Add</button>
+      </div>
+
+      <h3>Query</h3>
+      <textarea id="queryInput" placeholder="Type a query…">
+What is machine learning?</textarea
+      >
+
+      <div class="controls" style="margin-top: 0.5rem">
+        <button id="searchBtn">Find Most Similar</button>
+      </div>
+
+      <h3>Results (ranked by cosine similarity)</h3>
+      <div id="searchResults" class="results">
+        Results will appear here after searching.
+      </div>
+    </section>
+
+    <!-- Single Embed Section -->
+    <section>
+      <h2>Embed a Single Text</h2>
+      <textarea id="singleInput" placeholder="Text to embed…">
+The quick brown fox jumps over the lazy dog.</textarea
+      >
+      <div class="controls" style="margin-top: 0.5rem">
+        <button id="embedBtn">Embed</button>
+      </div>
+      <h3>Embedding Vector (first 16 values)</h3>
+      <div id="embedOutput" class="embed-output">—</div>
+      <p id="embedMeta" style="font-size: 0.85rem; color: gray"></p>
+    </section>
+
+    <script type="module">
+      import { SemanticEmbedder } from './semantic-embedder-api-polyfill.js';
+
+      const searchBtn = document.getElementById('searchBtn');
+      const embedBtn = document.getElementById('embedBtn');
+      const addCorpusBtn = document.getElementById('addCorpusBtn');
+      const addCorpusInput = document.getElementById('addCorpusInput');
+      const queryInput = document.getElementById('queryInput');
+      const singleInput = document.getElementById('singleInput');
+      const searchResults = document.getElementById('searchResults');
+      const embedOutput = document.getElementById('embedOutput');
+      const embedMeta = document.getElementById('embedMeta');
+      const progressEl = document.getElementById('progress');
+      const statusEl = document.getElementById('status');
+      const availabilityEl = document.getElementById('availability');
+      const corpusEl = document.getElementById('corpus');
+
+      const DEFAULT_CORPUS = [
+        'Artificial intelligence is transforming how we build software.',
+        'The cat sat on the mat and looked out the window.',
+        'Deep learning models learn representations from raw data.',
+        'Paris is the capital city of France.',
+        'Neural networks are inspired by the structure of the brain.',
+        'The stock market fell sharply yesterday morning.',
+        'Natural language processing enables machines to understand text.',
+        'She baked a chocolate cake for the birthday party.',
+      ];
+
+      // Build corpus UI
+      function addCorpusRow(text = '') {
+        const row = document.createElement('div');
+        row.className = 'corpus-item';
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.placeholder = 'Corpus sentence…';
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '✕';
+        removeBtn.title = 'Remove';
+        removeBtn.onclick = () => row.remove();
+        row.appendChild(ta);
+        row.appendChild(removeBtn);
+        corpusEl.appendChild(row);
+      }
+
+      DEFAULT_CORPUS.forEach((t) => addCorpusRow(t));
+
+      function getCorpusTexts() {
+        return [...corpusEl.querySelectorAll('textarea')]
+          .map((ta) => ta.value.trim())
+          .filter(Boolean);
+      }
+
+      // Reflect the real availability state as soon as the page loads.
+      SemanticEmbedder.availability().then((avail) => {
+        availabilityEl.textContent = `Availability: ${avail}`;
+      });
+
+      let embedder = null;
+      let loadingPromise = null;
+
+      // Lazily loads the model on first use. Subsequent calls return the same
+      // embedder without reloading. Concurrent callers share the same promise.
+      async function ensureEmbedder() {
+        if (embedder) {
+          return embedder;
+        }
+        if (loadingPromise) {
+          return loadingPromise;
+        }
+
+        statusEl.textContent = 'Loading model…';
+        progressEl.style.display = 'block';
+        progressEl.value = 0;
+
+        loadingPromise = SemanticEmbedder.create({
+          monitor(m) {
+            m.addEventListener('downloadprogress', (e) => {
+              availabilityEl.textContent = 'Availability: downloading';
+              progressEl.value = e.loaded;
+              if (e.loaded < 1) {
+                statusEl.textContent = `Downloading model: ${Math.round(e.loaded * 100)}%`;
+              }
+            });
+          },
+        })
+          .then(async (result) => {
+            embedder = result;
+            loadingPromise = null;
+            availabilityEl.textContent = `Availability: ${await SemanticEmbedder.availability()}`;
+            statusEl.textContent = 'Model loaded. Ready to embed.';
+            progressEl.style.display = 'none';
+            return embedder;
+          })
+          .catch((err) => {
+            loadingPromise = null;
+            statusEl.textContent = `Error loading model: ${err.message}`;
+            progressEl.style.display = 'none';
+            throw err;
+          });
+
+        return loadingPromise;
+      }
+
+      addCorpusBtn.onclick = () => {
+        const text = addCorpusInput.value.trim();
+        if (!text) {
+          return;
+        }
+        addCorpusRow(text);
+        addCorpusInput.value = '';
+        addCorpusInput.focus();
+        ensureEmbedder().catch(() => {});
+      };
+
+      searchBtn.onclick = async () => {
+        const query = queryInput.value.trim();
+        const corpus = getCorpusTexts();
+
+        if (!query || corpus.length === 0) {
+          searchResults.textContent =
+            'Please enter a query and at least one corpus sentence.';
+          return;
+        }
+
+        searchBtn.disabled = true;
+        searchResults.textContent = 'Computing embeddings…';
+
+        try {
+          const emb = await ensureEmbedder();
+          statusEl.textContent = 'Embedding…';
+
+          // EmbeddingGemma uses different task prefixes for queries vs documents,
+          // so we embed them with the appropriate taskType in separate calls.
+          const [queryResult, docsResult] = await Promise.all([
+            emb.embed(query, { taskType: 'query' }),
+            emb.embed(corpus, { taskType: 'document' }),
+          ]);
+
+          const queryVec = queryResult.embeddings[0].values;
+          const scored = corpus.map((text, i) => ({
+            text,
+            score: SemanticEmbedder.cosineSimilarity(
+              queryVec,
+              docsResult.embeddings[i].values
+            ),
+          }));
+          scored.sort((a, b) => b.score - a.score);
+
+          searchResults.innerHTML = '';
+          for (const { text, score } of scored) {
+            const row = document.createElement('div');
+            row.className = 'result-row';
+
+            const scoreEl = document.createElement('span');
+            scoreEl.className = 'result-score';
+            scoreEl.textContent = score.toFixed(3);
+
+            const barBg = document.createElement('div');
+            barBg.className = 'similarity-bar-bg';
+            const bar = document.createElement('div');
+            bar.className = 'similarity-bar';
+            bar.style.width = `${Math.max(0, score * 100).toFixed(1)}%`;
+            barBg.appendChild(bar);
+
+            const textEl = document.createElement('span');
+            textEl.className = 'result-text';
+            textEl.textContent = text;
+
+            row.appendChild(scoreEl);
+            row.appendChild(barBg);
+            row.appendChild(textEl);
+            searchResults.appendChild(row);
+          }
+
+          statusEl.textContent = `Done. Embedded query + ${corpus.length} documents (embedding space: ${docsResult.metadata.embeddingSpace}).`;
+        } catch (err) {
+          searchResults.textContent = `Error: ${err.message}`;
+          statusEl.textContent = 'Embedding failed.';
+        } finally {
+          searchBtn.disabled = false;
+        }
+      };
+
+      embedBtn.onclick = async () => {
+        const text = singleInput.value.trim();
+        if (!text) {
+          embedOutput.textContent = 'Please enter some text.';
+          return;
+        }
+
+        embedBtn.disabled = true;
+        embedOutput.textContent = 'Computing embedding…';
+
+        try {
+          const emb = await ensureEmbedder();
+          statusEl.textContent = 'Embedding…';
+
+          const result = await emb.embed(text);
+          const values = result.embeddings[0].values;
+
+          const preview = Array.from(values.slice(0, 16))
+            .map((v) => v.toFixed(6))
+            .join(', ');
+          embedOutput.textContent = `[${preview}, … (${values.length} total)]`;
+          embedMeta.textContent = `Embedding space: ${result.metadata.embeddingSpace} | Max input tokens: ${result.metadata.maxInputTokens} | Dimensions: ${values.length}`;
+          statusEl.textContent = 'Embedding complete.';
+        } catch (err) {
+          embedOutput.textContent = `Error: ${err.message}`;
+          statusEl.textContent = 'Embedding failed.';
+        } finally {
+          embedBtn.disabled = false;
+        }
+      };
+    </script>
+  </body>
+</html>

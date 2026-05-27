@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-task-apis-polyfills",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, etc.)",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +11,8 @@
     "./rewriter": "./dist/rewriter.js",
     "./language-detector": "./dist/language-detector.js",
     "./translator": "./dist/translator.js",
-    "./classifier": "./dist/classifier.js"
+    "./classifier": "./dist/classifier.js",
+    "./semantic-embedder": "./dist/semantic-embedder.js"
   },
   "files": [
     "dist/",
@@ -50,12 +51,22 @@
     "translator",
     "language-detector",
     "classifier",
+    "semantic-embedder",
+    "embeddings",
     "web-ai"
   ],
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",
   "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "dependencies": {
     "prompt-api-polyfill": "^1.19.0"
+  },
+  "peerDependencies": {
+    "@huggingface/transformers": ">=4.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@huggingface/transformers": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

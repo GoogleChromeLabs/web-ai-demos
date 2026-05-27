@@ -9,12 +9,21 @@ specifically:
 - **Rewriter API**
 - **Language Detector API**
 - **Translator API**
+- **SemanticEmbedder API**
 
-These polyfills are backed by the
+The Summarizer, Writer, Rewriter, Language Detector, and Translator polyfills
+are backed by the
 [`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill),
 which is automatically loaded if `window.LanguageModel` is not detected. This
 means they support the same
 [dynamic backends](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill#supported-backends).
+
+The SemanticEmbedder polyfill is backed by
+[EmbeddingGemma 300M](https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX)
+— the same model Chrome's built-in SemanticEmbedder API uses on-device — running
+in-browser via
+[`@huggingface/transformers`](https://huggingface.co/docs/transformers.js) (a
+peer dependency you must install separately).
 
 When loaded in the browser, they define globals:
 
@@ -24,6 +33,7 @@ window.Writer;
 window.Rewriter;
 window.LanguageDetector;
 window.Translator;
+window.SemanticEmbedder;
 ```
 
 so you can use these Task APIs even in environments where they are not yet
@@ -35,6 +45,12 @@ Install from npm:
 
 ```bash
 npm install built-in-ai-task-apis-polyfills
+```
+
+If you use the **SemanticEmbedder** polyfill, also install the peer dependency:
+
+```bash
+npm install @huggingface/transformers
 ```
 
 ## Quick start
@@ -67,6 +83,9 @@ defensive dynamic import strategy:
   }
   if (!('Translator' in window)) {
     polyfills.push(import('built-in-ai-task-apis-polyfills/translator'));
+  }
+  if (!('SemanticEmbedder' in window)) {
+    polyfills.push(import('built-in-ai-task-apis-polyfills/semantic-embedder'));
   }
   await Promise.all(polyfills);
 
@@ -145,6 +164,40 @@ const translator = await Translator.create({
 const result = await translator.translate('Hello world');
 ```
 
+#### SemanticEmbedder API
+
+Backed by
+[EmbeddingGemma 300M](https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX)
+via `@huggingface/transformers`. The model (~420 MB) is downloaded and cached in
+the browser on first use.
+
+```js
+const embedder = await SemanticEmbedder.create({
+  monitor(m) {
+    m.addEventListener('downloadprogress', (e) => {
+      console.log(`Download progress: ${Math.round(e.loaded * 100)}%`);
+    });
+  },
+});
+
+// Embed a single text
+const { embeddings } = await embedder.embed('Hello world');
+console.log(embeddings[0].values); // Float32Array of 768 values
+
+// Semantic search: embed query and corpus with appropriate task prefixes
+const [queryResult, docsResult] = await Promise.all([
+  embedder.embed('What is machine learning?', { taskType: 'query' }),
+  embedder.embed(['AI transforms software.', 'Paris is in France.'], {
+    taskType: 'document',
+  }),
+]);
+
+const queryVec = queryResult.embeddings[0].values;
+const scores = docsResult.embeddings.map((e) =>
+  SemanticEmbedder.cosineSimilarity(queryVec, e.values)
+);
+```
+
 ---
 
 ## Configuration
@@ -174,14 +227,16 @@ documentation:
 - [Rewriter API](https://developer.chrome.com/docs/ai/rewriter-api)
 - [Language Detector API](https://developer.chrome.com/docs/ai/language-detection-api)
 - [Translator API](https://developer.chrome.com/docs/ai/translator-api)
+- [SemanticEmbedder API](https://github.com/explainers-by-googlers/embedding-api)
 
 For complete examples, see:
 
-- [`demo_summarizer.html`](demo_summarizer.html)
-- [`demo_writer.html`](demo_writer.html)
-- [`demo_rewriter.html`](demo_rewriter.html)
-- [`demo_language_detector.html`](demo_language_detector.html)
-- [`demo_translator.html`](demo_translator.html)
+- [`demo-summarizer.html`](demo-summarizer.html)
+- [`demo-writer.html`](demo-writer.html)
+- [`demo-rewriter.html`](demo-rewriter.html)
+- [`demo-language-detector.html`](demo-language-detector.html)
+- [`demo-translator.html`](demo-translator.html)
+- [`demo-semantic-embedder.html`](demo-semantic-embedder.html)
 
 ---
 
