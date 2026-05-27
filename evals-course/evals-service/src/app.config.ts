@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const JUDGE_MODEL = "gemini-3-flash";
-export const APP_MODEL = "gemini-3-flash";
+export const JUDGE_MODEL = "gemini-3.5-flash";
+export const APP_MODEL = "gemini-3.5-flash";
 
 export const MOTTO_LENGTH_MAX = 6;
 export const CONTRAST_RATIO_MIN = 4.5;
