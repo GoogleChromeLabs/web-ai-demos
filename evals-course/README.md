@@ -176,6 +176,6 @@ For example:
       }
     }
   ],
-  "modelVersion": "gemini-3-flash"
+  "modelVersion": "gemini-3.5-flash"
 }
 ```
