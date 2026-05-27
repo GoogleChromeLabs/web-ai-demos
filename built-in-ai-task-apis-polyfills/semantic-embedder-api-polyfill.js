@@ -50,7 +50,18 @@ function applyPrefix(text, taskType) {
 async function isModelCached(modelId, dtype) {
   try {
     const { ModelRegistry } = await ensureTransformers();
-    return await ModelRegistry.is_cached(modelId, { dtype });
+    // include_processor: false avoids a network request for preprocessor_config.json,
+    // which this model doesn't have and would otherwise produce a 404.
+    const result = await ModelRegistry.is_cached_files(modelId, {
+      dtype,
+      include_processor: false,
+    });
+    // generation_config.json is an optional text-generation config that the
+    // transformers.js cache doesn't always persist; exclude it from the check.
+    const essential = result.files.filter(
+      (f) => f.file !== 'generation_config.json'
+    );
+    return essential.length > 0 && essential.every((f) => f.cached);
   } catch {
     return false;
   }
