@@ -9,6 +9,7 @@ import './rewriter-api-polyfill.js';
 import './language-detector-api-polyfill.js';
 import './translator-api-polyfill.js';
 // import './classifier-api-polyfill.js';
+import './semantic-embedder-api-polyfill.js';
 
 export { Summarizer } from './summarizer-api-polyfill.js';
 export { Writer } from './writer-api-polyfill.js';
@@ -16,3 +17,4 @@ export { Rewriter } from './rewriter-api-polyfill.js';
 export { LanguageDetector } from './language-detector-api-polyfill.js';
 export { Translator } from './translator-api-polyfill.js';
 // export { Classifier } from './classifier-api-polyfill.js';
+export { SemanticEmbedder } from './semantic-embedder-api-polyfill.js';

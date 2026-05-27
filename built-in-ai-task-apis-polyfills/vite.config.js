@@ -29,12 +29,16 @@ export default defineConfig({
         ),
         translator: resolve(__dirname, 'translator-api-polyfill.js'),
         classifier: resolve(__dirname, 'classifier-api-polyfill.js'),
+        'semantic-embedder': resolve(
+          __dirname,
+          'semantic-embedder-api-polyfill.js'
+        ),
       },
       formats: ['es'],
       fileName: (format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
-      external: ['prompt-api-polyfill'],
+      external: ['prompt-api-polyfill', '@huggingface/transformers'],
     },
     target: 'esnext',
   },
