@@ -67,17 +67,258 @@ async function isModelCached(modelId, dtype) {
   }
 }
 
+const isWorker =
+  typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
+
+function getWorkerUrl() {
+  const url = import.meta.url;
+  try {
+    if (
+      typeof globalThis !== 'undefined' &&
+      globalThis.location &&
+      new URL(url).origin !== globalThis.location.origin
+    ) {
+      const blobCode = `import ${JSON.stringify(url)};`;
+      const blob = new Blob([blobCode], { type: 'application/javascript' });
+      return URL.createObjectURL(blob);
+    }
+  } catch {
+    // Fallback to original URL
+  }
+  return url;
+}
+
+function runInTemporaryWorker(action, payload = {}) {
+  const url = getWorkerUrl();
+  const worker = new Worker(url, { type: 'module' });
+  return new Promise((resolve, reject) => {
+    worker.onmessage = (e) => {
+      const { type, result, error } = e.data;
+      if (type === 'response') {
+        resolve(result);
+        worker.terminate();
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      } else if (type === 'error') {
+        reject(new Error(error));
+        worker.terminate();
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      }
+    };
+    worker.onerror = (err) => {
+      reject(err);
+      worker.terminate();
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    };
+    worker.postMessage({ action, payload });
+  });
+}
+
+if (isWorker) {
+  const abortedRequests = new Set();
+  let workerTokenizer = null;
+  let workerModel = null;
+  let workerModelId = null;
+
+  const initWorkerModel = async (modelId, dtype, hasMonitor) => {
+    const { AutoModel, AutoTokenizer } = await ensureTransformers();
+
+    let progressCallback = null;
+    if (hasMonitor) {
+      progressCallback = (progress) => {
+        if (progress.status === 'progress_total') {
+          self.postMessage({
+            type: 'progress',
+            loaded: progress.total > 0 ? progress.loaded / progress.total : 0,
+          });
+        }
+      };
+    }
+
+    [workerTokenizer, workerModel] = await Promise.all([
+      AutoTokenizer.from_pretrained(modelId, {
+        progress_callback: progressCallback,
+      }),
+      AutoModel.from_pretrained(modelId, {
+        dtype,
+        progress_callback: progressCallback,
+      }),
+    ]);
+    workerModelId = modelId;
+  };
+
+  const checkAvailability = async (modelId, dtype) => {
+    if (typeof WebAssembly === 'undefined') {
+      return 'unavailable';
+    }
+    if (await isModelCached(modelId, dtype)) {
+      return 'available';
+    }
+    return 'downloadable';
+  };
+
+  self.onmessage = async (e) => {
+    const msg = e.data;
+
+    // Support static actions from temporary workers
+    if (msg.action === 'availability') {
+      try {
+        const { modelId, dtype } = msg.payload;
+        const status = await checkAvailability(modelId, dtype);
+        self.postMessage({ type: 'response', result: status });
+      } catch (err) {
+        self.postMessage({ type: 'error', error: err.message });
+      }
+      return;
+    }
+
+    // Instance-level actions
+    if (msg.type === 'init') {
+      try {
+        await initWorkerModel(msg.modelId, msg.dtype, msg.hasMonitor);
+        self.postMessage({ type: 'ready' });
+      } catch (err) {
+        self.postMessage({
+          type: 'init-error',
+          error: err.message,
+          name: err.name || 'Error',
+        });
+      }
+    } else if (msg.type === 'embed') {
+      const { requestId, inputs, options } = msg;
+      try {
+        if (!workerModel || !workerTokenizer) {
+          throw new Error('Model is not initialized in the worker.');
+        }
+
+        const taskType = options.taskType ?? 'document';
+        const prefixedInputs = inputs.map((text) =>
+          applyPrefix(text, taskType)
+        );
+
+        const tokenized = await workerTokenizer(prefixedInputs, {
+          padding: true,
+          truncation: true,
+          max_length: MAX_INPUT_TOKENS,
+        });
+
+        if (abortedRequests.has(requestId)) {
+          abortedRequests.delete(requestId);
+          throw new DOMException('Aborted', 'AbortError');
+        }
+
+        const { sentence_embedding } = await workerModel(tokenized);
+
+        if (abortedRequests.has(requestId)) {
+          abortedRequests.delete(requestId);
+          throw new DOMException('Aborted', 'AbortError');
+        }
+
+        const dim = sentence_embedding.dims[1];
+        const data = sentence_embedding.data; // flat Float32Array
+
+        const tokenCounts = [];
+        if (tokenized.attention_mask) {
+          const maskData = tokenized.attention_mask.data;
+          const seqLen = tokenized.attention_mask.dims[1];
+          for (let i = 0; i < inputs.length; i++) {
+            let count = 0;
+            const start = i * seqLen;
+            const end = start + seqLen;
+            for (let j = start; j < end; j++) {
+              if (Number(maskData[j]) === 1) {
+                count++;
+              }
+            }
+            tokenCounts.push(count);
+          }
+        } else {
+          const seqLen = tokenized.input_ids.dims[1];
+          for (let i = 0; i < inputs.length; i++) {
+            tokenCounts.push(seqLen);
+          }
+        }
+
+        const embeddings = inputs.map((_, i) => ({
+          values: data.slice(i * dim, (i + 1) * dim),
+          statistics: {
+            tokenCount: tokenCounts[i],
+          },
+        }));
+
+        const result = {
+          embeddings,
+          metadata: {
+            embeddingSpace: workerModelId,
+            maxInputTokens: MAX_INPUT_TOKENS,
+          },
+        };
+
+        self.postMessage({ type: 'embed-response', requestId, result });
+      } catch (err) {
+        abortedRequests.delete(requestId);
+        self.postMessage({
+          type: 'embed-error',
+          requestId,
+          error: err.message,
+          name: err.name || 'Error',
+        });
+      }
+    } else if (msg.type === 'abort-embed') {
+      abortedRequests.add(msg.requestId);
+    }
+  };
+}
+
 export class SemanticEmbedder {
-  #tokenizer = null;
-  #model = null;
+  #worker = null;
   #modelId = DEFAULT_MODEL;
   #destroyed = false;
   #destructionReason = null;
+  #pendingRequests = new Map();
+  #nextRequestId = 0;
 
-  constructor(tokenizer, model, modelId) {
-    this.#tokenizer = tokenizer;
-    this.#model = model;
+  constructor(worker, modelId) {
+    this.#worker = worker;
     this.#modelId = modelId;
+
+    this.#worker.onmessage = (e) => {
+      if (this.#destroyed) {
+        return;
+      }
+      const msg = e.data;
+      if (msg.type === 'embed-response') {
+        const req = this.#pendingRequests.get(msg.requestId);
+        if (req) {
+          this.#pendingRequests.delete(msg.requestId);
+          req.resolve(msg.result);
+        }
+      } else if (msg.type === 'embed-error') {
+        const req = this.#pendingRequests.get(msg.requestId);
+        if (req) {
+          this.#pendingRequests.delete(msg.requestId);
+          const EX = globalThis[msg.name] || DOMException || Error;
+          req.reject(new EX(msg.error, msg.name));
+        }
+      }
+    };
+
+    this.#worker.onerror = (err) => {
+      if (this.#destroyed) {
+        return;
+      }
+      const error = new Error('Web Worker error: ' + err.message);
+      for (const req of this.#pendingRequests.values()) {
+        req.reject(error);
+      }
+      this.#pendingRequests.clear();
+      this.destroy(error);
+    };
   }
 
   static _checkContext() {
@@ -120,10 +361,11 @@ export class SemanticEmbedder {
       if (downloadingModels.has(modelId)) {
         return 'downloading';
       }
-      if (await isModelCached(modelId, DEFAULT_DTYPE)) {
-        return 'available';
-      }
-      return 'downloadable';
+      const status = await runInTemporaryWorker('availability', {
+        modelId,
+        dtype: DEFAULT_DTYPE,
+      });
+      return status;
     })();
     p.catch(() => {});
     return p;
@@ -142,16 +384,10 @@ export class SemanticEmbedder {
       throw options.signal.reason || new DOMException('Aborted', 'AbortError');
     }
 
-    const { AutoModel, AutoTokenizer } = await ensureTransformers();
-
     const modelId = options.model || DEFAULT_MODEL;
     const dtype = options.dtype || DEFAULT_DTYPE;
 
-    // Per spec §5.2 "create an AI model object": fireProgressEvent is an
-    // algorithm taking a single `loaded` argument (0–1 fraction); total is
-    // always 1 and lengthComputable is always true.
     let fireProgressEvent = null;
-    let progressCallback = null;
     if (options.monitor) {
       const monitorTarget = new EventTarget();
       options.monitor(monitorTarget);
@@ -164,49 +400,88 @@ export class SemanticEmbedder {
           })
         );
       };
-      // AutoModel.from_pretrained() automatically wraps the callback with
-      // DefaultProgressCallback, which aggregates per-file events into a
-      // single 'progress_total' event covering all model files. We listen
-      // only to that status so progress is monotonically 0→1 and not
-      // confused by per-file events from the tokenizer or individual ONNX
-      // shards, which each independently go 0→100%.
-      progressCallback = (progress) => {
-        if (progress.status === 'progress_total') {
-          fireProgressEvent(
-            progress.total > 0 ? progress.loaded / progress.total : 0
-          );
-        }
-      };
     }
 
-    // Spec: fire loaded=0 before the download/initialization begins.
     fireProgressEvent?.(0);
 
     downloadingModels.add(modelId);
-    let tokenizer, model;
+
+    const url = getWorkerUrl();
+    const worker = new Worker(url, { type: 'module' });
+
+    let cleanup = null;
+
+    const readyPromise = new Promise((resolve, reject) => {
+      const onMessage = (e) => {
+        const msg = e.data;
+        if (msg.type === 'progress') {
+          fireProgressEvent?.(msg.loaded);
+        } else if (msg.type === 'ready') {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+          resolve();
+        } else if (msg.type === 'init-error') {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+          const EX = globalThis[msg.name] || DOMException || Error;
+          reject(new EX(msg.error, msg.name));
+        }
+      };
+
+      const onError = (err) => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+        reject(err);
+      };
+
+      worker.addEventListener('message', onMessage);
+      worker.addEventListener('error', onError);
+
+      cleanup = () => {
+        worker.removeEventListener('message', onMessage);
+        worker.removeEventListener('error', onError);
+      };
+    });
+
+    let abortHandler = null;
+    if (options.signal) {
+      abortHandler = () => {
+        cleanup?.();
+        worker.terminate();
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+        downloadingModels.delete(modelId);
+      };
+      options.signal.addEventListener('abort', abortHandler, { once: true });
+    }
+
     try {
-      [tokenizer, model] = await Promise.all([
-        AutoTokenizer.from_pretrained(modelId, {
-          progress_callback: progressCallback,
-        }),
-        AutoModel.from_pretrained(modelId, {
-          dtype,
-          progress_callback: progressCallback,
-        }),
-      ]);
+      worker.postMessage({
+        type: 'init',
+        modelId,
+        dtype,
+        hasMonitor: !!options.monitor,
+      });
+
+      await readyPromise;
+    } catch (err) {
+      worker.terminate();
+      throw err;
     } finally {
+      cleanup?.();
+      if (options.signal && abortHandler) {
+        options.signal.removeEventListener('abort', abortHandler);
+      }
       downloadingModels.delete(modelId);
     }
 
-    if (options.signal?.aborted) {
-      model.dispose?.();
-      throw options.signal.reason || new DOMException('Aborted', 'AbortError');
-    }
-
-    // Spec: fire loaded=1 once the model is fully loaded and ready.
     fireProgressEvent?.(1);
 
-    const embedder = new this(tokenizer, model, modelId);
+    const embedder = new this(worker, modelId);
 
     if (options.signal) {
       options.signal.addEventListener(
@@ -255,47 +530,46 @@ export class SemanticEmbedder {
       };
     }
 
-    // Apply EmbeddingGemma's task-specific prefixes before tokenization.
-    const taskType = options.taskType ?? 'document';
-    const prefixedInputs = inputs.map((text) => applyPrefix(text, taskType));
+    const requestId = ++this.#nextRequestId;
 
-    const tokenized = await this.#tokenizer(prefixedInputs, {
-      padding: true,
-      truncation: true,
-      max_length: MAX_INPUT_TOKENS,
+    return new Promise((resolve, reject) => {
+      let onAbort = null;
+
+      if (signal) {
+        onAbort = () => {
+          this.#pendingRequests.delete(requestId);
+          this.#worker?.postMessage({ type: 'abort-embed', requestId });
+          reject(signal.reason || new DOMException('Aborted', 'AbortError'));
+        };
+        signal.addEventListener('abort', onAbort, { once: true });
+      }
+
+      this.#pendingRequests.set(requestId, {
+        resolve: (result) => {
+          if (onAbort) {
+            signal.removeEventListener('abort', onAbort);
+          }
+          resolve(result);
+        },
+        reject: (err) => {
+          if (onAbort) {
+            signal.removeEventListener('abort', onAbort);
+          }
+          reject(err);
+        },
+      });
+
+      this.#worker?.postMessage({
+        type: 'embed',
+        requestId,
+        inputs,
+        options: {
+          taskType: options.taskType ?? 'document',
+        },
+      });
     });
-
-    if (signal?.aborted) {
-      throw signal.reason || new DOMException('Aborted', 'AbortError');
-    }
-
-    // EmbeddingGemma returns `sentence_embedding` directly — a [n, 768] tensor.
-    const { sentence_embedding } = await this.#model(tokenized);
-
-    if (signal?.aborted) {
-      throw signal.reason || new DOMException('Aborted', 'AbortError');
-    }
-
-    const dim = sentence_embedding.dims[1];
-    const data = sentence_embedding.data; // flat Float32Array of length n*768
-
-    const embeddings = inputs.map((_, i) => ({
-      values: data.slice(i * dim, (i + 1) * dim),
-    }));
-
-    return {
-      embeddings,
-      metadata: {
-        embeddingSpace: this.#modelId,
-        maxInputTokens: MAX_INPUT_TOKENS,
-      },
-    };
   }
 
-  /**
-   * Computes cosine similarity between two embedding vectors.
-   * Useful for semantic search ranking.
-   */
   static cosineSimilarity(a, b) {
     if (a.length !== b.length) {
       throw new RangeError('Embedding vectors must have the same dimension.');
@@ -326,9 +600,15 @@ export class SemanticEmbedder {
     this.#destructionReason =
       reason ||
       new DOMException('The embedder has been destroyed.', 'AbortError');
-    this.#model?.dispose?.();
-    this.#model = null;
-    this.#tokenizer = null;
+
+    const err = this.#destructionReason;
+    for (const req of this.#pendingRequests.values()) {
+      req.reject(err);
+    }
+    this.#pendingRequests.clear();
+
+    this.#worker?.terminate();
+    this.#worker = null;
   }
 }
 
