@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LiteRT-LM JS Demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      #out {
+        white-space: pre-wrap;
+        font-family: monospace;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 1rem;
+        min-height: 200px;
+        margin-bottom: 1rem;
+        background: #f9f9f9;
+      }
+      #in {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 1rem;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-DpmEgy2t.js"></script>
+  </head>
+  <body>
+    <h1>LiteRT-LM JS Demo</h1>
+    <p id="status">Initializing…</p>
+    <div id="out"></div>
+    <input id="in" placeholder="Type a message and press Enter…" disabled />
+  </body>
+</html>
