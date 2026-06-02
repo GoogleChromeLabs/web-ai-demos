@@ -6,6 +6,11 @@ when available, with the
 [Cache API](https://developer.mozilla.org/en-US/docs/Web/API/Cache) as an
 automatic fallback.
 
+**Progressive enhancement** — the library works without any configuration
+regardless of browser support. If COS is available it is used automatically; if
+not, the Cache API takes over transparently. No feature-detection or
+conditionals needed in your code.
+
 **Why COS?** The Cache API stores a separate copy per origin. COS stores a
 single copy keyed by content hash that every origin on the device can reuse.
 This means a 2 GB model downloaded by one site is instantly available to any
@@ -90,7 +95,7 @@ const blob = await fetchBlob(modelUrl, {
 });
 ```
 
-### npm packages
+### Resources from npm
 
 For any resource hosted on npm, SHA-256 hashes are available because npm
 packages are mirrored on jsDelivr, which exposes a per-file hash for every
@@ -110,7 +115,7 @@ const blob = await fetchBlob(cdnUrl, {
       'your-package@x.y.z/path/to/resource.bin'
     );
     if (result.status !== 'fulfilled') throw result.reason;
-    return result.value;
+    return result.value.hexHash;
   },
 });
 ```
