@@ -15,13 +15,14 @@ function setStatus(msg) {
 }
 
 setStatus('Fetching model…');
+
 const modelBlob = await fetchBlob(MODEL_URL, {
   onProgress({ loaded, total }) {
     const loadedGB = (loaded / 1e9).toFixed(2);
     if (total) {
-      const pct = ((loaded / total) * 100).toFixed(1);
+      const percent = ((loaded / total) * 100).toFixed(1);
       const totalGB = (total / 1e9).toFixed(2);
-      setStatus(`Downloading… ${pct}% (${loadedGB} / ${totalGB} GB)`);
+      setStatus(`Downloading… ${percent}% (${loadedGB} / ${totalGB} GB)`);
     } else {
       setStatus(`Downloading… ${loadedGB} GB`);
     }
@@ -29,6 +30,7 @@ const modelBlob = await fetchBlob(MODEL_URL, {
 });
 
 setStatus('Loading engine…');
+
 const engine = await Engine.create({ model: modelBlob.stream() });
 const chat = await engine.createConversation();
 
@@ -38,12 +40,13 @@ input.focus();
 
 input.addEventListener('keydown', async (event) => {
   if (event.key !== 'Enter') return;
-  const text = input.value;
+  const text = input.value.trim();
   input.value = '';
   out.append(`\n>>> ${text}\nAI: `);
   input.disabled = true;
 
-  for await (const chunk of chat.sendMessageStreaming(text)) {
+  const stream = chat.sendMessageStreaming(text);
+  for await (const chunk of stream) {
     out.append(chunk.content[0].text);
   }
 

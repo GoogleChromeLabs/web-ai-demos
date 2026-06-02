@@ -4,7 +4,7 @@ const SHA256_CACHE_NAME = 'cos-resource-fetcher-sha256';
 // Two-level SHA-256 lookup cache: in-memory (session) + Cache API (persistent).
 const sha256Memory = new Map();
 
-async function resolveSha256(url, getSha256) {
+async function resolveSha256(url, getSHA256) {
   if (sha256Memory.has(url)) return sha256Memory.get(url);
 
   const cache = await caches.open(SHA256_CACHE_NAME);
@@ -15,7 +15,7 @@ async function resolveSha256(url, getSha256) {
     return hash;
   }
 
-  const hash = await getSha256(url);
+  const hash = await getSHA256(url);
   sha256Memory.set(url, hash);
   // Fire-and-forget; failure is non-fatal (in-memory copy still valid for this session)
   cache.put(
@@ -33,7 +33,7 @@ async function resolveSha256(url, getSha256) {
  * @param {string} resolveUrl - A Hugging Face /resolve/ URL
  * @returns {Promise<string>} Lowercase hex SHA-256 string
  */
-export async function getHuggingFaceSha256(resolveUrl) {
+export async function getHuggingFaceSHA256(resolveUrl) {
   const rawUrl = resolveUrl.replace('/resolve/', '/raw/');
   const res = await fetch(rawUrl);
   if (!res.ok) throw new Error(`LFS pointer fetch failed: ${res.status}`);
@@ -80,7 +80,8 @@ async function fetchViaCOS(url, { sha256, onProgress }) {
     const [handle] = await navigator.crossOriginStorage.requestFileHandles([
       hash,
     ]);
-    return handle.getFile();
+    const file = await handle.getFile();
+    return new Blob([file], { type: file.type });
   } catch (err) {
     if (err.name !== 'NotFoundError') throw err;
 
@@ -127,13 +128,17 @@ async function fetchViaCache(url, { onProgress, cacheName }) {
 /**
  * Fetches a resource as a Blob using Cross-Origin Storage (COS) when available,
  * with the Cache API as fallback. By default resolves the required SHA-256 via
- * Hugging Face's Git LFS pointer, but any custom resolver can be passed in.
+ * Hugging Face's Git LFS pointer, but a pre-computed hash or a custom resolver
+ * can be passed in.
  *
  * @param {string} url - Resource URL (e.g. a Hugging Face /resolve/ URL)
  * @param {object} [options]
- * @param {(url: string) => Promise<string>} [options.getSha256]
- *   Returns the lowercase hex SHA-256 for the resource at `url`.
- *   Defaults to {@link getHuggingFaceSha256}.
+ * @param {string} [options.sha256]
+ *   Lowercase hex SHA-256 of the resource, if already known. Takes precedence
+ *   over `getSHA256`.
+ * @param {(url: string) => Promise<string>} [options.getSHA256]
+ *   Returns the lowercase hex SHA-256 for the resource at `url`. Only called
+ *   when `sha256` is not provided. Defaults to {@link getHuggingFaceSHA256}.
  * @param {(progress: { loaded: number, total: number | null }) => void} [options.onProgress]
  *   Called with running byte counts whenever a network fetch is in progress.
  * @param {string} [options.cacheName]
@@ -143,14 +148,15 @@ async function fetchViaCache(url, { onProgress, cacheName }) {
  */
 export async function fetchBlob(url, options = {}) {
   const {
-    getSha256 = getHuggingFaceSha256,
+    sha256: directSha256,
+    getSHA256 = getHuggingFaceSHA256,
     onProgress,
     cacheName = DEFAULT_CACHE_NAME,
   } = options;
 
   if ('crossOriginStorage' in navigator) {
     try {
-      const sha256 = await resolveSha256(url, getSha256);
+      const sha256 = directSha256 ?? (await resolveSha256(url, getSHA256));
       return await fetchViaCOS(url, { sha256, onProgress });
     } catch (err) {
       if (err.name !== 'NotAllowedError') throw err;
