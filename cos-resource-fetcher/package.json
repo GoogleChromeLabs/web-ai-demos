@@ -1,0 +1,13 @@
+{
+  "name": "cos-resource-fetcher",
+  "version": "0.1.0",
+  "description": "Fetch resource blobs via Cross-Origin Storage (COS) with Cache API fallback. Defaults to Hugging Face SHA-256 resolution, but accepts any custom resolver.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "license": "Apache-2.0"
+}
