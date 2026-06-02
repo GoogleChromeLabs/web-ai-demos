@@ -21,6 +21,12 @@
         margin-bottom: 1rem;
         background: #f9f9f9;
       }
+      #model {
+        font-size: 1rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
       #in {
         width: 100%;
         padding: 0.5rem;
@@ -33,6 +39,13 @@
   </head>
   <body>
     <h1>LiteRT-LM JS Demo</h1>
+    <p>
+      <label for="model">Model:</label>
+      <select id="model" disabled>
+        <option value="e2b">Gemma 4 E2B (1.87 GB)</option>
+        <option value="e4b">Gemma 4 E4B (2.77 GB)</option>
+      </select>
+    </p>
     <p id="status">Initializing…</p>
     <div id="out"></div>
     <input id="in" placeholder="Type a message and press Enter…" disabled />
