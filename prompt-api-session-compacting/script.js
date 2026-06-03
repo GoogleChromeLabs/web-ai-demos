@@ -109,11 +109,14 @@ function splitByCodeFences(text) {
 }
 
 async function summarizeText(text, role, summarizer) {
-  const summary = await summarizer.summarize(text, {
-    context:
-      `This is a ${role} turn from a chat conversation. ` +
-      `Preserve its key meaning as concisely as possible.`,
-  });
+  const summary = await summarizer.summarize(
+    text.trim().replace(/\n{3,}/g, '\n\n'),
+    {
+      context:
+        `This is a ${role} turn from a chat conversation. ` +
+        `Preserve its key meaning as concisely as possible.`,
+    }
+  );
   const trimmed = summary.trim();
   return trimmed.length < text.length ? trimmed : text;
 }
