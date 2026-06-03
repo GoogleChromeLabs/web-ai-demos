@@ -1,0 +1,58 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LiteRT-LM JS Demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      #out {
+        white-space: pre-wrap;
+        font-family: monospace;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 1rem;
+        min-height: 200px;
+        margin-bottom: 1rem;
+        background: #f9f9f9;
+      }
+      #model {
+        font-size: 1rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      #in {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 1rem;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-FjipSrFq.js"></script>
+  </head>
+  <body>
+    <h1>LiteRT-LM JS Demo</h1>
+    <p>
+      <label for="model">Model:</label>
+      <select id="model" disabled>
+        <option value="e2b">Gemma 4 E2B (2.01 GB)</option>
+        <option value="e4b">Gemma 4 E4B (2.97 GB)</option>
+      </select>
+    </p>
+    <p id="status">Initializing…</p>
+    <div id="out"></div>
+    <input id="in" placeholder="Type a message and press Enter…" disabled />
+  </body>
+</html>

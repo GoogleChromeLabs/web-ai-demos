@@ -1,0 +1,20 @@
+{
+  "name": "litert-lm-js",
+  "version": "1.0.0",
+  "description": "LiteRT-LM JS demo — uses cos-resource-fetcher for progressive model caching via COS and Cache API",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@litert-lm/core": "^0.12.1",
+    "cos-resource-fetcher": "file:.."
+  },
+  "devDependencies": {
+    "vite": "^8.0.16"
+  },
+  "license": "Apache-2.0",
+  "private": true
+}
