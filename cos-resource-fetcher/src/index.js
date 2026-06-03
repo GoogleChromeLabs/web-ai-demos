@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 const DEFAULT_CACHE_NAME = 'cos-resource-fetcher';
 const SHA256_CACHE_NAME = 'cos-resource-fetcher-sha256';
 
