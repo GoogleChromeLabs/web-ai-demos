@@ -1,0 +1,194 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright 2026 Google LLC
+ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: monospace;
+  font-size: 14px;
+  max-width: 1028px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: #111;
+}
+h1 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+p.subtitle {
+  color: #555;
+  margin-bottom: 1.25rem;
+}
+
+/* Status bar */
+#status {
+  padding: 0.4rem 0.6rem;
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  margin-bottom: 0.75rem;
+}
+
+/* Download progress */
+#dl-progress {
+  width: 100%;
+  display: none;
+  margin-bottom: 0.75rem;
+}
+
+/* Token meter */
+#token-row {
+  margin-bottom: 0.75rem;
+}
+#token-label {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+#token-bar {
+  height: 12px;
+  background: #e8e8e8;
+  border: 1px solid #ccc;
+}
+#token-fill {
+  height: 100%;
+  background: #3a7;
+  width: 0%;
+  transition: width 0.25s;
+}
+#token-fill.warn {
+  background: #e93;
+}
+#token-fill.danger {
+  background: #c33;
+}
+
+/* Chat window */
+#chat {
+  border: 1px solid #ccc;
+  height: 380px;
+  overflow-y: auto;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #fafafa;
+}
+.msg {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.msg .label {
+  font-weight: bold;
+}
+.msg.user .label {
+  color: #00c;
+}
+.msg.assistant .label {
+  color: #080;
+}
+.msg.system {
+  color: #888;
+  font-style: italic;
+  border-top: 1px dashed #ddd;
+  border-bottom: 1px dashed #ddd;
+  padding: 0.3rem 0;
+}
+
+/* Input row */
+#input-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+#user-input {
+  flex: 1;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 0.4rem;
+  border: 1px solid #ccc;
+}
+button {
+  font-family: monospace;
+  font-size: 14px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  border: 1px solid #999;
+  background: #eee;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#compact-btn {
+  background: #ff9;
+  border-color: #a80;
+}
+
+/* Compaction log */
+#compact-log {
+  margin-top: 0.75rem;
+}
+
+/* Debug section */
+#debug-details {
+  margin-top: 1rem;
+}
+#debug-details summary {
+  cursor: pointer;
+  user-select: none;
+}
+#debug-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+#debug-cols h3 {
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+  color: #444;
+}
+#debug-cols pre {
+  background: #f6f6f6;
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  overflow: auto;
+  max-height: 280px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  min-width: 0;
+}
+
+.compact-entry {
+  border: 1px solid #a80;
+  background: #fffbe6;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+}
+.compact-entry .entry-title {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+.compact-entry table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.compact-entry td {
+  padding: 0.1rem 0.4rem;
+}
+.compact-entry td:first-child {
+  color: #555;
+  width: 6rem;
+}
+.compact-entry .reduction {
+  color: #060;
+  font-weight: bold;
+}
+.compact-entry .reduction.bad {
+  color: #a00;
+}

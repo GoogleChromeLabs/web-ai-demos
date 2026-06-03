@@ -1,0 +1,62 @@
+<!--
+  SPDX-License-Identifier: Apache-2.0
+  Copyright 2026 Google LLC
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Session Compacting — Prompt API + Summarizer API</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Session Compacting — Prompt API + Summarizer API</h1>
+    <p class="subtitle">
+      Chat with the Prompt API. Press <strong>Compact session</strong> to detect
+      the language of each message with the Language Detector API, summarize it
+      with the Summarizer API, restart the session with the summaries as
+      <code>initialPrompts</code>, and see the token reduction.
+    </p>
+
+    <div id="status">Initializing…</div>
+    <progress id="dl-progress"></progress>
+
+    <div id="token-row">
+      <span id="token-label">Context: — / — tokens</span>
+      <div id="token-bar"><div id="token-fill"></div></div>
+    </div>
+
+    <div id="chat"></div>
+
+    <div id="input-row">
+      <input
+        id="user-input"
+        type="text"
+        placeholder="Type a message…"
+        disabled
+        autocomplete="off"
+      />
+      <button id="send-btn" disabled>Send</button>
+      <button id="compact-btn" disabled>Compact session</button>
+    </div>
+
+    <div id="compact-log"></div>
+
+    <details id="debug-details">
+      <summary>Debug: conversation JSON</summary>
+      <div id="debug-cols">
+        <div>
+          <h3>Regular (full history)</h3>
+          <pre id="pre-regular">(no messages yet)</pre>
+        </div>
+        <div>
+          <h3>Compacted (last compaction)</h3>
+          <pre id="pre-compacted">(not yet compacted)</pre>
+        </div>
+      </div>
+    </details>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
