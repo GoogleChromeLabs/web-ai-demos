@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, FileText, Loader2, Plus, Trash2, AlertCircle, Bot, Scan, Info, CheckCircle2 } from 'lucide-react';
 import exampleInvoiceUrl from '../invoice-example.png';

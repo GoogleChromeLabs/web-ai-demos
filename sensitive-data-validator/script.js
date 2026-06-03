@@ -1,4 +1,9 @@
 /**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Sensitive Data Validator
  * Uses Chrome's built-in Prompt API (Gemini Nano) to detect sensitive
  * information in messages before "sending" them to support.
