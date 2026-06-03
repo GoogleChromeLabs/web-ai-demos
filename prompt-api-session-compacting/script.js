@@ -147,15 +147,27 @@ async function getSummarizer(format, lang) {
   if (summarizers[key]) return summarizers[key];
 
   setStatus('Checking Summarizer API availability…');
-  const sumOptions = {
+
+  // Base options shared by both preference levels.
+  // expectedContextLanguages covers the `context` string passed at summarize time.
+  const baseOptions = {
     type: 'tldr',
     format,
     length: 'short',
-    preference: 'speed',
     expectedInputLanguages: [lang],
+    expectedContextLanguages: [lang],
     outputLanguage: lang,
   };
-  const sumAvail = await Summarizer.availability(sumOptions);
+
+  // Prefer 'speed' (smaller model, lower latency), but fall back to 'auto'
+  // if the smaller model doesn't support the requested language configuration.
+  let sumOptions = { ...baseOptions, preference: 'speed' };
+  let sumAvail = await Summarizer.availability(sumOptions);
+
+  if (sumAvail === 'unavailable') {
+    sumOptions = { ...baseOptions, preference: 'auto' };
+    sumAvail = await Summarizer.availability(sumOptions);
+  }
 
   if (sumAvail === 'unavailable') {
     throw new Error('Summarizer API is unavailable on this device.');
