@@ -1,0 +1,198 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright 2026 Google LLC
+ */
+
+:root {
+  color-scheme: dark light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  max-width: 1028px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: light-dark(#111, #eee);
+}
+h1 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+p.subtitle {
+  color: light-dark(#555, #aaa);
+  margin-bottom: 1.25rem;
+}
+
+/* Status bar */
+#status {
+  padding: 0.4rem 0.6rem;
+  background: light-dark(#f4f4f4, #222);
+  border: 1px solid light-dark(#ddd, #444);
+  margin-bottom: 0.75rem;
+}
+
+/* Download progress */
+#dl-progress {
+  width: 100%;
+  display: none;
+  margin-bottom: 0.75rem;
+}
+
+/* Token meter */
+#token-row {
+  margin-bottom: 0.75rem;
+}
+#token-label {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+#token-bar {
+  height: 12px;
+  background: light-dark(#e8e8e8, #333);
+  border: 1px solid light-dark(#ccc, #555);
+}
+#token-fill {
+  height: 100%;
+  background: #3a7;
+  width: 0%;
+  transition: width 0.25s;
+}
+#token-fill.warn {
+  background: #e93;
+}
+#token-fill.danger {
+  background: #c33;
+}
+
+/* Chat window */
+#chat {
+  border: 1px solid light-dark(#ccc, #444);
+  height: 380px;
+  overflow-y: auto;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: light-dark(#fafafa, #1a1a1a);
+}
+.msg {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.msg .label {
+  font-weight: bold;
+}
+.msg.user .label {
+  color: light-dark(#00c, #7af);
+}
+.msg.assistant .label {
+  color: light-dark(#080, #4c4);
+}
+.msg.system {
+  color: light-dark(#888, #777);
+  font-style: italic;
+  border-top: 1px dashed light-dark(#ddd, #444);
+  border-bottom: 1px dashed light-dark(#ddd, #444);
+  padding: 0.3rem 0;
+}
+
+/* Input row */
+#input-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+#user-input {
+  flex: 1;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 0.4rem;
+  border: 1px solid light-dark(#ccc, #555);
+}
+button {
+  font-family: monospace;
+  font-size: 14px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  border: 1px solid light-dark(#999, #666);
+  background: light-dark(#eee, #333);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#compact-btn {
+  background: light-dark(#ff9, #3a2800);
+  border-color: light-dark(#a80, #c90);
+}
+
+/* Compaction log */
+#compact-log {
+  margin-top: 0.75rem;
+}
+
+/* Debug section */
+#debug-details {
+  margin-top: 1rem;
+}
+#debug-details summary {
+  cursor: pointer;
+  user-select: none;
+}
+#debug-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+#debug-cols h3 {
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+  color: light-dark(#444, #bbb);
+}
+#debug-cols pre {
+  background: light-dark(#f6f6f6, #222);
+  border: 1px solid light-dark(#ddd, #444);
+  padding: 0.5rem;
+  overflow: auto;
+  max-height: 280px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  min-width: 0;
+}
+
+.compact-entry {
+  border: 1px solid light-dark(#a80, #c90);
+  background: light-dark(#fffbe6, #2a2300);
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+}
+.compact-entry .entry-title {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+.compact-entry table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.compact-entry td {
+  padding: 0.1rem 0.4rem;
+}
+.compact-entry td:first-child {
+  color: light-dark(#555, #aaa);
+  width: 6rem;
+}
+.compact-entry .reduction {
+  color: light-dark(#060, #5d5);
+  font-weight: bold;
+}
+.compact-entry .reduction.bad {
+  color: light-dark(#a00, #f66);
+}
