@@ -57,7 +57,14 @@ async function fetchWithProgress(url, onProgress) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Network error: ${res.status}`);
 
-  const total = Number(res.headers.get('Content-Length')) || null;
+  // When Content-Encoding is present (e.g. br, gzip) the browser decodes the
+  // body transparently, so the reader yields decompressed bytes while
+  // Content-Length reflects the compressed transfer size. Using that as total
+  // would cause loaded to overshoot. Signal unknown (null) instead so callers
+  // can substitute an authoritative total (e.g. from a registry) if they have one.
+  const total = res.headers.get('Content-Encoding')
+    ? null
+    : Number(res.headers.get('Content-Length')) || null;
   let loaded = 0;
   const chunks = [];
   const reader = res.body.getReader();
