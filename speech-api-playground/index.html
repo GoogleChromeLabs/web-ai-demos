@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Speech API Playground</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="column">
+            <h2>Options</h2>
+            <div class="option-group">
+                <label for="lang-input">Language (e.g., "en-US", "es-ES")</label>
+                <input type="text" id="lang-input" value="en-US">
+            </div>
+            <div class="option-group">
+                <label for="process-locally-check">
+                    <input type="checkbox" id="process-locally-check"> Process Locally
+                </label>
+                <label for="continuous-check">
+                    <input type="checkbox" id="continuous-check" checked> Continuous
+                </label>
+                <label for="interim-results-check">
+                    <input type="checkbox" id="interim-results-check" checked> Interim Results
+                </label>
+                <label for="unspoken-punctuation-check">
+                    <input type="checkbox" id="unspoken-punctuation-check" checked> Unspoken Punctuation
+                </label>
+            </div>
+            <div class="option-group">
+                <label for="quality-select">Quality</label>
+                <select id="quality-select">
+                    <option value="">(None)</option>
+                    <option value="command">Command</option>
+                    <option value="dictation">Dictation</option>
+                    <option value="conversation">Conversation</option>
+                </select>
+            </div>
+
+            <div class="option-group">
+                <label>Contextual Biasing Phrases</label>
+                <p class="description">Add phrases and a boost value (0.1-20.0) to increase their recognition probability.</p>
+                <div id="phrases-container">
+                    <!-- Phrase rows will be added here dynamically -->
+                </div>
+                <button id="add-phrase-btn" class="add-btn">+</button>
+            </div>
+
+            <h2>On-device</h2>
+            <p>Manage on-device speech models for local processing.</p>
+            <div class="button-group on-device-buttons">
+                <button id="check-availability-btn">Check Availability</button>
+                <button id="install-btn">Install</button>
+            </div>
+
+            <h2>Audio Source</h2>
+            <p>Use this audio file as the speech input source.</p>
+            <audio id="audio-source" src="recognition_audio.mp3" controls></audio>
+
+            <h2>Execute</h2>
+            <p>Start recognition from your microphone.</p>
+            <div class="button-group">
+                <button id="execute-btn">Start recognition from microphone</button>
+                <button id="stop-btn">Stop</button>
+            </div>
+
+            <h2>Output</h2>
+            <div id="output" class="output-box">
+                <p>Results will appear here...</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <h2>JavaScript Code</h2>
+            <p>The code below updates as you change the options. You can also edit it directly.</p>
+            <pre><code id="code-display" contenteditable="true">
+                </code></pre>
+            
+            <div class="security-warning">
+                <strong>Security Note:</strong> This playground executes user-edited code.
+                Only run code you understand.
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
