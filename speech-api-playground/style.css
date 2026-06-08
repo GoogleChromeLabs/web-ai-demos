@@ -1,0 +1,205 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.column {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+h2 {
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+
+.description {
+    font-size: 14px;
+    color: #666;
+    margin-top: -5px;
+}
+
+.option-group {
+    margin-bottom: 20px;
+}
+
+.option-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.option-group input[type="text"],
+.option-group select {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.option-group select {
+    appearance: none;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1em;
+    padding-right: 30px;
+    cursor: pointer;
+}
+
+.option-group select:focus,
+.option-group input[type="text"]:focus {
+    outline: none;
+    border-color: #007aff;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+.option-group input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.phrase-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.phrase-row input[type="text"],
+.phrase-row input[type="number"] {
+    flex: 1; /* Make both inputs share space equally */
+}
+
+.add-btn, .remove-phrase-btn {
+    background-color: #e0e0e0;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+    line-height: 26px; /* Center the text */
+    text-align: center;
+    padding: 0;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.remove-phrase-btn {
+    background-color: #ffdddd;
+}
+
+.button-group {
+    margin-bottom: 20px;
+}
+
+.button-group button {
+    background-color: AccentColor;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.on-device-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.on-device-buttons button {
+    flex: 1; /* Make buttons share space equally */
+    background-color: AccentColor;
+}
+
+#execute-with-audio-btn {
+    background-color: AccentColor;
+}
+
+.button-group button:hover {
+    opacity: 0.85;
+}
+
+#audio-source {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.note {
+    font-size: 13px;
+    color: #555;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: -5px;
+}
+
+.output-box {
+    background-color: #f5f5f5;
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 4px;
+    min-height: 100px;
+    font-family: "Courier New", Courier, monospace;
+}
+
+.metrics {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #e8f0fe;
+    border: 1px solid #c2d7fa;
+    border-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+}
+
+.metrics p {
+    margin: 5px 0;
+}
+
+pre {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    overflow-x: auto;
+    white-space: pre-wrap; /* Allows code to wrap */
+    word-wrap: break-word;
+}
+
+code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    outline: none; /* Removes outline when contenteditable is focused */
+}
+
+.security-warning {
+    font-size: 12px;
+    color: #888;
+    margin-top: 15px;
+    text-align: center;
+}
