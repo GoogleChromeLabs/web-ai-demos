@@ -68,6 +68,7 @@ try {
     }
 
     const recognition = new SpeechRecognition();
+    window.currentRecognition = recognition;
 
     // Timing and metrics variables
     let startTime = 0;
@@ -136,11 +137,7 @@ ${phrasesCode}
             </div>
         \`;
 
-        if (!${isProcessLocally}) {
-            output.innerHTML += metricsHtml + "<p>(Recognition finished)</p>";
-        } else {
-             output.innerHTML += metricsHtml + "<p>(Restarting...)</p>";
-        }
+        output.innerHTML += metricsHtml + "<p>(Recognition ended.)</p>";
     };
 
     // Start the recognition
@@ -159,6 +156,10 @@ ${phrasesCode}
     // --- 2. Execution Logic ---
     
     function executeCode() {
+        if (window.currentRecognition) {
+            try { window.currentRecognition.stop(); } catch (e) {}
+            window.currentRecognition = null;
+        }
         // Get the *current* text from the editable code block
         const userCode = codeDisplay.textContent;
 
@@ -178,6 +179,10 @@ ${phrasesCode}
 
     // --- 2b. Function to Execute with Audio Track ---
     async function executeWithAudioTrack() {
+        if (window.currentRecognition) {
+            try { window.currentRecognition.stop(); } catch (e) {}
+            window.currentRecognition = null;
+        }
         const output = document.getElementById('output');
         output.innerHTML = "<p>Initializing speech recognition with audio track...</p>";
 
@@ -199,6 +204,7 @@ ${phrasesCode}
 
             // This is the correct implementation: create a standard recognition object.
             const recognition = new SpeechRecognition();
+            window.currentRecognition = recognition;
             const audioTrack = audioTracks[0];
 
             // Timing and metrics variables
@@ -418,6 +424,16 @@ ${phrasesCode}
 
     // Attach event listeners
     executeBtn.addEventListener('click', executeCode);
+    stopBtn.addEventListener('click', () => {
+        if (!audioSource.paused) {
+            audioSource.pause();
+        }
+        if (window.currentRecognition) {
+            try { window.currentRecognition.stop(); } catch (e) {}
+            window.currentRecognition = null;
+            outputEl.innerHTML += '<p>(Stopped by user.)</p>';
+        }
+    });
     checkAvailabilityBtn.addEventListener('click', checkAvailability);
     installBtn.addEventListener('click', installModel);
     audioSource.addEventListener('play', executeWithAudioTrack);
