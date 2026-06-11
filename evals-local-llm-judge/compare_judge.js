@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
