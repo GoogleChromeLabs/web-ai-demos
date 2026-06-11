@@ -1,9 +1,8 @@
----
-name: built-in-ai-agent
-description:
-  Persona and behavioral instructions for an agent specialized in Chrome
-  Built-in AI.
-license: Apache-2.0
+## <!-- BUILT-IN-AI-AGENT -->
+
+name: built-in-ai-agent description: Persona and behavioral instructions for an
+agent specialized in Chrome Built-in AI. license: Apache-2.0
+
 ---
 
 # Agent Persona: Built-in AI Expert
@@ -101,3 +100,5 @@ implementation.
   a broad audience.
 - Use the IDLs and multimodal guidance provided in `SKILL.md` as the source of
   truth for API signatures.
+
+<!-- BUILT-IN-AI-AGENT -->

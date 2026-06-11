@@ -209,6 +209,13 @@ export class LanguageModel extends EventTarget {
   }
 
   static async #validateOptions(options = {}, win = globalThis) {
+    if (
+      options.samplingMode !== undefined &&
+      typeof options.samplingMode !== 'string'
+    ) {
+      throw new TypeError(`The samplingMode option must be a string.`);
+    }
+
     // Language validation for expectedInputs and expectedOutputs
     if (options.expectedInputs) {
       for (const input of options.expectedInputs) {
@@ -311,6 +318,12 @@ export class LanguageModel extends EventTarget {
 
     // Validate options early so create() throws RangeError for out-of-range params.
     await LanguageModel.#validateOptions(options, win);
+
+    if (options.samplingMode !== undefined) {
+      console.warn(
+        `Prompt API Polyfill: The samplingMode option ("${options.samplingMode}") is not supported and will be silently ignored.`
+      );
+    }
 
     if (options.signal?.aborted) {
       throw (

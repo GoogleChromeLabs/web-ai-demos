@@ -81,7 +81,7 @@ implementation.
 
 | Feature / Member   | Extension Context (Deprecated, but still working) | Modern Web AI (Standard)                |
 | :----------------- | :------------------------------------------------ | :-------------------------------------- |
-| **Parameters**     | `topK`, `temperature`                             | N/A                                     |
+| **Parameters**     | `topK`, `temperature`                             | `samplingMode`                          |
 | **Session Info**   | `LanguageModel.params()`, `LanguageModelParams`   | N/A                                     |
 | **Usage Tracking** | `measureInputUsage()`, `inputUsage`               | `measureContextUsage()`, `contextUsage` |
 | **Quota/Window**   | `inputQuota`, `onquotaoverflow`                   | `contextWindow`, `oncontextoverflow`    |
