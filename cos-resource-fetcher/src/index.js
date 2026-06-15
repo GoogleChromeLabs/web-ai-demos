@@ -89,9 +89,7 @@ async function fetchViaCOS(url, { sha256, onProgress }) {
   const hash = { algorithm: 'SHA-256', value: sha256 };
 
   try {
-    const [handle] = await navigator.crossOriginStorage.requestFileHandles([
-      hash,
-    ]);
+    const handle = await navigator.crossOriginStorage.requestFileHandle(hash);
     const file = await handle.getFile();
     return new Blob([file], { type: file.type });
   } catch (err) {
@@ -100,8 +98,8 @@ async function fetchViaCOS(url, { sha256, onProgress }) {
     // Not yet in COS: download, then store for future use by any origin
     const blob = await fetchWithProgress(url, onProgress);
     try {
-      const [handle] = await navigator.crossOriginStorage.requestFileHandles(
-        [hash],
+      const handle = await navigator.crossOriginStorage.requestFileHandle(
+        hash,
         {
           create: true,
           origins: '*',
