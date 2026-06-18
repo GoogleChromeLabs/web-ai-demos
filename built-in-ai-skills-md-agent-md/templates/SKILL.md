@@ -202,7 +202,6 @@ Below are the latest Web IDLs for these APIs, extracted from the official
 specifications.
 
 <!-- BEGIN IDLS -->
-
 ### Translation API
 
 ```webidl
@@ -311,6 +310,7 @@ interface Summarizer {
   readonly attribute SummarizerType type;
   readonly attribute SummarizerFormat format;
   readonly attribute SummarizerLength length;
+  // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   readonly attribute PerformancePreference preference;
 
   readonly attribute FrozenArray<DOMString>? expectedInputLanguages;
@@ -329,6 +329,7 @@ dictionary SummarizerCreateCoreOptions {
   SummarizerType type = "key-points";
   SummarizerFormat format = "markdown";
   SummarizerLength length = "short";
+  // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   PerformancePreference preference = "auto";
 
   sequence<DOMString> expectedInputLanguages;
@@ -499,7 +500,7 @@ interface mixin DestroyableModel {
 interface LanguageModel : EventTarget {
   static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
   static Promise<Availability> availability(optional LanguageModelCreateCoreOptions options = {});
-  // **DEPRECATED**: This method is only available in extension contexts.
+  // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   static Promise<LanguageModelParams?> params();
 
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
@@ -537,16 +538,18 @@ interface LanguageModel : EventTarget {
   // **DEPRECATED**: This attribute is only available in extension contexts.
   attribute EventHandler onquotaoverflow;
 
-  // **DEPRECATED**: This attribute is only available in extension contexts.
+  // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   readonly attribute unsigned long topK;
-  // **DEPRECATED**: This attribute is only available in extension contexts.
+  // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   readonly attribute float temperature;
 
-  Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
-  undefined destroy();
-};
+  readonly attribute LanguageModelSamplingMode samplingMode;
 
-// **DEPRECATED**: This interface and its attributes are only available in extension contexts.
+  Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
+};
+LanguageModel includes DestroyableModel;
+
+// **EXPERIMENTAL**: Only available in extension and experimental contexts.
 [Exposed=Window, SecureContext]
 interface LanguageModelParams {
   readonly attribute unsigned long defaultTopK;
@@ -571,10 +574,12 @@ dictionary LanguageModelTool {
 dictionary LanguageModelCreateCoreOptions {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
-  // **DEPRECATED**: This option is only allowed in extension contexts.
+  // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   unrestricted double topK;
-  // **DEPRECATED**: This option is only allowed in extension contexts.
+  // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   unrestricted double temperature;
+
+  LanguageModelSamplingMode samplingMode = "default";
 
   sequence<LanguageModelExpected> expectedInputs;
   sequence<LanguageModelExpected> expectedOutputs;
@@ -629,9 +634,11 @@ dictionary LanguageModelMessageContent {
   required LanguageModelMessageValue value;
 };
 
+enum LanguageModelSamplingMode { "most-predictable", "predictable", "balanced", "creative", "most-creative" };
+
 enum LanguageModelMessageRole { "system", "user", "assistant" };
 
-enum LanguageModelMessageType { "text", "image", "audio" };
+enum LanguageModelMessageType { "text", "image", "audio", "tool-call", "tool-response" };
 
 typedef (
   ImageBitmapSource

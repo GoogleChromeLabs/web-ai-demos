@@ -1,13 +1,14 @@
 {
   "name": "built-in-ai-skills-md-agent-md",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "update-idls": "node scripts/fetch-idls.js",
     "postinstall": "node scripts/install.js",
-    "fix": "npx prettier --write ."
+    "fix": "npx prettier --write .",
+    "prepublishOnly": "npm run update-idls"
   },
   "keywords": [],
   "author": "",
