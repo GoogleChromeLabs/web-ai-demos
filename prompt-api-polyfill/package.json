@@ -1,6 +1,6 @@
 {
   "name": "prompt-api-polyfill",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "description": "Polyfill for the Prompt API (`LanguageModel`) backed by Firebase AI Logic, Gemini API, OpenAI API, or Transformers.js.",
   "type": "module",
   "main": "./dist/prompt-api-polyfill.js",
@@ -47,20 +47,20 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.4.0",
+    "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.6.0",
     "node-addon-api": "^8.8.0",
-    "node-gyp": "^12.3.0",
-    "prettier": "^3.8.3",
+    "node-gyp": "^12.4.0",
+    "prettier": "^3.8.4",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^8.0.14"
+    "vite": "^8.0.16"
   },
   "dependencies": {
-    "@google/genai": "^2.6.0",
+    "@google/genai": "^2.8.0",
     "@huggingface/transformers": "^4.2.0",
-    "@mlc-ai/web-llm": "^0.2.83",
-    "firebase": "^12.13.0",
-    "openai": "^6.39.0"
+    "@mlc-ai/web-llm": "^0.2.84",
+    "firebase": "^12.14.0",
+    "openai": "^6.42.0"
   }
 }
