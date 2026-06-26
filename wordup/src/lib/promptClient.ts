@@ -1,5 +1,10 @@
 import type { LetterCell } from './db';
 
+const sessionOptions = {
+  expectedInputs: [{ type: 'text' }],
+  expectedOutputs: [{ type: 'text' }]
+};
+
 // Type declarations for window/global LanguageModel
 declare global {
   interface LanguageModel {
@@ -36,12 +41,12 @@ export async function generateWord(
     throw new Error('Chrome Prompt API (LanguageModel) is not supported in this browser.');
   }
 
-  const availability = await LanguageModel.availability();
+  const availability = await LanguageModel.availability(sessionOptions);
   if (availability === 'unavailable') {
     throw new Error('On-device LanguageModel is unavailable on this system.');
   }
 
-  const session = await LanguageModel.create();
+  const session = await LanguageModel.create(sessionOptions);
 
   try {
     let word = '';
@@ -128,12 +133,12 @@ export async function getSuggestions(
     throw new Error('Chrome Prompt API (LanguageModel) is not supported in this browser.');
   }
 
-  const availability = await LanguageModel.availability();
+  const availability = await LanguageModel.availability(sessionOptions);
   if (availability === 'unavailable') {
     throw new Error('On-device LanguageModel is unavailable on this system.');
   }
 
-  const session = await LanguageModel.create();
+  const session = await LanguageModel.create(sessionOptions);
 
   try {
     const correctLetters: string[] = ['', '', '', '', ''];
