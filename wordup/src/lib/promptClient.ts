@@ -66,17 +66,27 @@ export async function generateWord(
 
       // Formulate structured prompt requesting 20 words
       const duplicateClause = allowDuplicates ? '' : 'where each letter in the word is completely unique (no duplicate letters) ';
-      const promptText = `Generate exactly 20 different 5-letter English words that are ${difficultyWord} to guess, ${duplicateClause}. Proper nouns, abbreviations, or combinations of random letters are strictly forbidden. Return only the words as a comma-separated list, in all uppercase. Do not include any introductory or concluding text, explanations, or formatting. Example format: WORD1, WORD2, WORD3, WORD4, WORD5`;
+      const wordConstraint = {
+        type: 'array',
+        items: { type: 'string' }
+      };
+      const promptText = `Generate exactly 20 different 5-letter English words that are ${difficultyWord} to guess, ${duplicateClause}. Proper nouns, abbreviations, or combinations of random letters are strictly forbidden. Return only the words as a JSON array of strings in all uppercase. Do not include any introductory or concluding text, explanations, or formatting. Example format: ["WORD1", "WORD2", "WORD3", "WORD4", "WORD5"]`;
 
       debugLog(`[AI WORD GENERATION] Attempt ${attempts}/${maxAttempts}`);
       debugLog(`[AI WORD GENERATION] Prompt: "${promptText}"`);
 
-      const response = await session.prompt(promptText);
+      const response = await session.prompt(promptText, { responseConstraint: wordConstraint });
       debugLog(`[AI WORD GENERATION] Raw Response: "${response}"`);
 
-      // Parse comma-separated list
-      const rawWords = response.split(',')
-        .map(w => w.trim().toUpperCase().replace(/[^A-Z]/g, ''));
+      // Parse JSON array or comma-separated list fallback
+      let parsedWords: any[] = [];
+      try {
+        parsedWords = JSON.parse(response);
+      } catch {
+        parsedWords = response.split(',');
+      }
+      const rawWords = parsedWords
+        .map(w => typeof w === 'string' ? w.trim().toUpperCase().replace(/[^A-Z]/g, '') : '');
       
       debugLog(`[AI WORD GENERATION] Parsed Words:`, rawWords);
 
@@ -205,9 +215,13 @@ export async function getSuggestions(
     }
 
     promptParts.push("\nBased on these STRONG REQUIREMENTS AND CONSTRAINTS, suggest 15 valid, actual English words that fit ALL of the rules above. Words that do not fit the rules above are STRICTLY FORBIDDEN.");
-    promptParts.push("Return ONLY the list of words, uppercase, separated by commas. DO NOT include any introductory or concluding text, explanations, or formatting. Example format: WORD1, WORD2, WORD3.");
+    promptParts.push("Return ONLY the list of words as a JSON array of strings, uppercase. DO NOT include any introductory or concluding text, explanations, or formatting. Example format: [\"WORD1\", \"WORD2\", \"WORD3\"].");
 
     const promptText = promptParts.join("\n");
+    const suggestionConstraint = {
+      type: 'array',
+      items: { type: 'string' }
+    };
     
     const maxAttempts = 5;
     let finalSuggestions: string[] = [];
@@ -216,11 +230,17 @@ export async function getSuggestions(
       debugLog(`[AI HELP SUGGESTIONS] Attempt ${attempt}/${maxAttempts}`);
       debugLog(`[AI HELP SUGGESTIONS] Prompt sent to LanguageModel:\n${promptText}`);
       
-      const response = await session.prompt(promptText);
+      const response = await session.prompt(promptText, { responseConstraint: suggestionConstraint });
       debugLog(`[AI HELP SUGGESTIONS] Attempt ${attempt} Raw Response: "${response}"`);
       
-      const rawWords = response.split(',')
-        .map(w => w.trim().toUpperCase().replace(/[^A-Z]/g, ''));
+      let parsedWords: any[] = [];
+      try {
+        parsedWords = JSON.parse(response);
+      } catch {
+        parsedWords = response.split(',');
+      }
+      const rawWords = parsedWords
+        .map(w => typeof w === 'string' ? w.trim().toUpperCase().replace(/[^A-Z]/g, '') : '');
       
       debugLog(`[AI HELP SUGGESTIONS] Attempt ${attempt} Parsed raw words:`, rawWords);
 

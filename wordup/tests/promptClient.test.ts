@@ -15,7 +15,7 @@ describe('Prompt API Client', () => {
 
   it('should generate a 5-letter word without duplicate letters (happy path)', async () => {
     const mockSession = {
-      prompt: vi.fn().mockResolvedValue('SHINE'),
+      prompt: vi.fn().mockResolvedValue('["SHINE"]'),
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -27,17 +27,19 @@ describe('Prompt API Client', () => {
     expect(word).toBe('SHINE');
     expect(word.length).toBe(5);
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining('impossible')
+      expect.stringContaining('impossible'),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining('no duplicate letters')
+      expect.stringContaining('no duplicate letters'),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
     expect(mockSession.destroy).toHaveBeenCalled();
   });
 
   it('should allow duplicate letters when allowDuplicates is true', async () => {
     const mockSession = {
-      prompt: vi.fn().mockResolvedValue('APPLE'), // 'P' is duplicated
+      prompt: vi.fn().mockResolvedValue('["APPLE"]'), // 'P' is duplicated
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -48,13 +50,14 @@ describe('Prompt API Client', () => {
     const word = await generateWord('easy', true, []);
     expect(word).toBe('APPLE');
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.not.stringContaining('no duplicate letters')
+      expect.not.stringContaining('no duplicate letters'),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
   });
 
   it('should map medium difficulty to "a little challenging" in the prompt', async () => {
     const mockSession = {
-      prompt: vi.fn().mockResolvedValue('SHINE'),
+      prompt: vi.fn().mockResolvedValue('["SHINE"]'),
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -65,18 +68,16 @@ describe('Prompt API Client', () => {
     const word = await generateWord('medium', false, []);
     expect(word).toBe('SHINE');
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining('a little challenging')
-    );
-    expect(mockSession.prompt).not.toHaveBeenCalledWith(
-      expect.stringContaining('medium')
+      expect.stringContaining('a little challenging'),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
   });
 
   it('should retry when mock model returns a word with duplicate letters but allowDuplicates is false', async () => {
     const mockSession = {
       prompt: vi.fn()
-        .mockResolvedValueOnce('APPLE') // has duplicates (P), should reject and retry
-        .mockResolvedValueOnce('SHINE'), // no duplicates, should accept
+        .mockResolvedValueOnce('["APPLE"]') // has duplicates (P), should reject and retry
+        .mockResolvedValueOnce('["SHINE"]'), // no duplicates, should accept
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -92,8 +93,8 @@ describe('Prompt API Client', () => {
   it('should retry when mock model returns a word in usedWords', async () => {
     const mockSession = {
       prompt: vi.fn()
-        .mockResolvedValueOnce('SHINE') // in usedWords, should reject and retry
-        .mockResolvedValueOnce('APPLE'), // no duplicates (with allowDuplicates: true), should accept
+        .mockResolvedValueOnce('["SHINE"]') // in usedWords, should reject and retry
+        .mockResolvedValueOnce('["APPLE"]'), // no duplicates (with allowDuplicates: true), should accept
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -109,9 +110,9 @@ describe('Prompt API Client', () => {
   it('should retry when mock model returns a word that is not 5 letters long', async () => {
     const mockSession = {
       prompt: vi.fn()
-        .mockResolvedValueOnce('DOG') // 3 letters, reject
-        .mockResolvedValueOnce('LONGERWORD') // 10 letters, reject
-        .mockResolvedValueOnce('SHINE'), // 5 letters, accept
+        .mockResolvedValueOnce('["DOG"]') // 3 letters, reject
+        .mockResolvedValueOnce('["LONGERWORD"]') // 10 letters, reject
+        .mockResolvedValueOnce('["SHINE"]'), // 5 letters, accept
       destroy: vi.fn(),
     };
 
@@ -127,7 +128,7 @@ describe('Prompt API Client', () => {
 
   it('should throw an error after 15 failed attempts', async () => {
     const mockSession = {
-      prompt: vi.fn().mockResolvedValue('DOG'), // always invalid (3 letters)
+      prompt: vi.fn().mockResolvedValue('["DOG"]'), // always invalid (3 letters)
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -171,7 +172,7 @@ describe('Prompt API Client', () => {
 
   it('should formulate prompt with green, yellow, and gray constraints and parse comma-separated suggestions', async () => {
     const mockSession = {
-      prompt: vi.fn().mockResolvedValue('FINCH, CHINK, PINCH, WINCH'),
+      prompt: vi.fn().mockResolvedValue('["FINCH", "CHINK", "PINCH", "WINCH"]'),
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -198,13 +199,16 @@ describe('Prompt API Client', () => {
     
     expect(suggestions).toEqual(['FINCH', 'PINCH', 'WINCH']);
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining("All 5 letters in the word MUST BE UNIQUE (no duplicate letters).")
+      expect.stringContaining("All 5 letters in the word MUST BE UNIQUE (no duplicate letters)."),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining("Letter 'C' MUST BE present but MUST NOT be at")
+      expect.stringContaining("Letter 'C' MUST BE present but MUST NOT be at"),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining("MUST NOT BE PRESENT AT ANY INDEX")
+      expect.stringContaining("MUST NOT BE PRESENT AT ANY INDEX"),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
   });
 
@@ -221,7 +225,7 @@ describe('Prompt API Client', () => {
   it('should fall back to picking any 5-letter word regardless of duplicate and history constraints on the 15th attempt', async () => {
     const mockSession = {
       prompt: vi.fn()
-        .mockResolvedValue('APPLE, SHINE'), // APPLE has duplicate P, SHINE is in history
+        .mockResolvedValue('["APPLE", "SHINE"]'),
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -238,9 +242,9 @@ describe('Prompt API Client', () => {
     it('should retry getSuggestions up to 5 times if invalid suggestions are returned, and succeed when a valid one is found', async () => {
       const mockSession = {
         prompt: vi.fn()
-          .mockResolvedValueOnce('CLIMB') // fails green S_NE
-          .mockResolvedValueOnce('STONE') // contains absent T and O
-          .mockResolvedValueOnce('SHINE'), // valid!
+          .mockResolvedValueOnce('["CLIMB"]')
+          .mockResolvedValueOnce('["STONE"]')
+          .mockResolvedValueOnce('["SHINE"]'),
         destroy: vi.fn(),
       };
       global.LanguageModel = {
@@ -265,7 +269,7 @@ describe('Prompt API Client', () => {
 
     it('should return an empty array if all 5 attempts fail to return any valid suggestion', async () => {
       const mockSession = {
-        prompt: vi.fn().mockResolvedValue('CLIMB'), // always fails green constraints (S_NE)
+        prompt: vi.fn().mockResolvedValue('["CLIMB"]'),
         destroy: vi.fn(),
       };
       global.LanguageModel = {
@@ -291,7 +295,7 @@ describe('Prompt API Client', () => {
 
   it('should formulate prompt with correct 1-based indexing for green and yellow letters', async () => {
     const mockSession = {
-      prompt: vi.fn().mockResolvedValue('SHINE'),
+      prompt: vi.fn().mockResolvedValue('["SHINE"]'),
       destroy: vi.fn(),
     };
     global.LanguageModel = {
@@ -301,8 +305,8 @@ describe('Prompt API Client', () => {
 
     const guesses = [
       [
-        { letter: 'S', status: 'correct' }, // Index 0 -> 1-indexed 1
-        { letter: 'H', status: 'present' }, // Index 1 -> 1-indexed 2
+        { letter: 'S', status: 'correct' },
+        { letter: 'H', status: 'present' },
         { letter: 'I', status: 'absent' },
         { letter: 'N', status: 'absent' },
         { letter: 'E', status: 'absent' }
@@ -311,14 +315,14 @@ describe('Prompt API Client', () => {
 
     await getSuggestions(guesses as any, false);
 
-    // Verify green letter index is 1-indexed (Index 1)
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining("Letter at index 1 (1-indexed) MUST be 'S'")
+      expect.stringContaining("Letter at index 1 (1-indexed) MUST be 'S'"),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
 
-    // Verify yellow letter index is 1-indexed (Index 2)
     expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining("Letter 'H' MUST BE present but MUST NOT be at Index 2, (1-index)")
+      expect.stringContaining("Letter 'H' MUST BE present but MUST NOT be at Index 2, (1-index)"),
+      expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
   });
 });
