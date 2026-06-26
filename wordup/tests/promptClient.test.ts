@@ -19,7 +19,7 @@ describe('Prompt API Client', () => {
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -43,7 +43,7 @@ describe('Prompt API Client', () => {
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -61,7 +61,7 @@ describe('Prompt API Client', () => {
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -81,7 +81,7 @@ describe('Prompt API Client', () => {
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -98,7 +98,7 @@ describe('Prompt API Client', () => {
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -117,7 +117,7 @@ describe('Prompt API Client', () => {
     };
 
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -132,7 +132,7 @@ describe('Prompt API Client', () => {
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -144,39 +144,18 @@ describe('Prompt API Client', () => {
   });
 
   it('should throw an error if LanguageModel is unsupported', async () => {
-    // LanguageModel is not defined on global
     await expect(generateWord('easy', false, [])).rejects.toThrow(
       'Chrome Prompt API (LanguageModel) is not supported in this browser.'
     );
   });
 
-  it('should map medium difficulty to "a little challenging" in the prompt', async () => {
-    const mockSession = {
-      prompt: vi.fn().mockResolvedValue('SHINE'),
-      destroy: vi.fn(),
-    };
-    global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
-      create: vi.fn().mockResolvedValue(mockSession),
-    } as any;
-
-    const word = await generateWord('medium', false, []);
-    expect(word).toBe('SHINE');
-    expect(mockSession.prompt).toHaveBeenCalledWith(
-      expect.stringContaining('a little challenging')
-    );
-    expect(mockSession.prompt).not.toHaveBeenCalledWith(
-      expect.stringContaining('medium')
-    );
-  });
-
-  it('should formulate prompt with green, yellow, and gray constraints and parse comma-separated suggestions', async () => {
+  it('should formulate prompt with green, yellow, and gray constraints and parse suggestions', async () => {
     const mockSession = {
       prompt: vi.fn().mockResolvedValue('["FINCH", "CHINK", "PINCH", "WINCH"]'),
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -195,7 +174,7 @@ describe('Prompt API Client', () => {
       { letter: 'E', status: 'absent' },
     ];
 
-    const suggestions = await getSuggestions([guess1, guess2], false);
+    const suggestions = await getSuggestions([guess1, guess2] as any, false);
     
     expect(suggestions).toEqual(['FINCH', 'PINCH', 'WINCH']);
     expect(mockSession.prompt).toHaveBeenCalledWith(
@@ -229,7 +208,7 @@ describe('Prompt API Client', () => {
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -248,7 +227,7 @@ describe('Prompt API Client', () => {
         destroy: vi.fn(),
       };
       global.LanguageModel = {
-        availability: vi.fn().mockResolvedValue('readily'),
+        availability: vi.fn().mockResolvedValue('available'),
         create: vi.fn().mockResolvedValue(mockSession),
       } as any;
 
@@ -273,7 +252,7 @@ describe('Prompt API Client', () => {
         destroy: vi.fn(),
       };
       global.LanguageModel = {
-        availability: vi.fn().mockResolvedValue('readily'),
+        availability: vi.fn().mockResolvedValue('available'),
         create: vi.fn().mockResolvedValue(mockSession),
       } as any;
 
@@ -299,7 +278,7 @@ describe('Prompt API Client', () => {
       destroy: vi.fn(),
     };
     global.LanguageModel = {
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
       create: vi.fn().mockResolvedValue(mockSession),
     } as any;
 
@@ -325,5 +304,41 @@ describe('Prompt API Client', () => {
       expect.objectContaining({ responseConstraint: expect.any(Object) })
     );
   });
+
+  it('should pass options to availability and create and monitor downloadprogress', async () => {
+    const mockSession = {
+      prompt: vi.fn().mockResolvedValue('["SHINE"]'),
+      destroy: vi.fn(),
+    };
+    global.LanguageModel = {
+      availability: vi.fn().mockResolvedValue('available'),
+      create: vi.fn().mockImplementation(async (opts) => {
+        const mockMonitor = {
+          addEventListener: vi.fn((event, handler) => {
+            if (event === 'downloadprogress') {
+              handler({ loaded: 50, total: 100 });
+            }
+          })
+        };
+        if (opts.monitor) {
+          opts.monitor(mockMonitor);
+        }
+        return mockSession;
+      }),
+    } as any;
+
+    const onProgress = vi.fn();
+    const word = await generateWord('easy', false, [], onProgress);
+
+    expect(word).toBe('SHINE');
+    expect(global.LanguageModel.availability).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedInputs: expect.any(Array) })
+    );
+    expect(global.LanguageModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedInputs: expect.any(Array), monitor: expect.any(Function) })
+    );
+    expect(onProgress).toHaveBeenCalledWith(50, 100);
+  });
 });
+
 

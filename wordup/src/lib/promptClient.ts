@@ -35,7 +35,8 @@ function debugLog(...args: any[]) {
 export async function generateWord(
   difficulty: 'easy' | 'medium' | 'hard' | 'very_hard' | 'impossible',
   allowDuplicates: boolean,
-  usedWords: string[]
+  usedWords: string[],
+  onProgress?: (loaded: number, total: number) => void
 ): Promise<string> {
   if (typeof LanguageModel === 'undefined') {
     throw new Error('Chrome Prompt API (LanguageModel) is not supported in this browser.');
@@ -46,7 +47,17 @@ export async function generateWord(
     throw new Error('On-device LanguageModel is unavailable on this system.');
   }
 
-  const session = await LanguageModel.create(sessionOptions);
+  const session = await LanguageModel.create({
+    ...sessionOptions,
+    monitor(m: any) {
+      m.addEventListener('downloadprogress', (e: any) => {
+        debugLog(`[AI MODEL DOWNLOAD] Downloaded ${e.loaded}/${e.total} bytes`);
+        if (onProgress && e.total) {
+          onProgress(e.loaded, e.total);
+        }
+      });
+    }
+  });
 
   try {
     let word = '';
@@ -137,7 +148,8 @@ export async function generateWord(
 
 export async function getSuggestions(
   guesses: LetterCell[][],
-  allowDuplicates: boolean
+  allowDuplicates: boolean,
+  onProgress?: (loaded: number, total: number) => void
 ): Promise<string[]> {
   if (typeof LanguageModel === 'undefined') {
     throw new Error('Chrome Prompt API (LanguageModel) is not supported in this browser.');
@@ -148,7 +160,17 @@ export async function getSuggestions(
     throw new Error('On-device LanguageModel is unavailable on this system.');
   }
 
-  const session = await LanguageModel.create(sessionOptions);
+  const session = await LanguageModel.create({
+    ...sessionOptions,
+    monitor(m: any) {
+      m.addEventListener('downloadprogress', (e: any) => {
+        debugLog(`[AI MODEL DOWNLOAD] Downloaded ${e.loaded}/${e.total} bytes`);
+        if (onProgress && e.total) {
+          onProgress(e.loaded, e.total);
+        }
+      });
+    }
+  });
 
   try {
     const correctLetters: string[] = ['', '', '', '', ''];

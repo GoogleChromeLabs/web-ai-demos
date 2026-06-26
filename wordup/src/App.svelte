@@ -158,6 +158,7 @@
         guessesCount={game.state.guesses.length}
         revealWord={revealWord}
         settingsDescription={settingsDescription}
+        downloadProgress={game.state.downloadProgress}
       />
 
       <!-- Hint Suggestion Error Notice -->

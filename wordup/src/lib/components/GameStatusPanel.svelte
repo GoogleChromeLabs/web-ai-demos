@@ -4,13 +4,15 @@
     errorMessage = '',
     guessesCount = 0,
     revealWord = '',
-    settingsDescription = ''
+    settingsDescription = '',
+    downloadProgress = null
   } = $props<{
     gameStatus: 'loading' | 'playing' | 'won' | 'lost' | 'error';
     errorMessage?: string;
     guessesCount?: number;
     revealWord?: string;
     settingsDescription?: string;
+    downloadProgress?: number | null;
   }>();
 
   const isAiError = $derived(
@@ -33,9 +35,12 @@
   <div class="game-loading-panel" role="status" aria-label="Loading new word">
     <h2 class="game-loading-title">CONJURING A WORD...</h2>
     <p class="game-loading-text">{settingsDescription}</p>
-    <div class="loading-bar">
-      <div class="loading-bar-fill"></div>
-    </div>
+    {#if downloadProgress !== null && downloadProgress < 100}
+      <div class="download-progress-container">
+        <progress id="model-download-progress" value={downloadProgress} max="100"></progress>
+        <label for="model-download-progress" class="download-progress-label">Downloading AI Model: {downloadProgress}%</label>
+      </div>
+    {/if}
   </div>
 {:else}
   {#if gameStatus === 'error'}
@@ -157,36 +162,9 @@
     font-weight: 500;
   }
 
-  .loading-bar {
-    width: 100%;
-    max-width: 200px;
-    height: 12px;
-    background: #e2e8f0;
-    border: 2px solid #0f172a;
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .loading-bar-fill {
-    height: 100%;
-    width: 50%;
-    background: #38bdf8;
-    border-radius: 8px;
-    animation: loading-slide 1.5s infinite ease-in-out;
-    position: absolute;
-    left: 0;
-    top: 0;
-  }
-
   @keyframes loading-bounce {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.08); }
-  }
-
-  @keyframes loading-slide {
-    0% { left: -50%; }
-    100% { left: 100%; }
   }
 
   /* Game Error Panel */
@@ -225,5 +203,37 @@
     line-height: 1.5;
     border-top: 2px dashed rgba(15, 23, 42, 0.1);
     padding-top: 12px;
+  }
+  .download-progress-container {
+    width: 100%;
+    max-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+
+  progress {
+    width: 100%;
+    max-width: 200px;
+    height: 14px;
+    border-radius: 10px;
+    border: 2px solid #0f172a;
+    overflow: hidden;
+    background-color: #e2e8f0;
+  }
+
+  progress::-webkit-progress-bar {
+    background-color: #e2e8f0;
+  }
+
+  progress::-webkit-progress-value {
+    background-color: #38bdf8;
+  }
+
+  .download-progress-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0369a1;
   }
 </style>

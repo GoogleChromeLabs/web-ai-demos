@@ -77,7 +77,7 @@ describe('Game Store', () => {
     expect(store.state.isLocked).toEqual([false, false, false, false, false]);
 
     // Verify generateWord called with difficulty, allowDuplicates, and history
-    expect(generateWord).toHaveBeenCalledWith('hard', false, ['REACT']);
+    expect(generateWord).toHaveBeenCalledWith('hard', false, ['REACT'], expect.any(Function));
 
     // Verify session saved after generating new word
     expect(saveSession).toHaveBeenCalledWith({
@@ -501,7 +501,7 @@ describe('Game Store', () => {
     const store = createGameStore();
     await store.init();
 
-    expect(generateWord).toHaveBeenCalledWith('hard', false, []);
+    expect(generateWord).toHaveBeenCalledWith('hard', false, [], expect.any(Function));
 
     vi.mocked(generateWord).mockClear();
     vi.mocked(clearSession).mockClear();
@@ -520,7 +520,7 @@ describe('Game Store', () => {
     // Call forceNewGame: now it should clear session and generate with new settings!
     await store.forceNewGame();
     expect(clearSession).toHaveBeenCalled();
-    expect(generateWord).toHaveBeenCalledWith('easy', true, []);
+    expect(generateWord).toHaveBeenCalledWith('easy', true, [], expect.any(Function));
   });
 
   it('should NOT regenerate word or clear session when settings are changed but guesses exist', async () => {

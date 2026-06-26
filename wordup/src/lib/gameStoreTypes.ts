@@ -14,6 +14,7 @@ export interface GameState {
   activeAllowDuplicates: boolean;
   helpActionsUsed: number;
   shakeCells: boolean[];
+  downloadProgress: number | null;
 }
 
 export interface GameStore {
