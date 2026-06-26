@@ -3,7 +3,7 @@ import type { LetterCell } from './db';
 // Type declarations for window/global LanguageModel
 declare global {
   interface LanguageModel {
-    availability(): Promise<'readily' | 'after-download' | 'unavailable'>;
+    availability(options?: any): Promise<'unavailable' | 'downloadable' | 'downloading' | 'available'>;
     create(options?: any): Promise<LanguageModelSession>;
   }
   interface LanguageModelSession {
