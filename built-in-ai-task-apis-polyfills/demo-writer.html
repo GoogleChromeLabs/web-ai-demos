@@ -166,10 +166,18 @@ The history of artificial intelligence started with Alan Turing's work...</texta
     <div id="output">Your results will appear here...</div>
 
     <script type="module">
-      import firebaseConfig from './.env.json' with { type: 'json' };
       import { Writer } from './writer-api-polyfill.js';
 
-      // Set FIREBASE_CONFIG to select the Firebase backend
+      // Import Firebase config if present (standard pattern for this project)
+      let firebaseConfig = {};
+      try {
+        const response = await fetch('./.env.json');
+        firebaseConfig = await response.json();
+      } catch (e) {
+        console.warn(
+          'Firebase config (.env.json) not found, relying on local Writer if available.'
+        );
+      }
       window.FIREBASE_CONFIG = firebaseConfig;
 
       const input = document.getElementById('input');

@@ -106,9 +106,16 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
     <div id="output" class="output">Your results will appear here...</div>
 
     <script type="module">
-      import firebaseConfig from './.env.json' with { type: 'json' };
-
-      // Set FIREBASE_CONFIG to select the Firebase backend
+      // Import Firebase config if present (standard pattern for this project)
+      let firebaseConfig = {};
+      try {
+        const response = await fetch('./.env.json');
+        firebaseConfig = await response.json();
+      } catch (e) {
+        console.warn(
+          'Firebase config (.env.json) not found, relying on local Translator if available.'
+        );
+      }
       window.FIREBASE_CONFIG = firebaseConfig;
 
       import { Translator } from './translator-api-polyfill.js';

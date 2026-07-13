@@ -47,8 +47,21 @@
       window.__FORCE_PROMPT_API_POLYFILL__ = true;
     </script>
     <script type="module">
-      // OpenAI backend configuration imported from a JSON file
-      import openaiConfig from './.env-openai.json' with { type: 'json' };
+      // OpenAI backend configuration imported from a JSON file. Falls back
+      // to a dummy key if the file is missing, so the page loads and
+      // reports a clear auth error instead of a dev-server crash.
+      let openaiConfig;
+      try {
+        const res = await fetch('./.env-openai.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        openaiConfig = await res.json();
+      } catch {
+        console.warn(
+          'No .env-openai.json found. Copy dot_env.json to .env-openai.json ' +
+            'and fill in a real apiKey to use the OpenAI backend.'
+        );
+        openaiConfig = { apiKey: 'dummy' };
+      }
       window.OPENAI_CONFIG = openaiConfig;
 
       import './prompt-api-polyfill.js';

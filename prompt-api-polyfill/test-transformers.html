@@ -49,8 +49,21 @@
       window.__FORCE_PROMPT_API_POLYFILL__ = true;
     </script>
     <script type="module">
-      // Transformers.js backend configuration imported from a JSON file
-      import transformersConfig from './.env-transformers.json' with { type: 'json' };
+      // Transformers.js backend configuration imported from a JSON file, if
+      // present. Transformers.js runs entirely in-browser, so a missing file
+      // just falls back to a dummy API key instead of breaking the page.
+      let transformersConfig;
+      try {
+        const res = await fetch('./.env-transformers.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        transformersConfig = await res.json();
+      } catch {
+        console.warn(
+          'No .env-transformers.json found; using a dummy config. Create ' +
+            '.env-transformers.json to override the default model.'
+        );
+        transformersConfig = { apiKey: 'dummy' };
+      }
       window.TRANSFORMERS_CONFIG = transformersConfig;
 
       import './prompt-api-polyfill.js';

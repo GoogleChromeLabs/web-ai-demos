@@ -47,8 +47,22 @@
       window.__FORCE_PROMPT_API_POLYFILL__ = true;
     </script>
     <script type="module">
-      // Firebase backend configuration imported from a JSON file
-      import firebaseConfig from './.env-firebase.json' with { type: 'json' };
+      // Firebase backend configuration imported from a JSON file. Falls
+      // back to a dummy key if the file is missing, so the page loads and
+      // reports a clear auth error instead of a dev-server crash.
+      let firebaseConfig;
+      try {
+        const res = await fetch('./.env-firebase.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        firebaseConfig = await res.json();
+      } catch {
+        console.warn(
+          'No .env-firebase.json found. Copy dot_env.json to ' +
+            '.env-firebase.json and fill in real values to use the ' +
+            'Firebase backend.'
+        );
+        firebaseConfig = { apiKey: 'dummy' };
+      }
       window.FIREBASE_CONFIG = firebaseConfig;
 
       import './prompt-api-polyfill.js';
