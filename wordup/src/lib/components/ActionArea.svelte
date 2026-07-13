@@ -4,6 +4,7 @@
     isFetchingSuggestions = false,
     guessesLength = 0,
     helpActionsUsed = 0,
+    canUseHelp = (guessesLength > 0 && 3 - helpActionsUsed > 0),
     onSubmit,
     onHelp,
     onNewGame
@@ -12,6 +13,7 @@
     isFetchingSuggestions?: boolean;
     guessesLength?: number;
     helpActionsUsed?: number;
+    canUseHelp?: boolean;
     onSubmit: () => void;
     onHelp: () => void;
     onNewGame: () => void;
@@ -31,9 +33,9 @@
       <button 
         class="help-btn" 
         onclick={onHelp} 
-        disabled={isFetchingSuggestions || guessesLength === 0 || (3 - helpActionsUsed) <= 0}
-        title="Get AI word hints (costs 1 point)"
-        aria-label="Get AI word hints, costs 1 point. {guessesLength === 0 ? 'Unavailable on first turn.' : `${3 - helpActionsUsed} hints remaining.`}"
+        disabled={isFetchingSuggestions || !canUseHelp}
+        title={canUseHelp ? 'Reveal a missing letter (costs 1 point)' : (guessesLength === 0 ? 'Unavailable on first turn.' : (3 - helpActionsUsed <= 0 ? 'No hints remaining.' : 'Cannot reveal the last letter.'))}
+        aria-label={canUseHelp ? `Reveal a missing letter, costs 1 point. ${3 - helpActionsUsed} hints remaining.` : (guessesLength === 0 ? 'Unavailable on first turn.' : (3 - helpActionsUsed <= 0 ? 'No hints remaining.' : 'Cannot reveal the last letter.'))}
       >
         {#if isFetchingSuggestions}
           <div class="thinking-loader">
@@ -131,8 +133,8 @@
   }
 
   .help-btn {
-    width: 56px;
-    height: 56px;
+    width: 54px;
+    height: 54px;
     flex-shrink: 0;
     border-radius: 50%;
     border: 3px solid #0f172a;
@@ -168,6 +170,35 @@
     cursor: not-allowed;
     box-shadow: 0px 0px 0px #0f172a;
     transform: none;
+  }
+
+  @media (max-width: 480px) {
+    .submit-btn {
+      padding: 10px 14px;
+      font-size: 1rem;
+      border-radius: 14px;
+    }
+    .playing-actions {
+      gap: 10px;
+    }
+    .help-btn {
+      width: 46px;
+      height: 46px;
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .submit-btn {
+      padding: 9px 12px;
+      font-size: 0.95rem;
+      border-radius: 12px;
+    }
+    .help-btn {
+      width: 42px;
+      height: 42px;
+      font-size: 1.15rem;
+    }
   }
 
   .help-count {

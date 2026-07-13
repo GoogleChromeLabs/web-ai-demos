@@ -236,4 +236,28 @@
     font-weight: 700;
     color: #0369a1;
   }
+
+  @media (max-width: 480px) {
+    .game-over-panel {
+      padding: 14px;
+      border-radius: 16px;
+    }
+    .game-over-title {
+      font-size: 1.3rem;
+    }
+    .game-over-text {
+      font-size: 0.9rem;
+    }
+    .game-loading-panel, .game-error-panel {
+      padding: 18px 14px;
+      border-radius: 18px;
+      gap: 10px;
+    }
+    .game-loading-title, .game-error-title {
+      font-size: 1.25rem;
+    }
+    .game-loading-text, .game-error-text {
+      font-size: 0.9rem;
+    }
+  }
 </style>

@@ -7,8 +7,8 @@
     onSelectSuggestion: (word: string) => void;
   }>();
 
-  const evenSuggestions = $derived(suggestions.filter((_, i) => i % 2 === 0));
-  const oddSuggestions = $derived(suggestions.filter((_, i) => i % 2 !== 0));
+  const evenSuggestions = $derived(suggestions.filter((_: string, i: number) => i % 2 === 0));
+  const oddSuggestions = $derived(suggestions.filter((_: string, i: number) => i % 2 !== 0));
 </script>
 
 {#if suggestions.length > 0}
@@ -76,8 +76,8 @@
       flex-direction: row;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 12px;
-      margin-top: 16px;
+      gap: 10px;
+      margin-top: 12px;
       width: 100%;
     }
   }
@@ -85,8 +85,8 @@
   .suggestion-bubble {
     border: 3px solid #0f172a;
     border-radius: 50px;
-    padding: 10px 20px;
-    font-size: 1.1rem;
+    padding: 8px 16px;
+    font-size: 1rem;
     font-weight: 700;
     box-shadow: 3px 3px 0px #0f172a;
     cursor: pointer;
@@ -97,6 +97,15 @@
     justify-content: center;
     animation: bubble-float 3s infinite ease-in-out;
     animation-delay: var(--delay, 0s);
+  }
+
+  @media (max-width: 480px) {
+    .suggestion-bubble {
+      padding: 6px 12px;
+      font-size: 0.88rem;
+      border-width: 2.5px;
+      box-shadow: 2px 2px 0px #0f172a;
+    }
   }
 
   .suggestion-bubble:hover {

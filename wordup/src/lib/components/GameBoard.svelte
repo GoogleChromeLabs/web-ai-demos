@@ -54,8 +54,8 @@
     // 1. Detect new guess submission
     if (guesses.length > prevGuessesLength) {
       const lastGuess = guesses[guesses.length - 1];
-      const guessStr = lastGuess.map(c => c.letter).join('');
-      const evaluation = lastGuess.map((c, idx) => `Column ${idx + 1} ${c.letter} is ${c.status}`).join(', ');
+      const guessStr = lastGuess.map((c: LetterCell) => c.letter).join('');
+      const evaluation = lastGuess.map((c: LetterCell, idx: number) => `Column ${idx + 1} ${c.letter} is ${c.status}`).join(', ');
       announcement = `Submitted guess ${guesses.length}: ${guessStr}. Results: ${evaluation}.`;
       prevGuessesLength = guesses.length;
       prevActiveRow = [...activeRow];
@@ -63,8 +63,8 @@
     }
 
     // 2. Detect activeRow changes
-    const currentWord = activeRow.filter(c => c !== '').join('');
-    const prevWord = prevActiveRow.filter(c => c !== '').join('');
+    const currentWord = activeRow.filter((c: string) => c !== '').join('');
+    const prevWord = prevActiveRow.filter((c: string) => c !== '').join('');
     
     if (currentWord !== prevWord) {
       if (currentWord.length > prevWord.length) {
@@ -74,7 +74,7 @@
           announcement = `Filled active row with word: ${currentWord}.`;
         } else {
           // Single character entered
-          const addedIndex = activeRow.findIndex((c, i) => c !== '' && prevActiveRow[i] === '');
+          const addedIndex = activeRow.findIndex((c: string, i: number) => c !== '' && prevActiveRow[i] === '');
           if (addedIndex !== -1) {
             announcement = `Entered ${activeRow[addedIndex]} in column ${addedIndex + 1}.`;
           }
@@ -93,7 +93,7 @@
   });
 
   export function focusFirstEmptyCell() {
-    const idx = activeRow.findIndex((c, i) => c === '' && !isLocked[i]);
+    const idx = activeRow.findIndex((c: string, i: number) => c === '' && !isLocked[i]);
     if (idx !== -1 && inputRefs[idx]) {
       inputRefs[idx].focus();
     }
@@ -109,7 +109,7 @@
       target.value = activeRow[idx];
       
       if (activeRow[idx] !== '') {
-        const nextIdx = activeRow.findIndex((c, i) => i > idx && !isLocked[i]);
+        const nextIdx = activeRow.findIndex((c: string, i: number) => i > idx && !isLocked[i]);
         if (nextIdx !== -1 && inputRefs[nextIdx]) {
           inputRefs[nextIdx].focus();
         }

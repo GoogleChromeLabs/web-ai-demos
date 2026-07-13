@@ -9,6 +9,7 @@
   import GameStatusPanel from './lib/components/GameStatusPanel.svelte';
   import SuggestionsCloud from './lib/components/SuggestionsCloud.svelte';
   import ActionArea from './lib/components/ActionArea.svelte';
+  import { registerWebMCPTools } from './lib/webmcp';
 
   const game = createGameStore();
   
@@ -31,9 +32,16 @@
     game.state.gameStatus === 'lost' || game.state.gameStatus === 'won' ? game.revealWord() : ''
   );
 
-  onMount(async () => {
-    await game.init();
-    focusFirstEmptyCell();
+  onMount(() => {
+    const controller = new AbortController();
+    game.init().then(() => {
+      registerWebMCPTools(game, { signal: controller.signal });
+      focusFirstEmptyCell();
+    });
+
+    return () => {
+      controller.abort();
+    };
   });
 
   function focusFirstEmptyCell() {
@@ -55,48 +63,12 @@
   }
 
   async function triggerHelp() {
-    if (isFetchingSuggestions) return;
+    if (!game.canUseHelp) return;
     const expectedGuessesLength = game.state.guesses.length;
-    if (expectedGuessesLength === 0) return; // No help on first item before any guesses!
-    const remaining = 3 - game.state.helpActionsUsed;
-    if (remaining <= 0) return;
 
-    isFetchingSuggestions = true;
-    suggestionError = '';
-    
-    try {
-      const list = await getSuggestions(game.state.guesses, game.state.activeAllowDuplicates);
-      
-      // Abort if guesses length has changed in the meantime (race condition)
-      if (game.state.guesses.length !== expectedGuessesLength) {
-        return;
-      }
-
-      if (list.length === 0) {
-        throw new Error('AI could not find any valid words matching your constraints.');
-      }
-
-      const success = await game.useHelpAction();
-      if (game.state.guesses.length !== expectedGuessesLength) {
-        return;
-      }
-
-      if (success) {
-        suggestions = list;
-      }
-    } catch (err: any) {
-      if (game.state.guesses.length !== expectedGuessesLength) return;
-      console.error('Help action failed:', err);
-      const msg = err.message || '';
-      if (msg.includes('AI could not find') || msg.includes('valid words')) {
-        suggestionError = 'No valid words found matching your constraints! Try making another guess.';
-      } else if (msg.includes('not supported') || msg.includes('unavailable') || msg.includes('LanguageModel')) {
-        suggestionError = 'AI is currently offline. Please ensure your browser supports on-device AI.';
-      } else {
-        suggestionError = 'Could not fetch suggestions. Please try again.';
-      }
-    } finally {
-      isFetchingSuggestions = false;
+    const success = await game.useHelpAction();
+    if (success && game.state.guesses.length === expectedGuessesLength) {
+      focusFirstEmptyCell();
     }
   }
 
@@ -174,6 +146,7 @@
         isFetchingSuggestions={isFetchingSuggestions}
         guessesLength={game.state.guesses.length}
         helpActionsUsed={game.state.helpActionsUsed}
+        canUseHelp={game.canUseHelp}
         onSubmit={submitGuess}
         onHelp={triggerHelp}
         onNewGame={startNewGame}
@@ -215,7 +188,7 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 40px 15px;
+    padding: 30px 16px;
     box-sizing: border-box;
   }
 
@@ -225,11 +198,11 @@
     background: #fff;
     border: 4px solid #0f172a;
     border-radius: 32px;
-    padding: 30px 25px;
+    padding: 26px 20px;
     box-shadow: 8px 8px 0px #0f172a;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 22px;
     box-sizing: border-box;
     position: relative;
   }
@@ -256,10 +229,29 @@
   }
 
   /* Responsive Design adjustments */
-  @media (max-width: 400px) {
+  @media (max-width: 480px) {
+    .game-wrapper {
+      padding: 16px 10px;
+    }
     .game-container {
-      padding: 20px 15px;
+      padding: 18px 14px;
       gap: 16px;
+      border-radius: 24px;
+      border-width: 3.5px;
+      box-shadow: 5px 5px 0px #0f172a;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .game-wrapper {
+      padding: 10px 6px;
+    }
+    .game-container {
+      padding: 14px 10px;
+      gap: 12px;
+      border-radius: 20px;
+      border-width: 3px;
+      box-shadow: 4px 4px 0px #0f172a;
     }
   }
 </style>

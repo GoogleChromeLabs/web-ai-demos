@@ -26,11 +26,11 @@
     </div>
     <div class="stat-box">
       <dt class="stat-label">SCORE</dt>
-      <dd class="stat-val">{score} pts</dd>
+      <dd class="stat-val">{score}</dd>
     </div>
     <div class="stat-box">
       <dt class="stat-label">BEST</dt>
-      <dd class="stat-val">{highScore} pts</dd>
+      <dd class="stat-val">{highScore}</dd>
     </div>
   </dl>
 
@@ -63,7 +63,7 @@
         <span class="slider"></span>
       </label>
     </div>
-    <div class="setting-item">
+    <div class="setting-item generate-item">
       <button 
         id="generate-btn"
         class="generate-btn" 
@@ -92,6 +92,8 @@
     display: flex;
     justify-content: space-around;
     gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .stat-box {
@@ -99,23 +101,35 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
     background: #fff;
-    border: 2px solid #0f172a;
-    border-radius: 12px;
-    padding: 6px 10px;
+    border: 2.5px solid #0f172a;
+    border-radius: 14px;
+    padding: 8px 10px;
+    box-shadow: 2px 2px 0px #0f172a;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .stat-label {
-    font-size: 0.65rem;
+    font-size: 0.68rem;
     color: #64748b;
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-align: center;
+    margin: 0;
+    width: 100%;
   }
 
   .stat-val {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 800;
     color: #be185d;
+    white-space: nowrap;
+    text-align: center;
+    margin: 2px 0 0 0;
+    width: 100%;
   }
 
   .settings-control-row {
@@ -124,7 +138,7 @@
     align-items: center;
     border-top: 2px dashed rgba(15, 23, 42, 0.15);
     padding-top: 12px;
-    gap: 15px;
+    gap: 12px;
   }
 
   .setting-item {
@@ -136,7 +150,7 @@
   .setting-item.flex-row {
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   .setting-item label, .setting-label {
@@ -157,7 +171,6 @@
     cursor: pointer;
   }
 
-
   .custom-select:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -169,6 +182,7 @@
     display: inline-block;
     width: 44px;
     height: 22px;
+    flex-shrink: 0;
   }
 
   .toggle-switch input {
@@ -236,7 +250,6 @@
     justify-content: center;
   }
 
-
   .generate-btn:hover:not(:disabled) {
     background: #6d28d9;
     transform: translate(-1px, -1px);
@@ -266,6 +279,45 @@
   .toggle-switch input:focus-visible + .slider {
     outline: 3px solid #0284c7;
     outline-offset: 2px;
+  }
+
+  @media (max-width: 480px) {
+    .dashboard-panel {
+      padding: 12px 10px;
+      gap: 10px;
+    }
+    .stats-grid {
+      gap: 6px;
+      justify-content: center;
+    }
+    .stat-box {
+      padding: 6px 4px;
+      border-radius: 10px;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 0.6rem;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    .settings-control-row {
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-top: 10px;
+    }
+    .setting-item.generate-item {
+      width: 100%;
+      flex-basis: 100%;
+      margin-top: 2px;
+    }
+    .generate-btn {
+      width: 100%;
+    }
   }
 
   .sr-only {
