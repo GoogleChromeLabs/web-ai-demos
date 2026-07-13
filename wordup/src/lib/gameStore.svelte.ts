@@ -89,8 +89,8 @@ export function createGameStore(): GameStore {
       if (!secretWord) {
         downloadProgress = null;
         const word = await generateWord(activeDifficulty, activeAllowDuplicates, history, (loaded, total) => {
-          const pct = Math.round((loaded / total) * 100);
-          downloadProgress = pct < 100 ? pct : null;
+          const ratio = loaded / total;
+          downloadProgress = ratio < 1 ? ratio : null;
         });
         if (generationId !== activeGenerationId) return;
         secretWord = word.toUpperCase();

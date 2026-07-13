@@ -1,8 +1,9 @@
 import type { LetterCell } from './db';
 
 const sessionOptions = {
-  expectedInputs: [{ type: 'text' }],
-  expectedOutputs: [{ type: 'text' }]
+  languages: ['en'],
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }]
 };
 
 // Type declarations for window/global LanguageModel
@@ -79,7 +80,9 @@ export async function generateWord(
       const duplicateClause = allowDuplicates ? '' : 'where each letter in the word is completely unique (no duplicate letters) ';
       const wordConstraint = {
         type: 'array',
-        items: { type: 'string' }
+        items: { type: 'string' },
+        minItems: 20,
+        maxItems: 20
       };
       const promptText = `Generate exactly 20 different 5-letter English words that are ${difficultyWord} to guess, ${duplicateClause}. Proper nouns, abbreviations, or combinations of random letters are strictly forbidden. Return only the words as a JSON array of strings in all uppercase. Do not include any introductory or concluding text, explanations, or formatting. Example format: ["WORD1", "WORD2", "WORD3", "WORD4", "WORD5"]`;
 

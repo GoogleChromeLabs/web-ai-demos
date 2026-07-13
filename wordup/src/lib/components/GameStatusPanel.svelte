@@ -35,10 +35,10 @@
   <div class="game-loading-panel" role="status" aria-label="Loading new word">
     <h2 class="game-loading-title">CONJURING A WORD...</h2>
     <p class="game-loading-text">{settingsDescription}</p>
-    {#if downloadProgress !== null && downloadProgress < 100}
+    {#if downloadProgress !== null && downloadProgress < 1}
       <div class="download-progress-container">
-        <progress id="model-download-progress" value={downloadProgress} max="100"></progress>
-        <label for="model-download-progress" class="download-progress-label">Downloading AI Model: {downloadProgress}%</label>
+        <progress id="model-download-progress" value={downloadProgress}></progress>
+        <label for="model-download-progress" class="download-progress-label">Downloading AI Model: {Math.round(downloadProgress * 100)}%</label>
       </div>
     {/if}
   </div>
