@@ -145,7 +145,7 @@ describe('Prompt API Client', () => {
 
   it('should throw an error if LanguageModel is unsupported', async () => {
     await expect(generateWord('easy', false, [])).rejects.toThrow(
-      'Chrome Prompt API (LanguageModel) is not supported in this browser.'
+      'Prompt API (LanguageModel) is not supported in this browser.'
     );
   });
 

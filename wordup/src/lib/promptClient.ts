@@ -12,7 +12,7 @@ declare global {
     create(options?: any): Promise<LanguageModelSession>;
   }
   interface LanguageModelSession {
-    prompt(text: string): Promise<string>;
+    prompt(text: string, options?: any): Promise<string>;
     destroy(): void;
   }
   var LanguageModel: LanguageModel;
@@ -39,7 +39,7 @@ export async function generateWord(
   onProgress?: (loaded: number, total: number) => void
 ): Promise<string> {
   if (typeof LanguageModel === 'undefined') {
-    throw new Error('Chrome Prompt API (LanguageModel) is not supported in this browser.');
+    throw new Error('Prompt API (LanguageModel) is not supported in this browser.');
   }
 
   const availability = await LanguageModel.availability(sessionOptions);
@@ -152,7 +152,7 @@ export async function getSuggestions(
   onProgress?: (loaded: number, total: number) => void
 ): Promise<string[]> {
   if (typeof LanguageModel === 'undefined') {
-    throw new Error('Chrome Prompt API (LanguageModel) is not supported in this browser.');
+    throw new Error('Prompt API (LanguageModel) is not supported in this browser.');
   }
 
   const availability = await LanguageModel.availability(sessionOptions);
