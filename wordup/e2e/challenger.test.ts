@@ -173,4 +173,29 @@ describe('Challenger 2 - Keyboard Playability and Focus Management Verification'
     // let's also assert that the CSS classes exist in our component files (already verified statically)
     expect(true).toBe(true);
   });
+
+  it('should trigger a new game when Enter key or click is performed on the focused PLAY AGAIN button', async () => {
+    const harness = await setupE2ETest();
+    try {
+      await harness.typeWord('APPLE');
+      await harness.clickButton('GUESS!');
+
+      let status = await harness.getAppStatus();
+      expect(status.status).toBe('won');
+
+      // PLAY AGAIN! button is focused
+      const activeEl = document.activeElement as HTMLElement | null;
+      expect(activeEl).not.toBeNull();
+      expect(activeEl?.tagName.toLowerCase()).toBe('button');
+      expect(activeEl?.textContent?.trim()).toBe('PLAY AGAIN!');
+
+      // Trigger PLAY AGAIN button
+      await harness.clickButton('PLAY AGAIN!');
+      
+      status = await harness.getAppStatus();
+      expect(status.status).toBe('playing');
+    } finally {
+      await harness.cleanup();
+    }
+  });
 });

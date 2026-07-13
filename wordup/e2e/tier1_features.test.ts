@@ -124,6 +124,35 @@ describe('Tier 1 Feature Coverage E2E Tests', () => {
         await harnessLoss.cleanup();
       }
     });
+
+    it('should stay on victory screen when winning via Enter keypress without auto-restarting game', async () => {
+      const harness = await setupE2ETest();
+      try {
+        await harness.typeWord('APPLE');
+        await harness.pressKey('Enter');
+        
+        const status = await harness.getAppStatus();
+        expect(status.status).toBe('won');
+        expect(status.title).toBe('VICTORY!');
+      } finally {
+        await harness.cleanup();
+      }
+    });
+
+    it('should stay on game over screen when losing via Enter keypress without auto-restarting game', async () => {
+      const harness = await setupE2ETest();
+      try {
+        for (let i = 0; i < 5; i++) {
+          await harness.typeWord('APPLY');
+          await harness.pressKey('Enter');
+        }
+        const status = await harness.getAppStatus();
+        expect(status.status).toBe('lost');
+        expect(status.title).toBe('GAME OVER');
+      } finally {
+        await harness.cleanup();
+      }
+    });
   });
 
   // ==========================================

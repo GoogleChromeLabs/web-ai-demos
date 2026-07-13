@@ -136,6 +136,7 @@
         deleteLetter();
       }
     } else if (e.key === 'Enter') {
+      e.preventDefault();
       onSubmitGuess();
     } else if (e.key === 'ArrowLeft') {
       let prevIdx = -1;
