@@ -430,11 +430,23 @@ export async function setupE2ETest(options?: {
 
   await waitForLoading();
 
+  async function getActiveRow(): Promise<string[]> {
+    if (!currentContainer) return ['', '', '', '', ''];
+    const activeRow = currentContainer.querySelector('.board-row.active-row');
+    if (!activeRow) return ['', '', '', '', ''];
+    const cards = Array.from(activeRow.querySelectorAll('.letter-card'));
+    return cards.map(card => {
+      const input = card.querySelector('input.cell-input') as HTMLInputElement | null;
+      return input ? input.value : (card.querySelector('.letter-text')?.textContent?.trim() || '');
+    });
+  }
+
   return {
     typeWord,
     pressKey,
     clickButton,
     getGridState,
+    getActiveRow,
     getStatsState,
     getSuggestions,
     clickSuggestion,

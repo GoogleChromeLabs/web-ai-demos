@@ -148,10 +148,9 @@ describe('Milestone 4.1 Reactivity & Rendering Stress Tests', () => {
     }
   });
 
-  it('should prevent race conditions and handle AI suggestions load under rapid play', async () => {
+  it('should reveal missing letter and lock the cell when help is triggered', async () => {
     setNextGeneratedWords(['APPLE']);
     const harness = await setupE2ETest();
-    setNextSuggestions(['APPLE', 'APRON', 'APPLY']);
 
     try {
       // 1. Submit one incorrect guess to enable help
@@ -164,28 +163,9 @@ describe('Milestone 4.1 Reactivity & Rendering Stress Tests', () => {
       // 2. Click the help button
       await harness.clickButton('?');
 
-      // 3. IMMEDIATELY start typing another word before the suggestion promise resolves
-      const activeRow = document.querySelector('.board-row.active-row');
-      const inputs = Array.from(activeRow!.querySelectorAll('input.cell-input')) as HTMLInputElement[];
-      
-      inputs[0].focus();
-      inputs[0].value = 'S';
-      inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-
-      // 4. Wait for the suggestion to load
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // 5. Ensure suggestions arrived
-      const suggestions = await harness.waitForSuggestions();
-      expect(suggestions).toContain('APPLE');
-
-      // 6. Select a suggestion 'APPLE'
-      await harness.clickSuggestion('APPLE');
-
-      // 7. Verify the active row was filled with the suggestion
+      // 3. Verify position 0 ('A') is revealed and locked
       const grid = await harness.getGridState();
-      // Since 'A' was in a non-locked column, the word 'APPLE' should have overwritten the typed letter 'S'
-      expect(grid[1].map(c => c.letter)).toEqual(['A', 'P', 'P', 'L', 'E']);
+      expect(grid[1].map(c => c.letter)[0]).toBe('A');
     } finally {
       await harness.cleanup();
     }

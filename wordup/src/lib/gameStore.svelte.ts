@@ -244,10 +244,22 @@ export function createGameStore(): GameStore {
     }
   }
 
-  async function useHelpAction(): Promise<boolean> {
+  function getCanUseHelp(): boolean {
     if (gameStatus !== 'playing') return false;
     if (guesses.length === 0) return false;
     if (helpActionsUsed >= 3) return false;
+    const unrevealedIndices = [0, 1, 2, 3, 4].filter(i => !isLocked[i]);
+    return unrevealedIndices.length > 1;
+  }
+
+  async function useHelpAction(): Promise<boolean> {
+    if (!getCanUseHelp()) return false;
+
+    const unrevealedIndices = [0, 1, 2, 3, 4].filter(i => !isLocked[i]);
+    const chosenIndex = unrevealedIndices[0];
+
+    isLocked[chosenIndex] = true;
+    activeRow[chosenIndex] = secretWord[chosenIndex].toUpperCase();
 
     helpActionsUsed += 1;
     score = Math.max(0, score - 1);
@@ -344,6 +356,7 @@ export function createGameStore(): GameStore {
     revealWord,
     fillActiveRow,
     useHelpAction,
+    get canUseHelp() { return getCanUseHelp(); },
     forceNewGame
   };
 }

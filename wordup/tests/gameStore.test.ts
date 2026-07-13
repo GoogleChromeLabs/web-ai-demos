@@ -20,7 +20,7 @@ vi.mock('../src/lib/promptClient', () => ({
 }));
 
 describe('Game Store', () => {
-  let mockStats = { streak: 0, score: 0, highScore: 0, difficulty: 'hard', allowDuplicates: false };
+  let mockStats: { streak: number; score: number; highScore: number; difficulty: 'easy' | 'medium' | 'hard' | 'very_hard' | 'impossible'; allowDuplicates: boolean } = { streak: 0, score: 0, highScore: 0, difficulty: 'hard', allowDuplicates: false };
   let mockSession: any = null;
   let mockHistory: string[] = [];
 
@@ -550,53 +550,56 @@ describe('Game Store', () => {
     }));
   });
 
-  it('should manage help actions: deduct score, track usage, and save session with progress', async () => {
+  it('should manage help actions: reveal missing letter in right spot, deduct score, track usage, and save session', async () => {
     vi.mocked(loadStats).mockResolvedValue({ streak: 0, score: 10, highScore: 10, difficulty: 'hard', allowDuplicates: false });
     vi.mocked(loadSession).mockResolvedValue(null);
     vi.mocked(getWordHistory).mockResolvedValue([]);
-    vi.mocked(generateWord).mockResolvedValue('SHINE');
+    vi.mocked(generateWord).mockResolvedValue('PLANT');
 
     const store = createGameStore();
     await store.init();
 
-    // Submit a wrong guess first to move to round 2 (1 guess made)
-    'STONE'.split('').forEach(char => store.addLetter(char));
+    // Submit a wrong guess first to move to round 2 (1 guess made, no letters matched)
+    'CROWD'.split('').forEach(char => store.addLetter(char));
     await store.submitGuess();
 
     expect(store.state.score).toBe(10);
     expect(store.state.helpActionsUsed).toBe(0);
+    expect(store.canUseHelp).toBe(true);
 
     const success = await store.useHelpAction();
     expect(success).toBe(true);
     expect(store.state.helpActionsUsed).toBe(1);
     expect(store.state.score).toBe(9);
+    expect(store.state.isLocked[0]).toBe(true);
+    expect(store.state.activeRow[0]).toBe('P');
     expect(saveStats).toHaveBeenCalledWith({ streak: 0, score: 9, highScore: 10, difficulty: 'hard', allowDuplicates: false });
 
     expect(saveSession).toHaveBeenLastCalledWith({
       guesses: [
         [
-          { letter: 'S', status: 'correct' },
-          { letter: 'T', status: 'absent' },
+          { letter: 'C', status: 'absent' },
+          { letter: 'R', status: 'absent' },
           { letter: 'O', status: 'absent' },
-          { letter: 'N', status: 'correct' },
-          { letter: 'E', status: 'correct' }
+          { letter: 'W', status: 'absent' },
+          { letter: 'D', status: 'absent' }
         ]
       ],
-      activeRow: ['S', '', '', 'N', 'E'],
-      isLocked: [true, false, false, true, true],
+      activeRow: ['P', '', '', '', ''],
+      isLocked: [true, false, false, false, false],
       gameStatus: 'playing',
-      secretWord: 'SHINE',
+      secretWord: 'PLANT',
       helpActionsUsed: 1,
       difficulty: 'hard',
       allowDuplicates: false
     });
   });
 
-  it('should enforce a flat total of 3 help actions per game across all attempts and accumulate usage instead of resetting', async () => {
+  it('should enforce a flat total of 3 help actions per game and not reveal the last letter', async () => {
     vi.mocked(loadStats).mockResolvedValue({ streak: 0, score: 10, highScore: 10 });
     vi.mocked(loadSession).mockResolvedValue(null);
     vi.mocked(getWordHistory).mockResolvedValue([]);
-    vi.mocked(generateWord).mockResolvedValue('SHINE');
+    vi.mocked(generateWord).mockResolvedValue('PLANT');
 
     const store = createGameStore();
     await store.init();
@@ -605,36 +608,46 @@ describe('Game Store', () => {
     const successOnStart = await store.useHelpAction();
     expect(successOnStart).toBe(false);
 
-    // Submit guess 1 -> moves to Row 2
-    'STONE'.split('').forEach(char => store.addLetter(char));
+    // Submit guess 1 ('CROWD' -> 0 matches)
+    'CROWD'.split('').forEach(char => store.addLetter(char));
     await store.submitGuess();
 
-    // Row 2 - take 2 hints
-    expect(await store.useHelpAction()).toBe(true);
-    expect(await store.useHelpAction()).toBe(true);
-    expect(store.state.helpActionsUsed).toBe(2);
-
-    // Submit guess 2 -> moves to Row 3. Count should NOT reset to 0!
-    'STONE'.split('').forEach(char => store.addLetter(char));
-    await store.submitGuess();
-    expect(store.state.helpActionsUsed).toBe(2); // Still 2!
-
-    // Row 3 - take 1 hint (brings total to 3)
-    expect(await store.useHelpAction()).toBe(true);
+    // Row 2 - take 3 hints in sequence
+    expect(await store.useHelpAction()).toBe(true); // reveals 'P' (idx 0)
+    expect(await store.useHelpAction()).toBe(true); // reveals 'L' (idx 1)
+    expect(await store.useHelpAction()).toBe(true); // reveals 'A' (idx 2)
     expect(store.state.helpActionsUsed).toBe(3);
+    expect(store.state.activeRow).toEqual(['P', 'L', 'A', '', '']);
+    expect(store.canUseHelp).toBe(false); // Cap reached
 
-    // 4th total hint on Row 3 fails (cap of 3 reached!)
+    // 4th hint fails because cap of 3 reached
     expect(await store.useHelpAction()).toBe(false);
-    expect(store.state.helpActionsUsed).toBe(3);
+  });
 
-    // Submit guess 3 -> moves to Row 4.
-    'STONE'.split('').forEach(char => store.addLetter(char));
+  it('should refuse to reveal the final letter when only 1 unrevealed letter remains (at any index), but allow position 4 when multiple letters remain', async () => {
+    vi.mocked(loadStats).mockResolvedValue({ streak: 0, score: 10, highScore: 10 });
+    vi.mocked(loadSession).mockResolvedValue(null);
+    vi.mocked(getWordHistory).mockResolvedValue([]);
+    vi.mocked(generateWord).mockResolvedValue('PLANT');
+
+    const store = createGameStore();
+    await store.init();
+
+    // Case A: 2 unrevealed letters left at indices 3 ('N') and 4 ('T')
+    // Guess 'PLACE': matches P, L, A (indices 0, 1, 2 locked; 3 and 4 missing)
+    'PLACE'.split('').forEach(char => store.addLetter(char));
     await store.submitGuess();
-    expect(store.state.helpActionsUsed).toBe(3); // Still 3!
 
-    // Try calling help on Row 4 - should fail immediately because total cap of 3 has been reached!
+    expect(store.state.isLocked).toEqual([true, true, true, false, false]);
+    expect(store.canUseHelp).toBe(true);
+
+    // 1st Help reveals position 3 ('N')
+    expect(await store.useHelpAction()).toBe(true);
+    expect(store.state.activeRow).toEqual(['P', 'L', 'A', 'N', '']);
+
+    // Now only index 4 ('T') is unrevealed (count = 1). Help must refuse!
+    expect(store.canUseHelp).toBe(false);
     expect(await store.useHelpAction()).toBe(false);
-    expect(store.state.helpActionsUsed).toBe(3);
   });
 
   it('should fill active row with suggestion letters safely bypassing locked columns', async () => {

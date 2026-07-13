@@ -438,124 +438,75 @@ describe('Wordup PWA - Tier 2 Boundary & Corner Cases E2E Tests', () => {
   // F4: AI Hints & Suggestions (5 tests)
   // =========================================================================
   describe('F4: AI Hints & Suggestions', () => {
-    it('16. should handle AI offline or availability unavailable state gracefully', async () => {
+    it('16. should refuse to reveal the last remaining unrevealed letter', async () => {
       const harness = await setupE2ETest();
       try {
-        // Ensure duplicates are enabled and start new game so it applies
+        // Enable duplicates so APPLY works if needed, start game
         const checkbox = document.querySelector('#dup-toggle') as HTMLInputElement;
         if (!checkbox.checked) {
           await harness.toggleDuplicates();
         }
         await harness.clickButton('GENERATE');
 
-        // Submit one guess to unlock the help button
+        // Secret word is APPLE. Guess APPLY (matches A, P, P, L; leaves only E at index 4)
         await harness.typeWord('APPLY');
         await harness.clickButton('GUESS!');
 
-        // Set AI availability to unavailable
-        setMockedAvailability('unavailable');
-
-        // Click help button
-        await harness.clickButton('?');
-
-        // Verify error notice is shown
-        const hintError = await harness.waitForHintError();
-        expect(hintError).toContain('AI is currently offline');
+        // Help button should be disabled because only the last letter remains
+        const helpButton = document.querySelector('.help-btn') as HTMLButtonElement | null;
+        expect(helpButton?.disabled).toBe(true);
+        expect(helpButton?.getAttribute('title')).toBe('Cannot reveal the last letter.');
       } finally {
         await harness.cleanup();
       }
     });
 
-    it('17. should handle AI suggestions returning empty list gracefully', async () => {
+    it('17. should refuse to reveal the final remaining missing letter when unrevealed count reaches 1', async () => {
       const harness = await setupE2ETest();
       try {
-        // Ensure duplicates are enabled and start new game
-        const checkbox = document.querySelector('#dup-toggle') as HTMLInputElement;
-        if (!checkbox.checked) {
-          await harness.toggleDuplicates();
-        }
-        await harness.clickButton('GENERATE');
-
-        // Submit one guess
-        await harness.typeWord('APPLY');
+        // Secret word APPLE. Guess STARE (locks position 4 'E', leaves 0, 1, 2, 3 unrevealed)
+        await harness.typeWord('STARE');
         await harness.clickButton('GUESS!');
-        await new Promise(resolve => setTimeout(resolve, 50));
 
-        const grid = await harness.getGridState();
-        const status = await harness.getAppStatus();
-        console.log('TEST 17 DIAGNOSTIC:', JSON.stringify({ grid, status }));
+        const helpButton = document.querySelector('.help-btn') as HTMLButtonElement | null;
+        expect(helpButton?.disabled).toBe(false);
 
-        // Mock empty suggestions
-        setNextSuggestions([]);
-
-        // Click help button
+        // Click help 3 times (reveals 0 'A', 1 'P', 2 'P')
+        await harness.clickButton('?');
+        await harness.clickButton('?');
         await harness.clickButton('?');
 
-        // Verify specific error notice is shown
-        const hintError = await harness.waitForHintError();
-        expect(hintError).toContain('No valid words found matching your constraints');
+        // Position 3 'L' and position 4 'E' were remaining, but after 3 hints (locking 0,1,2), position 3 remains unrevealed because unrevealedCount=1
+        const activeRow = await harness.getActiveRow();
+        expect(activeRow.slice(0, 3)).toEqual(['A', 'P', 'P']);
+        expect(helpButton?.disabled).toBe(true);
       } finally {
         await harness.cleanup();
       }
     });
 
-    it('18. should handle AI suggestions throwing an error gracefully', async () => {
+    it('18. should not trigger help on turn 1 before any guesses are made', async () => {
       const harness = await setupE2ETest();
       try {
-        // Ensure duplicates are enabled and start new game
-        const checkbox = document.querySelector('#dup-toggle') as HTMLInputElement;
-        if (!checkbox.checked) {
-          await harness.toggleDuplicates();
-        }
-        await harness.clickButton('GENERATE');
-
-        // Submit one guess
-        await harness.typeWord('APPLY');
-        await harness.clickButton('GUESS!');
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        const grid = await harness.getGridState();
-        const status = await harness.getAppStatus();
-        console.log('TEST 18 DIAGNOSTIC:', JSON.stringify({ grid, status }));
-
-        // Mock suggestions prompt to throw error
-        vi.spyOn(globalThis.LanguageModel, 'create').mockResolvedValue({
-          prompt: async () => {
-            throw new Error('Prompt failed');
-          },
-          destroy: () => {}
-        });
-
-        // Click help button
-        await harness.clickButton('?');
-
-        // Verify generic error notice is shown
-        const hintError = await harness.waitForHintError();
-        expect(hintError).toContain('Could not fetch suggestions');
+        const helpButton = document.querySelector('.help-btn') as HTMLButtonElement | null;
+        expect(helpButton?.disabled).toBe(true);
+        expect(helpButton?.getAttribute('title')).toBe('Unavailable on first turn.');
       } finally {
         await harness.cleanup();
-        vi.restoreAllMocks();
       }
     });
 
     it('19. should enforce maximum of 3 help actions per game', async () => {
       const harness = await setupE2ETest();
       try {
-        // Set initial score to 5 so we have enough points to deduct (and enable duplicates so APPLY works)
+        // Set initial score to 5 so we have enough points to deduct
         await saveStats({ streak: 0, score: 5, highScore: 5, difficulty: 'hard', allowDuplicates: true });
-        const dbStats = await loadStats();
-        console.log('TEST 19 - DB STATS BEFORE RELOAD:', JSON.stringify(dbStats));
         await clearSession(); // Clear session
         await harness.reloadPage();
 
-        // Submit one guess to unlock help
-        await harness.typeWord('APPLY');
+        // Submit guess 'STARE' to unlock help (secret word APPLE)
+        await harness.typeWord('STARE');
         await harness.clickButton('GUESS!');
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        const grid = await harness.getGridState();
-        const status = await harness.getAppStatus();
-        console.log('TEST 19 DIAGNOSTIC:', JSON.stringify({ grid, status }));
 
         // Verify help button is enabled
         const helpButton = document.querySelector('.help-btn') as HTMLButtonElement | null;
@@ -563,13 +514,8 @@ describe('Wordup PWA - Tier 2 Boundary & Corner Cases E2E Tests', () => {
 
         // Click HELP 3 times
         await harness.clickButton('?'); // 1st
-        await harness.waitForHelpButtonActive();
-
         await harness.clickButton('?'); // 2nd
-        await harness.waitForHelpButtonActive();
-
         await harness.clickButton('?'); // 3rd
-        await harness.waitForHelpButtonActive();
 
         // Verify help button is now disabled
         expect(helpButton?.disabled).toBe(true);

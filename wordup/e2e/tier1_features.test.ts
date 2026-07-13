@@ -389,8 +389,8 @@ describe('Tier 1 Feature Coverage E2E Tests', () => {
         // On start, disabled because no guesses made yet
         expect(helpBtn.disabled).toBe(true);
 
-        // Make a wrong guess
-        await harness.typeWord('APPLY');
+        // Make a wrong guess that leaves >1 letters unrevealed
+        await harness.typeWord('STARE');
         await harness.clickButton('GUESS!');
 
         // Should now be enabled
@@ -417,48 +417,41 @@ describe('Tier 1 Feature Coverage E2E Tests', () => {
       }
     });
 
-    it('should fetch and display suggestions after at least one guess is made', async () => {
+    it('should reveal a missing letter in the right spot when help is clicked', async () => {
       const harness = await setupE2ETest();
       try {
-        // Submit guess
-        await harness.typeWord('APPLY');
+        // Submit guess 'STARE' against secret word 'APPLE'
+        await harness.typeWord('STARE');
         await harness.clickButton('GUESS!');
 
-        // Set mock suggestions
-        setNextSuggestions(['APPLE']);
-
         // Click help
-        await harness.clickButton('?'); // Help button has label "?" or class help-btn
+        await harness.clickButton('?');
 
-        const suggestions = await harness.waitForSuggestions();
-        expect(suggestions).toEqual(['APPLE']);
+        const activeRow = await harness.getActiveRow();
+        expect(activeRow[0]).toBe('A');
       } finally {
         await harness.cleanup();
       }
     });
 
-    it('should auto-fill the active row when a suggestion bubble is clicked', async () => {
+    it('should lock the revealed letter in the active row', async () => {
       const harness = await setupE2ETest();
       try {
-        await harness.typeWord('APPLY');
+        await harness.typeWord('STARE');
         await harness.clickButton('GUESS!');
 
-        setNextSuggestions(['APPLE']);
         await harness.clickButton('?');
-        await harness.waitForSuggestions();
 
-        // Click the suggestion bubble
-        await harness.clickSuggestion('APPLE');
-
-        const grid = await harness.getGridState();
-        expect(grid[1].map(c => c.letter)).toEqual(['A', 'P', 'P', 'L', 'E']);
+        const activeRow = await harness.getActiveRow();
+        expect(activeRow[0]).toBe('A');
       } finally {
         await harness.cleanup();
       }
     });
 
     it('should decrement score when help action is used', async () => {
-      const harness = await setupE2ETest();
+      await saveStats({ streak: 0, score: 0, highScore: 0, difficulty: 'hard', allowDuplicates: false });
+      const harness = await setupE2ETest({ streak: 0, score: 0, highScore: 0 });
       try {
         // 1. Win a game first to gain score (10 pts)
         await harness.typeWord('APPLE');
@@ -470,13 +463,11 @@ describe('Tier 1 Feature Coverage E2E Tests', () => {
         await harness.clickButton('PLAY AGAIN');
 
         // 3. Make a guess to enable help
-        await harness.typeWord('APPLY');
+        await harness.typeWord('STARE');
         await harness.clickButton('GUESS!');
 
         // 4. Trigger help
-        setNextSuggestions(['APPLE']);
         await harness.clickButton('?');
-        await harness.waitForSuggestions();
 
         // Score should decrement by 1 (10 -> 9)
         stats = await harness.getStatsState();
@@ -492,6 +483,7 @@ describe('Tier 1 Feature Coverage E2E Tests', () => {
   // ==========================================
   describe('F5: Session Persistence & Restore', () => {
     it('should save mid-game session state to database after each guess', async () => {
+      await clearSession();
       const harness = await setupE2ETest();
       try {
         await harness.typeWord('APPLY');
@@ -583,13 +575,11 @@ describe('Tier 1 Feature Coverage E2E Tests', () => {
       const harness = await setupE2ETest();
       try {
         // Submit guess to enable help
-        await harness.typeWord('APPLY');
+        await harness.typeWord('STARE');
         await harness.clickButton('GUESS!');
 
         // Use help
-        setNextSuggestions(['APPLE']);
         await harness.clickButton('?');
-        await harness.waitForSuggestions();
 
         // Remaining help count should be 2
         let helpCountEl = document.querySelector('.help-count');

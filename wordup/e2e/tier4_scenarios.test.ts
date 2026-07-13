@@ -180,14 +180,14 @@ describe('Wordup PWA E2E Tier 4: Real-World Application Scenarios', () => {
         [
           { letter: 'S', status: 'correct' },
           { letter: 'T', status: 'absent' },
-          { letter: 'A', status: 'correct' },
+          { letter: 'O', status: 'absent' },
           { letter: 'R', status: 'correct' },
           { letter: 'E', status: 'correct' }
         ],
         [
           { letter: 'S', status: 'correct' },
           { letter: 'L', status: 'absent' },
-          { letter: 'A', status: 'correct' },
+          { letter: 'O', status: 'absent' },
           { letter: 'R', status: 'correct' },
           { letter: 'E', status: 'correct' }
         ]
@@ -195,8 +195,8 @@ describe('Wordup PWA E2E Tier 4: Real-World Application Scenarios', () => {
 
       const savedSession = {
         guesses: restoredGuesses,
-        activeRow: ['S', '', 'A', 'R', 'E'],
-        isLocked: [true, false, true, true, true],
+        activeRow: ['S', '', '', 'R', 'E'],
+        isLocked: [true, false, false, true, true],
         gameStatus: 'playing' as const,
         secretWord: 'SPARE',
         helpActionsUsed: 0,
@@ -215,34 +215,18 @@ describe('Wordup PWA E2E Tier 4: Real-World Application Scenarios', () => {
       let stats = await harness.getStatsState();
       expect(stats.score).toBe(5);
 
-      // 2. We are stuck on guess 3. Use HELP.
-      setNextSuggestions(['SHARE', 'SPARE', 'SCARE']);
+      // 2. We are stuck on guess 3. Use HELP (reveals missing letter at index 1: 'P')
       await harness.clickButton('?');
-      await harness.waitForSuggestions();
 
       // Score should be decremented by 1 (penalty for help)
       stats = await harness.getStatsState();
       expect(stats.score).toBe(4);
 
-      // Select 'SHARE' (guess 3)
-      await harness.clickSuggestion('SHARE');
-      await harness.clickButton('GUESS!');
+      let activeRow = await harness.getActiveRow();
+      expect(activeRow).toEqual(['S', 'P', '', 'R', 'E']);
 
-      // Verify guess 3 submitted, game is still playing
-      status = await harness.getAppStatus();
-      expect(status.status).toBe('playing');
-
-      // 3. We are on guess 4. Use HELP again.
-      setNextSuggestions(['SPARE']);
-      await harness.clickButton('?');
-      await harness.waitForSuggestions();
-
-      // Score decremented by 1 again
-      stats = await harness.getStatsState();
-      expect(stats.score).toBe(3);
-
-      // Select 'SPARE' (guess 4)
-      await harness.clickSuggestion('SPARE');
+      // Fill remaining letter 'A' (index 2) by typing SPARE
+      await harness.typeWord('SPARE');
       await harness.clickButton('GUESS!');
 
       // Verify game is won
@@ -251,21 +235,21 @@ describe('Wordup PWA E2E Tier 4: Real-World Application Scenarios', () => {
 
       // Score calculation:
       // Starting score: 5
-      // 2 Help actions used: -2
-      // Guess 4 is correct: +3 (6 - 4 + 1 = 3 points)
-      // Total score: 5 - 2 + 3 = 6 points
+      // 1 Help action used: -1
+      // Guess 3 is correct: +4 (6 - 3 + 1 = 4 points)
+      // Total score: 5 - 1 + 4 = 8 points
       stats = await harness.getStatsState();
       expect(stats.streak).toBe(2);
-      expect(stats.score).toBe(6);
-      expect(stats.best).toBe(6);
+      expect(stats.score).toBe(8);
+      expect(stats.best).toBe(8);
 
-      // 4. Verify persistence after reload
+      // 4. Verify persistence after reload (won game cleared mid-game session, ready for next game)
       await harness.reloadPage();
       status = await harness.getAppStatus();
-      expect(status.status).toBe('won');
+      expect(status.status).toBe('playing');
       stats = await harness.getStatsState();
       expect(stats.streak).toBe(2);
-      expect(stats.score).toBe(6);
+      expect(stats.score).toBe(8);
     } finally {
       await harness.cleanup();
     }
@@ -390,16 +374,18 @@ describe('Wordup PWA E2E Tier 4: Real-World Application Scenarios', () => {
       await harness.clickButton('GUESS!');
 
       // 5. On 4th attempt, use a hint and win
-      setNextSuggestions(['GRAPE']);
+      // Click HELP: reveals index 0 ('G') in activeRow ['G', '', 'A', 'P', 'E']
       await harness.clickButton('?');
-      await harness.waitForSuggestions();
 
       // Score decremented by 1 (penalty for help) -> 20 - 1 = 19
       stats = await harness.getStatsState();
       expect(stats.score).toBe(19);
 
-      // Click suggestion
-      await harness.clickSuggestion('GRAPE');
+      let activeRow = await harness.getActiveRow();
+      expect(activeRow).toEqual(['G', '', 'A', '', 'E']);
+
+      // Type the full word 'GRAPE' into active row to fill positions 1 and 3
+      await harness.typeWord('GRAPE');
       await harness.clickButton('GUESS!');
 
       // Verify game is won

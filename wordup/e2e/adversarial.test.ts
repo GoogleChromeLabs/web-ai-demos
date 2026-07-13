@@ -80,9 +80,9 @@ describe('Wordup PWA - Adversarial and Coverage Hardening Tests', () => {
       // Click the help button '?' (starts loading suggestions)
       await harness.clickButton('?');
 
-      // Verify that while loading, the score is still 5 (no premature deduction!)
+      // Verify that score is decremented by 1 upon using help
       let tempStats = await harness.getStatsState();
-      expect(tempStats.score).toBe(5);
+      expect(tempStats.score).toBe(4);
 
       // While suggestions are loading, click the GENERATE button to start a new game
       await harness.clickButton('GENERATE');
@@ -107,13 +107,8 @@ describe('Wordup PWA - Adversarial and Coverage Hardening Tests', () => {
   });
 
   // Gap 2: AI Hint Constraint Filtering Accuracy
-  it('2. should strictly filter AI suggestions against green, yellow, and gray constraints', async () => {
-    // Secret word is SLATE
-    setNextGeneratedWords(['SLATE']);
-
+  it('2. should reveal a missing letter in the right spot when help is triggered', async () => {
     const harness = await setupE2ETest();
-    // Mock the suggestions returned by the prompt
-    setNextSuggestions(['SLATE', 'SHARE', 'PLATE', 'STALE']);
 
     try {
       // Submit guess STARE
@@ -123,14 +118,10 @@ describe('Wordup PWA - Adversarial and Coverage Hardening Tests', () => {
       // Click the help button '?'
       await harness.clickButton('?');
 
-      // Get suggestions from the UI
-      const suggestions = await harness.waitForSuggestions();
+      const activeRow = await harness.getActiveRow();
 
-      // Verify that ONLY 'SLATE' is shown
-      // - 'SHARE' is rejected because it contains 'R' (gray)
-      // - 'PLATE' is rejected because it doesn't start with 'S' (green at 0)
-      // - 'STALE' is rejected because 'T' is at position 1 (which was yellow at position 1 in 'STARE')
-      expect(suggestions).toEqual(['SLATE']);
+      // Secret word is APPLE. Position 0 ('A') is revealed in active row
+      expect(activeRow[0]).toBe('A');
     } finally {
       await harness.cleanup();
     }
@@ -161,7 +152,7 @@ describe('Wordup PWA - Adversarial and Coverage Hardening Tests', () => {
       // Verify that the game transitions to 'error' status
       const status = await harness.getAppStatus();
       expect(status.status).toBe('error');
-      expect(status.message).toContain('Chrome Prompt API (LanguageModel) is not supported in this browser.');
+      expect(status.message).toContain('Prompt API (LanguageModel) is not supported in this browser.');
     } finally {
       await harness.cleanup();
       // Restore LanguageModel

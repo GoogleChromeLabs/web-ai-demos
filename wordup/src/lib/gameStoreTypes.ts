@@ -28,5 +28,6 @@ export interface GameStore {
   revealWord(): string;
   fillActiveRow(word: string): void;
   useHelpAction(): Promise<boolean>;
+  readonly canUseHelp: boolean;
   forceNewGame(): Promise<void>;
 }

@@ -5,7 +5,7 @@ import {
   setNextGeneratedWords,
   setNextSuggestions,
 } from './runner';
-import { saveStats, saveSession, loadStats, type LetterCell } from '../src/lib/db';
+import { saveStats, saveSession, loadStats, clearSession, type LetterCell } from '../src/lib/db';
 
 describe('Wordup PWA E2E Tier 3: Cross-Feature Combinations', () => {
   beforeEach(() => {
@@ -99,18 +99,11 @@ describe('Wordup PWA E2E Tier 3: Cross-Feature Combinations', () => {
       await harness.typeWord('STARE');
       await harness.clickButton('GUESS!');
 
-      // Mock AI response to return a list of words, some with duplicates
-      // 'APPLE' has duplicate 'P', 'CRANE' and 'GRAPE' have unique letters
-      setNextSuggestions(['APPLE', 'CRANE', 'GRAPE']);
-
       // Trigger HELP
       await harness.clickButton('?');
 
-      // Verify that 'APPLE' (contains duplicates) is filtered out
-      let suggestions = await harness.waitForSuggestions();
-      expect(suggestions).not.toContain('APPLE');
-      expect(suggestions).toContain('CRANE');
-      expect(suggestions).toContain('GRAPE');
+      let activeRow = await harness.getActiveRow();
+      expect(activeRow[0]).toBe('G');
 
       // 2. Now start a game with duplicates enabled (allowDuplicates = true)
       if (!checkbox.checked) {
@@ -118,30 +111,25 @@ describe('Wordup PWA E2E Tier 3: Cross-Feature Combinations', () => {
       }
       expect(checkbox.checked).toBe(true);
 
-      setNextGeneratedWords(['APPLE']);
+      await clearSession();
+      setNextGeneratedWords(['LEMON']);
       await harness.clickButton('GENERATE');
 
       // Make a guess to enable HELP button
       await harness.typeWord('STARE');
       await harness.clickButton('GUESS!');
 
-      // Mock AI suggestions again
-      setNextSuggestions(['APPLE', 'CABLE', 'HALVE']);
-
       // Trigger HELP
       await harness.clickButton('?');
 
-      // Verify that 'APPLE' (contains duplicates) is allowed and shown
-      suggestions = await harness.waitForSuggestions();
-      expect(suggestions).toContain('APPLE');
-      expect(suggestions).toContain('CABLE');
-      expect(suggestions).toContain('HALVE');
+      activeRow = await harness.getActiveRow();
+      expect(activeRow[0]).toBe('L');
     } finally {
       await harness.cleanup();
     }
   });
 
-  it('should verify AI suggestions conform to green/yellow/gray letter constraints of current game', async () => {
+  it('should reveal the next unrevealed correct letter matching constraints of current game', async () => {
     const harness = await setupE2ETest();
 
     try {
@@ -150,23 +138,15 @@ describe('Wordup PWA E2E Tier 3: Cross-Feature Combinations', () => {
       await harness.clickButton('GENERATE');
 
       // Guess is STARE
-      // Feedback: S (green), T (yellow), A (green), R (gray/absent), E (green)
+      // Feedback: S (green at 0), T (yellow), A (green at 2), R (gray), E (green at 4)
       await harness.typeWord('STARE');
       await harness.clickButton('GUESS!');
 
-      // Mock LanguageModel raw response with different words:
-      // - SLATE: matches S at 0, A at 2, E at 4, has T, no R -> Fits!
-      // - SPATE: matches S at 0, A at 2, E at 4, has T, no R -> Fits!
-      // - SHARE: contains R (absent) -> Fails!
-      // - CRATE: no S at 0, contains R -> Fails!
-      setNextSuggestions(['SLATE', 'SPATE', 'SHARE', 'CRATE']);
-
-      // Trigger HELP
+      // Trigger HELP: position 0, 2, 4 are already locked (S, A, E). Unrevealed candidate is position 1 ('L').
       await harness.clickButton('?');
 
-      // Verify only conforming suggestions are displayed
-      const suggestions = await harness.waitForSuggestions();
-      expect(suggestions).toEqual(['SLATE', 'SPATE']);
+      const activeRow = await harness.getActiveRow();
+      expect(activeRow).toEqual(['S', 'L', 'A', '', 'E']);
     } finally {
       await harness.cleanup();
     }
@@ -254,7 +234,7 @@ describe('Wordup PWA E2E Tier 3: Cross-Feature Combinations', () => {
     }
   });
 
-  it('should handle using AI hints in very hard difficulty', async () => {
+  it('should handle using help in very hard difficulty', async () => {
     const harness = await setupE2ETest();
 
     try {
@@ -263,10 +243,8 @@ describe('Wordup PWA E2E Tier 3: Cross-Feature Combinations', () => {
       setNextGeneratedWords(['PEACH']);
       await harness.clickButton('GENERATE');
 
-      // Submit first guess: APPLE
-      // A (present/yellow), P (present/yellow), L/E (absent) -> wait, PEACH has P and A and E.
-      // PEACH: P (correct/green at index 0? No, P is at index 1 in APPLE, PEACH has P at 0. So P is present/yellow).
-      // Let's type 'PEARL'
+      // Submit first guess: PEARL
+      // PEARL against PEACH locks P, E, A (indices 0, 1, 2 locked; C at index 3 and H at index 4 unrevealed)
       await harness.typeWord('PEARL');
       await harness.clickButton('GUESS!');
 
@@ -274,16 +252,14 @@ describe('Wordup PWA E2E Tier 3: Cross-Feature Combinations', () => {
       let status = await harness.getAppStatus();
       expect(status.status).toBe('playing');
 
-      // Click HELP
-      setNextSuggestions(['PEACH']);
+      // Click HELP: reveals missing letter at index 3 ('C')
       await harness.clickButton('?');
 
-      // Verify suggestion is displayed
-      const suggestions = await harness.waitForSuggestions();
-      expect(suggestions).toContain('PEACH');
+      let activeRow = await harness.getActiveRow();
+      expect(activeRow).toEqual(['P', 'E', 'A', 'C', '']);
 
-      // Click suggestion to autofill
-      await harness.clickSuggestion('PEACH');
+      // Type the full word 'PEACH' into active row to fill position 4 'H'
+      await harness.typeWord('PEACH');
 
       // Submit guess
       await harness.clickButton('GUESS!');
