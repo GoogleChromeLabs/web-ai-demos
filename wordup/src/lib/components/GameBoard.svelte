@@ -26,8 +26,8 @@
   }>();
 
   let inputRefs: HTMLInputElement[] = [];
-  let prevActiveRow = $state<string[]>(untrack(() => [...activeRow]));
-  let prevGuessesLength = $state<number>(untrack(() => guesses.length));
+  let prevActiveRow = untrack(() => [...activeRow]);
+  let prevGuessesLength = untrack(() => guesses.length);
 
   let announcement = $state('');
 
