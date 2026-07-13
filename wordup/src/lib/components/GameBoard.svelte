@@ -19,8 +19,8 @@
     isLocked: boolean[];
     gameStatus: 'loading' | 'playing' | 'won' | 'lost' | 'error';
     shakeCells: boolean[];
-    addLetter: (char: string) => void;
-    deleteLetter: () => void;
+    addLetter: (char: string, index?: number) => void;
+    deleteLetter: (index?: number) => void;
     onSubmitGuess: () => void;
     onActivity?: () => void;
   }>();
@@ -106,7 +106,8 @@
     const val = target.value.toUpperCase();
     
     if (val) {
-      addLetter(val);
+      const charToInsert = val.slice(-1);
+      addLetter(charToInsert, idx);
       target.value = activeRow[idx];
       
       if (activeRow[idx] !== '') {
@@ -122,7 +123,6 @@
     if (onActivity) onActivity();
     if (e.key === 'Backspace') {
       if (activeRow[idx] === '') {
-        deleteLetter();
         let prevIdx = -1;
         for (let i = idx - 1; i >= 0; i--) {
           if (!isLocked[i]) {
@@ -130,11 +130,14 @@
             break;
           }
         }
-        if (prevIdx !== -1 && inputRefs[prevIdx]) {
-          inputRefs[prevIdx].focus();
+        if (prevIdx !== -1) {
+          deleteLetter(prevIdx);
+          if (inputRefs[prevIdx]) {
+            inputRefs[prevIdx].focus();
+          }
         }
       } else {
-        deleteLetter();
+        deleteLetter(idx);
       }
     } else if (e.key === 'Enter') {
       e.preventDefault();

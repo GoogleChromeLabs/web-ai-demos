@@ -117,41 +117,49 @@ export function createGameStore(): GameStore {
     }
   }
 
-  function addLetter(char: string) {
+  function addLetter(char: string, index?: number) {
     if (gameStatus !== 'playing') return;
     if (!/^[a-zA-Z]$/.test(char)) return;
     
-    // Find the first empty non-locked slot
-    const index = activeRow.findIndex((c, i) => c === '' && !isLocked[i]);
-    if (index === -1) return;
+    let targetIndex = (index !== undefined && index >= 0 && index < 5 && !isLocked[index])
+      ? index
+      : activeRow.findIndex((c, i) => c === '' && !isLocked[i]);
+
+    if (targetIndex === -1) return;
 
     const cleanChar = char.toUpperCase();
     if (!activeAllowDuplicates) {
       const existingIdx = activeRow.findIndex(c => c === cleanChar);
-      if (existingIdx !== -1) {
+      if (existingIdx !== -1 && existingIdx !== targetIndex) {
         shakeCells[existingIdx] = true;
         setTimeout(() => {
           shakeCells[existingIdx] = false;
         }, 400);
-        return; // Reject input
+        return; // Reject duplicate input
       }
     }
 
-    activeRow[index] = cleanChar;
+    activeRow[targetIndex] = cleanChar;
   }
 
-  function deleteLetter() {
+  function deleteLetter(index?: number) {
     if (gameStatus !== 'playing') return;
-    // Find last filled non-locked slot
-    let index = -1;
+    if (index !== undefined && index >= 0 && index < 5) {
+      if (!isLocked[index]) {
+        activeRow[index] = '';
+      }
+      return;
+    }
+
+    let targetIndex = -1;
     for (let i = 4; i >= 0; i--) {
       if (activeRow[i] !== '' && !isLocked[i]) {
-        index = i;
+        targetIndex = i;
         break;
       }
     }
-    if (index !== -1) {
-      activeRow[index] = '';
+    if (targetIndex !== -1) {
+      activeRow[targetIndex] = '';
     }
   }
 

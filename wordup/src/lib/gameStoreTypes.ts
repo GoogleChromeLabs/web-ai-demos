@@ -22,8 +22,8 @@ export interface GameStore {
   difficulty: 'easy' | 'medium' | 'hard' | 'very_hard' | 'impossible';
   allowDuplicates: boolean;
   init(): Promise<void>;
-  addLetter(char: string): void;
-  deleteLetter(): void;
+  addLetter(char: string, index?: number): void;
+  deleteLetter(index?: number): void;
   submitGuess(): Promise<void>;
   revealWord(): string;
   fillActiveRow(word: string): void;
