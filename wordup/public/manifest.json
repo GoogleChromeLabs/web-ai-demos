@@ -1,0 +1,29 @@
+{
+  "short_name": "Wordup",
+  "name": "Wordup",
+  "description": "Wordup - The AI-powered word game",
+  "icons": [
+    {
+      "src": "pwa-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "pwa-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "pwa-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./",
+  "scope": "./",
+  "background_color": "#fef08a",
+  "theme_color": "#a78bfa",
+  "display": "standalone",
+  "orientation": "portrait"
+}
