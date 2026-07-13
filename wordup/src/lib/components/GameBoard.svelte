@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { LetterCell } from '../db';
 
 
@@ -25,8 +26,8 @@
   }>();
 
   let inputRefs: HTMLInputElement[] = [];
-  let prevActiveRow = [...activeRow];
-  let prevGuessesLength = guesses.length;
+  let prevActiveRow = $state<string[]>(untrack(() => [...activeRow]));
+  let prevGuessesLength = $state<number>(untrack(() => guesses.length));
 
   let announcement = $state('');
 
@@ -168,11 +169,11 @@
 </script>
 
 {#if gameStatus === 'playing' || gameStatus === 'won' || gameStatus === 'lost'}
-  <main class="game-board-area" role="grid" aria-label="Wordup Game Board">
+  <main class="game-board-area">
     <!-- Visually hidden announcement area for screen readers -->
     <div class="sr-only" aria-live="polite">{announcement}</div>
 
-    <div class="grid-5x5">
+    <div class="grid-5x5" role="grid" aria-label="Wordup Game Board">
       <!-- Past Guess Rows -->
       {#each guesses as guess, rowIndex}
         <div class="board-row" role="row" aria-label="Row {rowIndex + 1}">
