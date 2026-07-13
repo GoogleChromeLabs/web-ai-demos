@@ -78,9 +78,16 @@ The web is a vast place. Built-in AI APIs like the Language Detector API allow d
     <div id="output" class="output"></div>
 
     <script type="module">
-      import firebaseConfig from './.env.json' with { type: 'json' };
-
-      // Set FIREBASE_CONFIG to select the Firebase backend
+      // Import Firebase config if present (standard pattern for this project)
+      let firebaseConfig = {};
+      try {
+        const response = await fetch('./.env.json');
+        firebaseConfig = await response.json();
+      } catch (e) {
+        console.warn(
+          'Firebase config (.env.json) not found, relying on local LanguageDetector if available.'
+        );
+      }
       window.FIREBASE_CONFIG = firebaseConfig;
 
       import { LanguageDetector } from './language-detector-api-polyfill.js';
