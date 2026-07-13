@@ -47,20 +47,20 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.5.0",
+    "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.6.0",
-    "node-addon-api": "^8.8.0",
-    "node-gyp": "^13.0.0",
-    "prettier": "^3.8.4",
+    "globals": "^17.7.0",
+    "node-addon-api": "^8.9.0",
+    "node-gyp": "^13.0.1",
+    "prettier": "^3.9.5",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^8.0.16"
+    "vite": "^8.1.4"
   },
   "dependencies": {
-    "@google/genai": "^2.8.0",
+    "@google/genai": "^2.11.0",
     "@huggingface/transformers": "^4.2.0",
     "@mlc-ai/web-llm": "^0.2.84",
-    "firebase": "^12.15.0",
-    "openai": "^6.44.0"
+    "firebase": "^12.16.0",
+    "openai": "^6.46.0"
   }
 }
