@@ -74,6 +74,12 @@
     }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .bubbly-letter {
+      animation: none;
+    }
+  }
+
   @media (max-width: 400px) {
     .bubbly-letter {
       width: 44px;

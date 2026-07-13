@@ -270,6 +270,13 @@
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
   }
+  @media (prefers-reduced-motion: reduce) {
+    .letter-card.input-card.is-wrong,
+    .letter-card.shake-orange {
+      animation: none;
+    }
+  }
+
   @media (max-width: 400px) {
     .letter-card { width: 46px; height: 46px; border-radius: 12px; }
     .letter-text, .cell-input { font-size: 1.5rem; }

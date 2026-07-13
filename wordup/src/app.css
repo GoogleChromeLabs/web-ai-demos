@@ -25,3 +25,21 @@ html, body {
   40%, 80% { transform: translateX(5px) rotate(1deg); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .letter-card.input-card.is-wrong,
+  .letter-card.shake-orange,
+  .hint-error-notice,
+  .bubbly-letter,
+  .suggestion-bubble {
+    animation: none !important;
+  }
+}
+
+
