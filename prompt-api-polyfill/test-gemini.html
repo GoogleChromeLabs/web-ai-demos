@@ -49,8 +49,22 @@
       window.__FORCE_PROMPT_API_POLYFILL__ = true;
     </script>
     <script type="module">
-      // Gemini backend configuration imported from a JSON file to avoid committing the API key
-      import geminiConfig from './.env-gemini.json' with { type: 'json' };
+      // Gemini backend configuration imported from a JSON file to avoid
+      // committing the API key. Falls back to a dummy key if the file is
+      // missing, so the page loads and reports a clear auth error instead
+      // of a dev-server crash.
+      let geminiConfig;
+      try {
+        const res = await fetch('./.env-gemini.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        geminiConfig = await res.json();
+      } catch {
+        console.warn(
+          'No .env-gemini.json found. Copy dot_env.json to .env-gemini.json ' +
+            'and fill in a real apiKey to use the Gemini backend.'
+        );
+        geminiConfig = { apiKey: 'dummy' };
+      }
       window.GEMINI_CONFIG = geminiConfig;
 
       import './prompt-api-polyfill.js';

@@ -47,8 +47,21 @@
       window.__FORCE_PROMPT_API_POLYFILL__ = true;
     </script>
     <script type="module">
-      // WebLLM backend configuration imported from a JSON file
-      import webllmConfig from './.env-webllm.json' with { type: 'json' };
+      // WebLLM backend configuration imported from a JSON file, if present.
+      // WebLLM runs entirely in-browser, so a missing file just falls back
+      // to a dummy API key instead of breaking the page.
+      let webllmConfig;
+      try {
+        const res = await fetch('./.env-webllm.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        webllmConfig = await res.json();
+      } catch {
+        console.warn(
+          'No .env-webllm.json found; using a dummy config. Create ' +
+            '.env-webllm.json to override the default model.'
+        );
+        webllmConfig = { apiKey: 'dummy' };
+      }
       window.WEBLLM_CONFIG = webllmConfig;
 
       import './prompt-api-polyfill.js';
