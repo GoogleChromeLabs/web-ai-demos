@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-task-apis-polyfills",
-  "version": "1.15.2",
+  "version": "1.15.3",
   "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, etc.)",
   "type": "module",
   "main": "./dist/index.js",
@@ -59,7 +59,7 @@
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",
   "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "dependencies": {
-    "prompt-api-polyfill": "^1.20.2"
+    "prompt-api-polyfill": "^1.20.3"
   },
   "peerDependencies": {
     "@huggingface/transformers": ">=4.2.0"
@@ -77,6 +77,6 @@
     "node-addon-api": "^8.9.0",
     "node-gyp": "^13.0.1",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^8.1.4"
+    "vite": "^8.1.5"
   }
 }
