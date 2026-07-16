@@ -214,6 +214,15 @@ What is machine learning?</textarea
 The quick brown fox jumps over the lazy dog.</textarea
       >
       <div class="controls" style="margin-top: 0.5rem">
+        <label for="taskTypeSelect">taskType:</label>
+        <select id="taskTypeSelect">
+          <option value="">(none — raw input as-is)</option>
+          <option value="semantic-similarity">semantic-similarity</option>
+          <option value="retrieval-query">retrieval-query</option>
+          <option value="retrieval-document">retrieval-document</option>
+          <option value="classification">classification</option>
+          <option value="clustering">clustering</option>
+        </select>
         <button id="embedBtn">Embed</button>
       </div>
       <h3>Embedding Vector (first 16 values)</h3>
@@ -230,6 +239,7 @@ The quick brown fox jumps over the lazy dog.</textarea
       const addCorpusInput = document.getElementById('addCorpusInput');
       const queryInput = document.getElementById('queryInput');
       const singleInput = document.getElementById('singleInput');
+      const taskTypeSelect = document.getElementById('taskTypeSelect');
       const searchResults = document.getElementById('searchResults');
       const embedOutput = document.getElementById('embedOutput');
       const embedMeta = document.getElementById('embedMeta');
@@ -355,8 +365,8 @@ The quick brown fox jumps over the lazy dog.</textarea
           // EmbeddingGemma uses different task prefixes for queries vs documents,
           // so we embed them with the appropriate taskType in separate calls.
           const [queryResult, docsResult] = await Promise.all([
-            emb.embed(query, { taskType: 'query' }),
-            emb.embed(corpus, { taskType: 'document' }),
+            emb.embed(query, { taskType: 'retrieval-query' }),
+            emb.embed(corpus, { taskType: 'retrieval-document' }),
           ]);
 
           const queryVec = queryResult.embeddings[0].values;
@@ -418,14 +428,15 @@ The quick brown fox jumps over the lazy dog.</textarea
           const emb = await ensureEmbedder();
           statusEl.textContent = 'Embedding…';
 
-          const result = await emb.embed(text);
+          const taskType = taskTypeSelect.value || undefined;
+          const result = await emb.embed(text, { taskType });
           const values = result.embeddings[0].values;
 
           const preview = Array.from(values.slice(0, 16))
             .map((v) => v.toFixed(6))
             .join(', ');
           embedOutput.textContent = `[${preview}, … (${values.length} total)]`;
-          embedMeta.textContent = `Embedding space: ${result.metadata.embeddingSpace} | Max input tokens: ${result.metadata.maxInputTokens} | Dimensions: ${values.length}`;
+          embedMeta.textContent = `taskType: ${taskType ?? '(none)'} | Embedding space: ${result.metadata.embeddingSpace} | Max input tokens: ${result.metadata.maxInputTokens} | Dimensions: ${values.length}`;
           statusEl.textContent = 'Embedding complete.';
         } catch (err) {
           embedOutput.textContent = `Error: ${err.message}`;

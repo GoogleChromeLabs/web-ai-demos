@@ -184,11 +184,14 @@ const embedder = await SemanticEmbedder.create({
 const { embeddings } = await embedder.embed('Hello world');
 console.log(embeddings[0].values); // Float32Array of 768 values
 
-// Semantic search: embed query and corpus with appropriate task prefixes
+// Semantic search: embed query and corpus with appropriate task prefixes.
+// Supported taskType values: 'semantic-similarity', 'retrieval-query',
+// 'retrieval-document', 'classification', 'clustering'. If omitted, the raw
+// string is embedded as-is with no prefix.
 const [queryResult, docsResult] = await Promise.all([
-  embedder.embed('What is machine learning?', { taskType: 'query' }),
+  embedder.embed('What is machine learning?', { taskType: 'retrieval-query' }),
   embedder.embed(['AI transforms software.', 'Paris is in France.'], {
-    taskType: 'document',
+    taskType: 'retrieval-document',
   }),
 ]);
 
