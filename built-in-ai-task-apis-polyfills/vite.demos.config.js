@@ -33,6 +33,24 @@ export default defineConfig({
         translator: resolve(__dirname, 'demo-translator.html'),
         writer: resolve(__dirname, 'demo-writer.html'),
       },
+      output: {
+        // semantic-embedder-api-polyfill.js spawns its own worker by
+        // pointing `new Worker()` at its own `import.meta.url`. That only
+        // works if the worker's URL resolves to a chunk containing solely
+        // that module's code — if bundling inlines it into the demo page's
+        // entry chunk instead, the worker re-executes the whole page bundle
+        // (including its DOM-touching top-level code) in a context with no
+        // `document`, and throws. Force it into an isolated chunk so the
+        // worker only ever (re-)loads itself.
+        advancedChunks: {
+          groups: [
+            {
+              name: 'semantic-embedder-api-polyfill',
+              test: /semantic-embedder-api-polyfill\.js$/,
+            },
+          ],
+        },
+      },
     },
     target: 'esnext',
   },
