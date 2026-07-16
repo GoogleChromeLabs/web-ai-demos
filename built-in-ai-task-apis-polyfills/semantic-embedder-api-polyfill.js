@@ -132,7 +132,6 @@ if (isWorker) {
   const abortedRequests = new Set();
   let workerTokenizer = null;
   let workerModel = null;
-  let workerModelId = null;
 
   const initWorkerModel = async (modelId, dtype, hasMonitor) => {
     const { AutoModel, AutoTokenizer } = await ensureTransformers();
@@ -158,7 +157,6 @@ if (isWorker) {
         progress_callback: progressCallback,
       }),
     ]);
-    workerModelId = modelId;
   };
 
   const checkAvailability = async (modelId, dtype) => {
@@ -230,42 +228,11 @@ if (isWorker) {
         const dim = sentence_embedding.dims[1];
         const data = sentence_embedding.data; // flat Float32Array
 
-        const tokenCounts = [];
-        if (tokenized.attention_mask) {
-          const maskData = tokenized.attention_mask.data;
-          const seqLen = tokenized.attention_mask.dims[1];
-          for (let i = 0; i < inputs.length; i++) {
-            let count = 0;
-            const start = i * seqLen;
-            const end = start + seqLen;
-            for (let j = start; j < end; j++) {
-              if (Number(maskData[j]) === 1) {
-                count++;
-              }
-            }
-            tokenCounts.push(count);
-          }
-        } else {
-          const seqLen = tokenized.input_ids.dims[1];
-          for (let i = 0; i < inputs.length; i++) {
-            tokenCounts.push(seqLen);
-          }
-        }
-
         const embeddings = inputs.map((_, i) => ({
           values: data.slice(i * dim, (i + 1) * dim),
-          statistics: {
-            tokenCount: tokenCounts[i],
-          },
         }));
 
-        const result = {
-          embeddings,
-          metadata: {
-            embeddingSpace: workerModelId,
-            maxInputTokens: MAX_INPUT_TOKENS,
-          },
-        };
+        const result = { embeddings };
 
         self.postMessage({ type: 'embed-response', requestId, result });
       } catch (err) {
@@ -285,15 +252,13 @@ if (isWorker) {
 
 export class SemanticEmbedder {
   #worker = null;
-  #modelId = DEFAULT_MODEL;
   #destroyed = false;
   #destructionReason = null;
   #pendingRequests = new Map();
   #nextRequestId = 0;
 
-  constructor(worker, modelId) {
+  constructor(worker) {
     this.#worker = worker;
-    this.#modelId = modelId;
 
     this.#worker.onmessage = (e) => {
       if (this.#destroyed) {
@@ -379,6 +344,13 @@ export class SemanticEmbedder {
     return p;
   }
 
+  // Deliberate divergence from Chrome's current native behavior: the spec
+  // notes download monitoring isn't implemented there yet, so create()
+  // fails unless availability() is already 'available'. This polyfill
+  // instead downloads on demand and fires `monitor` downloadprogress
+  // events, since that's the only way to bootstrap the model on the
+  // vast majority of browsers with no native implementation to fall
+  // back on, and the spec frames the native gap as temporary.
   static create(options = {}) {
     const p = this._createInternal(options);
     p.catch(() => {});
@@ -489,7 +461,7 @@ export class SemanticEmbedder {
 
     fireProgressEvent?.(1);
 
-    const embedder = new this(worker, modelId);
+    const embedder = new this(worker);
 
     if (options.signal) {
       options.signal.addEventListener(
@@ -538,13 +510,7 @@ export class SemanticEmbedder {
     const inputs = Array.isArray(input) ? input : [input];
 
     if (inputs.length === 0) {
-      return {
-        embeddings: [],
-        metadata: {
-          embeddingSpace: this.#modelId,
-          maxInputTokens: MAX_INPUT_TOKENS,
-        },
-      };
+      return { embeddings: [] };
     }
 
     const requestId = ++this.#nextRequestId;
@@ -587,28 +553,6 @@ export class SemanticEmbedder {
     });
   }
 
-  static cosineSimilarity(a, b) {
-    if (a.length !== b.length) {
-      throw new RangeError('Embedding vectors must have the same dimension.');
-    }
-    let dot = 0;
-    let normA = 0;
-    let normB = 0;
-    for (let i = 0; i < a.length; i++) {
-      dot += a[i] * b[i];
-      normA += a[i] * a[i];
-      normB += b[i] * b[i];
-    }
-    if (normA === 0 || normB === 0) {
-      return 0;
-    }
-    return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-  }
-
-  get inputQuota() {
-    return MAX_INPUT_TOKENS;
-  }
-
   destroy(reason) {
     if (this.#destroyed) {
       return;
@@ -637,7 +581,7 @@ if (typeof globalThis !== 'undefined' && globalThis.document) {
 
   const inject = (win) => {
     try {
-      if (!win || (win[apiName] && !win[apiName].__isPolyfill)) {
+      if (!win || (win[apiName] && win[apiName].__isPolyfill)) {
         return;
       }
       if (!(apiName in win) || isForced) {
@@ -649,7 +593,16 @@ if (typeof globalThis !== 'undefined' && globalThis.document) {
         LocalAPI.__isPolyfill = true;
         LocalAPI.create = LocalAPI.create.bind(LocalAPI);
         LocalAPI.availability = LocalAPI.availability.bind(LocalAPI);
-        win[apiName] = LocalAPI;
+        // A plain assignment silently no-ops (or throws, caught below) when
+        // a native implementation already defined this as a non-writable
+        // property. defineProperty succeeds as long as it's configurable,
+        // which WebIDL interface objects are per spec.
+        Object.defineProperty(win, apiName, {
+          value: LocalAPI,
+          writable: true,
+          configurable: true,
+          enumerable: false,
+        });
       }
     } catch {
       // Ignore cross-origin errors

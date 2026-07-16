@@ -144,6 +144,7 @@
 
   <body>
     <h1>SemanticEmbedder API Polyfill Demo</h1>
+    <div id="polyfill-mode-banner"></div>
     <p>
       Demonstrates the proposed
       <a
@@ -230,8 +231,15 @@ The quick brown fox jumps over the lazy dog.</textarea
       <p id="embedMeta" style="font-size: 0.85rem; color: gray"></p>
     </section>
 
+    <script src="./demo-polyfill-mode.js"></script>
+    <script>
+      setupPolyfillModeBanner({
+        apiName: 'SemanticEmbedder',
+        forceFlag: '__FORCE_SEMANTIC_EMBEDDER_POLYFILL__',
+      });
+    </script>
     <script type="module">
-      import { SemanticEmbedder } from './semantic-embedder-api-polyfill.js';
+      import './semantic-embedder-api-polyfill.js';
 
       const searchBtn = document.getElementById('searchBtn');
       const embedBtn = document.getElementById('embedBtn');
@@ -247,6 +255,26 @@ The quick brown fox jumps over the lazy dog.</textarea
       const statusEl = document.getElementById('status');
       const availabilityEl = document.getElementById('availability');
       const corpusEl = document.getElementById('corpus');
+
+      // Not part of the SemanticEmbedder spec, so it can't be assumed to
+      // exist on a native implementation — computed locally instead.
+      function cosineSimilarity(a, b) {
+        if (!a || !b || a.length !== b.length) {
+          return 0;
+        }
+        let dotProduct = 0;
+        let normA = 0;
+        let normB = 0;
+        for (let i = 0; i < a.length; i++) {
+          dotProduct += a[i] * b[i];
+          normA += a[i] * a[i];
+          normB += b[i] * b[i];
+        }
+        if (normA === 0 || normB === 0) {
+          return 0;
+        }
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+      }
 
       const DEFAULT_CORPUS = [
         'Artificial intelligence is transforming how we build software.',
@@ -372,10 +400,7 @@ The quick brown fox jumps over the lazy dog.</textarea
           const queryVec = queryResult.embeddings[0].values;
           const scored = corpus.map((text, i) => ({
             text,
-            score: SemanticEmbedder.cosineSimilarity(
-              queryVec,
-              docsResult.embeddings[i].values
-            ),
+            score: cosineSimilarity(queryVec, docsResult.embeddings[i].values),
           }));
           scored.sort((a, b) => b.score - a.score);
 
@@ -405,7 +430,7 @@ The quick brown fox jumps over the lazy dog.</textarea
             searchResults.appendChild(row);
           }
 
-          statusEl.textContent = `Done. Embedded query + ${corpus.length} documents (embedding space: ${docsResult.metadata.embeddingSpace}).`;
+          statusEl.textContent = `Done. Embedded query + ${corpus.length} documents.`;
         } catch (err) {
           searchResults.textContent = `Error: ${err.message}`;
           statusEl.textContent = 'Embedding failed.';
@@ -436,7 +461,7 @@ The quick brown fox jumps over the lazy dog.</textarea
             .map((v) => v.toFixed(6))
             .join(', ');
           embedOutput.textContent = `[${preview}, … (${values.length} total)]`;
-          embedMeta.textContent = `taskType: ${taskType ?? '(none)'} | Embedding space: ${result.metadata.embeddingSpace} | Max input tokens: ${result.metadata.maxInputTokens} | Dimensions: ${values.length}`;
+          embedMeta.textContent = `taskType: ${taskType ?? '(none)'} | Dimensions: ${values.length}`;
           statusEl.textContent = 'Embedding complete.';
         } catch (err) {
           embedOutput.textContent = `Error: ${err.message}`;

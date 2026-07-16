@@ -34,6 +34,7 @@
   </head>
   <body>
     <h1>Prompt API WebLLM Test</h1>
+    <div id="polyfill-mode-banner"></div>
     <p>This page tests the WebLLM backend with explicit configuration.</p>
 
     <label for="progress">Model Download Progress:</label>
@@ -42,9 +43,12 @@
     <div id="status">Ready</div>
     <pre id="output"></pre>
 
+    <script src="./demo-polyfill-mode.js"></script>
     <script>
-      // Force the polyfill even if a native LanguageModel implementation exists.
-      window.__FORCE_PROMPT_API_POLYFILL__ = true;
+      setupPolyfillModeBanner({
+        apiName: 'LanguageModel',
+        forceFlag: '__FORCE_PROMPT_API_POLYFILL__',
+      });
     </script>
     <script type="module">
       // WebLLM backend configuration imported from a JSON file, if present.
