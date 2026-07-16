@@ -2,3 +2,4 @@
 .env
 tests/
 dist/
+dist-demos/
