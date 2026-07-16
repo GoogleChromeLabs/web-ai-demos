@@ -37,6 +37,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
+    "build:demos": "vite build --config vite.demos.config.js",
     "prepublishOnly": "npm run build",
     "generate:registry": "node scripts/generate-registry.js",
     "sync:wpt": "node scripts/sync-wpt.js",
