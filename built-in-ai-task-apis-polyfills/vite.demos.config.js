@@ -16,6 +16,14 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'dist-demos',
+    // semantic-embedder-api-polyfill.js re-loads itself as a worker via
+    // `new Worker(import.meta.url)`. Vite's modulepreload machinery
+    // (the injected polyfill, and the `__vitePreload` wrapper it adds
+    // around dynamic imports) unconditionally touches `document`/`window`,
+    // which don't exist inside that worker. Disabling it avoids both:
+    // no polyfill import is injected, and dynamic imports no longer get
+    // wrapped with document-touching preload logic.
+    modulePreload: false,
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'index.html'),
