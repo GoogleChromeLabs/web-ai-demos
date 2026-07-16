@@ -637,7 +637,7 @@ if (typeof globalThis !== 'undefined' && globalThis.document) {
 
   const inject = (win) => {
     try {
-      if (!win || (win[apiName] && !win[apiName].__isPolyfill)) {
+      if (!win || (win[apiName] && win[apiName].__isPolyfill)) {
         return;
       }
       if (!(apiName in win) || isForced) {
@@ -649,7 +649,16 @@ if (typeof globalThis !== 'undefined' && globalThis.document) {
         LocalAPI.__isPolyfill = true;
         LocalAPI.create = LocalAPI.create.bind(LocalAPI);
         LocalAPI.availability = LocalAPI.availability.bind(LocalAPI);
-        win[apiName] = LocalAPI;
+        // A plain assignment silently no-ops (or throws, caught below) when
+        // a native implementation already defined this as a non-writable
+        // property. defineProperty succeeds as long as it's configurable,
+        // which WebIDL interface objects are per spec.
+        Object.defineProperty(win, apiName, {
+          value: LocalAPI,
+          writable: true,
+          configurable: true,
+          enumerable: false,
+        });
       }
     } catch {
       // Ignore cross-origin errors
