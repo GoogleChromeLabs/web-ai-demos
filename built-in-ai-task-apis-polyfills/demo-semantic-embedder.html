@@ -259,6 +259,9 @@ The quick brown fox jumps over the lazy dog.</textarea
       // Not part of the SemanticEmbedder spec, so it can't be assumed to
       // exist on a native implementation — computed locally instead.
       function cosineSimilarity(a, b) {
+        if (!a || !b || a.length !== b.length) {
+          return 0;
+        }
         let dotProduct = 0;
         let normA = 0;
         let normB = 0;
@@ -427,8 +430,7 @@ The quick brown fox jumps over the lazy dog.</textarea
             searchResults.appendChild(row);
           }
 
-          const embeddingSpace = docsResult.metadata?.embeddingSpace;
-          statusEl.textContent = `Done. Embedded query + ${corpus.length} documents${embeddingSpace ? ` (embedding space: ${embeddingSpace})` : ''}.`;
+          statusEl.textContent = `Done. Embedded query + ${corpus.length} documents.`;
         } catch (err) {
           searchResults.textContent = `Error: ${err.message}`;
           statusEl.textContent = 'Embedding failed.';
@@ -459,15 +461,7 @@ The quick brown fox jumps over the lazy dog.</textarea
             .map((v) => v.toFixed(6))
             .join(', ');
           embedOutput.textContent = `[${preview}, … (${values.length} total)]`;
-          const metaParts = [`taskType: ${taskType ?? '(none)'}`];
-          if (result.metadata?.embeddingSpace) {
-            metaParts.push(`Embedding space: ${result.metadata.embeddingSpace}`);
-          }
-          if (result.metadata?.maxInputTokens) {
-            metaParts.push(`Max input tokens: ${result.metadata.maxInputTokens}`);
-          }
-          metaParts.push(`Dimensions: ${values.length}`);
-          embedMeta.textContent = metaParts.join(' | ');
+          embedMeta.textContent = `taskType: ${taskType ?? '(none)'} | Dimensions: ${values.length}`;
           statusEl.textContent = 'Embedding complete.';
         } catch (err) {
           embedOutput.textContent = `Error: ${err.message}`;
