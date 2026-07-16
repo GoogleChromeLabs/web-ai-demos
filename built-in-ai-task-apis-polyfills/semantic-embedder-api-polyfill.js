@@ -5,13 +5,15 @@
 
 /**
  * SemanticEmbedder API Polyfill
- * Backed by EmbeddingGemma (onnx-community/embeddinggemma-300m-ONNX) via
- * @huggingface/transformers, matching the model Chrome's built-in
- * SemanticEmbedder API uses on-device.
+ * Backed by EmbeddingGemma (https://huggingface.co/litert-community/embeddinggemma-300m),
+ * the same 300M-parameter model Chrome's built-in SemanticEmbedder API uses
+ * on-device. This polyfill runs the equivalent ONNX conversion
+ * (onnx-community/embeddinggemma-300m-ONNX) in-browser via
+ * @huggingface/transformers, producing 768-dimensional Float32Array vectors.
  *
- * EmbeddingGemma is Google's 300M-parameter embedding model built on Gemma 3,
- * producing 768-dimensional vectors. It requires task-specific prefixes on
- * inputs so that query and document embeddings are optimized for retrieval.
+ * The optional `taskType` passed to embed() selects a task-specific prefix
+ * so the embedding is optimized for that use case. When omitted, the raw
+ * string is embedded as-is with no prefix.
  */
 
 const DEFAULT_MODEL = 'onnx-community/embeddinggemma-300m-ONNX';
@@ -21,11 +23,17 @@ const DEFAULT_DTYPE = 'q8';
 const MAX_INPUT_TOKENS = 2048;
 
 // EmbeddingGemma task-type prefixes (must match the model's training setup).
+// See https://ai.google.dev/gemma/docs/embeddinggemma/model_card for the
+// full prompt table.
 const TASK_PREFIXES = {
-  query: 'task: search result | query: ',
-  document: 'title: none | text: ',
-  classification: 'task: classification | text: ',
+  'semantic-similarity': 'task: sentence similarity | query: ',
+  'retrieval-query': 'task: search result | query: ',
+  'retrieval-document': 'title: none | text: ',
+  classification: 'task: classification | query: ',
+  clustering: 'task: clustering | query: ',
 };
+
+const VALID_TASK_TYPES = new Set(Object.keys(TASK_PREFIXES));
 
 // Tracks which model IDs are currently being downloaded.
 const downloadingModels = new Set();
@@ -43,8 +51,9 @@ async function ensureTransformers() {
 }
 
 function applyPrefix(text, taskType) {
-  const prefix = TASK_PREFIXES[taskType] ?? TASK_PREFIXES.document;
-  return `${prefix}${text}`;
+  // No taskType means the raw input is embedded as-is, with no prefix.
+  const prefix = taskType ? TASK_PREFIXES[taskType] : undefined;
+  return prefix ? `${prefix}${text}` : text;
 }
 
 async function isModelCached(modelId, dtype) {
@@ -196,9 +205,8 @@ if (isWorker) {
           throw new Error('Model is not initialized in the worker.');
         }
 
-        const taskType = options.taskType ?? 'document';
         const prefixedInputs = inputs.map((text) =>
-          applyPrefix(text, taskType)
+          applyPrefix(text, options.taskType)
         );
 
         const tokenized = await workerTokenizer(prefixedInputs, {
@@ -518,6 +526,15 @@ export class SemanticEmbedder {
       throw signal.reason || new DOMException('Aborted', 'AbortError');
     }
 
+    if (
+      options.taskType !== undefined &&
+      !VALID_TASK_TYPES.has(options.taskType)
+    ) {
+      throw new TypeError(
+        `Failed to execute 'embed': The provided value '${options.taskType}' is not a valid enum value of type EmbedderTaskType.`
+      );
+    }
+
     const inputs = Array.isArray(input) ? input : [input];
 
     if (inputs.length === 0) {
@@ -564,7 +581,7 @@ export class SemanticEmbedder {
         requestId,
         inputs,
         options: {
-          taskType: options.taskType ?? 'document',
+          taskType: options.taskType,
         },
       });
     });
