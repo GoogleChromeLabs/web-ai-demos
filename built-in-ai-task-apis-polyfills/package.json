@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-task-apis-polyfills",
-  "version": "1.15.2",
+  "version": "1.16.0",
   "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, etc.)",
   "type": "module",
   "main": "./dist/index.js",
@@ -76,6 +76,6 @@
     "node-addon-api": "^8.9.0",
     "node-gyp": "^13.0.1",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^8.1.4"
+    "vite": "^8.1.5"
   }
 }
