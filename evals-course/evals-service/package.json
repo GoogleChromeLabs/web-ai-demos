@@ -27,7 +27,7 @@
   "type": "commonjs",
   "dependencies": {
     "@google/genai": "^1.40.0",
-    "body-parser": "^2.2.2",
+    "body-parser": "^2.3.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
