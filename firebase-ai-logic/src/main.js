@@ -42,7 +42,7 @@ const ai = getAI(firebaseApp, {
 const model = getGenerativeModel(ai, {
   mode: 'prefer_on_device',
   inCloudParams: {
-    model: 'gemini-3.1-flash-lite-preview',
+    model: 'gemini-3.1-flash-lite',
   },
 });
 
