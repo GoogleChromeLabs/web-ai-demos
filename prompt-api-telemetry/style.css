@@ -1,0 +1,168 @@
+/**
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  color-scheme: dark light;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: clamp(320px, 90%, 1000px);
+  margin: auto;
+}
+
+h2,
+h3 {
+  margin-block-end: 0;
+}
+
+#error-message,
+#problem {
+  border: red solid 2px;
+  padding: 0.25rem;
+}
+
+#prompt-area {
+  margin-block-end: 1rem;
+}
+
+#prompt-area,
+#error-message,
+#problematic-area {
+  display: none;
+}
+
+.prompt,
+.response {
+  font-size: 1rem;
+  font-weight: normal;
+  padding: 1.5rem;
+}
+
+.response {
+  background: #f4b400;
+  color: black;
+}
+
+.prompt {
+  background: #4285f4;
+}
+
+.speech-bubble {
+  position: relative;
+  border-radius: 0.4em;
+}
+
+.speech-bubble:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border: 24px solid transparent;
+  margin-top: -24px;
+}
+
+.response.speech-bubble:after {
+  right: 0;
+  border-left-color: #f4b400;
+  border-right: 0;
+  margin-right: -24px;
+}
+
+.prompt.speech-bubble:after {
+  left: 0;
+  border-right-color: #4285f4;
+  border-left: 0;
+  margin-left: -24px;
+}
+
+textarea {
+  width: 100%;
+  height: 6rem;
+}
+
+#response-area {
+  white-space: pre-wrap;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+details {
+  padding-block: 1rem;
+}
+
+details div {
+  padding: 1rem;
+}
+
+.settings {
+  width: min-content;
+  gap: 1rem;
+  margin: 1rem;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+}
+
+label {
+  margin-bottom: 0.3em;
+  font-weight: bold;
+}
+
+summary {
+  cursor: pointer;
+  padding: 5px 10px;
+  background-color: gray;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  min-width: 130px;
+  width: min-content;
+}
+
+th,
+td {
+  padding: 0.5rem;
+}
+
+td {
+  text-align: right;
+}
+
+button {
+  margin-top: 10px;
+  cursor: pointer;
+  padding: 5px 10px;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  min-width: 130px;
+}
+
+[type="submit"] {
+  background-color: #0f9d58;
+}
+
+#reset-button {
+  background-color: #db4437;
+}
+
+footer {
+  margin-block: 1rem;
+}
+
+table {
+  font-variant-numeric: tabular-nums;
+}

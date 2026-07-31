@@ -9,6 +9,7 @@ Others showcase generic client-side AI using Transformers.js or Google's Gemma m
 
 - `weather-ai`: Uses Chrome's built-in Prompt API to generate a human-readable description of the weather from structured weather data provided by the OpenWeatherMap API.
 - `prompt-api-playground`: Showcases Chrome's built-in experimental Prompt API.
+- `prompt-api-telemetry`: PoC for exporting OpenInference traces from the Prompt API to Langfuse or LangSmith via OTLP/HTTP JSON.
 - `summarization-api-playground`: Showcases Chrome's built-in experimental Summarization API.
 - `speech-api-playground`: Showcases the Web Speech API for continuous speech recognition, interim results, and local on-device models.
 - `perf-client-side-gemma-worker`: Showcases web performance/UX tips for client-side Gen AI, based on a web worker. Uses an LLM (Google's Gemma 2) through MediaPipe.
