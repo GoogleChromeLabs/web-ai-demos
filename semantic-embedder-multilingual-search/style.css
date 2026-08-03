@@ -1,0 +1,139 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  color-scheme: dark light;
+  font-family: system-ui, sans-serif;
+  --accent: light-dark(#0b57d0, #a8c7fa);
+  --surface: light-dark(#f4f7fc, #202124);
+  --border: light-dark(#c7c7c7, #5f6368);
+  --muted: light-dark(#5f6368, #bdc1c6);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  width: min(760px, calc(100% - 2rem));
+  margin: 3rem auto;
+}
+
+h1 {
+  margin-block-end: 0.5rem;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+h2,
+h3,
+p {
+  margin-block-start: 0;
+}
+
+main > p:first-of-type {
+  max-width: 65ch;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.status {
+  margin-block: 1.5rem 0.5rem;
+  font-weight: 650;
+}
+
+progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+form {
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 2rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+label {
+  font-weight: 700;
+}
+
+input,
+button {
+  min-height: 2.75rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font: inherit;
+}
+
+.search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+button {
+  padding-inline: 1.5rem;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: light-dark(white, #062e6f);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.document {
+  margin-block: 2rem;
+}
+
+.document article {
+  padding: 1rem;
+  border-inline-start: 4px solid transparent;
+}
+
+.document article + article {
+  border-block-start: 1px solid var(--border);
+}
+
+.document article[data-match] {
+  border-inline-start-color: var(--accent);
+  background: var(--surface);
+}
+
+.document article p {
+  margin-block-end: 0;
+  line-height: 1.55;
+}
+
+details {
+  margin-block-start: 2rem;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  main {
+    margin-block: 1.5rem;
+  }
+
+  .search-row {
+    grid-template-columns: 1fr;
+  }
+}
