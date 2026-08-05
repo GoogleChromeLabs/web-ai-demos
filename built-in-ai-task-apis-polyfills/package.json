@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-task-apis-polyfills",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, etc.)",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,6 +22,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:demos": "vite build --config vite.demos.config.js",
     "prepublishOnly": "npm run build",
     "preview": "vite preview",
     "start": "npm run dev",
@@ -58,7 +59,7 @@
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",
   "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "dependencies": {
-    "prompt-api-polyfill": "^1.20.2"
+    "prompt-api-polyfill": "^1.20.3"
   },
   "peerDependencies": {
     "@huggingface/transformers": ">=4.2.0"

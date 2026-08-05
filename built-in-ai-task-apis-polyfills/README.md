@@ -196,8 +196,28 @@ const [queryResult, docsResult] = await Promise.all([
 ]);
 
 const queryVec = queryResult.embeddings[0].values;
+
+// cosineSimilarity() isn't part of the API, so compute it yourself.
+function cosineSimilarity(a, b) {
+  if (!a || !b || a.length !== b.length) {
+    return 0;
+  }
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  if (normA === 0 || normB === 0) {
+    return 0;
+  }
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
 const scores = docsResult.embeddings.map((e) =>
-  SemanticEmbedder.cosineSimilarity(queryVec, e.values)
+  cosineSimilarity(queryVec, e.values)
 );
 ```
 

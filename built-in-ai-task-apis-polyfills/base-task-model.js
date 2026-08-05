@@ -399,7 +399,16 @@ export class BaseTaskModel {
             LocalAPI.availability = LocalAPI.availability.bind(LocalAPI);
           }
 
-          win[apiName] = LocalAPI;
+          // A plain assignment silently no-ops (or throws, caught below) when
+          // a native implementation already defined this as a non-writable
+          // property. defineProperty succeeds as long as it's configurable,
+          // which WebIDL interface objects are per spec.
+          Object.defineProperty(win, apiName, {
+            value: LocalAPI,
+            writable: true,
+            configurable: true,
+            enumerable: false,
+          });
 
           // Ensure QuotaExceededError is also available in the iframe for WPT tests
           if (win.DOMException) {

@@ -64,6 +64,7 @@
 
   <body>
     <h1>Language Detector API Polyfill Demo</h1>
+    <div id="polyfill-mode-banner"></div>
 
     <textarea id="input">
 The web is a vast place. Built-in AI APIs like the Language Detector API allow developers to process information directly on the user's device. This improves privacy and performance.</textarea
@@ -77,6 +78,13 @@ The web is a vast place. Built-in AI APIs like the Language Detector API allow d
     <h2>Output</h2>
     <div id="output" class="output"></div>
 
+    <script src="./demo-polyfill-mode.js"></script>
+    <script>
+      setupPolyfillModeBanner({
+        apiName: 'LanguageDetector',
+        forceFlag: '__FORCE_LANGUAGE_DETECTOR_POLYFILL__',
+      });
+    </script>
     <script type="module">
       // Import Firebase config if present (standard pattern for this project)
       let firebaseConfig = {};
@@ -90,7 +98,7 @@ The web is a vast place. Built-in AI APIs like the Language Detector API allow d
       }
       window.FIREBASE_CONFIG = firebaseConfig;
 
-      import { LanguageDetector } from './language-detector-api-polyfill.js';
+      import './language-detector-api-polyfill.js';
 
       const input = document.getElementById('input');
       const detectBtn = document.getElementById('detectBtn');

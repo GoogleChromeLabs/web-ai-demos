@@ -63,6 +63,7 @@
 
   <body>
     <h1>Rewriter API Polyfill Demo</h1>
+    <div id="polyfill-mode-banner"></div>
 
     <div>
       <div>
@@ -166,8 +167,15 @@ The Rewriter API provides a way to rewrite text while controlling the tone, form
     <h2>Output</h2>
     <div id="output">Your results will appear here...</div>
 
+    <script src="./demo-polyfill-mode.js"></script>
+    <script>
+      setupPolyfillModeBanner({
+        apiName: 'Rewriter',
+        forceFlag: '__FORCE_REWRITER_POLYFILL__',
+      });
+    </script>
     <script type="module">
-      import { Rewriter } from './rewriter-api-polyfill.js';
+      import './rewriter-api-polyfill.js';
 
       // Import Firebase config if present (standard pattern for this project)
       let firebaseConfig = {};

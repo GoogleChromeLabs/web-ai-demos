@@ -63,6 +63,7 @@
 
   <body>
     <h1>Writer API Polyfill Demo</h1>
+    <div id="polyfill-mode-banner"></div>
 
     <div>
       <div>
@@ -165,8 +166,15 @@ The history of artificial intelligence started with Alan Turing's work...</texta
     <h2>Output</h2>
     <div id="output">Your results will appear here...</div>
 
+    <script src="./demo-polyfill-mode.js"></script>
+    <script>
+      setupPolyfillModeBanner({
+        apiName: 'Writer',
+        forceFlag: '__FORCE_WRITER_POLYFILL__',
+      });
+    </script>
     <script type="module">
-      import { Writer } from './writer-api-polyfill.js';
+      import './writer-api-polyfill.js';
 
       // Import Firebase config if present (standard pattern for this project)
       let firebaseConfig = {};

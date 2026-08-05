@@ -65,6 +65,7 @@
 
   <body>
     <h1>Translator API Polyfill Demo</h1>
+    <div id="polyfill-mode-banner"></div>
 
     <div class="controls">
       <label>
@@ -105,6 +106,13 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
     <h2>Output</h2>
     <div id="output" class="output">Your results will appear here...</div>
 
+    <script src="./demo-polyfill-mode.js"></script>
+    <script>
+      setupPolyfillModeBanner({
+        apiName: 'Translator',
+        forceFlag: '__FORCE_TRANSLATOR_POLYFILL__',
+      });
+    </script>
     <script type="module">
       // Import Firebase config if present (standard pattern for this project)
       let firebaseConfig = {};
@@ -118,7 +126,7 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
       }
       window.FIREBASE_CONFIG = firebaseConfig;
 
-      import { Translator } from './translator-api-polyfill.js';
+      import './translator-api-polyfill.js';
 
       const input = document.getElementById('input');
       const sourceLanguage = document.getElementById('sourceLanguage');

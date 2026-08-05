@@ -34,6 +34,7 @@
   </head>
   <body>
     <h1>Prompt API Transformers.js Test</h1>
+    <div id="polyfill-mode-banner"></div>
     <p>
       This page tests the Transformers.js backend with explicit configuration.
     </p>
@@ -44,9 +45,12 @@
     <div id="status">Ready</div>
     <pre id="output"></pre>
 
+    <script src="./demo-polyfill-mode.js"></script>
     <script>
-      // Force the polyfill even if a native LanguageModel implementation exists.
-      window.__FORCE_PROMPT_API_POLYFILL__ = true;
+      setupPolyfillModeBanner({
+        apiName: 'LanguageModel',
+        forceFlag: '__FORCE_PROMPT_API_POLYFILL__',
+      });
     </script>
     <script type="module">
       // Transformers.js backend configuration imported from a JSON file, if

@@ -1352,7 +1352,16 @@ const inject = (win) => {
     const LocalLanguageModel = class extends LanguageModel {};
     LocalLanguageModel.__window = win;
     LocalLanguageModel.__isPolyfill = true;
-    win.LanguageModel = LocalLanguageModel;
+    // A plain assignment silently no-ops (or throws, caught below) when a
+    // native implementation already defined this as a non-writable
+    // property. defineProperty succeeds as long as it's configurable,
+    // which WebIDL interface objects are per spec.
+    Object.defineProperty(win, 'LanguageModel', {
+      value: LocalLanguageModel,
+      writable: true,
+      configurable: true,
+      enumerable: false,
+    });
 
     // Ensure QuotaExceededError is also available in the iframe for WPT tests
     if (win.DOMException) {
@@ -1415,9 +1424,22 @@ if (
   !('LanguageModel' in globalThis) ||
   globalThis.__FORCE_PROMPT_API_POLYFILL__
 ) {
-  globalThis.LanguageModel = LanguageModel;
-  LanguageModel.__isPolyfill = true;
-  console.log(
-    'Polyfill: window.LanguageModel is now backed by the Prompt API polyfill.'
-  );
+  try {
+    LanguageModel.__isPolyfill = true;
+    // A plain assignment silently no-ops (or throws, caught below) when a
+    // native implementation already defined this as a non-writable
+    // property. defineProperty succeeds as long as it's configurable,
+    // which WebIDL interface objects are per spec.
+    Object.defineProperty(globalThis, 'LanguageModel', {
+      value: LanguageModel,
+      writable: true,
+      configurable: true,
+      enumerable: false,
+    });
+    console.log(
+      'Polyfill: window.LanguageModel is now backed by the Prompt API polyfill.'
+    );
+  } catch {
+    // Ignore if the native LanguageModel property can't be overridden.
+  }
 }
