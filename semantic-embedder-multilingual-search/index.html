@@ -1,0 +1,91 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="script.js"></script>
+    <title>Search a Spanish document in any language</title>
+  </head>
+  <body>
+    <main>
+      <h1>Search a Spanish document in any language</h1>
+      <p>
+        Type a question in another language. SemanticEmbedder highlights the
+        closest Spanish passage by meaning, without translating the text.
+      </p>
+
+      <p id="status" class="status" aria-live="polite">
+        Checking SemanticEmbedder…
+      </p>
+      <progress id="progress" max="1" value="0" hidden></progress>
+
+      <form id="search-form">
+        <label for="query">Ask in any language</label>
+        <div class="search-row">
+          <input
+            id="query"
+            type="search"
+            value="How do I get from the airport to the city centre?"
+            required
+          />
+          <button type="submit" disabled>Search</button>
+        </div>
+      </form>
+
+      <section class="document" aria-labelledby="document-title" lang="es">
+        <h2 id="document-title">Guía práctica de Madrid</h2>
+
+        <article data-passage>
+          <h3>Desde el aeropuerto</h3>
+          <p>
+            El tren exprés conecta el aeropuerto con el centro de Madrid cada
+            quince minutos. El trayecto dura aproximadamente media hora y los
+            billetes se venden en las máquinas de la estación.
+          </p>
+        </article>
+
+        <article data-passage>
+          <h3>Museos</h3>
+          <p>
+            Muchos museos ofrecen entrada gratuita durante las dos últimas horas
+            del día. Conviene consultar el horario oficial antes de la visita
+            porque puede cambiar en días festivos.
+          </p>
+        </article>
+
+        <article data-passage>
+          <h3>Transporte público</h3>
+          <p>
+            Para utilizar el metro y los autobuses necesitas una tarjeta
+            recargable. Puedes comprarla en cualquier estación de metro y añadir
+            viajes en las máquinas automáticas.
+          </p>
+        </article>
+
+        <article data-passage>
+          <h3>Farmacias de guardia</h3>
+          <p>
+            Las farmacias de guardia permanecen abiertas por la noche. Cada
+            farmacia cerrada muestra en la puerta la dirección de la farmacia de
+            guardia más cercana.
+          </p>
+        </article>
+      </section>
+
+      <details>
+        <summary>Canary setup</summary>
+        <p>
+          Enable <code>chrome://flags/#semantic-embedder-api</code> and relaunch
+          Chrome Canary. The first search may download the on-device model.
+        </p>
+      </details>
+    </main>
+  </body>
+</html>
