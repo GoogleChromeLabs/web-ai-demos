@@ -23,16 +23,20 @@ export interface FetchBlobOptions {
   sha256?: string;
 
   /**
-   * Returns the lowercase hex SHA-256 for the resource at `url`. Only called
-   * when {@link sha256} is not provided.
+   * Returns the lowercase hex SHA-256 for the resource at `url`, or
+   * `undefined` if it cannot be determined. Only called when {@link sha256} is
+   * not provided.
    *
    * Resolved hashes are cached — in memory for the current session and
    * persistently in the Cache API — so the resolver is only called on the
    * first request for a given URL per origin.
    *
+   * When the resolver returns `undefined` or throws, COS cannot be keyed for
+   * that URL and {@link fetchBlob} falls back to the Cache API path.
+   *
    * Defaults to {@link getHuggingFaceSHA256}.
    */
-  getSHA256?: (url: string) => Promise<string>;
+  getSHA256?: (url: string) => Promise<string | undefined>;
 
   /**
    * Called with running byte counts whenever a network fetch is in progress.
@@ -53,12 +57,17 @@ export interface FetchBlobOptions {
  * Extracts the SHA-256 hash for a Hugging Face resource by fetching its Git
  * LFS pointer file. Works with any Hugging Face `/resolve/` URL.
  *
+ * Resolves to `undefined` when no pointer applies: the URL is not a Hugging
+ * Face `/resolve/` URL, or the resource is not LFS-backed (small files such as
+ * `config.json` are served verbatim by `/raw/`, with no pointer to parse).
+ *
  * @param resolveUrl - A Hugging Face `/resolve/` URL.
- * @returns Lowercase hex SHA-256 string.
+ * @returns Lowercase hex SHA-256 string, or `undefined` if the resource has no
+ *   LFS pointer.
  */
 export declare function getHuggingFaceSHA256(
   resolveUrl: string
-): Promise<string>;
+): Promise<string | undefined>;
 
 /**
  * Fetches a resource as a `Blob` using Cross-Origin Storage (COS) when

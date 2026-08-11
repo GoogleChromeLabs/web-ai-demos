@@ -125,7 +125,7 @@ const blob = await fetchBlob(cdnUrl, {
 | Option       | Type                                                  | Default                                | Description                                                                 |
 | ------------ | ----------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------- |
 | `sha256`     | `string`                                              | —                                      | Lowercase hex SHA-256, if already known. Takes precedence over `getSHA256`. |
-| `getSHA256`  | `(url: string) => Promise<string>`                    | [`getHuggingFaceSHA256`](src/index.js) | Derives the SHA-256 at runtime. Only called when `sha256` is not provided.  |
+| `getSHA256`  | `(url: string) => Promise<string \| undefined>`       | [`getHuggingFaceSHA256`](src/index.js) | Derives the SHA-256 at runtime. Only called when `sha256` is not provided. Returning `undefined` (or throwing) falls back to the Cache API path. |
 | `onProgress` | `({ loaded: number, total: number \| null }) => void` | —                                      | Called with byte counts during a network download.                          |
 | `cacheName`  | `string`                                              | `'cos-resource-fetcher'`               | Cache API bucket used by the fallback path.                                 |
 
@@ -142,6 +142,10 @@ const sha256 = await getHuggingFaceSHA256(
 );
 console.log(sha256); // e.g. "3f4a…"
 ```
+
+It resolves to `undefined` when the URL is not a Hugging Face `/resolve/` URL,
+or when the resource is not LFS-backed (small files such as `config.json` are
+served verbatim, with no pointer to parse).
 
 ## Demo
 
