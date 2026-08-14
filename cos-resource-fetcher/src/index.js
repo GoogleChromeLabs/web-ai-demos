@@ -21,12 +21,16 @@ async function resolveSha256(url, getSHA256) {
   }
 
   const hash = await getSHA256(url);
+  // Also memoizes a negative result, so a URL with no resolvable hash costs at
+  // most one resolver call per session.
   sha256Memory.set(url, hash);
-  // Fire-and-forget; failure is non-fatal (in-memory copy still valid for this session)
-  cache.put(
-    url,
-    new Response(hash, { headers: { 'Content-Type': 'text/plain' } })
-  );
+  if (hash) {
+    // Fire-and-forget; failure is non-fatal (in-memory copy still valid for this session)
+    cache.put(
+      url,
+      new Response(hash, { headers: { 'Content-Type': 'text/plain' } })
+    );
+  }
   return hash;
 }
 
@@ -35,17 +39,26 @@ async function resolveSha256(url, getSHA256) {
  * pointer. The /raw/ endpoint returns the pointer; /resolve/ returns the actual
  * bytes — swapping that path segment is sufficient.
  *
+ * Returns `undefined` when no pointer applies: the URL is not a Hugging Face
+ * /resolve/ URL, or the resource is not LFS-backed (small files such as
+ * config.json are served verbatim by /raw/, with no pointer to parse). Callers
+ * should read that as "COS is not usable for this URL" rather than as an error.
+ *
  * @param {string} resolveUrl - A Hugging Face /resolve/ URL
- * @returns {Promise<string>} Lowercase hex SHA-256 string
+ * @returns {Promise<string|undefined>} Lowercase hex SHA-256 string, or
+ *   `undefined` if the resource has no LFS pointer
  */
 export async function getHuggingFaceSHA256(resolveUrl) {
+  // Without /resolve/ the rewrite below is a no-op, and we would download the
+  // resource itself just to fail at parsing it as a pointer.
+  if (!resolveUrl.includes('/resolve/')) return undefined;
+
   const rawUrl = resolveUrl.replace('/resolve/', '/raw/');
   const res = await fetch(rawUrl);
   if (!res.ok) throw new Error(`LFS pointer fetch failed: ${res.status}`);
   const text = await res.text();
   const match = text.match(/^oid sha256:([0-9a-f]{64})$/m);
-  if (!match) throw new Error('SHA-256 not found in LFS pointer');
-  return match[1];
+  return match ? match[1] : undefined;
 }
 
 /**
@@ -146,9 +159,11 @@ async function fetchViaCache(url, { onProgress, cacheName }) {
  * @param {string} [options.sha256]
  *   Lowercase hex SHA-256 of the resource, if already known. Takes precedence
  *   over `getSHA256`.
- * @param {(url: string) => Promise<string>} [options.getSHA256]
- *   Returns the lowercase hex SHA-256 for the resource at `url`. Only called
- *   when `sha256` is not provided. Defaults to {@link getHuggingFaceSHA256}.
+ * @param {(url: string) => Promise<string|undefined>} [options.getSHA256]
+ *   Returns the lowercase hex SHA-256 for the resource at `url`, or `undefined`
+ *   if it cannot be determined. Only called when `sha256` is not provided.
+ *   Defaults to {@link getHuggingFaceSHA256}. When no hash is available the
+ *   fetch falls back to the Cache API path instead of failing.
  * @param {(progress: { loaded: number, total: number | null }) => void} [options.onProgress]
  *   Called with running byte counts whenever a network fetch is in progress.
  * @param {string} [options.cacheName]
@@ -165,12 +180,23 @@ export async function fetchBlob(url, options = {}) {
   } = options;
 
   if ('crossOriginStorage' in navigator) {
-    try {
-      const sha256 = directSha256 ?? (await resolveSha256(url, getSHA256));
-      return await fetchViaCOS(url, { sha256, onProgress });
-    } catch (err) {
-      if (err.name !== 'NotAllowedError') throw err;
-      // COS permission denied by user — fall through to Cache API
+    let sha256 = directSha256;
+    if (!sha256) {
+      try {
+        sha256 = await resolveSha256(url, getSHA256);
+      } catch {
+        // Hash resolution failed (pointer fetch errored, custom resolver threw…).
+        // COS is keyed by hash, so it is unusable here — fall through rather
+        // than failing a fetch the Cache API path can still serve.
+      }
+    }
+    if (sha256) {
+      try {
+        return await fetchViaCOS(url, { sha256, onProgress });
+      } catch (err) {
+        if (err.name !== 'NotAllowedError') throw err;
+        // COS permission denied by user — fall through to Cache API
+      }
     }
   }
 
