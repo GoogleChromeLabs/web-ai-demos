@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { mount, unmount, tick } from 'svelte';
 import App from '../src/App.svelte';
 import { IDBFactory } from 'fake-indexeddb';
