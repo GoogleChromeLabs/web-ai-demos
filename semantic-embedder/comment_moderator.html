@@ -1,0 +1,62 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comment Moderator Prototype</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Toxic Comment Moderator</h1>
+            <p>Real-time moderation to nudge users away from toxic behavior before they post.</p>
+        </header>
+
+        <div class="status-bar" id="statusBar">
+            Checking API availability...
+        </div>
+
+        <nav class="tabs-nav">
+             <a href="index.html" class="tab-btn">Home</a>
+             <a href="note_search.html" class="tab-btn">Note Search</a>
+             <a href="comment_moderator.html" class="tab-btn active">Comment Moderator</a>
+             <a href="docs_rag.html" class="tab-btn">Docs RAG</a>
+        </nav>
+
+        <main>
+            <div class="tab-content active" style="display: block;">
+                <section class="moderator-section">
+                    <div class="forum-container">
+                        <div class="mock-post">
+                            <h3>Mock Blog Post: The Future of AI</h3>
+                            <p>This is a mock blog post to simulate a community forum environment. Feel free to leave a comment below.</p>
+                        </div>
+                        <div class="comment-box-container">
+                            <textarea id="commentInput" placeholder="Type your comment here..."></textarea>
+                            <div id="moderationWarning" class="moderation-warning" style="display:none;">
+                                ⚠️ This comment seems a bit aggressive. Consider rephrasing before posting.
+                            </div>
+                            <div id="moderationStats" class="moderation-stats" style="display:none;">
+                                <strong>Top matches:</strong>
+                                <ul id="moderationStatsList"></ul>
+                            </div>
+                            <button id="postCommentBtn">Post Comment</button>
+                        </div>
+                        <div class="comments-list">
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="comment_moderator.js"></script>
+</body>
+</html>

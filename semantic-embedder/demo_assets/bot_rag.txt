@@ -1,0 +1,5 @@
+What specific model family is the Chrome Text Embedding API designed to target, and what are its sizes?
+
+Why might a developer choose to use Chrome's local Text Embedding API instead of a cloud-based embedding service?
+
+How do I process multiple strings at once using the API, and what parameter should I use to specify that the text being embedded is a document rather than a search query?

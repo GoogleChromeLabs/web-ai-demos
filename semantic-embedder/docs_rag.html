@@ -1,0 +1,87 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docs RAG Prototype</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Documentation RAG</h1>
+            <p>Chat with documentation using the on-device Semantic Embedder API and Prompt API.</p>
+        </header>
+
+        <div class="status-bar" id="statusBar">
+            Checking API availability...
+        </div>
+
+        <nav class="tabs-nav">
+             <a href="index.html" class="tab-btn">Home</a>
+             <a href="note_search.html" class="tab-btn">Note Search</a>
+             <a href="comment_moderator.html" class="tab-btn">Comment Moderator</a>
+             <a href="docs_rag.html" class="tab-btn active">Docs RAG</a>
+        </nav>
+
+        <main>
+            <div class="tab-content active" style="display: block;">
+                <section class="rag-section">
+                    <div class="rag-layout">
+                        <div class="docs-sidebar">
+                            <ul id="mockDocsList" class="mock-docs-list">
+                                <!-- Populated by JS -->
+                            </ul>
+                        </div>
+                        <div class="chat-container">
+                            <div class="chat-header">
+                                <h2>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                RAG Chatbot
+                                </h2>
+                                <div class="status-indicator">
+                                    <span id="ai-status-dot" class="status-dot"></span>
+                                    <span id="ai-status-text">Checking APIs...</span>
+                                </div>
+                            </div>
+                            
+                            <div id="chat-messages" class="chat-messages">
+                                <div class="message bot">
+                                    <div class="message-sender">Chatbot</div>
+                                    <div class="message-bubble">
+                                        Hello! Ask me any questions about the document on the left. My answers are generated purely on-device using Chrome's built-in AI.
+                                    </div>
+                                    <div class="suggested-questions">
+                                        <button type="button" class="suggestion-btn">In what country is Normandy located?</button>
+                                        <button type="button" class="suggestion-btn">When were the Normans in Normandy?</button>
+                                        <button type="button" class="suggestion-btn">Who was the Norse leader?</button>
+                                        <button type="button" class="suggestion-btn">What century did the Normans first gain their separate identity?</button>
+                                        <button type="button" class="suggestion-btn">Who was the duke in the battle of Hastings?</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="chat-input-area">
+                                <form id="chat-form" class="input-wrapper">
+                                    <input type="text" id="chat-input" class="chat-input" placeholder="Ask a question..." autocomplete="off" disabled>
+                                    <button type="submit" id="chat-send" class="send-btn" disabled>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="docs_rag.js"></script>
+</body>
+</html>
