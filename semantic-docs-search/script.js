@@ -3,6 +3,7 @@ import {
   BLOCKS,
   buildIndex,
   implementation,
+  readBuildStats,
   readIndex,
   search,
 } from "./semantic-search.js";
@@ -30,6 +31,8 @@ const activityPassage = document.querySelector("#index-passage");
 const activityStats = document.querySelector("#index-stats");
 const results = document.querySelector("#results");
 const backend = document.querySelector("#backend");
+const buildStats = document.querySelector("#build-stats");
+const buildStatsList = document.querySelector("#build-stats-list");
 
 let db = {};
 let entries = [];
@@ -293,9 +296,18 @@ const highlightMatch = (path) => {
   return true;
 };
 
-const renderResults = (matches) => {
+const renderResults = (matches, stats) => {
   const heading = document.createElement("h2");
   heading.textContent = "Closest by meaning";
+
+  // Retrieval is two costs worth separating: embedding the query on the model,
+  // and comparing that vector against the index in plain JavaScript.
+  const timing = document.createElement("p");
+  timing.className = "result-stats";
+  timing.textContent = [
+    `query embedded in ${Math.round(stats.embedMilliseconds)} ms`,
+    `${count(stats.compared)} passages scored in ${stats.scoreMilliseconds.toFixed(1)} ms`,
+  ].join(" · ");
 
   needles.clear();
 
@@ -339,7 +351,7 @@ const renderResults = (matches) => {
     return link;
   });
 
-  results.replaceChildren(heading, ...list);
+  results.replaceChildren(heading, timing, ...list);
   results.hidden = false;
   results.scrollIntoView({ block: "nearest" });
   markActive();
@@ -396,11 +408,14 @@ const clock = (seconds) => {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
 };
 
+const count = (value) => Math.round(value).toLocaleString();
+
 const showActivity = ({
   loaded,
   total,
+  reportsTokens,
   tokens,
-  tokensPerSecond,
+  rate,
   seconds,
   current,
 }) => {
@@ -409,12 +424,68 @@ const showActivity = ({
     ? `${current.name} › ${current.section}`
     : current.name;
   activityPassage.textContent = current.passage;
-  activityStats.textContent = [
-    `${Math.round(tokensPerSecond).toLocaleString()} tokens/s`,
-    `${Math.round(tokens / 1000).toLocaleString()}k tokens`,
-    clock(seconds),
-    `${total - loaded} left`,
-  ].join(" · ");
+  // An implementation that reports no token counts still gets a live readout,
+  // measured in passages instead of in tokens it never told us about.
+  activityStats.textContent = (
+    reportsTokens
+      ? [`${count(rate)} tokens/s`, `${count(tokens / 1000)}k tokens`]
+      : [`${rate.toFixed(1)} passages/s`]
+  )
+    .concat(clock(seconds), `${total - loaded} left`)
+    .join(" · ");
+};
+
+// An index built before these numbers were recorded still describes itself, so
+// whatever the records know is shown and the rest of the rows stay away.
+const describeStoredIndex = () =>
+  semanticIndex.length
+    ? {
+        passages: semanticIndex.length,
+        documents: new Set(semanticIndex.map((record) => record.path)).size,
+        space: semanticIndex[0].space,
+      }
+    : undefined;
+
+const showBuildStats = (stats) => {
+  if (!stats) {
+    buildStats.hidden = true;
+    return;
+  }
+
+  const rows = [
+    [
+      "Passages",
+      `${count(stats.passages)} across ${count(stats.documents)} documents`,
+    ],
+    stats.seconds && ["Built in", clock(stats.seconds)],
+    stats.seconds && [
+      "Speed",
+      stats.reportsTokens
+        ? `${count(stats.tokens / stats.seconds)} tokens/s`
+        : `${(stats.passages / stats.seconds).toFixed(1)} passages/s`,
+    ],
+    stats.reportsTokens && ["Tokens read", count(stats.tokens)],
+    ["Embedding space", stats.space],
+    stats.implementation && [
+      "Implementation",
+      stats.implementation === "native" ? "native API" : "polyfill",
+    ],
+    stats.finishedAt && [
+      "Finished",
+      new Date(stats.finishedAt).toLocaleString(),
+    ],
+  ].filter(Boolean);
+
+  buildStatsList.replaceChildren(
+    ...rows.flatMap(([label, value]) => {
+      const term = document.createElement("dt");
+      term.textContent = label;
+      const description = document.createElement("dd");
+      description.textContent = value;
+      return [term, description];
+    }),
+  );
+  buildStats.hidden = false;
 };
 
 const build = async () => {
@@ -425,7 +496,7 @@ const build = async () => {
   indexProgress.value = 0;
 
   try {
-    semanticIndex = await buildIndex({
+    const built = await buildIndex({
       entries,
       db,
       onProgress: (progress) => {
@@ -439,6 +510,8 @@ const build = async () => {
         showActivity(progress);
       },
     });
+    semanticIndex = built.records;
+    showBuildStats(built.stats);
   } catch (error) {
     indexStatus.textContent = `Indexing failed: ${error.message}`;
     buildButton.disabled = false;
@@ -461,8 +534,8 @@ const runSearch = async (event) => {
   searchButton.disabled = true;
   indexStatus.textContent = "Searching…";
   try {
-    const matches = await search(query, semanticIndex);
-    renderResults(matches);
+    const { matches, stats } = await search(query, semanticIndex);
+    renderResults(matches, stats);
     indexStatus.textContent = matches.length
       ? summarizeIndex()
       : "No comparable vectors. Rebuild the index for the current model.";
@@ -495,6 +568,7 @@ const start = async () => {
   show(parseHash());
 
   semanticIndex = await readIndex();
+  showBuildStats((await readBuildStats()) ?? describeStoredIndex());
   await Promise.all([describeIndex(), showImplementation()]);
 };
 

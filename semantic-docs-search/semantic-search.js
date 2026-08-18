@@ -11,6 +11,8 @@ const BATCH_SIZE = 8;
 const UNKNOWN_SPACE = "unknown";
 const IDB_NAME = "semantic-docs-search";
 const IDB_STORE = "chunks";
+const META_STORE = "meta";
+const BUILD_KEY = "build";
 
 let embedder;
 let native;
@@ -59,14 +61,19 @@ export const destroyEmbedder = () => {
 
 const openDatabase = () =>
   new Promise((resolve, reject) => {
-    const request = indexedDB.open(IDB_NAME, 2);
-    request.onupgradeneeded = (event) => {
+    const request = indexedDB.open(IDB_NAME, 3);
+    request.onupgradeneeded = () => {
       const database = request.result;
-      // Version 1 held one vector per document; the chunked layout replaces it.
-      if (event.oldVersion) {
+      // Version 1 held one vector per document; the chunked layout replaced it.
+      if (database.objectStoreNames.contains("vectors")) {
         database.deleteObjectStore("vectors");
       }
-      database.createObjectStore(IDB_STORE, { keyPath: "id" });
+      if (!database.objectStoreNames.contains(IDB_STORE)) {
+        database.createObjectStore(IDB_STORE, { keyPath: "id" });
+      }
+      if (!database.objectStoreNames.contains(META_STORE)) {
+        database.createObjectStore(META_STORE);
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -86,19 +93,38 @@ export const readIndex = async () => {
   return records;
 };
 
-const writeIndex = async (records) => {
+const writeIndex = async (records, stats) => {
   const database = await openDatabase();
   await new Promise((resolve, reject) => {
-    const transaction = database.transaction(IDB_STORE, "readwrite");
+    const transaction = database.transaction(
+      [IDB_STORE, META_STORE],
+      "readwrite",
+    );
     const store = transaction.objectStore(IDB_STORE);
     store.clear();
     for (const record of records) {
       store.put(record);
     }
+    transaction.objectStore(META_STORE).put(stats, BUILD_KEY);
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error);
   });
   database.close();
+};
+
+// What the last build cost, kept so it can be shown long after it finished.
+export const readBuildStats = async () => {
+  const database = await openDatabase();
+  const stats = await new Promise((resolve, reject) => {
+    const request = database
+      .transaction(META_STORE, "readonly")
+      .objectStore(META_STORE)
+      .get(BUILD_KEY);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  database.close();
+  return stats;
 };
 
 // The blocks a document's text is built from, and the furniture that is not
@@ -261,6 +287,9 @@ export const buildIndex = async ({ entries, db, onProgress, signal }) => {
   let embedded = 0;
   let tokens = 0;
   let rate = 0;
+  // Token counts and truncation flags are optional in the result, so the run
+  // has to cope with an implementation that reports neither.
+  let reportsTokens = false;
   const startedAt = performance.now();
 
   while (pending.length) {
@@ -282,12 +311,24 @@ export const buildIndex = async ({ entries, db, onProgress, signal }) => {
     // throughput reported here is measured rather than estimated. The rate is
     // smoothed, because a batch of one-liners and a batch of long sections
     // differ wildly.
+    const reportedBefore = reportsTokens;
+    reportsTokens ||= result.embeddings.some(
+      (embedding) => embedding.statistics?.tokenCount !== undefined,
+    );
+    if (reportsTokens !== reportedBefore) {
+      // The readout just changed units, so the smoothed rate starts over
+      // rather than blending passages per second into tokens per second.
+      rate = 0;
+    }
     const batchTokens = result.embeddings.reduce(
       (total, embedding) => total + (embedding.statistics?.tokenCount ?? 0),
       0,
     );
     const batchSeconds = (performance.now() - batchStarted) / 1000;
-    const batchRate = batchSeconds ? batchTokens / batchSeconds : 0;
+    // Falls back to counting passages when the implementation reports no
+    // tokens, so the readout never sits at a flat zero.
+    const measured = reportsTokens ? batchTokens : result.embeddings.length;
+    const batchRate = batchSeconds ? measured / batchSeconds : 0;
     tokens += batchTokens;
     rate = rate ? rate * 0.7 + batchRate * 0.3 : batchRate;
 
@@ -331,8 +372,9 @@ export const buildIndex = async ({ entries, db, onProgress, signal }) => {
       phase: "embed",
       loaded: embedded,
       total: embedded + pending.length,
+      reportsTokens,
       tokens,
-      tokensPerSecond: rate,
+      rate,
       seconds: (performance.now() - startedAt) / 1000,
       current: {
         name: byPath.get(last.path)?.name ?? last.path,
@@ -342,8 +384,19 @@ export const buildIndex = async ({ entries, db, onProgress, signal }) => {
     });
   }
 
-  await writeIndex(records);
-  return records;
+  const stats = {
+    finishedAt: new Date().toISOString(),
+    passages: records.length,
+    documents: new Set(records.map((record) => record.path)).size,
+    seconds: (performance.now() - startedAt) / 1000,
+    reportsTokens,
+    tokens,
+    space,
+    implementation: await implementation(),
+  };
+
+  await writeIndex(records, stats);
+  return { records, stats };
 };
 
 // The API deliberately returns raw vectors and leaves comparison to the page.
@@ -363,24 +416,40 @@ const cosineSimilarity = (a, b) => {
 
 export const search = async (query, index, limit = 10) => {
   const active = await getEmbedder();
+
+  const embedStarted = performance.now();
   const { embeddings, metadata } = await active.embed(query, {
     taskType: "retrieval-query",
   });
+  const embedMilliseconds = performance.now() - embedStarted;
+
   const queryVector = embeddings[0].values;
   const space = metadata?.embeddingSpace ?? UNKNOWN_SPACE;
+  const scoreStarted = performance.now();
 
   // Chunks compete individually, then each document is represented by its
   // best one, so a long document cannot crowd out the rest of the results.
   // Anything embedded in another space is not comparable and sits this out.
+  const comparable = index.filter((stored) => stored.space === space);
   const best = new Map();
-  for (const record of index.filter((stored) => stored.space === space)) {
+  for (const record of comparable) {
     const score = cosineSimilarity(queryVector, record.values);
     if (score > (best.get(record.path)?.score ?? -Infinity)) {
       best.set(record.path, { ...record, score, values: undefined });
     }
   }
 
-  return [...best.values()]
+  const matches = [...best.values()]
     .sort((first, second) => second.score - first.score)
     .slice(0, limit);
+
+  return {
+    matches,
+    stats: {
+      embedMilliseconds,
+      scoreMilliseconds: performance.now() - scoreStarted,
+      compared: comparable.length,
+      tokens: embeddings[0].statistics?.tokenCount,
+    },
+  };
 };

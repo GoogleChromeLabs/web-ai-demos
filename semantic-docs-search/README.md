@@ -63,7 +63,21 @@ rather than reconstructed at query time.
 
 Building the index shows its work: the passage currently being embedded, the
 document and heading trail it came from, and throughput measured from the token
-counts the API reports.
+counts the API reports. Those figures are kept with the index and shown under
+**Index stats** at the foot of the sidebar, and each search reports what
+retrieval itself cost — the query embedding and the comparison pass separately.
+
+### When statistics are missing
+
+`statistics` and `metadata` are optional in the result, and an implementation is
+free to return neither. The header says which one is answering: `native API`
+when the browser provides `SemanticEmbedder`, `polyfill` otherwise, decided
+before the polyfill is imported since it defines the same global.
+
+Where token counts are missing, throughput is reported in passages per second
+instead, so the readout never sits at zero. The retry loop is the real loss:
+without `statistics.truncated` there is no signal that a passage did not fit, so
+oversized passages are truncated silently rather than being split.
 
 Nothing in the page knows the token limit. That number lives in the
 implementation and reaches the page only through the reported metadata, which is

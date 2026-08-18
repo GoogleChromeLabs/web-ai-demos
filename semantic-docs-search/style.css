@@ -89,6 +89,50 @@ progress {
   color: inherit;
 }
 
+#build-stats[hidden] {
+  display: none;
+}
+
+#build-stats {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+#build-stats summary {
+  font-size: 0.78rem;
+}
+
+#build-stats dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.1rem 0.5rem;
+  /* Pinned to the foot of the sidebar, so a long list scrolls on its own
+     rather than pushing the buttons off screen. */
+  max-height: 40dvh;
+  overflow-y: auto;
+  margin: 0.3rem 0 0;
+}
+
+#build-stats dt {
+  font-weight: 650;
+}
+
+#build-stats dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* What retrieval itself cost, as opposed to what the index cost to build. */
+.result-stats {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
 .actions {
   position: sticky;
   bottom: -1rem;
