@@ -151,10 +151,33 @@ it.
 
 Vite is not decoration here: the polyfill re-loads itself as a module worker and
 imports `@huggingface/transformers` by bare specifier, and import maps do not
-reach workers, so the specifier has to be resolved at build time. For the same
-reason [`vite.config.js`](vite.config.js) disables `modulePreload` and keeps the
-polyfill in a chunk of its own — bundled into the app chunk, the worker would
-re-run this whole page in a context with no DOM.
+reach workers, so the specifier has to be resolved at build time.
+
+That worker also shapes [`vite.config.js`](vite.config.js). It re-runs whichever
+chunk holds the polyfill, so that chunk must contain the polyfill alone and must
+not touch `document`. Importing the polyfill dynamically already earns it a
+chunk, but the dynamic-import helper is shared with the entry, and unless that
+helper is given a chunk of its own the polyfill chunk imports the entry to reach
+it — and the worker then executes this whole page with no DOM. `modulePreload`
+is off for the same reason.
+
+## Deploying to GitHub Pages
+
+`npm run build` produces output that Pages can serve as it stands.
+
+- `base` is `"./"`, so every asset resolves relative to the page and the site
+  works from a repository subpath as well as from a domain root. The wasm binary
+  is located through `import.meta.url`, so it follows.
+- The build emits `.nojekyll`, without which Pages runs the output through
+  Jekyll, which drops files whose names begin with an underscore.
+- Everything is fetched from the page's own origin or over CORS, and the
+  documentation database, the model, and the index are all cached in the
+  browser, so no server-side anything is required.
+
+Threads are the one thing Pages cannot give: `SharedArrayBuffer` needs
+cross-origin isolation, which needs COOP and COEP headers that Pages does not
+send, so onnxruntime runs single-threaded there and indexing is slower than it
+is locally.
 
 ## Notes
 
