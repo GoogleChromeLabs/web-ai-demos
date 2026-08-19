@@ -23,37 +23,74 @@ API reports so a different model invalidates them. A query is embedded with
 `retrieval-query`, and the page ranks by cosine similarity — the API returns raw
 vectors and deliberately leaves comparison and storage to the page.
 
-### Passages, not documents
+## Chunking
 
-Documents are indexed one section at a time. A whole-document vector can rank a
-document but cannot say which part of it matched, and most of these pages are
-long enough that "somewhere in `<input>`" is not an answer. Sections carry their
-heading trail, so a passage keeps the context it was written in and a result can
-say where it came from.
+Indexing turns each document into passages: one vector per section, with every
+passage small enough for the model to read in full.
 
-Sections are also cheaper to embed than whole documents: cost grows with
-sequence length, so 2,000 short passages take less work in total than 252
-full-length pages.
+### What constrains it
 
-### Fitting a passage to the input limit
+- **The API does not chunk.** The explainer is explicit that large inputs are
+  the developer's problem, so the page decides what a unit of text is.
+- **The limit is counted in tokens, not characters.** A token is a subword
+  piece, so its size depends on the text: across this corpus a token averages
+  4.8 characters, ranging from 4.1 to 5.3. Any character budget is therefore a
+  guess, and the page never sets one.
+- **The limit is not the page's to know.** It arrives with the result as
+  `metadata.maxInputTokens`, 2,047 for EmbeddingGemma here, and the code reads
+  it from there so a model with a different window needs no edit.
+- **Overflowing is silent.** An oversized input still returns a vector, just one
+  built from a prefix of the text. Only `statistics.truncated` distinguishes
+  that from a complete reading.
+- **Cost grows with sequence length**, and a batch is padded out to its longest
+  member, so a single long passage makes its whole batch expensive.
+- **A ranking has to point somewhere.** One vector per document can say which
+  document matched but not where, which is no answer on a page the size of
+  `<input>`.
 
-The API does not chunk, and the model's window is finite, so the page has to
-decide what to send. Rather than guessing a character budget, it asks and
-retries: a section goes in as written, and any embedding that comes back with
-`statistics.truncated` set is split and tried again, until every piece fits.
+### Step by step
 
-How far it splits comes from the rejection itself. The result reports
-`statistics.tokenCount` and `metadata.maxInputTokens`, so a piece that came back
-truncated is cut into `ceil(tokenCount / maxInputTokens)` parts and usually fits
-on the next attempt, instead of being halved repeatedly. For the largest
-document here, `<input>` at 8,899 tokens, that is 6 embed calls over 2 rounds
-rather than 15 over 4.
+1. **Strip the furniture.** Survey elements, Baseline banners, code samples,
+   tables, and iframes come out, because they repeat across pages and would
+   otherwise dominate the vectors.
+2. **Collect the leaf blocks** — `h1`–`h4`, `p`, `li`, `dt`, `dd`, `figcaption`
+   — keeping only the innermost when they nest, so no text is counted twice.
+   Whitespace is collapsed, and blocks stay separated by blank lines, which is
+   what later gives the splitter its seams.
+3. **Cut at every heading.** The blocks between two headings become one section.
+   Each carries the trail of headings above it, such as
+   `Description › Closing dialogs`, and the anchor id of the deepest one. The
+   page's own title heads the document rather than a section of it.
+4. **Compose the input** as the document name and type, then the heading trail,
+   then the prose. A passage keeps the context it was written in, and a hit can
+   name where it came from. This corpus yields 1,993 pieces, the median one 91
+   tokens.
+5. **Sort by length and batch by eight**, so a batch is padded to something near
+   its own members rather than to an outlier.
+6. **Embed** with the `retrieval-document` task type.
+7. **Split whatever did not fit.** A result marked `statistics.truncated` is cut
+   into `ceil(tokenCount / maxInputTokens)` parts — both numbers reported by the
+   implementation — and the parts rejoin the queue under the same section, to be
+   embedded and checked again. Cuts land on the coarsest seam near each division:
+   between blocks, else between sentences, else between words. A run with no seam
+   left is stored as it is, truncated, since nothing better exists.
+8. **Store** the vector with its document, heading trail, anchor, the passage
+   text for quoting, and the embedding space it was produced in.
 
-Cuts land on the coarsest seam the text still has — between blocks, then
-between sentences, then between words — so pieces stay as large and as whole as
-they can, and a piece with no seam left is kept as is.
+Here 6 of the 1,993 sections exceed the limit and become 13 parts, ending at
+2,000 passages. The largest, `input › Attributes › Individual attributes` at
+4,942 tokens, becomes three.
 
-### Grounding a result
+At query time each passage competes on its own, and a document is then
+represented by its best one, so a long document cannot fill the results with
+itself.
+
+The first build downloads the model, roughly 420 MB, cached by the browser
+afterwards. Indexing this corpus runs at roughly 70 tokens per second on an
+M-series laptop. Afterwards the index is read back from IndexedDB and a query
+takes well under a second.
+
+## Grounding a result
 
 A document name and a score are not enough to judge a hit, so each result names
 the section its matching passage came from, quotes the passage, links to that
@@ -67,7 +104,7 @@ counts the API reports. Those figures are kept with the index and shown under
 **Index stats** at the foot of the sidebar, and each search reports what
 retrieval itself cost — the query embedding and the comparison pass separately.
 
-### When statistics are missing
+## When statistics are missing
 
 `statistics` and `metadata` are optional in the result, and an implementation is
 free to return neither. The header says which one is answering: `native API`
@@ -79,19 +116,7 @@ instead, so the readout never sits at zero. The retry loop is the real loss:
 without `statistics.truncated` there is no signal that a passage did not fit, so
 oversized passages are truncated silently rather than being split.
 
-Nothing in the page knows the token limit. That number lives in the
-implementation and reaches the page only through the reported metadata, which is
-what makes the loop survive a model with a different window.
-
-Because a batch is padded to its longest member, pieces are grouped by length
-before being sent, which keeps the model from chewing through padding.
-
-The first build downloads the model, roughly 420 MB, cached by the browser
-afterwards. Indexing this corpus produces about 2,000 passages and runs at
-roughly 70 tokens per second on an M-series laptop. Afterwards the index is read
-back from IndexedDB and a query takes well under a second.
-
-### Polyfill version
+## Polyfill version
 
 This demo needs `built-in-ai-task-apis-polyfills` **1.17.0 or newer**. Earlier
 versions truncated oversized inputs to exactly the model's 2048-token window,
@@ -135,12 +160,7 @@ re-run this whole page in a context with no DOM.
 
 - `index.json` lists 251 entries; the database also holds an `index` overview
   page, which the sidebar adds back as **HTML overview**.
-- Passages are embedded under their document name, type, and heading trail, with
-  Baseline banners, code samples, and tables stripped first, so boilerplate that
-  repeats across pages does not dominate a vector.
 - Quoted text is cut at a word boundary, never mid-word.
-- Search ranks chunks individually but reports each document once, through its
-  best-scoring chunk, so a long document cannot crowd out the results.
 - Stored vectors carry the embedding space they were produced in, and a search
   ignores any that do not match the space the current model reports.
 - MDN live-sample `<iframe>`s are removed, since only MDN's own scripts can
