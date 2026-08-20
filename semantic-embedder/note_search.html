@@ -1,0 +1,60 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Search Prototype</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Semantic Note Search</h1>
+            <p>Your data never leaves your device. Search by concept, not just keywords.</p>
+        </header>
+        
+        <div class="status-bar" id="statusBar">
+            Checking API availability...
+        </div>
+
+        <nav class="tabs-nav">
+             <a href="index.html" class="tab-btn">Home</a>
+             <a href="note_search.html" class="tab-btn active">Note Search</a>
+             <a href="comment_moderator.html" class="tab-btn">Comment Moderator</a>
+             <a href="docs_rag.html" class="tab-btn">Docs RAG</a>
+        </nav>
+
+        <main>
+            <div class="tab-content active" style="display: block;">
+                <section class="notes-section">
+                    <div class="notes-layout">
+                        <div class="editor-container">
+                            <h3>My Private Note</h3>
+                            <textarea id="noteEditor" placeholder="Paste sensitive text here (e.g., mock medical records or diary entries)..."></textarea>
+                            <div class="save-status" id="saveStatus">Saved locally</div>
+                        </div>
+                        <div class="search-container">
+                            <h3>Search Notes</h3>
+                            <div class="search-box">
+                                <input type="text" id="noteSearchInput" placeholder="Search for a concept (e.g., 'money issues')">
+                                <button id="noteSearchBtn">Search</button>
+                            </div>
+                            <div id="noteSearchResults" class="results-list">
+                                <p class="placeholder-text">Search results will appear here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="note_search.js"></script>
+</body>
+</html>

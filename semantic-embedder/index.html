@@ -1,0 +1,72 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SemanticEmbedder API Prototypes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        .demo-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+        }
+        .demo-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .demo-card h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        .demo-card p {
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SemanticEmbedder API Prototypes</h1>
+        </header>
+
+        <main>
+            <p style="text-align: center; margin-bottom: 2rem; color: var(--text-secondary);">
+                <strong>Files to look into:</strong> <code>note_search.js</code>, <code>comment_moderator.js</code>, <code>docs_rag.js</code>
+                <br>
+                <strong>Requirements:</strong> You must enable the <code>chrome://flags/#semantic-embedder-api</code> flag to use these demos.
+            </p>
+
+            <a href="note_search.html" class="demo-card">
+                <h2>1. Semantic Note Search</h2>
+                <p>Search by concept, not just keywords.</p>
+            </a>
+
+            <a href="comment_moderator.html" class="demo-card">
+                <h2>2. Toxic Comment Moderator</h2>
+                <p>Real-time moderation to nudge users away from toxic behavior before they post.</p>
+            </a>
+
+            <a href="docs_rag.html" class="demo-card">
+                <h2>3. Documentation RAG</h2>
+                <p>Chat with documentation using the on-device Semantic Embedder API and Prompt API.</p>
+            </a>
+        </main>
+    </div>
+</body>
+</html>
