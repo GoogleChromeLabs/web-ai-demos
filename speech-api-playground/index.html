@@ -74,6 +74,35 @@
             <div id="output" class="output-box">
                 <p>Results will appear here...</p>
             </div>
+
+            <div class="option-group translation-group">
+                <label for="translate-lang-select">Live Translation</label>
+                <p class="description">Every sentence is translated with the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Translator" target="_blank" rel="noopener">Translator API</a> as soon as it is complete.</p>
+                <select id="translate-lang-select">
+                    <option value="" selected>(Off)</option>
+                    <option value="ar">Arabic (ar)</option>
+                    <option value="bn">Bengali (bn)</option>
+                    <option value="nl">Dutch (nl)</option>
+                    <option value="en">English (en)</option>
+                    <option value="fr">French (fr)</option>
+                    <option value="de">German (de)</option>
+                    <option value="hi">Hindi (hi)</option>
+                    <option value="it">Italian (it)</option>
+                    <option value="ja">Japanese (ja)</option>
+                    <option value="ko">Korean (ko)</option>
+                    <option value="zh">Mandarin Chinese (zh)</option>
+                    <option value="pl">Polish (pl)</option>
+                    <option value="pt">Portuguese (pt)</option>
+                    <option value="ru">Russian (ru)</option>
+                    <option value="es">Spanish (es)</option>
+                    <option value="zh-Hant">Taiwanese Mandarin (zh-Hant)</option>
+                    <option value="th">Thai (th)</option>
+                    <option value="tr">Turkish (tr)</option>
+                    <option value="vi">Vietnamese (vi)</option>
+                </select>
+                <p id="translation-status" class="note" hidden></p>
+                <div id="translation-output" class="output-box" hidden></div>
+            </div>
         </div>
 
         <div class="column">
