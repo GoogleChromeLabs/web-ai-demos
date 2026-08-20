@@ -1,3 +1,8 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Semantic search over the DevDocs entries, built on the proposed
 // SemanticEmbedder API. Chrome does not ship the API yet, so the polyfill
 // stands in: it runs EmbeddingGemma 300M locally through
