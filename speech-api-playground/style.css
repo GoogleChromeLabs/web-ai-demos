@@ -208,3 +208,53 @@ code {
     margin-top: 15px;
     text-align: center;
 }
+
+/* --- Live translation --- */
+
+.translation-group {
+    margin-top: 20px;
+}
+
+.translation-group select {
+    margin-bottom: 10px;
+}
+
+#translation-status {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+#translation-status.error {
+    background-color: #fdecea;
+    color: #a3261a;
+}
+
+#translation-output {
+    min-height: 0;
+}
+
+.translation-entry {
+    margin: 0 0 12px;
+}
+
+.translation-entry:last-child {
+    margin-bottom: 0;
+}
+
+.translation-source {
+    display: block;
+    color: #888;
+    font-size: 13px;
+}
+
+.translation-target {
+    display: block;
+}
+
+.translation-entry.pending .translation-target {
+    color: #888;
+}
+
+.translation-entry.error .translation-target {
+    color: #a3261a;
+}

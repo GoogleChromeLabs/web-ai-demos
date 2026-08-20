@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const addPhraseBtn = document.getElementById('add-phrase-btn');
     const phrasesContainer = document.getElementById('phrases-container');
     const outputEl = document.getElementById('output');
+    const translateLangSelect = document.getElementById('translate-lang-select');
+    const translationStatus = document.getElementById('translation-status');
+    const translationOutput = document.getElementById('translation-output');
 
     // --- 1. UI and Code Generation ---
 
@@ -97,6 +100,7 @@ ${phrasesCode}
         startTime = performance.now();
         firstTokenTime = 0;
         output.innerHTML = "<p>Listening... Speak into your microphone.</p>";
+        window.onLiveTranslationStart?.();
     };
 
     recognition.onresult = (event) => {
@@ -114,6 +118,9 @@ ${phrasesCode}
         output.innerHTML = \`
             <p><strong>Transcript:</strong> \${fullTranscript}</p>
         \`;
+
+        // Hand the transcript to the live translation panel below the output.
+        window.onLiveTranslationTranscript?.(fullTranscript);
     };
 
     recognition.onerror = (event) => {
@@ -143,6 +150,9 @@ ${phrasesCode}
         \`;
 
         output.innerHTML += metricsHtml + "<p>(Recognition ended.)</p>";
+
+        // Translate whatever is left over, even without closing punctuation.
+        window.onLiveTranslationEnd?.(fullTranscript);
     };
 
     // Start the recognition
@@ -245,6 +255,7 @@ ${phrasesCode}
                 startTime = performance.now();
                 firstTokenTime = 0;
                 metricsRendered = false;
+                resetTranslations();
                 output.innerHTML = `
                     <div id="transcript-area"><p>Listening to audio track...</p></div>
                     <div id="metrics-area"></div>
@@ -267,6 +278,8 @@ ${phrasesCode}
                 if (transcriptArea) {
                     transcriptArea.innerHTML = `<p><strong>Transcript:</strong> ${fullTranscript}</p>`;
                 }
+
+                handleTranscript(fullTranscript);
 
                 if (metricsRendered) {
                     // Update metrics if more results trickle in after we thought we were done
@@ -322,6 +335,7 @@ ${phrasesCode}
                 metricsRendered = true;
 
                 updateMetricsArea();
+                flushTranslations();
                 
                 // Clean up listeners
                 audioSource.removeEventListener('ended', handleAudioPlaybackEnded);
@@ -416,6 +430,218 @@ ${phrasesCode}
         }
     }
 
+    // --- 2d. Live Translation with the Translator API ---
+
+    // Matches everything up to and including a run of sentence-ending punctuation.
+    // An unterminated tail is left out, so a sentence is only picked up once the
+    // speaker has actually finished it.
+    const SENTENCE_REGEX = /[^.!?\u2026\u3002\uFF01\uFF1F]*[.!?\u2026\u3002\uFF01\uFF1F]+/g;
+
+    let sentences = [];      // One { source, target, state } entry per complete sentence.
+    let lastTranscript = '';
+    let tailFlushed = false; // Once recognition is over, an unfinished sentence counts too.
+    let translator = null;
+    let translatorPromise = null;
+    let translatorKey = '';
+
+    // "en-US" -> "en", "zh-Hant-TW" -> "zh-Hant". The Translator API expects a
+    // language, optionally with a script, but not a region.
+    function baseLanguageTag(tag) {
+        const [language, second] = tag.trim().replace(/_/g, '-').split('-');
+        if (!language) {
+            return '';
+        }
+        if (second && /^[a-z]{4}$/i.test(second)) {
+            return `${language.toLowerCase()}-${second[0].toUpperCase()}${second.slice(1).toLowerCase()}`;
+        }
+        return language.toLowerCase();
+    }
+
+    function splitSentences(text, includeTail) {
+        const matches = Array.from(text.matchAll(SENTENCE_REGEX));
+        const result = matches.map(match => match[0].trim());
+        if (includeTail) {
+            const last = matches[matches.length - 1];
+            result.push(text.slice(last ? last.index + last[0].length : 0).trim());
+        }
+        // Drop fragments that are punctuation or whitespace only.
+        return result.filter(sentence => /[\p{L}\p{N}]/u.test(sentence));
+    }
+
+    function escapeHtml(text) {
+        const element = document.createElement('div');
+        element.textContent = text;
+        return element.innerHTML;
+    }
+
+    function setTranslationStatus(message, isError) {
+        translationStatus.textContent = message || '';
+        translationStatus.hidden = !message;
+        translationStatus.classList.toggle('error', Boolean(isError));
+    }
+
+    function destroyTranslator() {
+        if (translator) {
+            try { translator.destroy(); } catch (e) {}
+        }
+        translator = null;
+        translatorPromise = null;
+        translatorKey = '';
+    }
+
+    // Creates (and caches) one Translator for the current language pair. The
+    // promise is reused so that sentences arriving back to back share a model
+    // download instead of triggering one each.
+    function getTranslator() {
+        const sourceLanguage = baseLanguageTag(langInput.value);
+        const targetLanguage = translateLangSelect.value;
+        const key = `${sourceLanguage}>${targetLanguage}`;
+        if (translatorPromise && translatorKey === key) {
+            return translatorPromise;
+        }
+
+        destroyTranslator();
+        translatorKey = key;
+        translatorPromise = (async () => {
+            if (!('Translator' in self)) {
+                throw new Error('The Translator API is not supported in this browser.');
+            }
+            if (!sourceLanguage) {
+                throw new Error('Set a recognition language to translate from.');
+            }
+            if (sourceLanguage === targetLanguage) {
+                throw new Error(`Nothing to translate: recognition is already in "${targetLanguage}".`);
+            }
+
+            const availability = await Translator.availability({ sourceLanguage, targetLanguage });
+            if (availability === 'unavailable') {
+                throw new Error(`Translation from "${sourceLanguage}" to "${targetLanguage}" is unavailable.`);
+            }
+            if (availability !== 'available') {
+                setTranslationStatus(`Preparing the ${sourceLanguage} \u2192 ${targetLanguage} model\u2026`);
+            }
+
+            const instance = await Translator.create({
+                sourceLanguage,
+                targetLanguage,
+                monitor(monitor) {
+                    monitor.addEventListener('downloadprogress', (e) => {
+                        setTranslationStatus(`Downloading the ${sourceLanguage} \u2192 ${targetLanguage} model\u2026 ${Math.floor(e.loaded * 100)}%`);
+                    });
+                },
+            });
+
+            translator = instance;
+            setTranslationStatus(`Translating ${sourceLanguage} \u2192 ${targetLanguage}.`);
+            return instance;
+        })();
+        return translatorPromise;
+    }
+
+    async function translateSentence(index) {
+        const entry = sentences[index];
+        try {
+            const instance = await getTranslator();
+            // A later interim result may have rewritten this sentence in the meantime.
+            if (sentences[index] !== entry) {
+                return;
+            }
+            const target = await instance.translate(entry.source);
+            if (sentences[index] !== entry) {
+                return;
+            }
+            entry.target = target;
+            entry.state = 'done';
+        } catch (e) {
+            if (sentences[index] !== entry) {
+                return;
+            }
+            entry.target = e.message;
+            entry.state = 'error';
+            setTranslationStatus(e.message, true);
+            console.error(e);
+        }
+        renderTranslations();
+    }
+
+    function renderTranslations() {
+        if (!translateLangSelect.value) {
+            translationOutput.hidden = true;
+            return;
+        }
+        translationOutput.hidden = false;
+        if (!sentences.length) {
+            translationOutput.innerHTML = '<p>Completed sentences are translated here\u2026</p>';
+            return;
+        }
+        translationOutput.innerHTML = sentences.map(entry => `
+            <p class="translation-entry ${entry.state}">
+                <span class="translation-source">${escapeHtml(entry.source)}</span>
+                <span class="translation-target">${entry.state === 'pending' ? '\u2026' : escapeHtml(entry.target)}</span>
+            </p>
+        `).join('');
+    }
+
+    // Called with the transcript recognized so far. Every sentence that has been
+    // completed since the last call is queued for translation.
+    function handleTranscript(transcript, includeTail = false) {
+        lastTranscript = transcript;
+        if (!translateLangSelect.value) {
+            return;
+        }
+
+        const complete = splitSentences(transcript, includeTail || tailFlushed);
+        // Interim results can rewrite an earlier sentence, so compare by position
+        // and re-translate only the entries whose text actually changed.
+        sentences.length = complete.length;
+        complete.forEach((source, index) => {
+            if (sentences[index] && sentences[index].source === source) {
+                return;
+            }
+            sentences[index] = { source, target: '', state: 'pending' };
+            translateSentence(index);
+        });
+        renderTranslations();
+    }
+
+    // Recognition is over: translate the trailing words even if the speaker never
+    // finished the sentence with punctuation.
+    function flushTranslations(transcript = lastTranscript) {
+        tailFlushed = true;
+        handleTranscript(transcript, true);
+    }
+
+    function resetTranslations() {
+        sentences = [];
+        lastTranscript = '';
+        tailFlushed = false;
+        setTranslationStatus('');
+        renderTranslations();
+    }
+
+    // The language pair changed: keep the recognized sentences, throw away their
+    // translations and run them through the new model.
+    function retranslateAll() {
+        destroyTranslator();
+        setTranslationStatus('');
+        if (!translateLangSelect.value) {
+            renderTranslations();
+            return;
+        }
+        sentences = sentences.map(entry => ({ source: entry.source, target: '', state: 'pending' }));
+        sentences.forEach((entry, index) => translateSentence(index));
+        renderTranslations();
+        if (!sentences.length) {
+            // Warm the model up (and surface any error) before the next utterance.
+            getTranslator().catch(e => setTranslationStatus(e.message, true));
+        }
+    }
+
+    // Hooks that the generated, user-editable code calls into.
+    window.onLiveTranslationStart = resetTranslations;
+    window.onLiveTranslationTranscript = transcript => handleTranscript(transcript);
+    window.onLiveTranslationEnd = transcript => flushTranslations(transcript);
+
     // --- 3. Attach Event Listeners ---
 
     // Update the code block whenever an option changes
@@ -438,6 +664,15 @@ ${phrasesCode}
             window.currentRecognition = null;
             outputEl.innerHTML += '<p>(Stopped by user.)</p>';
         }
+        flushTranslations();
+    });
+    translateLangSelect.addEventListener('change', retranslateAll);
+    // A different recognition language means a different translation source language.
+    // Debounced, so that typing a tag does not probe the model for every keystroke.
+    let langChangeTimer = null;
+    langInput.addEventListener('input', () => {
+        clearTimeout(langChangeTimer);
+        langChangeTimer = setTimeout(retranslateAll, 500);
     });
     checkAvailabilityBtn.addEventListener('click', checkAvailability);
     installBtn.addEventListener('click', installModel);
