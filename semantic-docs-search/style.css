@@ -351,6 +351,7 @@ summary {
 
 #index-stats {
   margin: 0;
+  white-space: pre-line;
   color: var(--accent);
   font-family: ui-monospace, monospace;
   font-size: 0.72rem;

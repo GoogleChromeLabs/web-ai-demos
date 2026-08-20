@@ -99,10 +99,16 @@ is recorded while indexing, where the exact text that was embedded is known,
 rather than reconstructed at query time.
 
 Building the index shows its work: the passage currently being embedded, the
-document and heading trail it came from, and throughput measured from the token
-counts the API reports. Those figures are kept with the index and shown under
-**Index stats** at the foot of the sidebar, and each search reports what
-retrieval itself cost — the query embedding and the comparison pass separately.
+document and heading trail it came from, and how fast it is going. Throughput
+leads with passages per second, which the page measures itself and can therefore
+report whatever implementation is answering — so a polyfill build and a native
+one can be compared. Tokens per second and the running token total follow when
+the implementation reports token counts.
+
+Those figures are kept with the index and shown under **Index stats** at the
+foot of the sidebar, alongside which implementation built it. Each search
+reports what retrieval itself cost — the query embedding and the comparison pass
+separately.
 
 ## When statistics are missing
 
@@ -111,8 +117,8 @@ free to return neither. The header says which one is answering: `native API`
 when the browser provides `SemanticEmbedder`, `polyfill` otherwise, decided
 before the polyfill is imported since it defines the same global.
 
-Where token counts are missing, throughput is reported in passages per second
-instead, so the readout never sits at zero. The retry loop is the real loss:
+Where token counts are missing, only the token figures drop out; passages per
+second is measured by the page and stays. The retry loop is the real loss:
 without `statistics.truncated` there is no signal that a passage did not fit, so
 oversized passages are truncated silently rather than being split.
 
@@ -178,6 +184,21 @@ Threads are the one thing Pages cannot give: `SharedArrayBuffer` needs
 cross-origin isolation, which needs COOP and COEP headers that Pages does not
 send, so onnxruntime runs single-threaded there and indexing is slower than it
 is locally.
+
+## Two caches, both per origin
+
+The documents and the embeddings are stored separately, and the page says so:
+the header reports the cached documents, the sidebar reports the stored
+passages. **Redownload documents** refetches the documentation and keeps the
+embeddings; **Rebuild semantic index** embeds the passages again and keeps the
+documents.
+
+Both live in origin-scoped storage — Cache Storage for the documents, IndexedDB
+for the vectors — so the same site served from another origin, `localhost:5173`
+instead of `localhost:5199`, starts with neither. That is why search can sit
+disabled on a page that reports its documents as cached, and the sidebar says
+which of the two is missing rather than leaving the controls greyed out without
+explanation.
 
 ## Notes
 

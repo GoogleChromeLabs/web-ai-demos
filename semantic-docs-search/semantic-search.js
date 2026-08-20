@@ -286,7 +286,8 @@ export const buildIndex = async ({ entries, db, onProgress, signal }) => {
   let space = UNKNOWN_SPACE;
   let embedded = 0;
   let tokens = 0;
-  let rate = 0;
+  let passageRate = 0;
+  let tokenRate = 0;
   // Token counts and truncation flags are optional in the result, so the run
   // has to cope with an implementation that reports neither.
   let reportsTokens = false;
@@ -311,26 +312,30 @@ export const buildIndex = async ({ entries, db, onProgress, signal }) => {
     // throughput reported here is measured rather than estimated. The rate is
     // smoothed, because a batch of one-liners and a batch of long sections
     // differ wildly.
-    const reportedBefore = reportsTokens;
     reportsTokens ||= result.embeddings.some(
       (embedding) => embedding.statistics?.tokenCount !== undefined,
     );
-    if (reportsTokens !== reportedBefore) {
-      // The readout just changed units, so the smoothed rate starts over
-      // rather than blending passages per second into tokens per second.
-      rate = 0;
-    }
     const batchTokens = result.embeddings.reduce(
       (total, embedding) => total + (embedding.statistics?.tokenCount ?? 0),
       0,
     );
     const batchSeconds = (performance.now() - batchStarted) / 1000;
-    // Falls back to counting passages when the implementation reports no
-    // tokens, so the readout never sits at a flat zero.
-    const measured = reportsTokens ? batchTokens : result.embeddings.length;
-    const batchRate = batchSeconds ? measured / batchSeconds : 0;
     tokens += batchTokens;
-    rate = rate ? rate * 0.7 + batchRate * 0.3 : batchRate;
+
+    // Passages per second is measured here and so exists whatever the
+    // implementation reports, which is what makes two runs comparable. Tokens
+    // per second is the finer measure, and only an implementation that reports
+    // token counts can offer it. Both are smoothed, because a batch of
+    // one-liners and a batch of long sections differ wildly.
+    const smooth = (previous, sample) =>
+      previous ? previous * 0.7 + sample * 0.3 : sample;
+    if (batchSeconds) {
+      passageRate = smooth(
+        passageRate,
+        result.embeddings.length / batchSeconds,
+      );
+      tokenRate = smooth(tokenRate, batchTokens / batchSeconds);
+    }
 
     batch.forEach((piece, position) => {
       const embedding = result.embeddings[position];
@@ -374,7 +379,8 @@ export const buildIndex = async ({ entries, db, onProgress, signal }) => {
       total: embedded + pending.length,
       reportsTokens,
       tokens,
-      rate,
+      passageRate,
+      tokenRate,
       seconds: (performance.now() - startedAt) / 1000,
       current: {
         name: byPath.get(last.path)?.name ?? last.path,
