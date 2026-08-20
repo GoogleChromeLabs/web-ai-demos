@@ -181,8 +181,15 @@ const embedder = await SemanticEmbedder.create({
 });
 
 // Embed a single text
-const { embeddings } = await embedder.embed('Hello world');
+const { embeddings, metadata } = await embedder.embed('Hello world');
 console.log(embeddings[0].values); // Float32Array of 768 values
+
+// Every embedding reports what the model actually saw, and the result carries
+// the space the vectors live in plus the input ceiling. Inputs longer than
+// `metadata.maxInputTokens` are truncated rather than rejected, so check
+// `truncated` if you need to chunk instead of losing the tail.
+console.log(embeddings[0].statistics); // { tokenCount: 4, truncated: false }
+console.log(metadata); // { embeddingSpace: 'embeddinggemma-300m', maxInputTokens: 2047 }
 
 // Semantic search: embed query and corpus with appropriate task prefixes.
 // Supported taskType values: 'semantic-similarity', 'retrieval-query',

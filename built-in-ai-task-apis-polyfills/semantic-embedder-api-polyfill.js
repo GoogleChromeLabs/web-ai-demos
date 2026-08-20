@@ -20,7 +20,16 @@ const DEFAULT_MODEL = 'onnx-community/embeddinggemma-300m-ONNX';
 // EmbeddingGemma activations do not support fp16. q8 gives a good balance of
 // model size and quality in the browser.
 const DEFAULT_DTYPE = 'q8';
-const MAX_INPUT_TOKENS = 2048;
+// EmbeddingGemma's context window is 2048 tokens, but onnxruntime-web
+// overflows when a sequence fills it exactly (`OrtRun()` ERROR_CODE 1), so the
+// usable ceiling is one token below the window. Truncating to the window size
+// itself would push every oversized input straight into that failure.
+const MODEL_CONTEXT_TOKENS = 2048;
+const MAX_INPUT_TOKENS = MODEL_CONTEXT_TOKENS - 1;
+
+// The vector space the embeddings belong to. Vectors from different spaces are
+// not comparable, so callers need this to version what they store.
+const EMBEDDING_SPACE = 'embeddinggemma-300m';
 
 // EmbeddingGemma task-type prefixes (must match the model's training setup).
 // See https://ai.google.dev/gemma/docs/embeddinggemma/model_card for the
@@ -207,6 +216,14 @@ if (isWorker) {
           applyPrefix(text, options.taskType)
         );
 
+        // Measure each input on its own first, so the reported token count is
+        // the length of the text as given rather than of the padded, truncated
+        // batch. Counting the batch in one pass is not an option: padding it
+        // to an over-long member throws inside the tokenizer.
+        const tokenCounts = prefixedInputs.map((text) =>
+          workerTokenizer(text).input_ids.dims.at(-1)
+        );
+
         const tokenized = await workerTokenizer(prefixedInputs, {
           padding: true,
           truncation: true,
@@ -230,9 +247,19 @@ if (isWorker) {
 
         const embeddings = inputs.map((_, i) => ({
           values: data.slice(i * dim, (i + 1) * dim),
+          statistics: {
+            tokenCount: tokenCounts[i],
+            truncated: tokenCounts[i] > MAX_INPUT_TOKENS,
+          },
         }));
 
-        const result = { embeddings };
+        const result = {
+          embeddings,
+          metadata: {
+            embeddingSpace: EMBEDDING_SPACE,
+            maxInputTokens: MAX_INPUT_TOKENS,
+          },
+        };
 
         self.postMessage({ type: 'embed-response', requestId, result });
       } catch (err) {
@@ -510,7 +537,13 @@ export class SemanticEmbedder {
     const inputs = Array.isArray(input) ? input : [input];
 
     if (inputs.length === 0) {
-      return { embeddings: [] };
+      return {
+        embeddings: [],
+        metadata: {
+          embeddingSpace: EMBEDDING_SPACE,
+          maxInputTokens: MAX_INPUT_TOKENS,
+        },
+      };
     }
 
     const requestId = ++this.#nextRequestId;
