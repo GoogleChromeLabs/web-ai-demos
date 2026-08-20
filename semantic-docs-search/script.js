@@ -359,7 +359,31 @@ const renderResults = (matches, stats) => {
 
 const summarizeIndex = () => {
   const documents = new Set(semanticIndex.map((record) => record.path)).size;
-  return `Semantic index ready: ${semanticIndex.length} passages across ${documents} documents.`;
+  return `${semanticIndex.length} passages embedded across ${documents} documents, stored for this origin.`;
+};
+
+// The search controls are only useful once embeddings exist, and a disabled
+// field with no explanation reads as a broken page.
+const setSearchable = (searchable) => {
+  queryInput.disabled = !searchable;
+  searchButton.disabled = !searchable;
+  queryInput.placeholder = searchable
+    ? "Search by meaning"
+    : "Build the index first";
+};
+
+// Only the polyfill's model is ours to describe. A browser with its own
+// implementation downloads whatever it downloads.
+const modelHint = async (state) => {
+  if (state === "downloading") {
+    return "The embedding model is downloading.";
+  }
+  if (state === "available") {
+    return "The embedding model is already downloaded.";
+  }
+  return (await implementation()) === "polyfill"
+    ? "Doing so downloads EmbeddingGemma 300M once, about 420 MB."
+    : "Doing so downloads the browser's embedding model once.";
 };
 
 // Says which implementation is behind the search, since the two are meant to be
@@ -384,10 +408,11 @@ const describeIndex = async () => {
     indexStatus.textContent = summarizeIndex();
     buildButton.textContent = "Rebuild semantic index";
     buildButton.disabled = false;
-    queryInput.disabled = false;
-    searchButton.disabled = false;
+    setSearchable(true);
     return;
   }
+
+  setSearchable(false);
 
   const state = await availability();
   if (state === "unavailable") {
@@ -396,10 +421,10 @@ const describeIndex = async () => {
     return;
   }
 
-  indexStatus.textContent =
-    state === "available"
-      ? "Model ready. Build the index to search by meaning."
-      : "Building the index downloads the EmbeddingGemma model once (~420 MB).";
+  // Embeddings live in this origin's IndexedDB, so a copy of the site served
+  // from somewhere else starts without them even though the documents are
+  // already cached.
+  indexStatus.textContent = `No embeddings stored for this origin yet. Build the index to search by meaning. ${await modelHint(state)}`;
   buildButton.disabled = false;
 };
 
@@ -415,7 +440,8 @@ const showActivity = ({
   total,
   reportsTokens,
   tokens,
-  rate,
+  passageRate,
+  tokenRate,
   seconds,
   current,
 }) => {
@@ -424,15 +450,25 @@ const showActivity = ({
     ? `${current.name} › ${current.section}`
     : current.name;
   activityPassage.textContent = current.passage;
-  // An implementation that reports no token counts still gets a live readout,
-  // measured in passages instead of in tokens it never told us about.
-  activityStats.textContent = (
-    reportsTokens
-      ? [`${count(rate)} tokens/s`, `${count(tokens / 1000)}k tokens`]
-      : [`${rate.toFixed(1)} passages/s`]
-  )
-    .concat(clock(seconds), `${total - loaded} left`)
-    .join(" · ");
+
+  // Passages per second leads, because it is measured the same way whatever
+  // the implementation reports and so compares across them. Token counts are
+  // an extra an implementation may or may not offer.
+  const lines = [
+    [
+      `${passageRate.toFixed(1)} passages/s`,
+      clock(seconds),
+      `${total - loaded} left`,
+    ].join(" · "),
+  ];
+  if (reportsTokens) {
+    lines.push(
+      [`${count(tokenRate)} tokens/s`, `${count(tokens / 1000)}k tokens`].join(
+        " · ",
+      ),
+    );
+  }
+  activityStats.textContent = lines.join("\n");
 };
 
 // An index built before these numbers were recorded still describes itself, so
@@ -460,10 +496,13 @@ const showBuildStats = (stats) => {
     stats.seconds && ["Built in", clock(stats.seconds)],
     stats.seconds && [
       "Speed",
-      stats.reportsTokens
-        ? `${count(stats.tokens / stats.seconds)} tokens/s`
-        : `${(stats.passages / stats.seconds).toFixed(1)} passages/s`,
+      `${(stats.passages / stats.seconds).toFixed(1)} passages/s`,
     ],
+    stats.seconds &&
+      stats.reportsTokens && [
+        "Token rate",
+        `${count(stats.tokens / stats.seconds)} tokens/s`,
+      ],
     stats.reportsTokens && ["Tokens read", count(stats.tokens)],
     ["Embedding space", stats.space],
     stats.implementation && [
@@ -490,8 +529,7 @@ const showBuildStats = (stats) => {
 
 const build = async () => {
   buildButton.disabled = true;
-  queryInput.disabled = true;
-  searchButton.disabled = true;
+  setSearchable(false);
   indexProgress.hidden = false;
   indexProgress.value = 0;
 
@@ -561,7 +599,7 @@ const start = async () => {
     return;
   }
 
-  statusLine.textContent = `${entries.length} entries ready and cached locally.`;
+  statusLine.textContent = `${entries.length} documents cached for this origin.`;
   filter.disabled = false;
   refreshButton.disabled = false;
   applyFilter();
