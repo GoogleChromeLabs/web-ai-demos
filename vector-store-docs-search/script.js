@@ -447,6 +447,16 @@ const build = async () => {
   await describeIndex();
 };
 
+// Emptying the field takes the results with it: they answer a question that is
+// no longer being asked.
+const clearResults = () => {
+  results.replaceChildren();
+  results.hidden = true;
+  if (storeInfo?.itemCount) {
+    indexStatus.textContent = summarizeIndex();
+  }
+};
+
 const runSearch = async (event) => {
   event.preventDefault();
   const query = queryInput.value.trim();
@@ -499,6 +509,11 @@ const start = async () => {
 
 filter.addEventListener("input", applyFilter);
 searchForm.addEventListener("submit", runSearch);
+queryInput.addEventListener("input", () => {
+  if (!queryInput.value.trim()) {
+    clearResults();
+  }
+});
 buildButton.addEventListener("click", build);
 
 window.addEventListener("hashchange", () => {
