@@ -1,0 +1,98 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="script.js"></script>
+    <title>Prompt-grounded docs search</title>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Prompt-grounded docs search</h1>
+        <p id="status" aria-live="polite">Loading documentation…</p>
+        <progress id="progress" max="1" value="0" hidden></progress>
+      </div>
+      <div class="badges">
+        <p id="backend" aria-live="polite">Checking…</p>
+        <p id="prompt-backend" aria-live="polite">Checking…</p>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav id="sidebar" aria-label="Documents">
+        <div class="controls">
+          <form id="search-form">
+            <input
+              id="query"
+              type="search"
+              placeholder="Search by meaning"
+              aria-label="Search by meaning"
+              autocomplete="off"
+              disabled
+            />
+            <button id="search" type="submit" disabled>Search</button>
+          </form>
+          <p id="index-status">Checking the Vector Store API…</p>
+          <progress id="index-progress" max="1" value="0" hidden></progress>
+
+          <div id="index-activity" hidden>
+            <p id="index-where"></p>
+            <p id="index-passage"></p>
+            <p id="index-stats"></p>
+          </div>
+        </div>
+
+        <div id="results" hidden></div>
+
+        <input
+          id="filter"
+          type="search"
+          placeholder="Filter entries by name"
+          aria-label="Filter entries by name"
+          autocomplete="off"
+          disabled
+        />
+        <div id="entries"></div>
+
+        <div class="actions">
+          <details id="build-stats" hidden>
+            <summary>Vector store</summary>
+            <dl id="build-stats-list"></dl>
+          </details>
+
+          <button
+            id="build-index"
+            type="button"
+            title="Hands every document to the store again. The cached documents are kept."
+            disabled
+          >
+            Build vector store
+          </button>
+          <button
+            id="refresh"
+            type="button"
+            title="Fetches the documentation again. The vector store is kept."
+            disabled
+          >
+            Redownload documents
+          </button>
+        </div>
+      </nav>
+
+      <div class="reading">
+        <p id="grounding" aria-live="polite" hidden></p>
+        <main id="content" tabindex="-1">
+          <p class="placeholder">Pick an entry on the left.</p>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
