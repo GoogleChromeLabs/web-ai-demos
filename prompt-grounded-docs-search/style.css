@@ -1,0 +1,527 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  color-scheme: dark light;
+  font-family: system-ui, sans-serif;
+  --accent: light-dark(#0b57d0, #a8c7fa);
+  --surface: light-dark(#f4f7fc, #202124);
+  --border: light-dark(#c7c7c7, #5f6368);
+  --muted: light-dark(#5f6368, #bdc1c6);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  margin: 0;
+}
+
+header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-block-end: 1px solid var(--border);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: end;
+}
+
+#prompt-backend {
+  flex: none;
+  margin: 0;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+#prompt-backend[data-state="available"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The reading column: the grounding line sits above the document rather than
+   inside it, which is replaced wholesale on every navigation. */
+.reading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+#grounding {
+  margin: 0;
+  padding: 0.5rem 2rem;
+  border-block-end: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+#grounding[hidden] {
+  display: none;
+}
+
+#grounding[data-state="working"] {
+  color: inherit;
+}
+
+/* Three dots keeping time while a model reads, summarizes or answers. */
+.thinking {
+  display: inline-flex;
+  gap: 0.2rem;
+  margin-inline-end: 0.45rem;
+  vertical-align: middle;
+}
+
+.thinking i {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: thinking 1.1s ease-in-out infinite;
+}
+
+.thinking i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.thinking i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes thinking {
+  0%,
+  70%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+
+  35% {
+    opacity: 1;
+    transform: translateY(-0.18rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking i {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* The passage a language model pointed at. */
+#content .match {
+  background: light-dark(#fff2c2, #46390f);
+  outline: 0.3rem solid light-dark(#fff2c2, #46390f);
+  border-radius: 0.15rem;
+}
+
+/* Which implementation is answering. Muted for the polyfill, since it is the
+   stand-in, and in the accent color once the browser brings its own. */
+#backend {
+  flex: none;
+  margin: 0;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+#backend[data-implementation="native"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+#status {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+progress {
+  width: min(320px, 100%);
+  margin-block-start: 0.5rem;
+}
+
+.layout {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(200px, 280px) 1fr;
+  min-height: 0;
+}
+
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  overflow-y: auto;
+  border-inline-end: 1px solid var(--border);
+  background: var(--surface);
+}
+
+#filter {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: canvas;
+  color: inherit;
+}
+
+#build-stats[hidden] {
+  display: none;
+}
+
+#build-stats {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+#build-stats summary {
+  font-size: 0.78rem;
+}
+
+#build-stats dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.1rem 0.5rem;
+  /* Pinned to the foot of the sidebar, so a long list scrolls on its own
+     rather than pushing the buttons off screen. */
+  max-height: 40dvh;
+  overflow-y: auto;
+  margin: 0.3rem 0 0;
+}
+
+#build-stats dt {
+  font-weight: 650;
+}
+
+#build-stats dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* What retrieval itself cost, as opposed to what the index cost to build. */
+.result-stats {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.actions {
+  position: sticky;
+  bottom: -1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-block: auto -1rem;
+  padding-block: 0.75rem 1rem;
+  background: var(--surface);
+}
+
+#entries {
+  flex: 1;
+}
+
+summary {
+  padding-block: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+#entries a {
+  display: block;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+#entries a:hover {
+  background: light-dark(#e6ebf5, #303134);
+}
+
+#entries a.active {
+  background: var(--accent);
+  color: light-dark(white, #202124);
+}
+
+#content {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  line-height: 1.55;
+}
+
+#content:focus-visible {
+  outline: none;
+}
+
+.placeholder {
+  color: var(--muted);
+}
+
+/* DevDocs ships MDN markup, so tame the parts that do not belong here. */
+#content mdn-survey,
+#content .hidden,
+#content .sample-code-frame {
+  display: none;
+}
+
+#content h1 {
+  font-size: 1.75rem;
+}
+
+#content a {
+  color: var(--accent);
+}
+
+#content pre,
+#content table,
+#content .code-example {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+#content pre {
+  padding: 0.75rem;
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+
+#content code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+}
+
+#content table {
+  display: block;
+  border-collapse: collapse;
+}
+
+#content th,
+#content td {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+#content img {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (width < 700px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  #sidebar {
+    max-height: 40dvh;
+    border-inline-end: none;
+    border-block-end: 1px solid var(--border);
+  }
+}
+
+/* The entry list scrolls the active entry into view, so the search controls
+   are pinned to stay reachable. */
+.controls {
+  position: sticky;
+  top: -1rem;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-block: 1rem;
+  margin-block: -1rem 0;
+  background: var(--surface);
+}
+
+#search-form {
+  display: flex;
+  gap: 0.4rem;
+}
+
+#query {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: canvas;
+  color: inherit;
+}
+
+#search,
+#build-index,
+#refresh {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: canvas;
+  color: inherit;
+  cursor: pointer;
+}
+
+#search:disabled,
+#build-index:disabled,
+#refresh:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+#index-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+#index-progress {
+  width: 100%;
+}
+
+/* What the model is reading right now, so a long build shows its work. */
+#index-activity[hidden] {
+  display: none;
+}
+
+#index-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: canvas;
+}
+
+#index-where {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#index-passage {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+#index-stats {
+  margin: 0;
+  white-space: pre-line;
+  color: var(--accent);
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#results h2 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+#results {
+  /* Clears the pinned controls, so results scrolled into view are not left
+     underneath them. */
+  scroll-margin-block-start: 9rem;
+}
+
+#results a {
+  display: block;
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.result-title {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+/* The passage the vector actually matched, so a result can be judged without
+   opening it. */
+.result-passage {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin-block-start: 0.1rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+#results a:hover {
+  background: light-dark(#e6ebf5, #303134);
+}
+
+#results a.active {
+  background: var(--accent);
+  color: light-dark(white, #202124);
+}
+
+.score {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+#results a.active .score,
+#results a.active .result-passage {
+  color: inherit;
+}
