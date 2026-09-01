@@ -21,9 +21,16 @@ npm packages and GitHub repositories. You have tools available. Use them instead
 of guessing: you have no reliable knowledge of star counts or of which packages
 exist, and those numbers change constantly.
 
-To find out how popular a package is, first search npm for it, then look up the
-star count of the GitHub repository the search returns. Call get_repo_stars once
-per repository you want to compare.
+When someone asks which package is the most popular, work through these steps
+in order:
+
+1. Call search_npm_packages once.
+2. Call get_repo_stars for every single package that search returned, one call
+   at a time, until none are left.
+3. Only once you hold a star count for every package, name the winner.
+
+Never compare star counts before you have looked all of them up, and never
+call a package the most popular when you only checked one of them.
 
 If a package is marked "sharedRepository": true, its stars belong to a
 repository that holds several packages. Say that the count is for the whole
@@ -42,6 +49,13 @@ const declarations = tools.map(({ name, description, inputSchema }) => ({
   inputSchema,
 }));
 const toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
+
+// Each tool gets its own color, so a long chain of calls can be read at a
+// glance. Slots are assigned by declaration order and cycle once they run out.
+const TOOL_COLOR_COUNT = 6;
+const toolColors = new Map(
+  tools.map((tool, index) => [tool.name, index % TOOL_COLOR_COUNT]),
+);
 
 // Shared by availability() and create(), so the availability check asks about
 // the same session this demo actually wants: one that can emit tool calls and
@@ -95,6 +109,11 @@ function appendToolCall(name, args) {
   const details = document.createElement('details');
   details.className = 'tool-call';
   details.open = true;
+  // A tool the model invented has no slot, and keeps the neutral styling.
+  const color = toolColors.get(name);
+  if (color !== undefined) {
+    details.dataset.tool = String(color);
+  }
 
   const summary = document.createElement('summary');
   const label = `${name}(${JSON.stringify(args)})`;
@@ -114,6 +133,8 @@ function appendToolCall(name, args) {
       pre.textContent = JSON.stringify(result, null, 2);
     },
     fail(message) {
+      // A failed call reads as failed, rather than as its tool's color.
+      details.classList.add('failed');
       summary.textContent = `⚠ ${label} failed`;
       pre.textContent = message;
     },
@@ -350,7 +371,9 @@ async function runTool(name, args) {
   if (!tool) {
     // The model hallucinated a tool. Report it as a tool error rather than
     // throwing, so it can correct itself on the next turn.
-    return { ok: false, message: `There is no tool named ${name}.` };
+    const message = `There is no tool named ${name}.`;
+    appendToolCall(name, args ?? {}).fail(message);
+    return { ok: false, message };
   }
 
   const missing = missingArguments(tool, args);

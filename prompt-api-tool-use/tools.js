@@ -63,7 +63,7 @@ async function getRepoStars({ owner, repo }) {
   });
 }
 
-async function searchNpmPackages({ query, limit = 5 }) {
+async function searchNpmPackages({ query, limit = 3 }) {
   // npm normalizes repository links to a handful of shapes, all of which
   // need to collapse to a plain `owner/repo` pair so the result can be handed
   // straight to `get_repo_stars`:
@@ -91,7 +91,9 @@ async function searchNpmPackages({ query, limit = 5 }) {
     return { owner, repo };
   }
 
-  const count = Math.min(Math.max(Number(limit) || 5, 1), 10);
+  // Default deliberately low: every extra package is another round trip the
+  // model has to complete before it can compare, and it tends to give up.
+  const count = Math.min(Math.max(Number(limit) || 3, 1), 10);
   // Over-fetch, because packages without a GitHub repository are dropped
   // below and would otherwise leave the list short.
   const size = Math.min(count * 4, 50);
@@ -186,7 +188,9 @@ export const tools = [
       'Search the npm registry for packages matching a query, for example ' +
       '"browser fs access". Only returns packages that have an associated ' +
       'GitHub repository. Use this to find candidate packages, then look up ' +
-      "a package's popularity with get_repo_stars. A package marked " +
+      "a package's popularity with get_repo_stars. Comparing packages means " +
+      'calling get_repo_stars once for each package this returns, not just ' +
+      'for the first one. A package marked ' +
       '"sharedRepository": true lives inside a repository that holds several ' +
       'packages, so that repository\'s star count covers all of them and is ' +
       'not a measure of that one package. Say so whenever you report or ' +
@@ -203,7 +207,8 @@ export const tools = [
         limit: {
           type: 'number',
           description:
-            'How many packages to return. Defaults to 5, at most 10.',
+            'How many packages to return. Defaults to 3, at most 10. Keep ' +
+            'this small: each package costs another get_repo_stars call.',
         },
       },
       required: ['query'],
