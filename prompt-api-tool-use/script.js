@@ -14,6 +14,7 @@ const sendBtn = document.getElementById('send-btn');
 const resetBtn = document.getElementById('reset-btn');
 const activateBtn = document.getElementById('activate-btn');
 const debugLog = document.getElementById('debug-log');
+const copyDebugBtn = document.getElementById('copy-debug');
 
 const SYSTEM_PROMPT = `You are a helpful assistant that answers questions about
 npm packages and GitHub repositories. You have tools available. Use them instead
@@ -23,6 +24,11 @@ exist, and those numbers change constantly.
 To find out how popular a package is, first search npm for it, then look up the
 star count of the GitHub repository the search returns. Call get_repo_stars once
 per repository you want to compare.
+
+If a package is marked "sharedRepository": true, its stars belong to a
+repository that holds several packages. Say that the count is for the whole
+repository rather than for that package, and do not rank it against standalone
+packages as though the numbers meant the same thing.
 
 Answer in one short paragraph. Always give the exact star counts the tools gave
 you, and never invent one.`;
@@ -114,11 +120,27 @@ function appendToolCall(name, args) {
   };
 }
 
+// `disabled` takes a control out of the focus order and hides it from
+// assistive technology, so a keyboard user tabbing through the page loses it
+// while a turn runs. `aria-disabled` keeps it focusable and announces it as
+// unavailable instead, which means the control still gets clicked: every
+// handler below rejects the activation itself.
+function setDisabled(element, value) {
+  element.setAttribute('aria-disabled', String(value));
+}
+
+function isDisabled(element) {
+  return element.getAttribute('aria-disabled') === 'true';
+}
+
 function setBusy(value) {
   busy = value;
-  userInput.disabled = value;
-  sendBtn.disabled = value;
-  resetBtn.disabled = value;
+  // `readonly` rather than `disabled`: it blocks typing while keeping the
+  // field focusable and readable.
+  userInput.readOnly = value;
+  setDisabled(userInput, value);
+  setDisabled(sendBtn, value);
+  setDisabled(resetBtn, value);
   if (!value) {
     userInput.focus();
   }
@@ -248,9 +270,16 @@ function asMessages(role, payload) {
   return [{ role, content: asContent(payload) }];
 }
 
+// Every message logged below, in order: the transcript the copy button hands
+// over, and what you would store to replay the session.
+const transcript = [];
+
 // Records one leg of the exchange: `↑` for what the page sends into the
 // session, `↓` for what the model sends back.
 function logExchange(direction, label, role, payload) {
+  const messages = plainify(asMessages(role, payload));
+  transcript.push(...messages);
+
   const entry = document.createElement('div');
   entry.className = `exchange ${direction}`;
 
@@ -260,7 +289,7 @@ function logExchange(direction, label, role, payload) {
   entry.append(heading);
 
   const pre = document.createElement('pre');
-  pre.textContent = JSON.stringify(plainify(asMessages(role, payload)), null, 2);
+  pre.textContent = JSON.stringify(messages, null, 2);
   entry.append(pre);
 
   debugLog.append(entry);
@@ -272,6 +301,25 @@ function logSystemPrompt() {
   logExchange('sent', 'initialPrompts', 'system', SYSTEM_PROMPT);
 }
 
+// Records a failed round in the debug view. Deliberately not added to
+// `transcript`: the copied JSON stays a valid list of messages, while the
+// rendered log still explains why the exchange stopped where it did.
+function logError(message) {
+  const entry = document.createElement('div');
+  entry.className = 'exchange failed';
+
+  const heading = document.createElement('div');
+  heading.className = 'exchange-label';
+  heading.textContent = '⚠ error';
+  entry.append(heading);
+
+  const pre = document.createElement('pre');
+  pre.textContent = message;
+  entry.append(pre);
+
+  debugLog.append(entry);
+}
+
 function logTurnStart(question) {
   const heading = document.createElement('div');
   heading.className = 'exchange-turn';
@@ -281,6 +329,20 @@ function logTurnStart(question) {
 
 // ─── Tool-call loop ──────────────────────────────────────────────────────────
 
+// Reports which of a tool's required arguments the model left out. Small
+// models regularly call a tool with `arguments: {}`, and running the tool
+// anyway sends undefined values to the API: a wasted request, answered with a
+// misleading error. `get_repo_stars` with no arguments asks GitHub about
+// `/repos/undefined/undefined` and reports "not found", which reads as "that
+// repository does not exist" rather than "you forgot the arguments".
+function missingArguments(tool, args) {
+  const required = tool.inputSchema?.required ?? [];
+  return required.filter((key) => {
+    const value = args?.[key];
+    return value === undefined || value === null || value === '';
+  });
+}
+
 // Runs one tool the model asked for. Returns either the tool's parsed output
 // or a failure message, so the caller can build a tool success or a tool error.
 async function runTool(name, args) {
@@ -289,6 +351,17 @@ async function runTool(name, args) {
     // The model hallucinated a tool. Report it as a tool error rather than
     // throwing, so it can correct itself on the next turn.
     return { ok: false, message: `There is no tool named ${name}.` };
+  }
+
+  const missing = missingArguments(tool, args);
+  if (missing.length) {
+    // Name what is missing, so the next attempt can fix it.
+    const list = missing.map((key) => `"${key}"`).join(' and ');
+    const message =
+      `${name} was called without ${list}. Call it again and provide ` +
+      `${missing.length > 1 ? 'those arguments' : 'that argument'}.`;
+    appendToolCall(name, args ?? {}).fail(message);
+    return { ok: false, message };
   }
 
   const entry = appendToolCall(name, args ?? {});
@@ -304,6 +377,28 @@ async function runTool(name, args) {
   }
 }
 
+// Chrome refuses a tool result that contains a JSON null anywhere inside it:
+// null converts to base::Value::Type::NONE, ContainsNoneType() sees it, and
+// ConvertToolSuccessToDictValue() fails, which surfaces as "Failed to
+// serialize tool result. Value may contain circular references...". The whole
+// turn dies on it. GitHub returns `description: null` for a repository without
+// a description, so strip nulls instead of handing one over.
+function withoutNulls(value) {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => item !== null && item !== undefined)
+      .map(withoutNulls);
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, item]) => item !== null && item !== undefined)
+        .map(([key, item]) => [key, withoutNulls(item)]),
+    );
+  }
+  return value;
+}
+
 // Builds one `tool-response` content part for a call the model made.
 //
 // The value has to be a real LanguageModelToolSuccess or LanguageModelToolError
@@ -315,9 +410,10 @@ function toolResponsePart(call, outcome) {
     ? new LanguageModelToolSuccess({
         callID: call.callID,
         name: call.name,
-        // `object` takes any JSON-serializable value. Chrome currently
-        // supports only `text` and `object` here, not `image` or `audio`.
-        result: [{ type: 'object', value: outcome.value }],
+        // `object` takes any JSON-serializable value, minus nulls. Chrome
+        // currently supports only `text` and `object` here, not `image` or
+        // `audio`.
+        result: [{ type: 'object', value: withoutNulls(outcome.value) ?? {} }],
       })
     : new LanguageModelToolError({
         callID: call.callID,
@@ -446,6 +542,7 @@ async function ask(question) {
 
   } catch (error) {
     appendMessage('error', `Something went wrong: ${error.message}`);
+    logError(`${error.name}: ${error.message}`);
   } finally {
     // In `finally`, so the status is correct however the turn ended: a normal
     // answer, a sanitizer stop, the tool-call cap, or a thrown error.
@@ -462,7 +559,7 @@ async function ask(question) {
 // straight from a click when the model still has to be downloaded, because
 // create() then needs transient user activation.
 async function createSession() {
-  activateBtn.disabled = true;
+  setDisabled(activateBtn, true);
   setStatus('Preparing the model…');
 
   try {
@@ -487,7 +584,7 @@ async function createSession() {
     logSystemPrompt();
   } catch (error) {
     dlProgress.style.display = 'none';
-    activateBtn.disabled = false;
+    setDisabled(activateBtn, false);
     setStatus(`Could not create a session: ${error.message}`);
     return;
   }
@@ -529,7 +626,7 @@ async function initSession() {
       ? 'Finish downloading the model'
       : 'Download the model';
   activateBtn.hidden = false;
-  activateBtn.disabled = false;
+  setDisabled(activateBtn, false);
   setStatus(
     'The model has to be downloaded before this demo can run. Click the ' +
       'button to start; the download is a few gigabytes and only happens once.',
@@ -550,6 +647,7 @@ async function resetSession() {
 
   chatEl.replaceChildren();
   debugLog.replaceChildren();
+  transcript.length = 0;
   logSystemPrompt();
   turn = 0;
   setBusy(false);
@@ -560,6 +658,11 @@ async function resetSession() {
 
 formEl.addEventListener('submit', (event) => {
   event.preventDefault();
+  // Submitting is still possible while aria-disabled, by clicking Send or by
+  // pressing Enter in the field, so refuse it here.
+  if (isDisabled(sendBtn)) {
+    return;
+  }
   const question = userInput.value.trim();
   if (!question) {
     return;
@@ -568,7 +671,20 @@ formEl.addEventListener('submit', (event) => {
   ask(question);
 });
 
+copyDebugBtn.addEventListener('click', async () => {
+  // One JSON array of every message, in order.
+  await navigator.clipboard.writeText(JSON.stringify(transcript, null, 2));
+  const label = copyDebugBtn.textContent;
+  copyDebugBtn.textContent = `Copied ${transcript.length} messages`;
+  setTimeout(() => {
+    copyDebugBtn.textContent = label;
+  }, 2000);
+});
+
 activateBtn.addEventListener('click', () => {
+  if (isDisabled(activateBtn)) {
+    return;
+  }
   // The click is what grants the transient activation create() needs.
   if (!navigator.userActivation?.isActive) {
     setStatus('Interact with the page first, then try again.');
@@ -577,10 +693,20 @@ activateBtn.addEventListener('click', () => {
   createSession();
 });
 
-resetBtn.addEventListener('click', resetSession);
+resetBtn.addEventListener('click', () => {
+  if (isDisabled(resetBtn)) {
+    return;
+  }
+  resetSession();
+});
 
 for (const button of document.querySelectorAll('.example')) {
   button.addEventListener('click', () => {
+    // The example buttons are never marked unavailable, but they start a turn
+    // just like Send does, so they get the same guard.
+    if (busy || !session) {
+      return;
+    }
     ask(button.textContent.trim());
   });
 }

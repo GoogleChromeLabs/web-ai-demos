@@ -23,7 +23,9 @@
     <div id="controls">
       <div id="status">Initializing…</div>
       <button id="activate-btn" type="button" hidden>Download the model</button>
-      <button id="reset-btn" type="button" disabled>Reset session</button>
+      <button id="reset-btn" type="button" aria-disabled="true">
+        Reset session
+      </button>
     </div>
     <progress id="dl-progress"></progress>
 
@@ -47,13 +49,17 @@
         type="text"
         autocomplete="off"
         placeholder="Ask about npm packages or GitHub repositories…"
-        disabled
+        readonly
+        aria-disabled="true"
       />
-      <button id="send-btn" type="submit" disabled>Send</button>
+      <button id="send-btn" type="submit" aria-disabled="true">Send</button>
     </form>
 
     <details id="debug">
       <summary>Debug: messages exchanged with the model</summary>
+      <div id="debug-toolbar">
+        <button id="copy-debug" type="button">Copy as JSON</button>
+      </div>
       <div id="debug-log"></div>
     </details>
 

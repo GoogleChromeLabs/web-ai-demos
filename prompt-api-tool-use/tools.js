@@ -138,6 +138,32 @@ async function searchNpmPackages({ query, limit = 5 }) {
     }
   }
 
+  // The search endpoint drops `repository.directory`, so ask the registry for
+  // each candidate. A directory means the package sits in a subdirectory of a
+  // larger repository, and that repository's stars are not the package's
+  // stars: `prompt-api-polyfill` lives in `GoogleChromeLabs/web-ai-demos`,
+  // whose stars cover every demo in it. Fetched in parallel, and best effort:
+  // a package that cannot be checked is simply left unflagged.
+  await Promise.all(
+    packages.map(async (pkg) => {
+      try {
+        // Scoped names keep their `@`, but the slash has to be escaped.
+        const response = await fetch(
+          `${NPM_REGISTRY}/${pkg.name.replace('/', '%2F')}/latest`,
+        );
+        if (!response.ok) {
+          return;
+        }
+        const doc = await response.json();
+        if (doc.repository?.directory) {
+          pkg.sharedRepository = true;
+        }
+      } catch {
+        // Leave the package unflagged.
+      }
+    }),
+  );
+
   if (packages.length === 0) {
     return JSON.stringify({
       error: 'no_results',
@@ -160,7 +186,11 @@ export const tools = [
       'Search the npm registry for packages matching a query, for example ' +
       '"browser fs access". Only returns packages that have an associated ' +
       'GitHub repository. Use this to find candidate packages, then look up ' +
-      "a package's popularity with get_repo_stars.",
+      "a package's popularity with get_repo_stars. A package marked " +
+      '"sharedRepository": true lives inside a repository that holds several ' +
+      'packages, so that repository\'s star count covers all of them and is ' +
+      'not a measure of that one package. Say so whenever you report or ' +
+      'compare stars for such a package.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -184,7 +214,10 @@ export const tools = [
     name: 'get_repo_stars',
     description:
       'Get the number of GitHub stars a repository has. Use this whenever ' +
-      'someone asks how popular a repository is or how many stars it has.',
+      'someone asks how popular a repository is or how many stars it has. ' +
+      'Stars belong to the repository as a whole, so if the repository holds ' +
+      'more than one package, the count is not a measure of any single one ' +
+      'of them.',
     inputSchema: {
       type: 'object',
       properties: {

@@ -170,8 +170,8 @@ button.example:hover {
   padding: 0.5rem 1rem;
   cursor: pointer;
 }
-#send-btn:disabled,
-#user-input:disabled {
+#send-btn[aria-disabled='true'],
+#user-input[aria-disabled='true'] {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -194,8 +194,8 @@ button.example:hover {
   cursor: pointer;
   white-space: nowrap;
 }
-#reset-btn:disabled,
-#activate-btn:disabled {
+#reset-btn[aria-disabled='true'],
+#activate-btn[aria-disabled='true'] {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -242,4 +242,17 @@ button.example:hover {
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+#debug-toolbar {
+  margin-top: 0.75rem;
+}
+#copy-debug {
+  font: inherit;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+
+.exchange.failed {
+  border-left-color: light-dark(#b03030, #e07070);
 }
