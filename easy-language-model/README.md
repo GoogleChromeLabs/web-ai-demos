@@ -40,10 +40,11 @@ Three separate concerns have to line up before a session exists: the
 availability check has to use the _same_ options as `create()`, a download
 needs a progress indicator, and starting that download needs a user gesture.
 
-Both sides check availability here, so the difference is only in what's left
-over. `EasyLanguageModel.availability()` takes the whole options object and
-reads just the parts availability depends on, so one object serves both calls
-and there is nothing to keep in sync.
+Both sides check availability, so what's left over is the real difference:
+wiring the monitor, handling the extracting state, and waiting for a gesture.
+Keeping the Prompt API's own options in one object is what makes the two calls
+agree by construction; the wrapper's options are spread in at `create()` time
+and never have to be repeated.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -101,6 +102,8 @@ progress.hidden = true;
 </td><td>
 
 ```js
+// Only what the Prompt API itself defines,
+// so the same object can serve both calls.
 const options = {
   expectedInputs: [
     { type: 'text', languages: ['en'] },
@@ -108,14 +111,6 @@ const options = {
   expectedOutputs: [
     { type: 'text', languages: ['en'] },
   ],
-
-  progress,
-  onUserActivationRequired() {
-    // Reveal something to interact with,
-    // and say why it's there.
-    enableButton.hidden = false;
-    hint.hidden = false;
-  },
 };
 
 // Optional: create() checks anyway and
@@ -129,8 +124,17 @@ if (availability === 'unavailable') {
   return;
 }
 
-const session =
-  await EasyLanguageModel.create(options);
+const session = await EasyLanguageModel.create({
+  ...options,
+  // The wrapper's own options go on here.
+  progress,
+  onUserActivationRequired() {
+    // Reveal something to interact with,
+    // and say why it's there.
+    enableButton.hidden = false;
+    hint.hidden = false;
+  },
+});
 ```
 
 </td></tr>
