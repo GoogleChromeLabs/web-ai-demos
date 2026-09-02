@@ -301,9 +301,14 @@ export class EasySession {
    * balanced fragment: `<p>` arrives before its text. Concatenating every chunk
    * yields the complete, well-formed HTML.
    *
-   * Consuming the stream has no side effects. To put the response on screen
-   * instead, use `renderStreaming()`, which runs this same pipeline and does
-   * the DOM work for you.
+   * Consuming the stream has no side effects. To put the response on screen,
+   * pipe it into `renderStreamingHTML()`:
+   *
+   * ```js
+   * await session
+   *   .promptStreamingHTML(prompt)
+   *   .pipeTo(renderStreamingHTML(output));
+   * ```
    *
    * @param {LanguageModelPrompt} input
    * @param {object} [options]
@@ -313,18 +318,15 @@ export class EasySession {
    * @returns {ReadableStream<string>} HTML chunks.
    */
   promptStreamingHTML(input, options) {
-    // Rendering belongs to renderStreaming(); this method only yields.
-    const { into, ...rest } = options ?? {};
-    return toReadableStream(this.#streamHtml(input, rest));
+    return toReadableStream(this.#streamHtml(input, options));
   }
 
-  async *#streamHtml(input, { into, onMarkdown, ...options } = {}) {
+  async *#streamHtml(input, { onMarkdown, ...options } = {}) {
     const entries = toHistoryEntries(input);
     const pending = [];
     let unsafeAttribute = null;
 
     const streamer = createHtmlTokenStreamer({
-      into,
       onHtml: (html) => pending.push(html),
       onUnsafe: (detail) => {
         unsafeAttribute = detail;
@@ -396,40 +398,6 @@ export class EasySession {
     }
 
     this.#record([...entries, { role: 'assistant', content: full }]);
-  }
-
-  /**
-   * Streams the response into an element as it arrives.
-   *
-   * The same token-level pipeline as `promptStreamingHTML()`, with the loop
-   * written for you and the DOM work done: nodes are appended as the parser
-   * recognizes them, so the browser paints only what changed instead of
-   * re-parsing the response on every chunk. This is the only method that
-   * touches the page.
-   *
-   * @param {LanguageModelPrompt} input
-   * @param {object} options
-   * @param {HTMLElement} options.into Element to render into.
-   * @param {(html: string) => void} [options.onHtml] Each HTML chunk.
-   * @param {(chunk: string) => void} [options.onMarkdown] Each Markdown chunk.
-   * @returns {Promise<string>} The full Markdown response.
-   */
-  async renderStreaming(input, { into, onHtml, onMarkdown, ...options } = {}) {
-    if (!into) {
-      throw new TypeError('renderStreaming() requires an `into` element.');
-    }
-    let markdown = '';
-    for await (const html of this.#streamHtml(input, {
-      ...options,
-      into,
-      onMarkdown: (chunk) => {
-        markdown += chunk;
-        onMarkdown?.(chunk);
-      },
-    })) {
-      onHtml?.(html);
-    }
-    return markdown;
   }
 
   // ── Compacting ─────────────────────────────────────────────────────────────

@@ -65,18 +65,6 @@
           <button type="submit" id="submit-btn">Send</button>
           <button type="button" id="stop-btn" disabled>Stop</button>
         </div>
-        <fieldset id="render-mode">
-          <legend>Render with</legend>
-          <label>
-            <input type="radio" name="mode" value="render" checked />
-            <code>renderStreaming({ into })</code>
-          </label>
-          <label>
-            <input type="radio" name="mode" value="pipe" />
-            <code>promptStreamingHTML().pipeTo(renderStreamingHTML())</code>
-          </label>
-        </fieldset>
-
         <p class="hint">
           Try an injection:
           <button type="button" class="link" id="attack-btn">
@@ -87,17 +75,17 @@
       </form>
 
       <p class="hint">
-        Everything below comes from one <code>renderStreaming()</code> call, so
-        one prompt is one inference. It is <code>promptStreamingHTML()</code>
-        with the loop written for you: one pipeline, shown three ways — the DOM
-        it builds, the Markdown it read from the model, and the HTML chunks it
-        emits.
+        Everything below comes from one <code>promptStreamingHTML()</code>
+        call, so one prompt is one inference. Its chunks are piped into
+        <code>renderStreamingHTML()</code> to build the DOM on the left, tapped
+        by a <code>TransformStream</code> on the way past for the listing at the
+        bottom, and <code>onMarkdown</code> gives the raw Markdown on the right.
       </p>
 
       <div id="panes">
         <section>
           <h2>
-            <code>renderStreaming()</code>
+            <code>renderStreamingHTML()</code>
             <span class="tag">live DOM, token by token</span>
           </h2>
           <output id="html-output" class="prose"></output>

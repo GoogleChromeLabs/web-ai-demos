@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="dom-chromium-ai" />
+
 export { EasyLanguageModel } from './easy-language-model.js';
 export { EasySession } from './easy-session.js';
 export {

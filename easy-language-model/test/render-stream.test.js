@@ -13,22 +13,23 @@ import { createHtmlTokenStreamer } from '../src/markdown-html.js';
 import { renderStreamingHTML } from '../src/render-stream.js';
 import { normalizeHtml } from './normalize.js';
 
-/** Renders Markdown both ways and returns the two results. */
+/**
+ * Streams Markdown to HTML chunks, then rebuilds a DOM from those chunks.
+ *
+ * The chunks concatenated are the HTML the response describes, so rebuilding
+ * them and serializing has to come back to the same thing.
+ */
 async function bothWays(markdown, { chunkSize } = {}) {
   const chunks = [];
   const emitter = createHtmlTokenStreamer({ onHtml: (h) => chunks.push(h) });
-  const direct = document.createElement('div');
-  const renderer = createHtmlTokenStreamer({ into: direct, onHtml: () => {} });
 
   const pieces = chunkSize
     ? (markdown.match(new RegExp(`[\\s\\S]{1,${chunkSize}}`, 'g')) ?? [])
     : [markdown];
   for (const piece of pieces) {
     emitter.write(piece);
-    renderer.write(piece);
   }
   emitter.end();
-  renderer.end();
 
   const piped = document.createElement('div');
   const writer = renderStreamingHTML(piped).getWriter();
@@ -40,7 +41,7 @@ async function bothWays(markdown, { chunkSize } = {}) {
   // Attribute order carries no meaning and serializers disagree on it.
   return {
     chunks,
-    direct: normalizeHtml(direct.innerHTML),
+    direct: normalizeHtml(chunks.join('')),
     piped: normalizeHtml(piped.innerHTML),
   };
 }
@@ -63,7 +64,7 @@ const CASES = {
 
 describe('renderStreamingHTML', () => {
   for (const [name, markdown] of Object.entries(CASES)) {
-    it(`builds the same DOM as rendering directly: ${name}`, async () => {
+    it(`rebuilds the HTML it was given: ${name}`, async () => {
       const { direct, piped } = await bothWays(markdown);
       assert.equal(piped, direct);
     });

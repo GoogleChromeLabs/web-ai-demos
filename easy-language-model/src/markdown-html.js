@@ -79,9 +79,8 @@ function tagsOf(element) {
  *
  * A chunk is therefore *not* a balanced fragment — `<p>` arrives before the
  * text inside it, and `</p>` long after. Concatenating every chunk yields the
- * complete, well-formed HTML. To put it on screen as it arrives, pass `into`
- * and the streamer builds the DOM directly, appending nodes rather than
- * re-parsing anything.
+ * complete, well-formed HTML. To put it on screen as it arrives, pipe those
+ * chunks into `renderStreamingHTML()`.
  *
  * Safety comes from construction rather than from a post-hoc scrub: every tag
  * is one the Markdown parser picked from a fixed set, all text is escaped, and
@@ -89,17 +88,14 @@ function tagsOf(element) {
  * Markdown is separately vetted with the Sanitizer API by the caller.
  *
  * @param {object} options
- * @param {HTMLElement} [options.into] Also build the DOM into this element.
  * @param {(html: string) => void} [options.onHtml] Receives each HTML chunk.
  * @param {(detail: {attribute: string, value: string}) => void} [options.onUnsafe]
  */
-export function createHtmlTokenStreamer({ into, onHtml, onUnsafe } = {}) {
-  // With no target element, build in a document that has no browsing context,
-  // so an image URL the model made up is never requested.
-  const doc = into
-    ? into.ownerDocument
-    : document.implementation.createHTMLDocument('');
-  const root = into ?? doc.createElement('div');
+export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
+  // The nodes exist only to be serialized, so they are built in a document with
+  // no browsing context: an image URL the model made up is never requested.
+  const doc = document.implementation.createHTMLDocument('');
+  const root = doc.createElement('div');
 
   // Markdown puts a link's URL after its text — `[docs](url)` — so smd sets
   // `href` and `src` only when the token closes, long after the opening tag

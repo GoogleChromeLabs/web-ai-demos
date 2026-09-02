@@ -10,6 +10,7 @@ import { describe, it } from 'node:test';
 import { marked } from 'marked';
 
 import { createHtmlTokenStreamer } from '../src/markdown-html.js';
+import { renderStreamingHTML } from '../src/render-stream.js';
 import { normalizeHtml } from './normalize.js';
 
 marked.setOptions({ gfm: true, breaks: false });
@@ -203,16 +204,20 @@ describe('streaming', () => {
     assert.equal(out[0], '<p>');
   });
 
-  it('builds the same DOM it describes', () => {
-    const into = document.createElement('div');
+  it('describes a DOM that can be rebuilt from the chunks alone', async () => {
     const out = [];
-    const streamer = createHtmlTokenStreamer({
-      into,
-      onHtml: (h) => out.push(h),
-    });
+    const streamer = createHtmlTokenStreamer({ onHtml: (h) => out.push(h) });
     streamer.write(sample);
     streamer.end();
-    assert.equal(out.join(''), into.innerHTML);
+
+    const rebuilt = document.createElement('div');
+    const writer = renderStreamingHTML(rebuilt).getWriter();
+    for (const html of out) {
+      await writer.write(html);
+    }
+    await writer.close();
+
+    assert.equal(normalizeHtml(rebuilt.innerHTML), normalizeHtml(out.join('')));
   });
 });
 
