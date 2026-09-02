@@ -6,13 +6,19 @@
 // A DOM for Node, so the real renderer can be tested rather than a stand-in.
 import { parseHTML } from 'linkedom';
 
-const { document, Element, Node } = parseHTML(
+const { document, Element, Node, Event, CustomEvent } = parseHTML(
   '<!doctype html><html><body></body></html>'
 );
+
+// linkedom's dispatchEvent writes to fields that Node's built-in Event exposes
+// as read-only getters, so tests that dispatch on this document need linkedom's
+// own Event class.
+export { Event as DomEvent };
 
 globalThis.document = document;
 globalThis.Element = Element;
 globalThis.Node = Node;
+globalThis.CustomEvent ??= CustomEvent;
 
 // linkedom has no `document.implementation`; the renderer builds into an inert
 // document when it isn't given a target element.

@@ -466,6 +466,18 @@ failure rather than a silent change:
 npm test
 ```
 
+Runs in Node against a DOM shim, covering the Markdown pipeline (every
+construct checked against a CommonMark reference at several chunk sizes),
+session plumbing (user activation, download states, `compact()`, listener
+re-attachment, error recovery), and download progress payloads.
+
+Sanitization is the one thing Node can't cover, since it has no HTML Sanitizer
+API. Those cases live in a page instead:
+
+```sh
+npm run dev   # then open /test/sanitizer.browser.html
+```
+
 ## Build
 
 ```sh

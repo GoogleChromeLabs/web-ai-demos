@@ -48,6 +48,7 @@
             Context: — / — tokens
           </label>
           <button type="button" id="compact-btn">Compact session</button>
+          <button type="button" id="reset-btn">Reset session</button>
         </div>
         <progress id="context-bar" value="0" max="1"></progress>
       </section>
@@ -62,6 +63,7 @@
             value="Explain the difference between a stack and a queue, with a short Java example."
           />
           <button type="submit" id="submit-btn">Send</button>
+          <button type="button" id="stop-btn" disabled>Stop</button>
         </div>
         <p class="hint">
           Try an injection:
@@ -74,15 +76,16 @@
 
       <p class="hint">
         Everything below comes from one <code>renderStreaming()</code> call, so
-        one prompt is one inference. The left pane is the live DOM it builds by
-        appending nodes; the right is the raw Markdown it was given, via
-        <code>onMarkdown</code>.
+        one prompt is one inference. It is <code>promptStreamingHTML()</code>
+        with the loop written for you: one pipeline, shown three ways — the DOM
+        it builds, the Markdown it read from the model, and the HTML chunks it
+        emits.
       </p>
 
       <div id="panes">
         <section>
           <h2>
-            <code>into</code>
+            <code>renderStreaming()</code>
             <span class="tag">live DOM, token by token</span>
           </h2>
           <output id="html-output" class="prose"></output>
@@ -90,7 +93,7 @@
 
         <section>
           <h2>
-            <code>onMarkdown</code>
+            <code>promptStreaming()</code>
             <span class="tag">raw Markdown chunks</span>
           </h2>
           <pre id="markdown-output"></pre>

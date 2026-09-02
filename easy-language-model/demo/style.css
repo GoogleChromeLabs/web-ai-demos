@@ -139,11 +139,17 @@ button:disabled {
   cursor: default;
 }
 
-#compact-btn {
-  margin-left: auto;
+#compact-btn,
+#reset-btn,
+#stop-btn {
   background: transparent;
   color: inherit;
   border-color: var(--line);
+}
+
+/* Pushes the session controls to the far end of the row. */
+#compact-btn {
+  margin-left: auto;
 }
 
 button.link {

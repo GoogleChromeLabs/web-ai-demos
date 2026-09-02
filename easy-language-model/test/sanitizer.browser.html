@@ -1,0 +1,185 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Sanitizer tests — Easy Language Model</title>
+    <style>
+      body {
+        font:
+          14px/1.5 ui-monospace,
+          monospace;
+        margin: 2rem auto;
+        max-width: 60rem;
+        padding-inline: 1rem;
+      }
+      h1 {
+        font-size: 1.1rem;
+      }
+      p {
+        font-family: system-ui, sans-serif;
+        color: color-mix(in srgb, CanvasText 60%, Canvas);
+      }
+      #summary {
+        font-weight: bold;
+      }
+      .pass {
+        color: #15803d;
+      }
+      .fail {
+        color: #b91c1c;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sanitizer tests</h1>
+    <p>
+      These cover the behaviour that depends on the real HTML Sanitizer API,
+      which is why they can't live in <code>npm test</code> — Node has no
+      implementation of it. Everything else is covered there. Run with
+      <code>npm run dev</code> and open this page.
+    </p>
+    <div id="summary">Running…</div>
+    <ol id="results"></ol>
+
+    <script type="module">
+      import { EasyLanguageModel, isSanitizerSupported } from '/src/index.js';
+      import { fakeLanguageModel, stubGlobals } from '/test/stubs.js';
+
+      const results = document.getElementById('results');
+      const summary = document.getElementById('summary');
+      let failures = 0;
+
+      function report(name, error) {
+        const item = document.createElement('li');
+        item.className = error ? 'fail' : 'pass';
+        item.textContent = error ? `FAIL  ${name}\n      ${error}` : name;
+        results.append(item);
+        if (error) failures++;
+      }
+
+      async function test(name, fn) {
+        try {
+          await fn();
+          report(name);
+        } catch (error) {
+          report(name, error.message);
+        }
+      }
+
+      const eq = (actual, expected, what) => {
+        if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+          throw new Error(
+            `${what}: got ${JSON.stringify(actual)}, wanted ${JSON.stringify(expected)}`
+          );
+        }
+      };
+
+      const script = { response: '', sessions: [] };
+      stubGlobals({ LanguageModel: fakeLanguageModel(script) });
+
+      const session = await EasyLanguageModel.create({
+        userActivation: 'ignore',
+      });
+
+      const drain = async (stream) => {
+        const chunks = [];
+        for await (const chunk of stream) chunks.push(chunk);
+        return chunks;
+      };
+
+      const nameOfThrown = async (fn) => {
+        try {
+          await fn();
+          return null;
+        } catch (error) {
+          return error.name;
+        }
+      };
+
+      if (!isSanitizerSupported()) {
+        summary.textContent =
+          'This browser has no HTML Sanitizer API, so these tests cannot run.';
+      } else {
+        await test('prompt() throws on unsafe output', async () => {
+          script.response = 'Sure: <img src="pwned" onerror="alert(1)">';
+          eq(
+            await nameOfThrown(() => session.prompt('x')),
+            'UnsafeModelOutputError',
+            'error'
+          );
+        });
+
+        await test('promptStreaming() errors on unsafe output', async () => {
+          script.response = 'ok then <img src=x onerror=alert(1)> more text';
+          eq(
+            await nameOfThrown(() => drain(session.promptStreaming('x'))),
+            'UnsafeModelOutputError',
+            'error'
+          );
+        });
+
+        await test('promptStreamingHTML() errors on unsafe output', async () => {
+          script.response = 'text <img src=x onerror=alert(1)> more';
+          eq(
+            await nameOfThrown(() => drain(session.promptStreamingHTML('x'))),
+            'UnsafeModelOutputError',
+            'error'
+          );
+        });
+
+        await test('an unfinished tag is never handed out', async () => {
+          script.response = 'safe start <img src=x onerror=alert(1)> tail';
+          const lenient = await EasyLanguageModel.create({
+            unsafeOutput: 'stop',
+            userActivation: 'ignore',
+          });
+          const chunks = await drain(lenient.promptStreaming('x'));
+          eq(chunks.join(''), 'safe start ', 'emitted text');
+        });
+
+        await test("unsafeOutput 'stop' reports instead of throwing", async () => {
+          const seen = [];
+          const lenient = await EasyLanguageModel.create({
+            unsafeOutput: 'stop',
+            onUnsafeOutput: (detail) => seen.push(detail),
+            userActivation: 'ignore',
+          });
+          script.response = 'text <img src=x onerror=alert(1)> more';
+          await drain(lenient.promptStreaming('x'));
+          eq(seen.length > 0, true, 'reported');
+        });
+
+        await test('fenced HTML is not treated as an attack', async () => {
+          script.response =
+            'Here is HTML:\n\n```html\n<iframe src="x"></iframe>\n```\n';
+          eq(
+            await nameOfThrown(() => drain(session.promptStreaming('x'))),
+            null,
+            'error'
+          );
+        });
+
+        await test('a bare < in prose streams through', async () => {
+          script.response = 'if 1 < 2 and 3 > 2 then done';
+          const chunks = await drain(session.promptStreaming('x'));
+          eq(chunks.join(''), script.response, 'text');
+        });
+
+        summary.textContent =
+          failures === 0
+            ? `All ${results.children.length} sanitizer tests passed.`
+            : `${failures} of ${results.children.length} failed.`;
+        summary.className = failures === 0 ? 'pass' : 'fail';
+      }
+      window.__done = true;
+      window.__failures = failures;
+    </script>
+  </body>
+</html>
