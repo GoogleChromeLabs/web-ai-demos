@@ -8,7 +8,7 @@ built-in AI app ends up writing folded in:
 |                        | Prompt API                                                        | `EasyLanguageModel`                                                                                                                       |
 | ---------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sanitizing output**  | Sanitize and diff every response yourself to see what was removed | [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) on `prompt()` and `promptStreaming()`, on by default |
-| **Rendering Markdown** | Bring your own streaming parser                                   | `promptStreamingHTML()` emits HTML chunks; `renderStreaming()` renders them                                                               |
+| **Rendering Markdown** | Bring your own streaming parser                                   | `promptStreamingHTML()` emits HTML chunks; `renderStreaming()` puts them on screen                                                        |
 | **Long conversations** | Manage `contextUsage` and rebuild the session yourself            | `session.compact()`                                                                                                                       |
 | **Model downloads**    | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
 | **User activation**    | `create()` fails if the page has no gesture                       | Waits for one, or tells you to ask                                                                                                        |
@@ -222,8 +222,9 @@ produces it. A chunk is therefore _not_ a balanced fragment: `<p>` arrives
 before its text and `</p>` long after. Concatenating every chunk yields the
 complete, well-formed HTML.
 
-To put it on screen, pass `into` and the DOM is built by appending nodes, so
-nothing is ever re-parsed:
+Consuming that stream has no side effects. To put the response on screen,
+`renderStreaming()` runs the same pipeline and does the DOM work, appending
+nodes as the parser recognizes them so nothing is ever re-parsed:
 
 <!-- prettier-ignore-start -->
 <table>
@@ -241,32 +242,26 @@ for await (const chunk of stream) {
 </td><td>
 
 ```js
-const stream = session.promptStreamingHTML(
-  prompt,
-  { into: output },
-);
-for await (const html of stream) {
-  // `html` is already in `output`.
-}
+await session.renderStreaming(prompt, {
+  into: output,
+});
 ```
 
 </td></tr>
 </table>
 <!-- prettier-ignore-end -->
 
-`renderStreaming()` is the same pipeline with the loop written for you, and
-hands back the raw Markdown as well:
+It hands back the raw Markdown, and can surface the HTML chunks on the way
+past, so one response drives every view you want and showing the rendered
+output beside the raw Markdown costs one inference rather than two:
 
 ```js
 const markdown = await session.renderStreaming(prompt, {
   into: output,
-  onHtml: (html) => htmlView.append(html), // the chunks above
-  onMarkdown: (chunk) => rawView.append(chunk), // what the model actually said
+  onHtml: (html) => htmlView.append(html),
+  onMarkdown: (chunk) => rawView.append(chunk),
 });
 ```
-
-One response can drive every view this way, so showing the rendered output
-beside the raw Markdown costs one inference, not two.
 
 ### Stopping a response
 
@@ -387,16 +382,16 @@ re-thrown.
 
 ### `EasySession`
 
-| Member                                                                                                                                                               | Notes                                                                                                                       |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `prompt(input, options)`                                                                                                                                             | Sanitized.                                                                                                                  |
-| `promptStreaming(input, options)`                                                                                                                                    | `ReadableStream` of vetted Markdown chunks.                                                                                 |
-| `promptStreamingHTML(input, {into, onMarkdown, …})`                                                                                                                  | `ReadableStream` of HTML chunks at parser granularity; concatenate for the full HTML. Pass `into` to render as you consume. |
-| `renderStreaming(input, {into, onHtml, onMarkdown, …})`                                                                                                              | Renders into an element token by token; resolves with the Markdown.                                                         |
-| `compact(options)`                                                                                                                                                   | Returns `{before, after, saved, reduction, messages, languages}`.                                                           |
-| `history`                                                                                                                                                            | The conversation as the current session sees it.                                                                            |
-| `session`                                                                                                                                                            | The raw `LanguageModel`.                                                                                                    |
-| `append`, `clone`, `destroy`, `measureContextUsage`, `contextUsage`, `contextWindow`, `samplingMode`, `addEventListener`, `removeEventListener`, `oncontextoverflow` | Pass-throughs.                                                                                                              |
+| Member                                                                                                                                                               | Notes                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `prompt(input, options)`                                                                                                                                             | Sanitized.                                                                                                 |
+| `promptStreaming(input, options)`                                                                                                                                    | `ReadableStream` of vetted Markdown chunks.                                                                |
+| `promptStreamingHTML(input, {onMarkdown, …})`                                                                                                                        | `ReadableStream` of HTML chunks at parser granularity; concatenate for the full HTML. No side effects.     |
+| `renderStreaming(input, {into, onHtml, onMarkdown, …})`                                                                                                              | Renders into an element token by token; resolves with the Markdown. The only method that touches the page. |
+| `compact(options)`                                                                                                                                                   | Returns `{before, after, saved, reduction, messages, languages}`.                                          |
+| `history`                                                                                                                                                            | The conversation as the current session sees it.                                                           |
+| `session`                                                                                                                                                            | The raw `LanguageModel`.                                                                                   |
+| `append`, `clone`, `destroy`, `measureContextUsage`, `contextUsage`, `contextWindow`, `samplingMode`, `addEventListener`, `removeEventListener`, `oncontextoverflow` | Pass-throughs.                                                                                             |
 
 ### Errors
 

@@ -276,27 +276,21 @@ export class EasySession {
    * balanced fragment: `<p>` arrives before its text. Concatenating every chunk
    * yields the complete, well-formed HTML.
    *
-   * To put it on screen as it streams, pass `into` (or use `renderStreaming()`,
-   * which is the same thing with the loop written for you). The DOM is built by
-   * appending nodes, so nothing is ever re-parsed:
-   *
-   * ```js
-   * const stream = session.promptStreamingHTML(prompt, { into: output });
-   * for await (const html of stream) {
-   *   // Already rendered into `output`; `html` is the chunk that did it.
-   * }
-   * ```
+   * Consuming the stream has no side effects. To put the response on screen
+   * instead, use `renderStreaming()`, which runs this same pipeline and does
+   * the DOM work for you.
    *
    * @param {LanguageModelPrompt} input
    * @param {object} [options]
-   * @param {HTMLElement} [options.into] Render into this element as you consume.
    * @param {(chunk: string) => void} [options.onMarkdown] Receives the raw
    *   Markdown as it arrives, so the same response can drive a second view
    *   without paying for a second inference.
    * @returns {ReadableStream<string>} HTML chunks.
    */
   promptStreamingHTML(input, options) {
-    return toReadableStream(this.#streamHtml(input, options));
+    // Rendering belongs to renderStreaming(); this method only yields.
+    const { into, ...rest } = options ?? {};
+    return toReadableStream(this.#streamHtml(input, rest));
   }
 
   async *#streamHtml(input, { into, onMarkdown, ...options } = {}) {
@@ -383,9 +377,10 @@ export class EasySession {
    * Streams the response into an element as it arrives.
    *
    * The same token-level pipeline as `promptStreamingHTML()`, with the loop
-   * written for you: nodes are appended as the parser recognizes them, so the
-   * browser paints only what changed instead of re-parsing the response on
-   * every chunk.
+   * written for you and the DOM work done: nodes are appended as the parser
+   * recognizes them, so the browser paints only what changed instead of
+   * re-parsing the response on every chunk. This is the only method that
+   * touches the page.
    *
    * @param {LanguageModelPrompt} input
    * @param {object} options

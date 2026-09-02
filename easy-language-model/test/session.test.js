@@ -178,6 +178,16 @@ describe('prompting', () => {
     assert.equal(html[0], '<h1>');
   });
 
+  it('promptStreamingHTML() touches nothing, even handed an element', async () => {
+    const script = newScript('# Title\n');
+    install(script);
+    const session = await EasyLanguageModel.create(NO_SANITIZER);
+    const into = document.createElement('div');
+    const html = await drain(session.promptStreamingHTML('x', { into }));
+    assert.equal(html.join(''), '<h1>Title</h1>', 'the stream still yields');
+    assert.equal(into.innerHTML, '', 'rendering belongs to renderStreaming()');
+  });
+
   it('renders into an element and surfaces both representations', async () => {
     const script = newScript('# Title\n\nA **bold** para.\n');
     install(script);
