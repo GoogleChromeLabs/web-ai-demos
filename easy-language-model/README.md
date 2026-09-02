@@ -40,6 +40,11 @@ Three separate concerns have to line up before a session exists: the
 availability check has to use the _same_ options as `create()`, a download
 needs a progress indicator, and starting that download needs a user gesture.
 
+Both sides check availability here, so the difference is only in what's left
+over. `EasyLanguageModel.availability()` takes the whole options object and
+reads just the parts availability depends on, so one object serves both calls
+and there is nothing to keep in sync.
+
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
 <tr valign="top"><td>
@@ -96,7 +101,7 @@ progress.hidden = true;
 </td><td>
 
 ```js
-const session = await EasyLanguageModel.create({
+const options = {
   expectedInputs: [
     { type: 'text', languages: ['en'] },
   ],
@@ -111,7 +116,21 @@ const session = await EasyLanguageModel.create({
     enableButton.hidden = false;
     hint.hidden = false;
   },
-});
+};
+
+// Optional: create() checks anyway and
+// throws LanguageModelUnavailableError.
+// Worth asking first if you'd rather not
+// offer the feature at all.
+const availability =
+  await EasyLanguageModel.availability(options);
+
+if (availability === 'unavailable') {
+  return;
+}
+
+const session =
+  await EasyLanguageModel.create(options);
 ```
 
 </td></tr>
