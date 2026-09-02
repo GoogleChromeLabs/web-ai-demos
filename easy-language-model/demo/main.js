@@ -103,7 +103,9 @@ function updateContextDisplay() {
   // lets the browser do the scaling.
   contextBar.value = session.contextUsage;
   contextBar.max = session.contextWindow;
-  const percent = Math.round(session.contextUsageRatio * 100);
+  const percent = session.contextWindow
+    ? Math.round((session.contextUsage / session.contextWindow) * 100)
+    : 0;
   contextLabel.textContent =
     `Context: ${Math.round(session.contextUsage)} / ` +
     `${Math.round(session.contextWindow)} tokens (${percent}%)`;

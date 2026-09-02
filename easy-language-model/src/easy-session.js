@@ -133,12 +133,6 @@ export class EasySession {
     return this.#session.contextWindow;
   }
 
-  /** Context fill as a fraction between 0 and 1. */
-  get contextUsageRatio() {
-    const total = this.#session.contextWindow;
-    return total > 0 ? this.#session.contextUsage / total : 0;
-  }
-
   get samplingMode() {
     return this.#session.samplingMode;
   }
