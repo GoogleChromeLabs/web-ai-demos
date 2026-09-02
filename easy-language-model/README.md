@@ -60,21 +60,17 @@ const options = {
   ],
 };
 
-// Must match create() exactly, or the
-// answer is about a different model.
 const availability =
   await LanguageModel.availability(options);
 
 if (availability === 'unavailable') {
-  throw new Error('Not available.');
+  return;
 }
 
 let downloading = false;
 if (availability !== 'available') {
   downloading = true;
   progress.hidden = false;
-  // A download needs a gesture, so this
-  // has to run from an event handler.
   if (!navigator.userActivation.isActive) {
     await waitForClick();
   }
@@ -88,8 +84,6 @@ const session = await LanguageModel.create({
       (e) => {
         progress.value = e.loaded;
         if (downloading && e.loaded === 1) {
-          // Unpacking now; nobody knows
-          // how long that takes.
           progress.removeAttribute('value');
         }
       },
@@ -102,8 +96,6 @@ progress.hidden = true;
 </td><td>
 
 ```js
-// Only what the Prompt API itself defines,
-// so the same object can serve both calls.
 const options = {
   expectedInputs: [
     { type: 'text', languages: ['en'] },
@@ -113,10 +105,6 @@ const options = {
   ],
 };
 
-// Optional: create() checks anyway and
-// throws LanguageModelUnavailableError.
-// Worth asking first if you'd rather not
-// offer the feature at all.
 const availability =
   await EasyLanguageModel.availability(options);
 
@@ -126,11 +114,8 @@ if (availability === 'unavailable') {
 
 const session = await EasyLanguageModel.create({
   ...options,
-  // The wrapper's own options go on here.
   progress,
   onUserActivationRequired() {
-    // Reveal something to interact with,
-    // and say why it's there.
     enableButton.hidden = false;
     hint.hidden = false;
   },
@@ -139,6 +124,13 @@ const session = await EasyLanguageModel.create({
 
 </td></tr>
 </table>
+
+On the left, `e.loaded === 1` is the moment the bytes are all in and the
+browser starts unpacking the model. That takes an unknown amount of time, so
+the indicator has to go indeterminate; the wrapper does that for you and
+reports it as an `extracting` state. Checking availability is optional on the
+right — `create()` checks anyway and throws `LanguageModelUnavailableError` —
+but it is worth asking first if you would rather not offer the feature at all.
 
 The button needs no click handler: any trusted click, tap, or key press
 anywhere on the page releases the wait and `create()` resolves. It's there to
@@ -153,9 +145,6 @@ button's handler and treat a missing gesture as an error.
 <tr valign="top"><td>
 
 ```js
-// The Sanitizer API doesn't report what it
-// removed, so parse the output twice in an
-// inert document and compare.
 const doc =
   document.implementation.createHTMLDocument();
 
@@ -167,8 +156,6 @@ const wasSanitized = (html) => {
   return safe.innerHTML !== unsafe.innerHTML;
 };
 
-// `answer` is untrusted. Check it before it
-// goes anywhere near the DOM.
 const answer = await session.prompt(prompt);
 if (wasSanitized(answer)) {
   throw new Error('Unsafe output.');
@@ -179,12 +166,16 @@ if (wasSanitized(answer)) {
 
 ```js
 const answer = await session.prompt(prompt);
-// Already vetted: throws
-// UnsafeModelOutputError otherwise.
 ```
 
 </td></tr>
 </table>
+
+The left has to build that helper because the Sanitizer API doesn't report what
+it removed, so the only way to find out is to parse twice and compare — see
+[How the sanitization works](#how-the-sanitization-works). On the right the
+response is already vetted, and `prompt()` throws `UnsafeModelOutputError` when
+it isn't.
 
 ### Streaming Markdown
 
@@ -197,9 +188,6 @@ const stream = session.promptStreaming(prompt);
 let chunks = '';
 for await (const chunk of stream) {
   chunks += chunk;
-  // A tag can straddle a chunk boundary, so
-  // check everything received so far, with
-  // wasSanitized() from above.
   if (wasSanitized(chunks)) {
     smd.parser_end(parser);
     return;
@@ -216,12 +204,14 @@ const stream = session.promptStreaming(prompt);
 for await (const chunk of stream) {
   output.append(chunk);
 }
-// The stream errors instead of handing
-// you an unsafe chunk.
 ```
 
 </td></tr>
 </table>
+
+The check on the left runs against everything received so far, not each chunk
+alone, because a tag can straddle a chunk boundary. On the right the stream
+errors instead of handing you an unsafe chunk.
 
 ### Streaming HTML
 
@@ -241,9 +231,6 @@ nothing is ever re-parsed:
 <tr valign="top"><td>
 
 ```js
-// Re-parses and re-renders the whole
-// response on every chunk, and trusts
-// the model.
 let chunks = '';
 for await (const chunk of stream) {
   chunks += chunk;
@@ -259,8 +246,7 @@ const stream = session.promptStreamingHTML(
   { into: output },
 );
 for await (const html of stream) {
-  // Already rendered into `output`;
-  // `html` is the chunk that did it.
+  // `html` is already in `output`.
 }
 ```
 
@@ -322,17 +308,17 @@ Compacting is the proactive alternative: summarize the history with the
 and restart the session with those summaries as `initialPrompts`, which the
 browser never evicts.
 
+By hand that means tracking every message, detecting each one's language,
+summarizing it, destroying the session, building a new one, and re-registering
+every listener — while keeping an untouched copy of the history in case any of
+that fails. `compact()` returns
+`{ before, after, saved, reduction, messages, languages }`.
+
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
 <tr valign="top"><td>
 
 ```js
-// Track every message yourself, detect the
-// language of each one, summarize it, throw
-// the session away, build a new one, and
-// re-register every event listener — while
-// keeping an untouched copy of the history
-// in case any of that fails.
 const compacted = [];
 for (const message of history) {
   const lang = (await detectLanguage(message.content))
@@ -361,8 +347,6 @@ session.addEventListener('contextoverflow', …);
 
 ```js
 const stats = await session.compact();
-// { before, after, saved, reduction,
-//   messages, languages }
 ```
 
 </td></tr>
