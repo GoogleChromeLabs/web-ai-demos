@@ -15,6 +15,7 @@ const resetBtn = document.getElementById('reset-btn');
 const activateBtn = document.getElementById('activate-btn');
 const debugLog = document.getElementById('debug-log');
 const copyDebugBtn = document.getElementById('copy-debug');
+const flagNote = document.getElementById('flag-note');
 
 const SYSTEM_PROMPT = `You are a helpful assistant that answers questions about
 npm packages and GitHub repositories. You have tools available. Use them instead
@@ -625,6 +626,19 @@ async function initSession() {
     setStatus(
       'The Prompt API is not available. Use Chrome 138 or later on desktop.',
     );
+    return;
+  }
+
+  // These three interfaces are gated behind the same flag as tool support
+  // itself, so their absence pinpoints the flag rather than the API. Creating
+  // a session would fail anyway, since SESSION_OPTIONS asks for tool types.
+  const toolUseSupported =
+    'LanguageModelToolCall' in self &&
+    'LanguageModelToolSuccess' in self &&
+    'LanguageModelToolError' in self;
+  if (!toolUseSupported) {
+    flagNote.hidden = false;
+    setStatus('Tool use is not enabled, so this demo cannot run.');
     return;
   }
 

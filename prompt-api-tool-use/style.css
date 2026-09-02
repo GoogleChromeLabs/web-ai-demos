@@ -29,6 +29,21 @@ p.subtitle {
   margin-bottom: 1.25rem;
   max-width: 70ch;
 }
+/* A prerequisite, not prose: set apart from the description above it so it
+   does not read as one more sentence about the demo. */
+p.requirement {
+  max-width: 70ch;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid light-dark(#8a6d00, #d9b64a);
+  background: light-dark(#fffaf0, #241f14);
+}
+p.requirement code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: light-dark(#f4ecd8, #332c1a);
+  padding: 0.1em 0.35em;
+}
 
 /* Status line */
 #status {
