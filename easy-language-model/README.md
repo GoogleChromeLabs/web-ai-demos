@@ -258,6 +258,25 @@ await session.renderStreaming(prompt, {
 </table>
 <!-- prettier-ignore-end -->
 
+There is a second way to put it on screen, if you would rather compose streams
+than pass callbacks. `renderStreamingHTML()` is a `WritableStream` you can pipe
+into:
+
+```js
+import { renderStreamingHTML } from 'easy-language-model';
+
+await session
+  .promptStreamingHTML(prompt)
+  .pipeTo(renderStreamingHTML(output));
+```
+
+Both build exactly the same DOM. `pipeTo()` drains the stream, so this can't be
+wired up and do nothing, and it opens the response to the rest of the streams
+machinery: put a `TransformStream` in the middle to tap the chunks, or feed the
+renderer HTML from somewhere other than a model. `renderStreaming()` stays the
+shorter option when all you want is the response on the page, and it is the one
+that hands back the other views.
+
 It hands back the raw Markdown, and can surface the HTML chunks on the way
 past, so one response drives every view you want and showing the rendered
 output beside the raw Markdown costs one inference rather than two:
@@ -400,6 +419,15 @@ re-thrown.
 | `history`                                                                                                                                                            | The conversation as the current session sees it.                                                           |
 | `session`                                                                                                                                                            | The raw `LanguageModel`.                                                                                   |
 | `append`, `clone`, `destroy`, `measureContextUsage`, `contextUsage`, `contextWindow`, `samplingMode`, `addEventListener`, `removeEventListener`, `oncontextoverflow` | Pass-throughs.                                                                                             |
+
+### Exports
+
+Besides `EasyLanguageModel` and the errors, the entry point exports
+`renderStreamingHTML(element)`, the `WritableStream` shown above. It builds
+nodes with `createElement` and `append` and never from a string, so it works on
+pages that enforce Trusted Types — which is why every chunk
+`promptStreamingHTML()` yields is a single token rather than a balanced
+fragment. A fragment would force `insertAdjacentHTML`, and such pages refuse it.
 
 ### Errors
 

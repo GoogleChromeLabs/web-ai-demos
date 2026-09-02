@@ -5,6 +5,7 @@
 
 import {
   EasyLanguageModel,
+  renderStreamingHTML,
   UnsafeModelOutputError,
   UserActivationRequiredError,
 } from '../src/index.js';
@@ -29,6 +30,10 @@ const attackButton = $('attack-btn');
 const htmlOutput = $('html-output');
 const markdownOutput = $('markdown-output');
 const htmlChunks = $('html-chunks');
+const renderModeInputs = document.querySelectorAll('#render-mode input');
+
+const renderMode = () =>
+  [...renderModeInputs].find((input) => input.checked).value;
 const log = $('log');
 
 const ATTACK_PROMPT =
@@ -211,29 +216,54 @@ form.addEventListener('submit', async (event) => {
   controller = new AbortController();
 
   try {
-    // One response, three views, one inference. Nodes are appended into
-    // `htmlOutput` as the parser recognizes them, so text appears as fast as
-    // the model produces it; `onHtml` and `onMarkdown` surface the same
-    // response as the HTML chunk stream and as raw Markdown.
-    await session.renderStreaming(prompt, {
-      // Passed straight through to the Prompt API, so Stop aborts the
-      // inference itself rather than just ignoring the rest of it.
-      signal: controller.signal,
-      into: htmlOutput,
-      onHtml(html) {
-        chunkCount++;
-        htmlChunks.append(html);
-        // `onHtml` fires once the node is in the DOM, so this follows both the
-        // rendered pane and the chunk listing.
-        htmlTail.follow();
-        chunksTail.follow();
-      },
-      onMarkdown(chunk) {
-        markdownOutput.append(chunk);
-        markdownTail.follow();
-      },
-    });
-    addLogEntry(`Response complete, ${chunkCount} HTML chunks.`);
+    // `signal` is passed straight through to the Prompt API either way, so
+    // Stop aborts the inference itself rather than ignoring the rest of it.
+    if (renderMode() === 'pipe') {
+      // The stream carries the HTML; a WritableStream puts it on the page.
+      // `pipeTo()` drains it, so there is no way to wire this up and have
+      // nothing happen.
+      await session
+        .promptStreamingHTML(prompt, {
+          signal: controller.signal,
+          onMarkdown(chunk) {
+            markdownOutput.append(chunk);
+            markdownTail.follow();
+          },
+        })
+        .pipeThrough(
+          new TransformStream({
+            transform(html, sink) {
+              chunkCount++;
+              htmlChunks.append(html);
+              chunksTail.follow();
+              sink.enqueue(html);
+            },
+          })
+        )
+        .pipeTo(renderStreamingHTML(htmlOutput));
+      htmlTail.follow();
+    } else {
+      // One call does the DOM work and hands back the other two views.
+      await session.renderStreaming(prompt, {
+        signal: controller.signal,
+        into: htmlOutput,
+        onHtml(html) {
+          chunkCount++;
+          htmlChunks.append(html);
+          // `onHtml` fires once the node is in the DOM, so this follows both
+          // the rendered pane and the chunk listing.
+          htmlTail.follow();
+          chunksTail.follow();
+        },
+        onMarkdown(chunk) {
+          markdownOutput.append(chunk);
+          markdownTail.follow();
+        },
+      });
+    }
+    addLogEntry(
+      `Response complete, ${chunkCount} HTML chunks via ${renderMode()}.`
+    );
   } catch (error) {
     if (error.name === 'AbortError') {
       // Whatever arrived before the abort stays on screen.

@@ -65,6 +65,18 @@
           <button type="submit" id="submit-btn">Send</button>
           <button type="button" id="stop-btn" disabled>Stop</button>
         </div>
+        <fieldset id="render-mode">
+          <legend>Render with</legend>
+          <label>
+            <input type="radio" name="mode" value="render" checked />
+            <code>renderStreaming({ into })</code>
+          </label>
+          <label>
+            <input type="radio" name="mode" value="pipe" />
+            <code>promptStreamingHTML().pipeTo(renderStreamingHTML())</code>
+          </label>
+        </fieldset>
+
         <p class="hint">
           Try an injection:
           <button type="button" class="link" id="attack-btn">

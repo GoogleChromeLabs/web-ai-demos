@@ -124,6 +124,30 @@ export function createHtmlTokenStreamer({ into, onHtml, onUnsafe } = {}) {
     }
   };
 
+  /**
+   * Emits a finished element as the same opening tag / text / closing tag
+   * chunks the streaming path produces, rather than as one balanced fragment.
+   *
+   * Concatenated the result is identical either way, but keeping every chunk to
+   * a single token means a consumer can rebuild the DOM with `createElement`
+   * and `append` alone. Handing it a fragment would force `insertAdjacentHTML`,
+   * which pages that enforce Trusted Types refuse.
+   */
+  const emitElement = (node) => {
+    if (node.nodeType === 3) {
+      onHtml?.(escapeText(node.data));
+      return;
+    }
+    const { open, close } = tagsOf(node);
+    onHtml?.(open);
+    for (const child of node.childNodes) {
+      emitElement(child);
+    }
+    if (close) {
+      onHtml?.(close);
+    }
+  };
+
   // One frame per open token. `elements` are the elements the token opened,
   // outermost first. `deferred` holds an element opened by a descendant whose
   // closing tag belongs to this token instead — a `<tbody>` spanning rows.
@@ -386,7 +410,7 @@ export function createHtmlTokenStreamer({ into, onHtml, onUnsafe } = {}) {
         if (bufferDepth === 0) {
           const element = bufferRoot;
           bufferRoot = null;
-          emit(element.outerHTML);
+          emitElement(element);
         }
         return;
       }
@@ -416,7 +440,7 @@ export function createHtmlTokenStreamer({ into, onHtml, onUnsafe } = {}) {
           if (bufferDepth === 0) {
             const element = bufferRoot;
             bufferRoot = null;
-            emit(element.outerHTML);
+            emitElement(element);
           }
           continue;
         }

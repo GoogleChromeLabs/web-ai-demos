@@ -241,3 +241,27 @@ pre {
   height: 1px;
   overflow: hidden;
 }
+
+#render-mode {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.75rem;
+  margin-top: 0.75rem;
+}
+
+#render-mode legend {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding-inline: 0.35rem;
+}
+
+#render-mode label {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  cursor: pointer;
+}
