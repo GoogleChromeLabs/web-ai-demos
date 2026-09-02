@@ -1,0 +1,120 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪄</text></svg>"
+    />
+    <title>Easy Language Model</title>
+    <link rel="stylesheet" href="/demo/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>🪄 Easy Language Model</h1>
+      <p class="lede">
+        A near drop-in wrapper for the Prompt API's <code>LanguageModel</code>:
+        Sanitizer API on every response, streaming HTML output, in-place session
+        compacting, always-on download reporting, and user activation handled
+        for you.
+      </p>
+    </header>
+
+    <section id="status-panel">
+      <div class="row">
+        <span class="badge" id="state-badge">checking</span>
+        <span id="status">Checking availability…</span>
+      </div>
+      <progress id="download-progress" hidden value="0" max="1"></progress>
+      <label class="visually-hidden" for="download-progress">
+        Model download progress
+      </label>
+      <p id="activation-hint" hidden>
+        👆 The model needs to be downloaded, which requires a user gesture.
+        <strong>Click anywhere on this page</strong> to start.
+      </p>
+    </section>
+
+    <main hidden id="app">
+      <section id="context-panel">
+        <div class="row">
+          <label for="context-bar" id="context-label">
+            Context: — / — tokens
+          </label>
+          <button type="button" id="compact-btn">Compact session</button>
+        </div>
+        <progress id="context-bar" value="0" max="1"></progress>
+      </section>
+
+      <form id="prompt-form">
+        <label for="prompt-input">Prompt</label>
+        <div class="row">
+          <input
+            id="prompt-input"
+            name="prompt"
+            autocomplete="off"
+            value="Explain the difference between a stack and a queue, with a short Java example."
+          />
+          <button type="submit" id="submit-btn">Send</button>
+        </div>
+        <p class="hint">
+          Try an injection:
+          <button type="button" class="link" id="attack-btn">
+            fill in a prompt that makes the model emit an
+            <code>&lt;img onerror&gt;</code>
+          </button>
+        </p>
+      </form>
+
+      <p class="hint">
+        Everything below comes from one <code>renderStreaming()</code> call, so
+        one prompt is one inference. The left pane is the live DOM it builds by
+        appending nodes; the right is the raw Markdown it was given, via
+        <code>onMarkdown</code>.
+      </p>
+
+      <div id="panes">
+        <section>
+          <h2>
+            <code>into</code>
+            <span class="tag">live DOM, token by token</span>
+          </h2>
+          <output id="html-output" class="prose"></output>
+        </section>
+
+        <section>
+          <h2>
+            <code>onMarkdown</code>
+            <span class="tag">raw Markdown chunks</span>
+          </h2>
+          <pre id="markdown-output"></pre>
+        </section>
+      </div>
+
+      <details>
+        <summary>
+          The HTML chunks <code>promptStreamingHTML()</code> yields
+        </summary>
+        <pre id="html-chunks"></pre>
+      </details>
+
+      <details id="log-details" open>
+        <summary>Library events</summary>
+        <ol id="log"></ol>
+      </details>
+    </main>
+
+    <p id="unsupported" hidden class="error">
+      This browser doesn't support the Prompt API. Try Chrome with built-in AI
+      enabled.
+    </p>
+
+    <script type="module" src="/demo/main.js"></script>
+  </body>
+</html>

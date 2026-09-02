@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dist-demo/
+.claude/
+
+# Local test harnesses
+_*.html

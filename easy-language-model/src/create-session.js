@@ -1,0 +1,90 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { LanguageModelUnavailableError } from './errors.js';
+import { createDownloadReporter } from './download.js';
+import { ensureUserActivation } from './user-activation.js';
+
+/**
+ * The subset of create options that `availability()` accepts.
+ *
+ * Passing exactly the same options to `availability()` and `create()` matters:
+ * the browser may report a default model as available while the specific
+ * language or modality you asked for still needs downloading.
+ */
+const CORE_OPTION_KEYS = [
+  'topK',
+  'temperature',
+  'samplingMode',
+  'expectedInputs',
+  'expectedOutputs',
+  'tools',
+];
+
+export function toCoreOptions(options) {
+  const core = {};
+  for (const key of CORE_OPTION_KEYS) {
+    if (options[key] !== undefined) {
+      core[key] = options[key];
+    }
+  }
+  return core;
+}
+
+/** Whether the Prompt API exists in this context. */
+export function isPromptApiSupported() {
+  return 'LanguageModel' in globalThis;
+}
+
+/**
+ * Creates a raw `LanguageModel` session with download reporting always on and
+ * the user activation requirement taken care of.
+ *
+ * @param {object} createOptions Passed through to `LanguageModel.create()`.
+ * @param {object} easy The wrapper's own options.
+ * @returns {Promise<LanguageModel>}
+ */
+export async function createRawSession(createOptions, easy) {
+  if (!isPromptApiSupported()) {
+    throw new LanguageModelUnavailableError(
+      "This browser doesn't support the Prompt API (`LanguageModel`)."
+    );
+  }
+
+  const reporter = createDownloadReporter(easy);
+  reporter.setState('checking');
+
+  const availability = await LanguageModel.availability(
+    toCoreOptions(createOptions)
+  );
+
+  if (availability === 'unavailable') {
+    reporter.reportAvailability(availability);
+    throw new LanguageModelUnavailableError(
+      'The Prompt API is unavailable on this device for the requested ' +
+        'configuration.',
+      { availability }
+    );
+  }
+
+  reporter.reportAvailability(availability);
+
+  // A gesture is only required when something has to be downloaded.
+  if (availability !== 'available') {
+    await ensureUserActivation({
+      mode: easy.userActivation ?? 'wait',
+      onUserActivationRequired: easy.onUserActivationRequired,
+      signal: createOptions.signal,
+    });
+  }
+
+  const session = await LanguageModel.create({
+    ...createOptions,
+    monitor: reporter.monitor,
+  });
+
+  reporter.reportReady();
+  return session;
+}

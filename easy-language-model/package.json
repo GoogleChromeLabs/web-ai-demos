@@ -1,0 +1,44 @@
+{
+  "name": "easy-language-model",
+  "version": "0.1.0",
+  "description": "A near drop-in wrapper for the Prompt API's LanguageModel with sanitized output, streaming HTML, session compacting, always-on download reporting, and user activation handling.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "main": "./dist/easy-language-model.umd.cjs",
+  "module": "./dist/easy-language-model.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/easy-language-model.js",
+      "require": "./dist/easy-language-model.umd.cjs"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:demo": "vite build --config vite.demo.config.js",
+    "preview": "vite preview --config vite.demo.config.js",
+    "format": "prettier --write .",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "keywords": [
+    "prompt-api",
+    "built-in-ai",
+    "gemini-nano",
+    "language-model",
+    "sanitizer",
+    "streaming-markdown"
+  ],
+  "devDependencies": {
+    "linkedom": "^0.18.13",
+    "marked": "^18.0.11",
+    "prettier": "^3.4.2",
+    "vite": "^7.0.0"
+  }
+}
