@@ -178,6 +178,29 @@ describe('prompting', () => {
     assert.equal(html[0], '<h1>');
   });
 
+  it('promptHTML() returns the whole response as HTML', async () => {
+    const script = newScript('# Title\n\nA **bold** para.\n');
+    install(script);
+    const session = await EasyLanguageModel.create(NO_SANITIZER);
+    assert.equal(
+      await session.promptHTML('x'),
+      '<h1>Title</h1><p>A <strong>bold</strong> para.</p>'
+    );
+  });
+
+  it('promptHTML() agrees with the streaming form and records history', async () => {
+    const script = newScript('# Title\n\nA **bold** para.\n');
+    install(script);
+    const session = await EasyLanguageModel.create(NO_SANITIZER);
+    const whole = await session.promptHTML('x');
+    const streamed = (await drain(session.promptStreamingHTML('x'))).join('');
+    assert.equal(whole, streamed);
+    assert.deepEqual(
+      session.history.map((m) => m.role),
+      ['user', 'assistant', 'user', 'assistant']
+    );
+  });
+
   it('promptStreamingHTML() touches nothing, even handed an element', async () => {
     const script = newScript('# Title\n');
     install(script);

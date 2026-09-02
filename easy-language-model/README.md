@@ -213,14 +213,21 @@ The check on the left runs against everything received so far, not each chunk
 alone, because a tag can straddle a chunk boundary. On the right the stream
 errors instead of handing you an unsafe chunk.
 
-### Streaming HTML
+### HTML instead of Markdown
 
-`promptStreamingHTML()` runs the Markdown through a streaming parser and gives
-you HTML instead. Chunks arrive at the granularity the parser works at — an
-opening tag, a run of text, a closing tag — so text appears as fast as the model
-produces it. A chunk is therefore _not_ a balanced fragment: `<p>` arrives
-before its text and `</p>` long after. Concatenating every chunk yields the
-complete, well-formed HTML.
+`promptHTML()` and `promptStreamingHTML()` are `prompt()` and
+`promptStreaming()` with the Markdown run through a streaming parser, so what
+you get back is HTML. `promptHTML()` hands over the whole response at once:
+
+```js
+output.setHTML(await session.promptHTML(prompt));
+```
+
+`promptStreamingHTML()` gives you the same HTML as it arrives. Chunks land at
+the granularity the parser works at — an opening tag, a run of text, a closing
+tag — so text appears as fast as the model produces it. A chunk is therefore
+_not_ a balanced fragment: `<p>` arrives before its text and `</p>` long after.
+Concatenating every chunk yields the complete, well-formed HTML.
 
 Consuming that stream has no side effects. To put the response on screen,
 `renderStreaming()` runs the same pipeline and does the DOM work, appending
@@ -386,6 +393,7 @@ re-thrown.
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `prompt(input, options)`                                                                                                                                             | Sanitized.                                                                                                 |
 | `promptStreaming(input, options)`                                                                                                                                    | `ReadableStream` of vetted Markdown chunks.                                                                |
+| `promptHTML(input, options)`                                                                                                                                         | The whole response as HTML, safe to assign.                                                                |
 | `promptStreamingHTML(input, {onMarkdown, …})`                                                                                                                        | `ReadableStream` of HTML chunks at parser granularity; concatenate for the full HTML. No side effects.     |
 | `renderStreaming(input, {into, onHtml, onMarkdown, …})`                                                                                                              | Renders into an element token by token; resolves with the Markdown. The only method that touches the page. |
 | `compact(options)`                                                                                                                                                   | Returns `{before, after, saved, reduction, messages, languages}`.                                          |

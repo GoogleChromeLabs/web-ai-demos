@@ -268,6 +268,31 @@ export class EasySession {
   }
 
   /**
+   * Like `prompt()`, but the response comes back as HTML instead of Markdown.
+   *
+   * The whole response in one string, so it can go straight into a container.
+   * It is safe to assign: every tag came from the Markdown parser's fixed set
+   * and all text was escaped by the DOM serializer, so nothing the model wrote
+   * survives as markup. `setHTML()` costs nothing extra if you would rather
+   * not have `innerHTML` in your code at all.
+   *
+   * ```js
+   * output.setHTML(await session.promptHTML(prompt));
+   * ```
+   *
+   * @param {LanguageModelPrompt} input
+   * @param {object} [options]
+   * @returns {Promise<string>} The complete HTML.
+   */
+  async promptHTML(input, options) {
+    let html = '';
+    for await (const chunk of this.#streamHtml(input, options)) {
+      html += chunk;
+    }
+    return html;
+  }
+
+  /**
    * Streams the response as HTML instead of Markdown.
    *
    * Chunks arrive at the granularity the Markdown parser works at — an opening
