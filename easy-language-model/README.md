@@ -15,8 +15,9 @@ built-in AI app ends up writing folded in:
 
 Everything else — `append()`, `clone()`, `measureContextUsage()`,
 `contextUsage`, `contextWindow`, `contextoverflow`, `responseConstraint`,
-`initialPrompts`, `tools`, multimodal input — is passed through untouched, and
-`session.session` gets you the raw `LanguageModel` for anything else.
+`initialPrompts`, `signal`, `tools`, multimodal input — is passed through
+untouched, and `session.session` gets you the raw `LanguageModel` for anything
+else.
 
 ## Install
 
@@ -258,6 +259,38 @@ const markdown = await session.renderStreaming(prompt, {
 One response can drive every view this way, so showing the rendered output
 beside the raw Markdown costs one inference, not two.
 
+### Stopping a response
+
+`signal` reaches the Prompt API unchanged on every prompting method, so an
+abort cancels the inference rather than just ignoring the rest of it. Whatever
+was already emitted stays valid; the stream ends with an `AbortError`, which is
+worth telling apart from a real failure:
+
+```js
+const controller = new AbortController();
+stopButton.onclick = () => controller.abort();
+
+try {
+  await session.renderStreaming(prompt, {
+    into: output,
+    signal: controller.signal,
+  });
+} catch (error) {
+  if (error.name !== 'AbortError') throw error;
+}
+```
+
+An aborted turn is not written to `history`, so what the wrapper thinks was said
+does not drift from the session, which matters because `compact()` reads it.
+
+To start over instead, destroy the session and make a new one, the same thing
+the [Prompt API playground](../prompt-api-playground/) does:
+
+```js
+session.destroy();
+session = await EasyLanguageModel.create(options);
+```
+
 ### Compacting a long conversation
 
 When the context window fills, the browser evicts the oldest message pairs.
@@ -340,23 +373,24 @@ re-thrown.
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
 | `onDownloadStateChange(state)`                           | —                     | `checking` → `downloadable` → `downloading` → `extracting` → `ready`.                                        |
 | `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically.                                                             |
+| `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
 | `userActivation`                                         | `'wait'`              | `'wait'`, `'throw'`, or `'ignore'`.                                                                          |
 | `onUserActivationRequired()`                             | —                     | Your cue to reveal a button or other affordance.                                                             |
 | `compact`                                                | —                     | Defaults for `session.compact()`.                                                                            |
 
 ### `EasySession`
 
-| Member                                                                                                                                        | Notes                                                                                                                       |
-| --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `prompt(input, options)`                                                                                                                      | Sanitized.                                                                                                                  |
-| `promptStreaming(input, options)`                                                                                                             | `ReadableStream` of vetted Markdown chunks.                                                                                 |
-| `promptStreamingHTML(input, {into, onMarkdown, …})`                                                                                           | `ReadableStream` of HTML chunks at parser granularity; concatenate for the full HTML. Pass `into` to render as you consume. |
-| `renderStreaming(input, {into, onHtml, onMarkdown, …})`                                                                                       | Renders into an element token by token; resolves with the Markdown.                                                         |
-| `compact(options)`                                                                                                                            | Returns `{before, after, saved, reduction, messages, languages}`.                                                           |
-| `history`                                                                                                                                     | The conversation as the current session sees it.                                                                            |
-| `contextUsageRatio`                                                                                                                           | `contextUsage / contextWindow`.                                                                                             |
-| `session`                                                                                                                                     | The raw `LanguageModel`.                                                                                                    |
-| `append`, `clone`, `destroy`, `measureContextUsage`, `contextUsage`, `contextWindow`, `samplingMode`, `addEventListener`, `oncontextoverflow` | Pass-throughs.                                                                                                              |
+| Member                                                                                                                                                               | Notes                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `prompt(input, options)`                                                                                                                                             | Sanitized.                                                                                                                  |
+| `promptStreaming(input, options)`                                                                                                                                    | `ReadableStream` of vetted Markdown chunks.                                                                                 |
+| `promptStreamingHTML(input, {into, onMarkdown, …})`                                                                                                                  | `ReadableStream` of HTML chunks at parser granularity; concatenate for the full HTML. Pass `into` to render as you consume. |
+| `renderStreaming(input, {into, onHtml, onMarkdown, …})`                                                                                                              | Renders into an element token by token; resolves with the Markdown.                                                         |
+| `compact(options)`                                                                                                                                                   | Returns `{before, after, saved, reduction, messages, languages}`.                                                           |
+| `history`                                                                                                                                                            | The conversation as the current session sees it.                                                                            |
+| `contextUsageRatio`                                                                                                                                                  | `contextUsage / contextWindow`.                                                                                             |
+| `session`                                                                                                                                                            | The raw `LanguageModel`.                                                                                                    |
+| `append`, `clone`, `destroy`, `measureContextUsage`, `contextUsage`, `contextWindow`, `samplingMode`, `addEventListener`, `removeEventListener`, `oncontextoverflow` | Pass-throughs.                                                                                                              |
 
 ### Errors
 
@@ -407,10 +441,11 @@ npm install
 npm run dev
 ```
 
-The demo shows all five features: the download states as they happen, the
-user-gesture prompt, both streaming methods side by side, the context bar with
-a compact button, and a button that fills in an injection prompt so you can
-watch rendering stop mid-response.
+One prompt is one inference, shown three ways: the live DOM, the raw Markdown
+the model produced, and the HTML chunks that built the DOM. Around that are the
+download states as they happen, the user-gesture prompt, a context bar with
+compact and reset, stop for a response in flight, and a button that fills in an
+injection prompt so you can watch rendering stop mid-response.
 
 ## The Markdown parser
 
