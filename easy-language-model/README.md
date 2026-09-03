@@ -165,6 +165,7 @@ button's handler and treat a missing gesture as an error.
 Taking the model at its word:
 
 ```js
+// Dangerous: `answer` is untrusted.
 const answer = await session.prompt(prompt);
 output.innerHTML = answer;
 ```
@@ -187,12 +188,14 @@ const answer = await session.prompt(prompt);
 if (wasSanitized(answer)) {
   throw new Error('Unsafe output.');
 }
+output.setHTML(answer);
 ```
 
 </td><td>
 
 ```js
 const answer = await session.prompt(prompt);
+output.setHTML(answer);
 ```
 
 </td></tr>
@@ -205,6 +208,14 @@ what it removed: the only way to find out is to parse twice and compare — see
 [How the sanitization works](#how-the-sanitization-works). On the right the
 response is already vetted, and `prompt()` throws `UnsafeModelOutputError` when
 it isn't.
+
+Why `setHTML()` in the lower two, when the response has already been checked?
+Because the check deliberately exempts fenced code — a Markdown renderer shows
+that as text rather than running it — so a vetted response can still carry an
+`<iframe>` inside a fence, and `innerHTML` would create it. The two do different
+jobs: the check tells you someone tried, so you can refuse the response
+outright, and the sink stops anything that was never checked. Set
+`ignoreFencedCode: false` if you would rather the check cover fences as well.
 
 ### Streaming the response
 
@@ -444,7 +455,7 @@ Added by the wrapper:
 | `promptStreamingHTML(input, {onMarkdownChunk, …})` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                  |
 | `compact(options)`                                 | Summarizes the conversation and restarts the session. Returns `{before, after, saved, reduction, messages, languages}`. |
 | `history`                                          | The conversation as the current session sees it, which is what `compact()` summarizes.                                  |
-| `session`                                          | The raw `LanguageModel`, for anything the wrapper doesn't cover.                                                        |
+| `session`                                          | The raw `LanguageModel`. Its only members this class lacks are the deprecated and extension-only ones below.            |
 
 Everything else is the Prompt API's, and behaves the same unless noted:
 
@@ -532,7 +543,8 @@ injection prompt so you can watch rendering stop mid-response.
 
 ## The Markdown parser
 
-The parser in [`src/markdown-parser.js`](src/markdown-parser.js) is a vendored
+The parser in
+[`vendor/streaming-markdown.js`](vendor/streaming-markdown.js) is a vendored
 copy of [streaming-markdown](https://github.com/thetarnav/streaming-markdown)
 0.2.15 (MIT, Damian Tarnawski). It's here rather than in `dependencies` because
 upstream is unmaintained — the last substantive commit was May 2025 and it
