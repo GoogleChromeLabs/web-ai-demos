@@ -34,8 +34,8 @@ Requires a browser with the Prompt API and the HTML Sanitizer API. Pass
 
 Nothing is bundled at runtime. The single dependency,
 [`@types/dom-chromium-ai`](https://www.npmjs.com/package/@types/dom-chromium-ai),
-ships no code: the published declarations build on it so `LanguageModelPrompt`
-and friends resolve in your editor.
+ships no code: the published declarations build on it so the Prompt API's own
+types resolve in your editor.
 
 ## Side by side
 
