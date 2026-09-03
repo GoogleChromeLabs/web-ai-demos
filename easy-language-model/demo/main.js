@@ -72,6 +72,25 @@ const htmlTail = createTailFollower(htmlOutput);
 const markdownTail = createTailFollower(markdownOutput);
 const chunksTail = createTailFollower(htmlChunks);
 
+/**
+ * `renderStreamingHTML()`, plus following the newest content.
+ *
+ * The scroll has to happen after the chunk is in the DOM, so it can't be done
+ * from a `TransformStream` upstream of the renderer: those run before the sink
+ * writes, and the node isn't there yet.
+ */
+function renderFollowing(element, tail) {
+  const writer = renderStreamingHTML(element).getWriter();
+  return new WritableStream({
+    async write(html) {
+      await writer.write(html);
+      tail.follow();
+    },
+    close: () => writer.close(),
+    abort: (reason) => writer.abort(reason),
+  });
+}
+
 function clearOutputs() {
   htmlOutput.replaceChildren();
   markdownOutput.textContent = '';
@@ -213,9 +232,8 @@ form.addEventListener('submit', async (event) => {
 
   try {
     // `signal` goes straight through to the Prompt API, so Stop aborts the
-    // inference itself rather than ignoring the rest of it. The stream carries
-    // the HTML; a WritableStream puts it on the page, and pipeTo() drains it,
-    // so this cannot be wired up and do nothing.
+    // inference itself rather than ignoring the rest of it. The chunks are
+    // tapped for the listing on their way past, then written to the page.
     await session
       .promptStreamingHTML(prompt, {
         signal: controller.signal,
@@ -234,8 +252,7 @@ form.addEventListener('submit', async (event) => {
           },
         })
       )
-      .pipeTo(renderStreamingHTML(htmlOutput));
-    htmlTail.follow();
+      .pipeTo(renderFollowing(htmlOutput, htmlTail));
     addLogEntry(`Response complete, ${chunkCount} HTML chunks.`);
   } catch (error) {
     if (error.name === 'AbortError') {
