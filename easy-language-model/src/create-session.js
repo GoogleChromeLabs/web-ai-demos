@@ -7,32 +7,6 @@ import { LanguageModelUnavailableError } from './errors.js';
 import { createDownloadReporter } from './download.js';
 import { ensureUserActivation } from './user-activation.js';
 
-/**
- * The subset of create options that `availability()` accepts.
- *
- * Passing exactly the same options to `availability()` and `create()` matters:
- * the browser may report a default model as available while the specific
- * language or modality you asked for still needs downloading.
- */
-const CORE_OPTION_KEYS = [
-  'topK',
-  'temperature',
-  'samplingMode',
-  'expectedInputs',
-  'expectedOutputs',
-  'tools',
-];
-
-export function toCoreOptions(options) {
-  const core = {};
-  for (const key of CORE_OPTION_KEYS) {
-    if (options[key] !== undefined) {
-      core[key] = options[key];
-    }
-  }
-  return core;
-}
-
 /** Whether the Prompt API exists in this context. */
 export function isPromptApiSupported() {
   return 'LanguageModel' in globalThis;
@@ -56,9 +30,10 @@ export async function createRawSession(createOptions, easy) {
   const reporter = createDownloadReporter(easy);
   reporter.setState('checking');
 
-  const availability = await LanguageModel.availability(
-    toCoreOptions(createOptions)
-  );
+  // Forwarded as given. A dictionary ignores members it doesn't declare, so
+  // whatever the Prompt API adds next reaches both calls without a change here,
+  // and the two can never disagree about the same session.
+  const availability = await LanguageModel.availability(createOptions);
 
   if (availability === 'unavailable') {
     reporter.reportAvailability(availability);

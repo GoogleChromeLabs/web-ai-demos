@@ -4,11 +4,7 @@
  */
 
 import { Compactor } from './compact.js';
-import {
-  createRawSession,
-  isPromptApiSupported,
-  toCoreOptions,
-} from './create-session.js';
+import { createRawSession, isPromptApiSupported } from './create-session.js';
 import {
   LanguageModelUnavailableError,
   UnsafeModelOutputError,
@@ -158,8 +154,8 @@ export class EasyLanguageModel {
   }
 
   /**
-   * Same as `LanguageModel.availability()`. Only the core options matter, so
-   * the wrapper's own options can be passed straight through.
+   * Same as `LanguageModel.availability()`. The wrapper's own options can be
+   * passed straight through, so one object serves this and `create()`.
    *
    * @returns {Promise<'unavailable'|'downloadable'|'downloading'|'available'>}
    */
@@ -167,7 +163,7 @@ export class EasyLanguageModel {
     if (!isPromptApiSupported()) {
       return 'unavailable';
     }
-    return LanguageModel.availability(toCoreOptions(options));
+    return LanguageModel.availability(splitOptions(options).createOptions);
   }
 
   /**
@@ -225,11 +221,6 @@ export class EasyLanguageModel {
   }
 
   // ── Pass-throughs ──────────────────────────────────────────────────────────
-
-  /** The underlying `LanguageModel`, for anything this wrapper doesn't cover. */
-  get session() {
-    return this.#session;
-  }
 
   get contextUsage() {
     return this.#session.contextUsage;

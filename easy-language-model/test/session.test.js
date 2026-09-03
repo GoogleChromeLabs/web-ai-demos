@@ -126,6 +126,54 @@ describe('creating a session', () => {
     assert.equal(progress.hidden, true, 'hidden once ready');
   });
 
+  it('forwards unknown options to both calls, unchanged', async () => {
+    const script = newScript();
+    const created = [];
+    const asked = [];
+    install(script, { onCreate: (options) => created.push(options) });
+    const base = globalThis.LanguageModel;
+    globalThis.LanguageModel = {
+      ...base,
+      async availability(options) {
+        asked.push(options);
+        return 'available';
+      },
+    };
+
+    // Stand-in for whatever the Prompt API adds next.
+    const options = {
+      ...NO_SANITIZER,
+      somethingNew: 42,
+      samplingMode: 'balanced',
+    };
+    await EasyLanguageModel.availability(options);
+    await EasyLanguageModel.create(options);
+
+    assert.equal(asked[0].somethingNew, 42, 'reached availability()');
+    assert.equal(created[0].somethingNew, 42, 'reached create()');
+    assert.equal(created[0].samplingMode, 'balanced');
+    for (const seen of [asked[0], created[0]]) {
+      assert.ok(!('sanitizer' in seen), "the wrapper's own options stay out");
+      assert.ok(!('userActivation' in seen), 'and so do its behaviour flags');
+    }
+  });
+
+  it('exposes no route to the raw session', async () => {
+    install(newScript());
+    const session = await EasyLanguageModel.create(NO_SANITIZER);
+    assert.equal(session.session, undefined);
+    for (const deprecated of [
+      'measureInputUsage',
+      'inputUsage',
+      'inputQuota',
+      'onquotaoverflow',
+      'topK',
+      'temperature',
+    ]) {
+      assert.ok(!(deprecated in session), deprecated);
+    }
+  });
+
   it('rejects when the model is unavailable', async () => {
     install(newScript(), { availability: ['unavailable'] });
     await assert.rejects(EasyLanguageModel.create(NO_SANITIZER), {
@@ -251,8 +299,7 @@ describe('aborting', () => {
     let seenSignal;
     install(script);
     const session = await EasyLanguageModel.create(NO_SANITIZER);
-    // The fake records what it was handed.
-    session.session.promptStreaming = function (input, options) {
+    script.sessions.at(-1).promptStreaming = function (input, options) {
       seenSignal = options?.signal;
       return new ReadableStream({
         start(controller) {
@@ -270,7 +317,7 @@ describe('aborting', () => {
     install(script);
     const session = await EasyLanguageModel.create(NO_SANITIZER);
     const controller = new AbortController();
-    session.session.promptStreaming = function () {
+    script.sessions.at(-1).promptStreaming = function () {
       return new ReadableStream({
         start(streamController) {
           streamController.enqueue('partial ');
@@ -307,15 +354,16 @@ describe('compacting', () => {
     await conversation(session);
 
     const before = session.history.length;
-    const old = session.session;
+    const old = script.sessions.at(-1);
     const stats = await session.compact();
+    const replacement = script.sessions.at(-1);
 
     assert.equal(stats.messages, before, 'every message survives');
     assert.equal(old.destroyed, true, 'the old session is released');
-    assert.notEqual(session.session, old, 'a new session takes over');
+    assert.notEqual(replacement, old, 'a new session takes over');
     assert.equal(session.history[1].content, 'The quick brown', 'summarized');
     assert.equal(
-      session.session.options.initialPrompts.length,
+      replacement.options.initialPrompts.length,
       before,
       'the summaries seed the new session'
     );
@@ -331,7 +379,7 @@ describe('compacting', () => {
     let overflows = 0;
     session.addEventListener('contextoverflow', () => overflows++);
     await session.compact();
-    session.session.dispatchEvent(new Event('contextoverflow'));
+    script.sessions.at(-1).dispatchEvent(new Event('contextoverflow'));
     assert.equal(overflows, 1);
   });
 
@@ -355,8 +403,11 @@ describe('compacting', () => {
 
     await assert.rejects(session.compact(), { message: 'seeding failed' });
 
-    assert.ok(session.session, 'a working session must remain');
-    assert.equal(session.session.destroyed, false);
+    assert.equal(
+      script.sessions.at(-1).destroyed,
+      false,
+      'a working session must remain'
+    );
     assert.equal(session.history.length, full, 'full history is restored');
     assert.equal(
       await session.prompt('still alive?'),

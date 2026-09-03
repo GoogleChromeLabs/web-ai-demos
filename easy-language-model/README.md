@@ -16,8 +16,7 @@ built-in AI app ends up writing folded in:
 Everything else — `append()`, `clone()`, `measureContextUsage()`,
 `contextUsage`, `contextWindow`, `contextoverflow`, `responseConstraint`,
 `initialPrompts`, `signal`, `tools`, multimodal input — is passed through
-untouched, and `session.session` gets you the raw `LanguageModel` for anything
-else.
+untouched, including anything the Prompt API adds after this was written.
 
 ## Install
 
@@ -454,7 +453,6 @@ Added by the wrapper:
 | `promptStreamingHTML(input, {onMarkdownChunk, …})` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                  |
 | `compact(options)`                                 | Summarizes the conversation and restarts the session. Returns `{before, after, saved, reduction, messages, languages}`. |
 | `history`                                          | The conversation as the current session sees it, which is what `compact()` summarizes.                                  |
-| `session`                                          | The raw `LanguageModel`. Everything web-standard is wrapped, so this is for whatever the Prompt API adds next.          |
 
 Everything else is the Prompt API's, and behaves the same unless noted:
 
@@ -468,11 +466,11 @@ Everything else is the Prompt API's, and behaves the same unless noted:
 | `addEventListener()`, `removeEventListener()`, `oncontextoverflow`       | same                | Re-attached to the replacement session when `compact()` swaps it.               |
 | `measureContextUsage()`, `contextUsage`, `contextWindow`, `samplingMode` | same                | Passed straight through.                                                        |
 
-Nothing deprecated or extension-only is wrapped or documented here, so
-`measureInputUsage()`, `inputUsage`, `inputQuota`, `onquotaoverflow`, `topK`,
-`temperature` and `LanguageModel.params()` have no counterpart. Use
-`samplingMode` instead of `topK` and `temperature`; it is the member that
-replaced them.
+Every web-standard member is wrapped, and there is no way through to the
+session underneath, so nothing deprecated or extension-only is reachable.
+Options are another matter: they are forwarded exactly as given, which is what
+keeps `availability()` and `create()` in agreement and means a new one works
+without a change here.
 
 ### Exports
 
