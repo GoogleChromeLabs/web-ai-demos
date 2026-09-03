@@ -29,9 +29,9 @@ export const DOWNLOAD_STATES = [
 /**
  * Normalizes a `downloadprogress` event into the shape callers are handed.
  *
- * `total` is 1 when the browser reports a fraction rather than a byte count,
- * and can be absent entirely, so `percent` is computed here rather than by
- * every caller. Every download callback in the library goes through this, so
+ * A `total` of 1 means the browser is reporting a fraction rather than a byte
+ * count, and it can be absent entirely, so `percent` is worked out here rather
+ * than by every caller. Every download callback in the library goes through this, so
  * they all carry the same fields.
  *
  * @param {{loaded: number, total?: number}} event

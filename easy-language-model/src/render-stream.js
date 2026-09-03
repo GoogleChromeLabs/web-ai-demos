@@ -42,10 +42,9 @@ function unescapeText(text) {
  * await session.promptStreamingHTML(prompt).pipeTo(renderStreamingHTML(output));
  * ```
  *
- * `pipeTo()` drains the stream, so unlike passing an element to a method that
- * returns one, there is no way to wire this up and have nothing happen. It also
- * gives you the rest of the streams machinery for free: put a `TransformStream`
- * in the middle, or feed it HTML chunks from somewhere other than a model.
+ * Piping drains the stream, and brings the rest of the streams machinery with
+ * it: put a `TransformStream` in the middle to see the chunks on their way
+ * past, or feed this HTML from somewhere other than a model.
  *
  * Nodes are built with `createElement` and `append`, never from a string, so
  * this works on pages that enforce Trusted Types. That is why every chunk is a

@@ -188,9 +188,9 @@ export class Compactor {
   /**
    * Compacts a message list.
    *
-   * `system` messages and non-text content pass through verbatim: a system
-   * prompt is an instruction, not a transcript, and summarizing it changes
-   * the model's behavior.
+   * Messages with the `system` role, and non-text content, pass through
+   * verbatim: a system prompt is an instruction, not a transcript, and
+   * summarizing it changes the model's behavior.
    *
    * @param {Array<{role: string, content: any}>} history
    * @returns {Promise<{messages: Array, languages: string[]}>}
