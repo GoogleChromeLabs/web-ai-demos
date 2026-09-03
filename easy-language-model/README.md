@@ -29,7 +29,7 @@ npm install easy-language-model
 import { EasyLanguageModel } from 'easy-language-model';
 ```
 
-Requires Chrome with the Prompt API and the HTML Sanitizer API. Pass
+Requires a browser with the Prompt API and the HTML Sanitizer API. Pass
 `sanitizer: false` to run without the latter.
 
 Nothing is bundled at runtime. The single dependency,
