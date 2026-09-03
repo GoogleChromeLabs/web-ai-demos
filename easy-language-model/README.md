@@ -166,7 +166,7 @@ Taking the model at its word:
 
 ```js
 const answer = await session.prompt(prompt);
-output.innerHTML = marked.parse(answer);
+output.innerHTML = answer;
 ```
 
 Checking it first:
@@ -206,7 +206,7 @@ what it removed: the only way to find out is to parse twice and compare — see
 response is already vetted, and `prompt()` throws `UnsafeModelOutputError` when
 it isn't.
 
-### Streaming Markdown
+### Streaming the response
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -218,12 +218,10 @@ let chunks = '';
 for await (const chunk of stream) {
   chunks += chunk;
   if (wasSanitized(chunks)) {
-    smd.parser_end(parser);
     return;
   }
-  smd.parser_write(parser, chunk);
+  output.append(chunk);
 }
-smd.parser_end(parser);
 ```
 
 </td><td>
@@ -240,7 +238,8 @@ for await (const chunk of stream) {
 
 The check on the left runs against everything received so far, not each chunk
 alone, because a tag can straddle a chunk boundary. On the right the stream
-errors instead of handing you an unsafe chunk.
+errors instead of handing you an unsafe chunk. Both append the chunks as text;
+the model writes Markdown, and turning that into HTML is the next section.
 
 ### HTML instead of Markdown
 
@@ -260,7 +259,9 @@ Concatenating every chunk yields the complete, well-formed HTML.
 
 Consuming that stream has no side effects. To put the response on screen, pipe
 it into `renderStreamingHTML()`, a `WritableStream` that builds the DOM by
-appending nodes as they arrive, so nothing is ever re-parsed:
+appending nodes as they arrive, so nothing is ever re-parsed. The other column
+reaches for [`marked`](https://marked.js.org/), an ordinary Markdown parser,
+which has to be handed the whole response every time it grows:
 
 <!-- prettier-ignore-start -->
 <table>
