@@ -51,6 +51,13 @@ Keeping the Prompt API's own options in one object is what makes the two calls
 agree by construction; the wrapper's options are spread in at `create()` time
 and never have to be repeated.
 
+Both columns use the same three elements from the page. `progress` is an
+`HTMLProgressElement`. `enableButton` and `hint` start hidden, are revealed
+only when a gesture is needed — something to click, and a line saying why — and
+are hidden again once the session exists. `waitForClick()` on the left is a
+helper you would write yourself, which is what `onUserActivationRequired`
+replaces.
+
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
 <tr valign="top"><td>
@@ -77,7 +84,11 @@ if (availability !== 'available') {
   downloading = true;
   progress.hidden = false;
   if (!navigator.userActivation.isActive) {
+    enableButton.hidden = false;
+    hint.hidden = false;
     await waitForClick();
+    enableButton.hidden = true;
+    hint.hidden = true;
   }
 }
 
@@ -125,6 +136,8 @@ const session = await EasyLanguageModel.create({
     hint.hidden = false;
   },
 });
+enableButton.hidden = true;
+hint.hidden = true;
 ```
 
 </td></tr>
