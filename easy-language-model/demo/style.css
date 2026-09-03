@@ -88,8 +88,7 @@ code {
 }
 
 .badge[data-state='downloading'],
-.badge[data-state='downloadable'],
-.badge[data-state='extracting'] {
+.badge[data-state='downloadable'] {
   color: var(--warn);
   border-color: currentColor;
 }

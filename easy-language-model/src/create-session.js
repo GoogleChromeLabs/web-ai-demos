@@ -28,7 +28,6 @@ export async function createRawSession(createOptions, easy) {
   }
 
   const reporter = createDownloadReporter(easy);
-  reporter.setState('checking');
 
   // Forwarded as given. A dictionary ignores members it doesn't declare, so
   // whatever the Prompt API adds next reaches both calls without a change here,

@@ -144,8 +144,8 @@ hint.hidden = true;
 
 On the left, `e.loaded === 1` is the moment the bytes are all in and the
 browser starts unpacking the model. That takes an unknown amount of time, so
-the indicator has to go indeterminate; the wrapper does that for you and
-reports it as an `extracting` state. Checking availability is optional on the
+the indicator has to go indeterminate, which the wrapper does for you.
+Checking availability is optional on the
 right — `create()` checks anyway and throws `LanguageModelUnavailableError` —
 but it is worth asking first if you would rather not offer the feature at all.
 
@@ -433,8 +433,7 @@ these:
 | `unsafeOutput`                                           | `'throw'`             | `'throw'` or `'stop'` (end the stream quietly).                                                              |
 | `onUnsafeOutput(detail)`                                 | —                     | Called on detection either way. `detail` has `output`, `sanitized`, `partialOutput`.                         |
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
-| `onDownloadStateChange(state)`                           | —                     | `checking` → `downloadable` → `downloading` → `extracting` → `ready`.                                        |
-| `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically.                                                             |
+| `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
 | `userActivation`                                         | `'wait'`              | `'wait'`, `'throw'`, or `'ignore'`.                                                                          |
 | `onUserActivationRequired()`                             | —                     | Your cue to reveal a button or other affordance.                                                             |

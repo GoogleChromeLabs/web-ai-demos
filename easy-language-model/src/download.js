@@ -4,29 +4,6 @@
  */
 
 /**
- * Every state a session creation can pass through, in order:
- *
- * - `checking`      — `availability()` is in flight.
- * - `unavailable`   — the model can't run on this device with these options.
- * - `downloadable`  — a download is needed and hasn't started.
- * - `downloading`   — bytes are coming in; progress events are firing.
- * - `extracting`    — the download finished; the browser is unpacking and
- *                     loading the model into memory. Duration is unknown, so
- *                     this is the point to show an indeterminate indicator.
- * - `available`     — the model was already there, no download needed.
- * - `ready`         — the session exists and can be prompted.
- */
-export const DOWNLOAD_STATES = [
-  'checking',
-  'unavailable',
-  'downloadable',
-  'downloading',
-  'extracting',
-  'available',
-  'ready',
-];
-
-/**
  * Normalizes a `downloadprogress` event into the shape callers are handed.
  *
  * A `total` of 1 means the browser is reporting a fraction rather than a byte
@@ -48,53 +25,33 @@ export function normalizeDownloadProgress(event, resource) {
  * Wires up download reporting for one `create()` call.
  *
  * Unlike the raw Prompt API, where `monitor` is opt-in, the wrapper always
- * installs one. A user's own `monitor` callback still runs, and a
- * `<progress>` element passed as `progress` is driven automatically, including
- * the indeterminate "extracting" phase once the bytes are all in.
+ * installs one. A caller's own `monitor` still runs, and a `<progress>` element
+ * passed as `progress` is driven automatically, including going indeterminate
+ * once the bytes are all in and the browser is unpacking the model.
  *
  * @param {object} options
- * @param {(state: string, detail: object) => void} [options.onDownloadStateChange]
  * @param {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [options.onDownloadProgress]
  * @param {HTMLProgressElement} [options.progress]
  * @param {(monitor: EventTarget) => void} [options.monitor] The caller's own monitor.
  */
 export function createDownloadReporter({
-  onDownloadStateChange,
   onDownloadProgress,
   progress,
   monitor,
 } = {}) {
-  let state = null;
   // The model was missing when we started, so a download really is happening.
   let downloadExpected = false;
 
-  const setState = (next, detail = {}) => {
-    if (state === next) {
-      return;
-    }
-    state = next;
-    if (progress) {
-      progress.hidden = !(next === 'downloading' || next === 'extracting');
-    }
-    onDownloadStateChange?.(next, { ...detail, state: next });
-  };
-
   return {
-    get state() {
-      return state;
-    },
-
     /** Called with the result of `availability()`. */
     reportAvailability(availability) {
       downloadExpected = availability !== 'available';
       if (progress) {
+        progress.hidden = !downloadExpected;
         progress.value = 0;
         progress.max = 1;
       }
-      setState(availability, { availability });
     },
-
-    setState,
 
     /** The `monitor` callback to hand to `LanguageModel.create()`. */
     monitor(m) {
@@ -102,18 +59,18 @@ export function createDownloadReporter({
         const reported = normalizeDownloadProgress(event, 'language-model');
         const { total, loaded, percent } = reported;
 
-        if (percent < 1) {
-          setState('downloading');
-          if (progress) {
+        if (progress) {
+          if (percent < 1) {
+            progress.hidden = false;
             progress.max = total;
             progress.value = loaded;
+          } else if (downloadExpected) {
+            // All bytes are in, but the model still has to be unpacked and
+            // loaded into memory. Nobody can say how long that takes, so the
+            // bar goes indeterminate.
+            progress.hidden = false;
+            progress.removeAttribute('value');
           }
-        } else if (downloadExpected) {
-          // All bytes are in, but the model still has to be extracted and
-          // loaded into memory. Nobody can say how long that takes, so switch
-          // the bar to its indeterminate state.
-          setState('extracting');
-          progress?.removeAttribute('value');
         }
 
         onDownloadProgress?.(reported);
@@ -128,7 +85,6 @@ export function createDownloadReporter({
         progress.value = 0;
         progress.max = 1;
       }
-      setState('ready');
     },
   };
 }

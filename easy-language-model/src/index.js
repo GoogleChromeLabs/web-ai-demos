@@ -10,7 +10,6 @@ export {
   UnsafeModelOutputError,
   UserActivationRequiredError,
 } from './errors.js';
-export { DOWNLOAD_STATES } from './download.js';
 export { renderStreamingHTML } from './render-stream.js';
 export { hasUserActivation, waitForUserActivation } from './user-activation.js';
 export {

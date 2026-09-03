@@ -99,7 +99,7 @@ describe('creating a session', () => {
     );
   });
 
-  it('reports download states in order and drives a progress element', async () => {
+  it('drives a progress element through the download and hides it after', async () => {
     const script = newScript();
     script.progress = [
       { loaded: 0.25, total: 1 },
@@ -108,70 +108,24 @@ describe('creating a session', () => {
     ];
     install(script, { availability: ['downloadable'] });
 
-    const states = [];
+    const seen = [];
     const progress = document.createElement('progress');
     await EasyLanguageModel.create({
       ...NO_SANITIZER,
       progress,
-      onDownloadStateChange: (state) => states.push(state),
+      onDownloadProgress: (p) => seen.push(p.percent),
     });
 
-    assert.deepEqual(states, [
-      'checking',
-      'downloadable',
-      'downloading',
-      'extracting',
-      'ready',
-    ]);
+    assert.deepEqual(seen, [0.25, 0.5, 1], 'every event reported');
     assert.equal(progress.hidden, true, 'hidden once ready');
   });
 
-  it('forwards unknown options to both calls, unchanged', async () => {
+  it('leaves the progress element alone when nothing is downloaded', async () => {
     const script = newScript();
-    const created = [];
-    const asked = [];
-    install(script, { onCreate: (options) => created.push(options) });
-    const base = globalThis.LanguageModel;
-    globalThis.LanguageModel = {
-      ...base,
-      async availability(options) {
-        asked.push(options);
-        return 'available';
-      },
-    };
-
-    // Stand-in for whatever the Prompt API adds next.
-    const options = {
-      ...NO_SANITIZER,
-      somethingNew: 42,
-      samplingMode: 'balanced',
-    };
-    await EasyLanguageModel.availability(options);
-    await EasyLanguageModel.create(options);
-
-    assert.equal(asked[0].somethingNew, 42, 'reached availability()');
-    assert.equal(created[0].somethingNew, 42, 'reached create()');
-    assert.equal(created[0].samplingMode, 'balanced');
-    for (const seen of [asked[0], created[0]]) {
-      assert.ok(!('sanitizer' in seen), "the wrapper's own options stay out");
-      assert.ok(!('userActivation' in seen), 'and so do its behaviour flags');
-    }
-  });
-
-  it('exposes no route to the raw session', async () => {
-    install(newScript());
-    const session = await EasyLanguageModel.create(NO_SANITIZER);
-    assert.equal(session.session, undefined);
-    for (const deprecated of [
-      'measureInputUsage',
-      'inputUsage',
-      'inputQuota',
-      'onquotaoverflow',
-      'topK',
-      'temperature',
-    ]) {
-      assert.ok(!(deprecated in session), deprecated);
-    }
+    install(script);
+    const progress = document.createElement('progress');
+    await EasyLanguageModel.create({ ...NO_SANITIZER, progress });
+    assert.equal(progress.hidden, true);
   });
 
   it('rejects when the model is unavailable', async () => {

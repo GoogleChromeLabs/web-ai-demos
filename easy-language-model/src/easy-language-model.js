@@ -89,7 +89,6 @@ const EASY_OPTION_KEYS = new Set([
   'unsafeOutput',
   'onUnsafeOutput',
   'onDownloadProgress',
-  'onDownloadStateChange',
   'progress',
   'userActivation',
   'onUserActivationRequired',
@@ -124,7 +123,6 @@ function splitOptions(options) {
  * @property {(detail: {output: string, sanitized: string, partialOutput: string}) => void} [onUnsafeOutput]
  *   Always called on detection, whichever strategy is set.
  * @property {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [onDownloadProgress]
- * @property {(state: string, detail: object) => void} [onDownloadStateChange]
  * @property {HTMLProgressElement} [progress] Driven automatically, including
  *   the indeterminate phase while the model is unpacked.
  * @property {'wait'|'throw'|'ignore'} [userActivation] What to do when a

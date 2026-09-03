@@ -146,19 +146,21 @@ function setBusy(value) {
 // Builds a session. Called at startup and again by Reset, which is what
 // starting over means with the Prompt API: destroy the old session and create
 // a new one with the same options.
+// Only what the Prompt API defines, so the same object serves availability()
+// and create() and the two cannot disagree about the session.
+const MODEL_OPTIONS = {
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
+};
+
 async function createSession() {
   const created = await EasyLanguageModel.create({
-    expectedInputs: [{ type: 'text', languages: ['en'] }],
-    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+    ...MODEL_OPTIONS,
 
     // Download reporting needs no opting in. Handing the wrapper a
     // <progress> element is enough to get a correct one, including the
     // indeterminate phase while the model is unpacked into memory.
     progress: downloadProgress,
-    onDownloadStateChange(state) {
-      setState(state, `Model is ${state}.`);
-      addLogEntry(`downloadStateChange → ${state}`);
-    },
     onDownloadProgress({ resource, percent }) {
       // Compacting downloads a summarizer and a language detector of its own,
       // so say which one is arriving.
@@ -196,6 +198,21 @@ async function init() {
     $('status-panel').hidden = true;
     return;
   }
+
+  setState('checking', 'Checking availability…');
+  const availability = await EasyLanguageModel.availability(MODEL_OPTIONS);
+  addLogEntry(`availability: ${availability}`);
+
+  if (availability === 'unavailable') {
+    setState('unavailable', 'The model is unavailable on this device.');
+    return;
+  }
+  setState(
+    availability,
+    availability === 'available'
+      ? 'Creating session…'
+      : `Model is ${availability}; it has to be downloaded first.`
+  );
 
   try {
     session = await createSession();
