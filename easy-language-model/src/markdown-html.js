@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as smd from './markdown-parser.js';
+import * as smd from '../vendor/streaming-markdown.js';
 import { isSafeUrl } from './sanitizer.js';
 
 // CommonMark resolves entity references in text; upstream passes them through,
@@ -153,8 +153,8 @@ export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
   let entityTail = '';
 
   const frames = [];
-  // The opening tags of the most recent token, not yet serialized: set_attr()
-  // runs after add_token(), and the attributes have to be in the tag.
+  // The opening tags of the most recent token, not yet serialized: setAttr()
+  // runs after addToken(), and the attributes have to be in the tag.
   let pendingFrame = null;
 
   const flush = () => {
@@ -207,7 +207,7 @@ export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
   const renderer = {
     data,
 
-    add_token(data, type) {
+    addToken(data, type) {
       if (type === smd.DOCUMENT) {
         return;
       }
@@ -238,7 +238,7 @@ export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
         case smd.HEADING_4:
         case smd.HEADING_5:
         case smd.HEADING_6:
-          slot = create(`h${smd.heading_to_level(type)}`);
+          slot = create(`h${smd.headingToLevel(type)}`);
           break;
         case smd.ITALIC_AST:
         case smd.ITALIC_UND:
@@ -334,8 +334,8 @@ export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
       frames.push(pendingFrame);
     },
 
-    set_attr(data, type, value) {
-      const attribute = smd.attr_to_html_attr(type);
+    setAttr(data, type, value) {
+      const attribute = smd.attrToHtmlAttr(type);
       const element = data.nodes[data.index];
 
       if (attribute === 'href' || attribute === 'src') {
@@ -368,7 +368,7 @@ export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
       element.setAttribute(attribute, value);
     },
 
-    add_text(data, rawText) {
+    addText(data, rawText) {
       flush();
       const element = data.nodes[data.index];
 
@@ -390,7 +390,7 @@ export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
       }
     },
 
-    end_token(data) {
+    endToken(data) {
       flushEntityTail();
       flush();
       data.index -= 1;
@@ -419,11 +419,11 @@ export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
   return {
     root,
     write(chunk) {
-      smd.parser_write(parser, chunk);
+      smd.parserWrite(parser, chunk);
     },
     /** Flushes the parser and closes any tags Markdown left open. */
     end() {
-      smd.parser_end(parser);
+      smd.parserEnd(parser);
       flushEntityTail();
       flush();
       while (frames.length > 0) {

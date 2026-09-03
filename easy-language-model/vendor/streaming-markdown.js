@@ -16,10 +16,10 @@
  *
  * - `_` only opens emphasis at a word boundary, per CommonMark, so
  *   snake_case_word and MAX_BUFFER_SIZE keep their underscores. `*` is
- *   unchanged. This needs `last_text_char`, because text is flushed to the
+ *   unchanged. This needs `lastTextChar`, because text is flushed to the
  *   renderer at arbitrary points and a chunk boundary can empty the buffer
  *   right before the delimiter.
- * - `~~~` opens a code fence, alongside ```. `fence_char` records which
+ * - `~~~` opens a code fence, alongside ```. `fenceChar` records which
  *   character opened it so the right one closes it. `~~strikethrough~~` still
  *   works: two tildes not followed by a third fail out to the inline path.
  *
@@ -28,11 +28,10 @@
  * trimming, link titles, image alt text and the `language-` class prefix are
  * fixed there rather than here.
  *
- * To review this against upstream, normalize the formatting first:
- *
- *   npx prettier --stdin-filepath smd.js \
- *     < node_modules/streaming-markdown/smd.js > /tmp/upstream.js
- *   diff /tmp/upstream.js src/markdown-parser.js
+ * Every snake_case identifier was renamed to camelCase to match the rest of
+ * this project. SCREAMING_SNAKE constants kept their convention. That makes a
+ * line-by-line diff against upstream useless, which is a deliberate trade: this
+ * is a fork rather than a patched copy, and there is no upstream left to track.
  */
 
 /*
@@ -84,40 +83,40 @@ export const Token = /** @type {const} */ ({
   Document: DOCUMENT,
   Blockquote: BLOCKQUOTE,
   Paragraph: PARAGRAPH,
-  Heading_1: HEADING_1,
-  Heading_2: HEADING_2,
-  Heading_3: HEADING_3,
-  Heading_4: HEADING_4,
-  Heading_5: HEADING_5,
-  Heading_6: HEADING_6,
-  Code_Block: CODE_BLOCK,
-  Code_Fence: CODE_FENCE,
-  Code_Inline: CODE_INLINE,
-  Italic_Ast: ITALIC_AST,
-  Italic_Und: ITALIC_UND,
-  Strong_Ast: STRONG_AST,
-  Strong_Und: STRONG_UND,
+  Heading1: HEADING_1,
+  Heading2: HEADING_2,
+  Heading3: HEADING_3,
+  Heading4: HEADING_4,
+  Heading5: HEADING_5,
+  Heading6: HEADING_6,
+  CodeBlock: CODE_BLOCK,
+  CodeFence: CODE_FENCE,
+  CodeInline: CODE_INLINE,
+  ItalicAst: ITALIC_AST,
+  ItalicUnd: ITALIC_UND,
+  StrongAst: STRONG_AST,
+  StrongUnd: STRONG_UND,
   Strike: STRIKE,
   Link: LINK,
-  Raw_URL: RAW_URL,
+  RawURL: RAW_URL,
   Image: IMAGE,
-  Line_Break: LINE_BREAK,
+  LineBreak: LINE_BREAK,
   Rule: RULE,
-  List_Unordered: LIST_UNORDERED,
-  List_Ordered: LIST_ORDERED,
-  List_Item: LIST_ITEM,
+  ListUnordered: LIST_UNORDERED,
+  ListOrdered: LIST_ORDERED,
+  ListItem: LIST_ITEM,
   Checkbox: CHECKBOX,
   Table: TABLE,
-  Table_Row: TABLE_ROW,
-  Table_Cell: TABLE_CELL,
-  Equation_Block: EQUATION_BLOCK,
-  Equation_Inline: EQUATION_INLINE,
+  TableRow: TABLE_ROW,
+  TableCell: TABLE_CELL,
+  EquationBlock: EQUATION_BLOCK,
+  EquationInline: EQUATION_INLINE,
 });
 
 /**
  * @param   {Token} type
  * @returns {string    } */
-export function token_to_string(type) {
+export function tokenToString(type) {
   switch (type) {
     case DOCUMENT:
       return 'Document';
@@ -126,31 +125,31 @@ export function token_to_string(type) {
     case PARAGRAPH:
       return 'Paragraph';
     case HEADING_1:
-      return 'Heading_1';
+      return 'Heading1';
     case HEADING_2:
-      return 'Heading_2';
+      return 'Heading2';
     case HEADING_3:
-      return 'Heading_3';
+      return 'Heading3';
     case HEADING_4:
-      return 'Heading_4';
+      return 'Heading4';
     case HEADING_5:
-      return 'Heading_5';
+      return 'Heading5';
     case HEADING_6:
-      return 'Heading_6';
+      return 'Heading6';
     case CODE_BLOCK:
-      return 'Code_Block';
+      return 'CodeBlock';
     case CODE_FENCE:
-      return 'Code_Fence';
+      return 'CodeFence';
     case CODE_INLINE:
-      return 'Code_Inline';
+      return 'CodeInline';
     case ITALIC_AST:
-      return 'Italic_Ast';
+      return 'ItalicAst';
     case ITALIC_UND:
-      return 'Italic_Und';
+      return 'ItalicUnd';
     case STRONG_AST:
-      return 'Strong_Ast';
+      return 'StrongAst';
     case STRONG_UND:
-      return 'Strong_Und';
+      return 'StrongUnd';
     case STRIKE:
       return 'Strike';
     case LINK:
@@ -160,27 +159,27 @@ export function token_to_string(type) {
     case IMAGE:
       return 'Image';
     case LINE_BREAK:
-      return 'Line_Break';
+      return 'LineBreak';
     case RULE:
       return 'Rule';
     case LIST_UNORDERED:
-      return 'List_Unordered';
+      return 'ListUnordered';
     case LIST_ORDERED:
-      return 'List_Ordered';
+      return 'ListOrdered';
     case LIST_ITEM:
-      return 'List_Item';
+      return 'ListItem';
     case CHECKBOX:
       return 'Checkbox';
     case TABLE:
       return 'Table';
     case TABLE_ROW:
-      return 'Table_Row';
+      return 'TableRow';
     case TABLE_CELL:
-      return 'Table_Cell';
+      return 'TableCell';
     case EQUATION_BLOCK:
-      return 'Equation_Block';
+      return 'EquationBlock';
     case EQUATION_INLINE:
-      return 'Equation_Inline';
+      return 'EquationInline';
   }
 }
 
@@ -202,7 +201,7 @@ export const Attr = /** @type {const} */ ({
 /**
  * @param   {Attr} type
  * @returns {string    } */
-export function attr_to_html_attr(type) {
+export function attrToHtmlAttr(type) {
   switch (type) {
     case HREF:
       return 'href';
@@ -220,7 +219,7 @@ export function attr_to_html_attr(type) {
 /**
  * @param   {number} level
  * @returns {Token } */
-export const level_to_heading = (level) => {
+export const levelToHeading = (level) => {
   switch (level) {
     case 1:
       return HEADING_1;
@@ -236,12 +235,12 @@ export const level_to_heading = (level) => {
       return HEADING_6;
   }
 };
-export const heading_from_level = level_to_heading;
+export const headingFromLevel = levelToHeading;
 
 /**
  * @param   {Token} token
  * @returns {number} */
-export const heading_to_level = (token) => {
+export const headingToLevel = (token) => {
   switch (token) {
     case HEADING_1:
       return 1;
@@ -262,7 +261,7 @@ export const heading_to_level = (token) => {
 
 /**
  * @typedef  {object      } Parser
- * @property {Any_Renderer} renderer        - {@link Renderer} interface
+ * @property {AnyRenderer} renderer        - {@link Renderer} interface
  * @property {string      } text            - Text to be added to the last token in the next flush
  * @property {string      } pending         - Characters for identifying tokens
  * @property {Uint32Array } tokens          - Current token and it's parents (a slice of a tree)
@@ -270,22 +269,22 @@ export const heading_to_level = (token) => {
  * @property {number      } token           - Last token in the tree
  * @property {Uint8Array  } spaces
  * @property {string      } indent
- * @property {number      } indent_len
- * @property {number      } fence_end       - For {@link Token.Code_Fence} parsing
- * @property {number      } fence_start
- * @property {string      } fence_char      - FIX: ` or ~, whichever opened the fence
- * @property {string      } last_text_char  - FIX: last character handed to the renderer
- * @property {number      } blockquote_idx  - For Blockquote parsing
- * @property {string      } hr_char         - For horizontal rule parsing
- * @property {number      } hr_chars        - For horizontal rule parsing
- * @property {number      } table_state
+ * @property {number      } indentLen
+ * @property {number      } fenceEnd       - For {@link Token.CodeFence} parsing
+ * @property {number      } fenceStart
+ * @property {string      } fenceChar      - FIX: ` or ~, whichever opened the fence
+ * @property {string      } lastTextChar  - FIX: last character handed to the renderer
+ * @property {number      } blockquoteIdx  - For Blockquote parsing
+ * @property {string      } hrChar         - For horizontal rule parsing
+ * @property {number      } hrChars        - For horizontal rule parsing
+ * @property {number      } tableState
  */
 
 const TOKEN_ARRAY_CAP = 24;
 
 /**
  * Makes a new Parser object.
- * @param   {Any_Renderer} renderer
+ * @param   {AnyRenderer} renderer
  * @returns {Parser      } */
 export function parser(renderer) {
   const tokens = new Uint32Array(TOKEN_ARRAY_CAP);
@@ -297,17 +296,17 @@ export function parser(renderer) {
     tokens: tokens,
     len: 0,
     token: DOCUMENT,
-    fence_end: 0,
-    blockquote_idx: 0,
-    hr_char: '',
-    hr_chars: 0,
-    fence_start: 0,
-    fence_char: '',
-    last_text_char: '',
+    fenceEnd: 0,
+    blockquoteIdx: 0,
+    hrChar: '',
+    hrChars: 0,
+    fenceStart: 0,
+    fenceChar: '',
+    lastTextChar: '',
     spaces: new Uint8Array(TOKEN_ARRAY_CAP),
     indent: '',
-    indent_len: 0,
-    table_state: 0,
+    indentLen: 0,
+    tableState: 0,
   };
 }
 
@@ -315,38 +314,38 @@ export function parser(renderer) {
  * Finish rendering the markdown - flushes any remaining text.
  * @param   {Parser} p
  * @returns {void  } */
-export function parser_end(p) {
+export function parserEnd(p) {
   if (p.pending.length > 0) {
-    parser_write(p, '\n');
+    parserWrite(p, '\n');
   }
 }
 
 /**
  * @param   {Parser} p
  * @returns {void  } */
-function add_text(p) {
+function addText(p) {
   if (p.text.length === 0) return;
   console.assert(p.len > 0, 'Never adding text to root');
   /*  FIX: the emphasis rules need the character before a delimiter, but text
         is flushed at arbitrary points — a chunk boundary can empty p.text right
         before an `_`. Remember the last character that went out.
     */
-  p.last_text_char = p.text[p.text.length - 1];
-  p.renderer.add_text(p.renderer.data, p.text);
+  p.lastTextChar = p.text[p.text.length - 1];
+  p.renderer.addText(p.renderer.data, p.text);
   p.text = '';
 }
 
 /**
  * @param   {Parser} p
  * @returns {void  } */
-function ensure_paragraph(p) {
+function ensureParagraph(p) {
   switch (p.token) {
     case LINE_BREAK:
     case DOCUMENT:
     case BLOCKQUOTE:
     case LIST_ORDERED:
     case LIST_UNORDERED:
-      add_token(p, PARAGRAPH);
+      addToken(p, PARAGRAPH);
   }
 }
 
@@ -354,28 +353,28 @@ function ensure_paragraph(p) {
  * @param   {Parser} p
  * @param   {string} text
  * @returns {void  } */
-function push_text(p, text) {
-  ensure_paragraph(p);
+function pushText(p, text) {
+  ensureParagraph(p);
   p.text += text;
 }
 
 /**
  * @param   {Parser} p
  * @returns {void  } */
-function end_token(p) {
-  p.last_text_char = ''; // FIX: see add_text
+function endToken(p) {
+  p.lastTextChar = ''; // FIX: see addText
   console.assert(p.len > 0, 'No nodes to end');
   p.len -= 1;
   p.token = /** @type {Token} */ (p.tokens[p.len]);
-  p.renderer.end_token(p.renderer.data);
+  p.renderer.endToken(p.renderer.data);
 }
 
 /**
  * @param   {Parser} p
  * @param   {Token } token
  * @returns {void  } */
-function add_token(p, token) {
-  p.last_text_char = ''; // FIX: see add_text
+function addToken(p, token) {
+  p.lastTextChar = ''; // FIX: see addText
   /*
      If a list doesn't start with a list item
      it means that there was a newline after the list:
@@ -383,32 +382,32 @@ function add_token(p, token) {
      1. foo
      2. bar
      <empty line>
-     <not_a_list_item> <- new token
+     <notAListItem> <- new token
     */
   if (
     (p.tokens[p.len] === LIST_ORDERED || p.tokens[p.len] === LIST_UNORDERED) &&
     token !== LIST_ITEM
   ) {
-    end_token(p);
+    endToken(p);
   }
 
   p.len += 1;
   p.tokens[p.len] = token;
   p.token = token;
-  p.renderer.add_token(p.renderer.data, token);
+  p.renderer.addToken(p.renderer.data, token);
 }
 
 /**
  * @param   {Parser} p
  * @param   {number} token
- * @param   {number} start_idx
+ * @param   {number} startIdx
  * @returns {number} */
-function idx_of_token(p, token, start_idx) {
-  while (start_idx <= p.len) {
-    if (p.tokens[start_idx] === token) {
-      return start_idx;
+function idxOfToken(p, token, startIdx) {
+  while (startIdx <= p.len) {
+    if (p.tokens[startIdx] === token) {
+      return startIdx;
     }
-    start_idx += 1;
+    startIdx += 1;
   }
   return -1;
 }
@@ -418,12 +417,12 @@ function idx_of_token(p, token, start_idx) {
  * @param   {Parser} p
  * @param   {number} len
  * @returns {void  } */
-function end_tokens_to_len(p, len) {
+function endTokensToLen(p, len) {
   // TODO: specific token state should be reset only when the token ends
-  p.fence_start = 0;
+  p.fenceStart = 0;
 
   while (p.len > len) {
-    end_token(p);
+    endToken(p);
   }
 }
 
@@ -431,7 +430,7 @@ function end_tokens_to_len(p, len) {
  * @param   {Parser} p
  * @param   {number} indent
  * @returns {number} */
-function end_tokens_to_indent(p, indent) {
+function endTokensToIndent(p, indent) {
   let idx = 0;
   for (let i = 0; i <= p.len; i += 1) {
     indent -= p.spaces[i];
@@ -449,7 +448,7 @@ function end_tokens_to_indent(p, indent) {
   }
 
   while (p.len > idx) {
-    end_token(p);
+    endToken(p);
   }
 
   return indent;
@@ -457,9 +456,9 @@ function end_tokens_to_indent(p, indent) {
 
 /**
  * @param   {Parser } p
- * @param   {Token  } list_token
+ * @param   {Token  } listToken
  * @returns {boolean} added a new list */
-function continue_or_add_list(p, list_token) {
+function continueOrAddList(p, listToken) {
   /* will create a new list inside the last item
        if the amount of spaces is greater than the last one (with prefix)
        1. foo
@@ -468,32 +467,32 @@ function continue_or_add_list(p, list_token) {
           12. qux    <- cannot be nested in "baz" or "bar",
                         so it's a new list in "foo"
     */
-  let list_idx = -1;
-  let item_idx = -1;
+  let listIdx = -1;
+  let itemIdx = -1;
 
-  for (let i = p.blockquote_idx + 1; i <= p.len; i += 1) {
+  for (let i = p.blockquoteIdx + 1; i <= p.len; i += 1) {
     if (p.tokens[i] === LIST_ITEM) {
-      if (p.indent_len < p.spaces[i]) {
-        item_idx = -1;
+      if (p.indentLen < p.spaces[i]) {
+        itemIdx = -1;
         break;
       }
-      item_idx = i;
-    } else if (p.tokens[i] === list_token) {
-      list_idx = i;
+      itemIdx = i;
+    } else if (p.tokens[i] === listToken) {
+      listIdx = i;
     }
   }
 
-  if (item_idx === -1) {
-    if (list_idx === -1) {
-      end_tokens_to_len(p, p.blockquote_idx);
-      add_token(p, list_token);
+  if (itemIdx === -1) {
+    if (listIdx === -1) {
+      endTokensToLen(p, p.blockquoteIdx);
+      addToken(p, listToken);
       return true;
     }
-    end_tokens_to_len(p, list_idx);
+    endTokensToLen(p, listIdx);
     return false;
   }
-  end_tokens_to_len(p, item_idx);
-  add_token(p, list_token);
+  endTokensToLen(p, itemIdx);
+  addToken(p, listToken);
   return true;
 }
 
@@ -501,28 +500,28 @@ function continue_or_add_list(p, list_token) {
  * Create a new list
  * or continue the last one
  * @param   {Parser } p
- * @param   {number } prefix_length
+ * @param   {number } prefixLength
  * @returns {void   } */
-function add_list_item(p, prefix_length) {
-  add_token(p, LIST_ITEM);
-  p.spaces[p.len] = p.indent_len + prefix_length;
-  clear_root_pending(p);
+function addListItem(p, prefixLength) {
+  addToken(p, LIST_ITEM);
+  p.spaces[p.len] = p.indentLen + prefixLength;
+  clearRootPending(p);
   p.token = MAYBE_TASK;
 }
 
 /**
  * @param   {Parser} p
  * @returns {void  } */
-function clear_root_pending(p) {
+function clearRootPending(p) {
   p.indent = '';
-  p.indent_len = 0;
+  p.indentLen = 0;
   p.pending = '';
 }
 
 /**
  * @param   {number} charcode
  * @returns {boolean} */
-function is_digit(charcode) {
+function isDigit(charcode) {
   switch (charcode) {
     case 48:
     case 49:
@@ -543,7 +542,7 @@ function is_digit(charcode) {
 /**
  * @param   {number} charcode
  * @returns {boolean} */
-function is_delimeter(charcode) {
+function isDelimeter(charcode) {
   switch (charcode) {
     //   " "      ":"      ";"      ")"      ","      "!"      "."      "?"      "]"      "\n"
     case 32:
@@ -565,16 +564,16 @@ function is_delimeter(charcode) {
 /**
  * @param   {number} charcode
  * @returns {boolean} */
-function is_delimeter_or_number(charcode) {
-  return is_digit(charcode) || is_delimeter(charcode);
+function isDelimeterOrNumber(charcode) {
+  return isDigit(charcode) || isDelimeter(charcode);
 }
 
 /**
  * @param   {number} charcode
  * @returns {boolean} */
-function is_alnum(charcode) {
+function isAlnum(charcode) {
   return (
-    is_digit(charcode) || // 0-9
+    isDigit(charcode) || // 0-9
     (charcode >= 65 && charcode <= 90) || // A-Z
     (charcode >= 97 && charcode <= 122)
   ); // a-z
@@ -585,7 +584,7 @@ function is_alnum(charcode) {
  * @param   {Parser} p
  * @param   {string} chunk
  * @returns {void  } */
-export function parser_write(p, chunk) {
+export function parserWrite(p, chunk) {
   for (const char of chunk) {
     /*
          Handle newlines
@@ -593,24 +592,24 @@ export function parser_write(p, chunk) {
     if (p.token === NEWLINE) {
       switch (char) {
         case ' ':
-          p.indent_len += 1;
+          p.indentLen += 1;
           continue;
         case '\t':
-          p.indent_len += 4;
+          p.indentLen += 4;
           continue;
       }
 
-      let indent = end_tokens_to_indent(p, p.indent_len);
+      let indent = endTokensToIndent(p, p.indentLen);
 
-      p.indent_len = 0;
+      p.indentLen = 0;
       p.token = p.tokens[p.len];
 
       if (indent > 0) {
-        parser_write(p, ' '.repeat(indent));
+        parserWrite(p, ' '.repeat(indent));
       }
     }
 
-    const pending_with_char = p.pending + char;
+    const pendingWithChar = p.pending + char;
 
     /*
         Token specific checks
@@ -631,13 +630,13 @@ export function parser_write(p, chunk) {
             console.assert(p.pending.length === 1);
             p.pending = char;
             p.indent += ' ';
-            p.indent_len += 1;
+            p.indentLen += 1;
             continue;
           case '\t':
             console.assert(p.pending.length === 1);
             p.pending = char;
             p.indent += '\t';
-            p.indent_len += 4;
+            p.indentLen += 4;
             continue;
           case '\n':
             console.assert(p.pending.length === 1);
@@ -648,8 +647,8 @@ export function parser_write(p, chunk) {
                  2. bar
                 */
             if (p.tokens[p.len] === LIST_ITEM && p.token === LINE_BREAK) {
-              end_token(p);
-              clear_root_pending(p);
+              endToken(p);
+              clearRootPending(p);
               p.pending = char;
               continue;
             }
@@ -657,10 +656,10 @@ export function parser_write(p, chunk) {
                  Exit out of tokens
                  And ignore newlines in root
                 */
-            end_tokens_to_len(p, p.blockquote_idx);
-            clear_root_pending(p);
-            p.blockquote_idx = 0;
-            p.fence_start = 0;
+            endTokensToLen(p, p.blockquoteIdx);
+            clearRootPending(p);
+            p.blockquoteIdx = 0;
+            p.fenceStart = 0;
             p.pending = char;
             continue;
           /* Heading */
@@ -668,39 +667,39 @@ export function parser_write(p, chunk) {
             switch (char) {
               case '#':
                 if (p.pending.length < 6) {
-                  p.pending = pending_with_char;
+                  p.pending = pendingWithChar;
                   continue;
                 }
                 break; // fail
               case ' ':
-                end_tokens_to_indent(p, p.indent_len);
-                add_token(p, heading_from_level(p.pending.length));
-                clear_root_pending(p);
+                endTokensToIndent(p, p.indentLen);
+                addToken(p, headingFromLevel(p.pending.length));
+                clearRootPending(p);
                 continue;
             }
             break; // fail
           /* Blockquote */
           case '>': {
-            const next_blockquote_idx = idx_of_token(
+            const nextBlockquoteIdx = idxOfToken(
               p,
               BLOCKQUOTE,
-              p.blockquote_idx + 1
+              p.blockquoteIdx + 1
             );
 
             /*
-                Only when there is no blockquote to the right of blockquote_idx
+                Only when there is no blockquote to the right of blockquoteIdx
                 a new blockquote can be created
                 */
-            if (next_blockquote_idx === -1) {
-              end_tokens_to_len(p, p.blockquote_idx);
-              p.blockquote_idx += 1;
-              p.fence_start = 0;
-              add_token(p, BLOCKQUOTE);
+            if (nextBlockquoteIdx === -1) {
+              endTokensToLen(p, p.blockquoteIdx);
+              p.blockquoteIdx += 1;
+              p.fenceStart = 0;
+              addToken(p, BLOCKQUOTE);
             } else {
-              p.blockquote_idx = next_blockquote_idx;
+              p.blockquoteIdx = nextBlockquoteIdx;
             }
 
-            clear_root_pending(p);
+            clearRootPending(p);
             p.pending = char;
             continue;
           }
@@ -710,35 +709,35 @@ export function parser_write(p, chunk) {
           case '-':
           case '*':
           case '_':
-            if (p.hr_chars === 0) {
+            if (p.hrChars === 0) {
               console.assert(
                 p.pending.length === 1,
                 'Pending should be one character'
               );
-              p.hr_chars = 1;
-              p.hr_char = p.pending;
+              p.hrChars = 1;
+              p.hrChar = p.pending;
             }
 
-            if (p.hr_chars > 0) {
+            if (p.hrChars > 0) {
               switch (char) {
-                case p.hr_char:
-                  p.hr_chars += 1;
-                  p.pending = pending_with_char;
+                case p.hrChar:
+                  p.hrChars += 1;
+                  p.pending = pendingWithChar;
                   continue;
                 case ' ':
-                  p.pending = pending_with_char;
+                  p.pending = pendingWithChar;
                   continue;
                 case '\n':
-                  if (p.hr_chars < 3) break;
-                  end_tokens_to_indent(p, p.indent_len);
-                  p.renderer.add_token(p.renderer.data, RULE);
-                  p.renderer.end_token(p.renderer.data);
-                  clear_root_pending(p);
-                  p.hr_chars = 0;
+                  if (p.hrChars < 3) break;
+                  endTokensToIndent(p, p.indentLen);
+                  p.renderer.addToken(p.renderer.data, RULE);
+                  p.renderer.endToken(p.renderer.data);
+                  clearRootPending(p);
+                  p.hrChars = 0;
                   continue;
               }
 
-              p.hr_chars = 0;
+              p.hrChars = 0;
             }
 
             /* Unordered list
@@ -747,9 +746,9 @@ export function parser_write(p, chunk) {
                 /  * **baz**
                 /*/
             if ('_' !== p.pending[0] && ' ' === p.pending[1]) {
-              continue_or_add_list(p, LIST_UNORDERED);
-              add_list_item(p, 2);
-              parser_write(p, pending_with_char.slice(2));
+              continueOrAddList(p, LIST_UNORDERED);
+              addListItem(p, 2);
+              parserWrite(p, pendingWithChar.slice(2));
               continue;
             }
 
@@ -762,36 +761,36 @@ export function parser_write(p, chunk) {
                 and are re-dispatched as ~~strikethrough~~.
             */
           case '~': {
-            const fence_char = p.pending[0];
+            const fenceChar = p.pending[0];
             /*  ``?
                       ^
                 */
             if (p.pending.length < 3) {
-              if (fence_char === char) {
-                p.pending = pending_with_char;
-                p.fence_start = pending_with_char.length;
+              if (fenceChar === char) {
+                p.pending = pendingWithChar;
+                p.fenceStart = pendingWithChar.length;
                 continue;
               }
-              p.fence_start = 0;
+              p.fenceStart = 0;
               break; // fail
             }
 
-            if (fence_char === char) {
+            if (fenceChar === char) {
               /*  ````?
                            ^
                     */
-              if (p.pending.length === p.fence_start) {
-                p.pending = pending_with_char;
-                p.fence_start = pending_with_char.length;
+              if (p.pending.length === p.fenceStart) {
+                p.pending = pendingWithChar;
+                p.fenceStart = pendingWithChar.length;
               }
               /*  ```code`
                                ^
                     */
               else {
-                add_token(p, PARAGRAPH);
-                clear_root_pending(p);
-                p.fence_start = 0;
-                parser_write(p, pending_with_char);
+                addToken(p, PARAGRAPH);
+                clearRootPending(p);
+                p.fenceStart = 0;
+                parserWrite(p, pendingWithChar);
               }
               continue;
             }
@@ -800,18 +799,18 @@ export function parser_write(p, chunk) {
               /*  ```lang\n
                                 ^
                     */
-              end_tokens_to_indent(p, p.indent_len);
+              endTokensToIndent(p, p.indentLen);
 
-              add_token(p, CODE_FENCE);
-              p.fence_char = fence_char;
-              if (p.pending.length > p.fence_start) {
-                p.renderer.set_attr(
+              addToken(p, CODE_FENCE);
+              p.fenceChar = fenceChar;
+              if (p.pending.length > p.fenceStart) {
+                p.renderer.setAttr(
                   p.renderer.data,
                   LANG,
-                  p.pending.slice(p.fence_start)
+                  p.pending.slice(p.fenceStart)
                 );
               }
-              clear_root_pending(p);
+              clearRootPending(p);
               p.token = NEWLINE;
               continue;
             }
@@ -819,7 +818,7 @@ export function parser_write(p, chunk) {
             /*  ```lang\n
                         ^
                 */
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           }
           /*
@@ -829,8 +828,8 @@ export function parser_write(p, chunk) {
           case '+':
             if (' ' !== char) break; // fail
 
-            continue_or_add_list(p, LIST_UNORDERED);
-            add_list_item(p, 2);
+            continueOrAddList(p, LIST_UNORDERED);
+            addListItem(p, 2);
             continue;
           /* List Ordered */
           case '0':
@@ -850,49 +849,49 @@ export function parser_write(p, chunk) {
             if ('.' === p.pending[p.pending.length - 1]) {
               if (' ' !== char) break; // fail
 
-              if (continue_or_add_list(p, LIST_ORDERED) && p.pending !== '1.') {
-                p.renderer.set_attr(
+              if (continueOrAddList(p, LIST_ORDERED) && p.pending !== '1.') {
+                p.renderer.setAttr(
                   p.renderer.data,
                   START,
                   p.pending.slice(0, -1)
                 );
               }
-              add_list_item(p, p.pending.length + 1);
+              addListItem(p, p.pending.length + 1);
               continue;
             } else {
-              const char_code = char.charCodeAt(0);
+              const charCode = char.charCodeAt(0);
               if (
-                46 === char_code || // '.'
-                is_digit(char_code) // 0-9
+                46 === charCode || // '.'
+                isDigit(charCode) // 0-9
               ) {
-                p.pending = pending_with_char;
+                p.pending = pendingWithChar;
                 continue;
               }
             }
             break; // fail
           /* Table */
           case '|':
-            end_tokens_to_len(p, p.blockquote_idx);
+            endTokensToLen(p, p.blockquoteIdx);
 
-            add_token(p, TABLE);
-            add_token(p, TABLE_ROW);
+            addToken(p, TABLE);
+            addToken(p, TABLE_ROW);
 
             p.pending = '';
-            parser_write(p, char);
+            parserWrite(p, char);
 
             continue;
         }
 
-        let to_write = pending_with_char;
+        let toWrite = pendingWithChar;
 
         /* Add a line break and continue in previous token */
         if (p.token === LINE_BREAK) {
           p.token = p.tokens[p.len];
-          p.renderer.add_token(p.renderer.data, LINE_BREAK);
-          p.renderer.end_token(p.renderer.data);
+          p.renderer.addToken(p.renderer.data, LINE_BREAK);
+          p.renderer.endToken(p.renderer.data);
         }
         /* Code Block */
-        else if (p.indent_len >= 4) {
+        else if (p.indentLen >= 4) {
           /*
                 Case where there are additional spaces
                 after the indent that makes the code block
@@ -905,54 +904,54 @@ export function parser_write(p, chunk) {
                 ^^-----indent
                    ^^^-part of code
                 */
-          let code_start = 0;
-          for (; code_start < 4; code_start += 1) {
-            if (p.indent[code_start] === '\t') {
-              code_start = code_start + 1;
+          let codeStart = 0;
+          for (; codeStart < 4; codeStart += 1) {
+            if (p.indent[codeStart] === '\t') {
+              codeStart = codeStart + 1;
               break;
             }
           }
-          to_write = p.indent.slice(code_start) + pending_with_char;
-          add_token(p, CODE_BLOCK);
+          toWrite = p.indent.slice(codeStart) + pendingWithChar;
+          addToken(p, CODE_BLOCK);
         }
         /* Paragraph */
         else {
-          add_token(p, PARAGRAPH);
+          addToken(p, PARAGRAPH);
         }
 
-        clear_root_pending(p);
-        parser_write(p, to_write);
+        clearRootPending(p);
+        parserWrite(p, toWrite);
         continue;
       case TABLE:
-        if (p.table_state === 1) {
+        if (p.tableState === 1) {
           switch (char) {
             case '-':
             case ' ':
             case '|':
             case ':':
-              p.pending = pending_with_char;
+              p.pending = pendingWithChar;
               continue;
             case '\n':
-              p.table_state = 2;
+              p.tableState = 2;
               p.pending = '';
               continue;
             default:
-              end_token(p);
-              p.table_state = 0;
+              endToken(p);
+              p.tableState = 0;
               break;
           }
         } else {
           switch (p.pending) {
             case '|':
-              add_token(p, TABLE_ROW);
+              addToken(p, TABLE_ROW);
               p.pending = '';
-              parser_write(p, char);
+              parserWrite(p, char);
               continue;
             case '\n':
-              end_token(p);
+              endToken(p);
               p.pending = '';
-              p.table_state = 0;
-              parser_write(p, char);
+              p.tableState = 0;
+              parserWrite(p, char);
               continue;
           }
         }
@@ -962,34 +961,34 @@ export function parser_write(p, chunk) {
           case '':
             break;
           case '|':
-            add_token(p, TABLE_CELL);
-            end_token(p);
+            addToken(p, TABLE_CELL);
+            endToken(p);
             p.pending = '';
-            parser_write(p, char);
+            parserWrite(p, char);
             continue;
           case '\n':
-            end_token(p);
-            p.table_state = Math.min(p.table_state + 1, 2);
+            endToken(p);
+            p.tableState = Math.min(p.tableState + 1, 2);
             p.pending = '';
-            parser_write(p, char);
+            parserWrite(p, char);
             continue;
           default:
-            add_token(p, TABLE_CELL);
-            parser_write(p, char);
+            addToken(p, TABLE_CELL);
+            parserWrite(p, char);
             continue;
         }
         break;
       case TABLE_CELL:
         if (p.pending === '|') {
-          add_text(p);
-          end_token(p);
+          addText(p);
+          endToken(p);
           p.pending = '';
-          parser_write(p, char);
+          parserWrite(p, char);
           continue;
         }
         break;
       case CODE_BLOCK:
-        switch (pending_with_char) {
+        switch (pendingWithChar) {
           case '\n    ':
           case '\n   \t':
           case '\n  \t':
@@ -1002,12 +1001,12 @@ export function parser_write(p, chunk) {
           case '\n ':
           case '\n  ':
           case '\n   ':
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           default:
             if (p.pending.length !== 0) {
-              add_text(p);
-              end_token(p);
+              addText(p);
+              endToken(p);
               p.pending = char;
             } else {
               p.text += char;
@@ -1018,11 +1017,11 @@ export function parser_write(p, chunk) {
         /*  FIX: close on the character that opened the fence, not always
                 a backtick.
             */
-        if (char === p.fence_char) {
+        if (char === p.fenceChar) {
           /*  ```\n<code>\n``??
                 |                 ^
                 */
-          p.pending = pending_with_char;
+          p.pending = pendingWithChar;
           continue;
         }
         switch (char) {
@@ -1030,13 +1029,13 @@ export function parser_write(p, chunk) {
             /*  ```\n<code>\n```\n
                 |                    ^
                 */
-            if (pending_with_char.length === p.fence_start + p.fence_end + 1) {
-              add_text(p);
-              end_token(p);
+            if (pendingWithChar.length === p.fenceStart + p.fenceEnd + 1) {
+              addText(p);
+              endToken(p);
               p.pending = '';
-              p.fence_start = 0;
-              p.fence_end = 0;
-              p.fence_char = '';
+              p.fenceStart = 0;
+              p.fenceEnd = 0;
+              p.fenceChar = '';
               p.token = NEWLINE;
               continue;
             }
@@ -1047,8 +1046,8 @@ export function parser_write(p, chunk) {
                 |                ^  (space after newline is allowed)
                 */
             if (p.pending[0] === '\n') {
-              p.pending = pending_with_char;
-              p.fence_end += 1;
+              p.pending = pendingWithChar;
+              p.fenceEnd += 1;
               continue;
             }
             break;
@@ -1056,29 +1055,29 @@ export function parser_write(p, chunk) {
         // any other char
         p.text += p.pending;
         p.pending = char;
-        p.fence_end = 1;
+        p.fenceEnd = 1;
         continue;
       case CODE_INLINE:
         switch (char) {
           case '`':
             if (
-              pending_with_char.length ===
-              p.fence_start + Number(p.pending[0] === ' ') // 0 or 1 for space
+              pendingWithChar.length ===
+              p.fenceStart + Number(p.pending[0] === ' ') // 0 or 1 for space
             ) {
-              add_text(p);
-              end_token(p);
+              addText(p);
+              endToken(p);
               p.pending = '';
-              p.fence_start = 0;
+              p.fenceStart = 0;
             } else {
-              p.pending = pending_with_char;
+              p.pending = pendingWithChar;
             }
             continue;
           case '\n':
             p.text += p.pending;
             p.pending = '';
             p.token = LINE_BREAK;
-            p.blockquote_idx = 0;
-            add_text(p);
+            p.blockquoteIdx = 0;
+            addText(p);
             continue;
           /* Trim space before ` */
           case ' ':
@@ -1086,7 +1085,7 @@ export function parser_write(p, chunk) {
             p.pending = char;
             continue;
           default:
-            p.text += pending_with_char;
+            p.text += pendingWithChar;
             p.pending = '';
             continue;
         }
@@ -1095,30 +1094,30 @@ export function parser_write(p, chunk) {
         switch (p.pending.length) {
           case 0:
             if ('[' !== char) break; // fail
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           case 1:
             if (' ' !== char && 'x' !== char) break; // fail
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           case 2:
             if (']' !== char) break; // fail
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           case 3:
             if (' ' !== char) break; // fail
-            p.renderer.add_token(p.renderer.data, CHECKBOX);
+            p.renderer.addToken(p.renderer.data, CHECKBOX);
             if ('x' === p.pending[1]) {
-              p.renderer.set_attr(p.renderer.data, CHECKED, '');
+              p.renderer.setAttr(p.renderer.data, CHECKED, '');
             }
-            p.renderer.end_token(p.renderer.data);
+            p.renderer.endToken(p.renderer.data);
             p.pending = ' ';
             continue;
         }
 
         p.token = p.tokens[p.len];
         p.pending = '';
-        parser_write(p, pending_with_char);
+        parserWrite(p, pendingWithChar);
         continue;
       case STRONG_AST:
       case STRONG_UND: {
@@ -1130,19 +1129,19 @@ export function parser_write(p, chunk) {
         }
 
         if (symbol === p.pending) {
-          add_text(p);
+          addText(p);
           /* **Bold**
                           ^
                 */
           if (symbol === char) {
-            end_token(p);
+            endToken(p);
             p.pending = '';
             continue;
           }
           /* **Bold*Bold->Em*
                           ^
                 */
-          add_token(p, italic);
+          addToken(p, italic);
           p.pending = char;
           continue;
         }
@@ -1166,14 +1165,14 @@ export function parser_write(p, chunk) {
                        With the help of the next character
                     */
               if (p.tokens[p.len - 1] === strong) {
-                p.pending = pending_with_char;
+                p.pending = pendingWithChar;
               }
               /* *em**bold
                            ^
                     */
               else {
-                add_text(p);
-                add_token(p, strong);
+                addText(p);
+                addToken(p, strong);
                 p.pending = '';
               }
             }
@@ -1181,21 +1180,21 @@ export function parser_write(p, chunk) {
                        ^
                 */
             else {
-              add_text(p);
-              end_token(p);
+              addText(p);
+              endToken(p);
               p.pending = char;
             }
             continue;
           case symbol + symbol:
             const italic = p.token;
-            add_text(p);
-            end_token(p);
-            end_token(p);
+            addText(p);
+            endToken(p);
+            endToken(p);
             /* ***bold>em**em* or **bold*bold>em***
                                ^                      ^
                 */
             if (symbol !== char) {
-              add_token(p, italic);
+              addToken(p, italic);
               p.pending = char;
             } else {
               p.pending = '';
@@ -1205,9 +1204,9 @@ export function parser_write(p, chunk) {
         break;
       }
       case STRIKE:
-        if ('~~' === pending_with_char) {
-          add_text(p);
-          end_token(p);
+        if ('~~' === pendingWithChar) {
+          addText(p);
+          endToken(p);
           p.pending = '';
           continue;
         }
@@ -1218,8 +1217,8 @@ export function parser_write(p, chunk) {
                ^        ^
             */
         if (char === '\n') {
-          add_text(p);
-          add_token(p, EQUATION_BLOCK);
+          addText(p);
+          addToken(p, EQUATION_BLOCK);
           p.pending = '';
         } else {
           p.token = p.tokens[p.len];
@@ -1229,21 +1228,21 @@ export function parser_write(p, chunk) {
             p.text += '$$';
           }
           p.pending = '';
-          parser_write(p, char);
+          parserWrite(p, char);
         }
         continue;
       case EQUATION_BLOCK:
-        if ('\\]' === pending_with_char || '$$' === pending_with_char) {
-          add_text(p);
-          end_token(p);
+        if ('\\]' === pendingWithChar || '$$' === pendingWithChar) {
+          addText(p);
+          endToken(p);
           p.pending = '';
           continue;
         }
         break;
       case EQUATION_INLINE:
-        if ('\\)' === pending_with_char || '$' === p.pending[0]) {
-          add_text(p);
-          end_token(p);
+        if ('\\)' === pendingWithChar || '$' === p.pending[0]) {
+          addText(p);
+          endToken(p);
 
           if (char === ')') {
             p.pending = '';
@@ -1255,22 +1254,19 @@ export function parser_write(p, chunk) {
         break;
       /* Raw URLs */
       case MAYBE_URL:
-        if (
-          'http://' === pending_with_char ||
-          'https://' === pending_with_char
-        ) {
-          add_text(p);
-          add_token(p, RAW_URL);
-          p.pending = pending_with_char;
-          p.text = pending_with_char;
+        if ('http://' === pendingWithChar || 'https://' === pendingWithChar) {
+          addText(p);
+          addToken(p, RAW_URL);
+          p.pending = pendingWithChar;
+          p.text = pendingWithChar;
         } else if (
           'http:/'[p.pending.length] === char ||
           'https:/'[p.pending.length] === char
         ) {
-          p.pending = pending_with_char;
+          p.pending = pendingWithChar;
         } else {
           p.token = p.tokens[p.len];
-          parser_write(p, char);
+          parserWrite(p, char);
         }
         continue;
       case LINK:
@@ -1280,11 +1276,11 @@ export function parser_write(p, chunk) {
                 [Link](url)
                      ^
                 */
-          add_text(p);
+          addText(p);
           if ('(' === char) {
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
           } else {
-            end_token(p);
+            endToken(p);
             p.pending = char;
           }
           continue;
@@ -1297,8 +1293,8 @@ export function parser_write(p, chunk) {
           if (')' === char) {
             const type = p.token === LINK ? HREF : SRC;
             const url = p.pending.slice(2);
-            p.renderer.set_attr(p.renderer.data, type, url);
-            end_token(p);
+            p.renderer.setAttr(p.renderer.data, type, url);
+            endToken(p);
             p.pending = '';
           } else {
             p.pending += char;
@@ -1311,37 +1307,37 @@ export function parser_write(p, chunk) {
                                  ^
             */
         if (' ' === char || '\n' === char || '\\' === char) {
-          p.renderer.set_attr(p.renderer.data, HREF, p.pending);
-          add_text(p);
-          end_token(p);
+          p.renderer.setAttr(p.renderer.data, HREF, p.pending);
+          addText(p);
+          endToken(p);
           p.pending = char;
         } else {
           p.text += char;
-          p.pending = pending_with_char;
+          p.pending = pendingWithChar;
         }
         continue;
       case MAYBE_BR:
-        if (pending_with_char.startsWith('<br')) {
+        if (pendingWithChar.startsWith('<br')) {
           if (
             /* "<br" */
-            pending_with_char.length === 3 ||
+            pendingWithChar.length === 3 ||
             /* "<br " */
             char === ' ' ||
             /* "<br/" | "<br /" */
             (char === '/' &&
-              (pending_with_char.length === 4 ||
+              (pendingWithChar.length === 4 ||
                 p.pending[p.pending.length - 1] === ' '))
           ) {
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           }
 
           /* "<br>" | "<br/>" */
           if (char === '>') {
-            add_text(p);
+            addText(p);
             p.token = p.tokens[p.len];
-            p.renderer.add_token(p.renderer.data, LINE_BREAK);
-            p.renderer.end_token(p.renderer.data);
+            p.renderer.addToken(p.renderer.data, LINE_BREAK);
+            p.renderer.endToken(p.renderer.data);
             p.pending = '';
             continue;
           }
@@ -1350,7 +1346,7 @@ export function parser_write(p, chunk) {
         p.token = p.tokens[p.len];
         p.text += '<';
         p.pending = p.pending.slice(1);
-        parser_write(p, char);
+        parserWrite(p, char);
         continue;
     }
 
@@ -1369,13 +1365,13 @@ export function parser_write(p, chunk) {
 
         switch (char) {
           case '(':
-            add_text(p);
-            add_token(p, EQUATION_INLINE);
+            addText(p);
+            addToken(p, EQUATION_INLINE);
             p.pending = '';
             continue;
           case '[':
             p.token = MAYBE_EQ_BLOCK;
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           case '\n':
             // Escaped newline has the same affect as unescaped one
@@ -1385,10 +1381,10 @@ export function parser_write(p, chunk) {
             let charcode = char.charCodeAt(0);
             p.pending = '';
             p.text +=
-              is_digit(charcode) || // 0-9
+              isDigit(charcode) || // 0-9
               (charcode >= 65 && charcode <= 90) || // A-Z
               (charcode >= 97 && charcode <= 122) // a-z
-                ? pending_with_char
+                ? pendingWithChar
                 : char;
             continue;
         }
@@ -1405,16 +1401,16 @@ export function parser_write(p, chunk) {
           case HEADING_4:
           case HEADING_5:
           case HEADING_6:
-            add_text(p);
-            end_tokens_to_len(p, p.blockquote_idx);
-            p.blockquote_idx = 0;
+            addText(p);
+            endTokensToLen(p, p.blockquoteIdx);
+            p.blockquoteIdx = 0;
             p.pending = char;
             continue;
           default:
-            add_text(p);
+            addText(p);
             p.pending = char;
             p.token = LINE_BREAK;
-            p.blockquote_idx = 0;
+            p.blockquoteIdx = 0;
             continue;
         }
         break;
@@ -1425,8 +1421,8 @@ export function parser_write(p, chunk) {
           p.token !== EQUATION_BLOCK &&
           p.token !== EQUATION_INLINE
         ) {
-          add_text(p);
-          p.pending = pending_with_char;
+          addText(p);
+          p.pending = pendingWithChar;
           p.token = MAYBE_BR;
           continue;
         }
@@ -1436,12 +1432,12 @@ export function parser_write(p, chunk) {
         if (p.token === IMAGE) break;
 
         if ('`' === char) {
-          p.fence_start += 1;
-          p.pending = pending_with_char;
+          p.fenceStart += 1;
+          p.pending = pendingWithChar;
         } else {
-          p.fence_start += 1; // started at 0, and first wasn't counted
-          add_text(p);
-          add_token(p, CODE_INLINE);
+          p.fenceStart += 1; // started at 0, and first wasn't counted
+          addText(p);
+          addToken(p, CODE_INLINE);
           p.text = ' ' === char || '\n' === char ? '' : char; // trim leading space
           p.pending = '';
         }
@@ -1467,9 +1463,9 @@ export function parser_write(p, chunk) {
                     snake_case_word, MAX_BUFFER_SIZE, __name__ mid-word.
                     `*` is unrestricted and keeps upstream's behaviour.
                 */
-          const prev_char =
-            p.text.length > 0 ? p.text[p.text.length - 1] : p.last_text_char;
-          if (prev_char !== '' && is_alnum(prev_char.charCodeAt(0))) break;
+          const prevChar =
+            p.text.length > 0 ? p.text[p.text.length - 1] : p.lastTextChar;
+          if (prevChar !== '' && isAlnum(prevChar.charCodeAt(0))) break;
         }
 
         if (p.pending.length === 1) {
@@ -1477,15 +1473,15 @@ export function parser_write(p, chunk) {
                     ^
                 */
           if (symbol === char) {
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           }
           /* *Em*
                     ^
                 */
           if (' ' !== char && '\n' !== char) {
-            add_text(p);
-            add_token(p, italic);
+            addText(p);
+            addToken(p, italic);
             p.pending = char;
             continue;
           }
@@ -1494,9 +1490,9 @@ export function parser_write(p, chunk) {
                      ^
                 */
           if (symbol === char) {
-            add_text(p);
-            add_token(p, strong);
-            add_token(p, italic);
+            addText(p);
+            addToken(p, strong);
+            addToken(p, italic);
             p.pending = '';
             continue;
           }
@@ -1504,8 +1500,8 @@ export function parser_write(p, chunk) {
                      ^
                 */
           if (' ' !== char && '\n' !== char) {
-            add_text(p);
-            add_token(p, strong);
+            addText(p);
+            addToken(p, strong);
             p.pending = char;
             continue;
           }
@@ -1520,7 +1516,7 @@ export function parser_write(p, chunk) {
                         ^
                     */
             if ('~' === char) {
-              p.pending = pending_with_char;
+              p.pending = pendingWithChar;
               continue;
             }
           } else {
@@ -1528,8 +1524,8 @@ export function parser_write(p, chunk) {
                     |    ^
                     */
             if (' ' !== char && '\n' !== char) {
-              add_text(p);
-              add_token(p, STRIKE);
+              addText(p);
+              addToken(p, STRIKE);
               p.pending = char;
               continue;
             }
@@ -1544,21 +1540,21 @@ export function parser_write(p, chunk) {
                 */
           if ('$' === char) {
             p.token = MAYBE_EQ_BLOCK;
-            p.pending = pending_with_char;
+            p.pending = pendingWithChar;
             continue;
           }
           /* $123
                     ^
                 */
-          else if (is_delimeter_or_number(char.charCodeAt(0))) {
+          else if (isDelimeterOrNumber(char.charCodeAt(0))) {
             break;
           }
           /* $EQUATION_INLINE$
                     ^
                 */
           else {
-            add_text(p);
-            add_token(p, EQUATION_INLINE);
+            addText(p);
+            addToken(p, EQUATION_INLINE);
             p.pending = char;
             continue;
           }
@@ -1573,8 +1569,8 @@ export function parser_write(p, chunk) {
           p.token !== EQUATION_INLINE &&
           ']' !== char
         ) {
-          add_text(p);
-          add_token(p, LINK);
+          addText(p);
+          addToken(p, LINK);
           p.pending = char;
           continue;
         }
@@ -1582,8 +1578,8 @@ export function parser_write(p, chunk) {
       /* ![Image](url) */
       case '!':
         if (!(p.token === IMAGE) && '[' === char) {
-          add_text(p);
-          add_token(p, IMAGE);
+          addText(p);
+          addToken(p, IMAGE);
           p.pending = '';
           continue;
         }
@@ -1621,32 +1617,32 @@ export function parser_write(p, chunk) {
     p.pending = char;
   }
 
-  add_text(p);
+  addText(p);
 }
 
 /**
  * @template T
- * @callback Renderer_Add_Token
+ * @callback RendererAddToken
  * @param   {T    } data
  * @param   {Token} type
  * @returns {void } */
 
 /**
  * @template T
- * @callback Renderer_End_Token
+ * @callback RendererEndToken
  * @param   {T    } data
  * @returns {void } */
 
 /**
  * @template T
- * @callback Renderer_Add_Text
+ * @callback RendererAddText
  * @param   {T     } data
  * @param   {string} text
  * @returns {void  } */
 
 /**
  * @template T
- * @callback Renderer_Set_Attr
+ * @callback RendererSetAttr
  * @param   {T     } data
  * @param   {Attr  } type
  * @param   {string} value
@@ -1657,10 +1653,10 @@ export function parser_write(p, chunk) {
  * @template T
  * @typedef  {object               } Renderer
  * @property {T                    } data      User data object. Available as first param in callbacks.
- * @property {Renderer_Add_Token<T>} add_token When the tokens starts.
- * @property {Renderer_End_Token<T>} end_token When the token ends.
- * @property {Renderer_Add_Text <T>} add_text  To append text to current token. Can be called multiple times or none.
- * @property {Renderer_Set_Attr <T>} set_attr  Set additional attributes of current token eg. the link url.
+ * @property {RendererAddToken<T>} addToken When the tokens starts.
+ * @property {RendererEndToken<T>} endToken When the token ends.
+ * @property {RendererAddText <T>} addText  To append text to current token. Can be called multiple times or none.
+ * @property {RendererSetAttr <T>} setAttr  Set additional attributes of current token eg. the link url.
  */
 
-/** @typedef {Renderer<any>} Any_Renderer */
+/** @typedef {Renderer<any>} AnyRenderer */

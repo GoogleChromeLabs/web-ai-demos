@@ -263,17 +263,16 @@ await session
 </table>
 <!-- prettier-ignore-end -->
 
-`pipeTo()` drains the stream, so this cannot be wired up and quietly do
-nothing, and the response is open to the rest of the streams machinery. Put a
-`TransformStream` in the middle to tap the chunks on their way past, and take
-the raw Markdown through `onMarkdown`, so one response drives every view you
-want and showing the rendered output beside the Markdown costs one inference
-rather than two:
+Because the response is a stream, the rest of the streams machinery comes with
+it. A `TransformStream` in the middle sees each HTML chunk on its way to the
+page, and `onMarkdownChunk` hands back the Markdown that HTML was converted
+from. One response can drive all three views, so showing the rendered output
+beside the raw Markdown costs one inference rather than two:
 
 ```js
 await session
   .promptStreamingHTML(prompt, {
-    onMarkdown: (chunk) => rawView.append(chunk),
+    onMarkdownChunk: (chunk) => rawView.append(chunk),
   })
   .pipeThrough(
     new TransformStream({
@@ -409,7 +408,7 @@ re-thrown.
 | `prompt(input, options)`                                                                                                                                             | Sanitized.                                                                                             |
 | `promptStreaming(input, options)`                                                                                                                                    | `ReadableStream` of vetted Markdown chunks.                                                            |
 | `promptHTML(input, options)`                                                                                                                                         | The whole response as HTML, safe to assign.                                                            |
-| `promptStreamingHTML(input, {onMarkdown, …})`                                                                                                                        | `ReadableStream` of HTML chunks at parser granularity; concatenate for the full HTML. No side effects. |
+| `promptStreamingHTML(input, {onMarkdownChunk, …})`                                                                                                                   | `ReadableStream` of HTML chunks at parser granularity; concatenate for the full HTML. No side effects. |
 | `compact(options)`                                                                                                                                                   | Returns `{before, after, saved, reduction, messages, languages}`.                                      |
 | `history`                                                                                                                                                            | The conversation as the current session sees it.                                                       |
 | `session`                                                                                                                                                            | The raw `LanguageModel`.                                                                               |

@@ -219,7 +219,7 @@ form.addEventListener('submit', async (event) => {
     await session
       .promptStreamingHTML(prompt, {
         signal: controller.signal,
-        onMarkdown(chunk) {
+        onMarkdownChunk(chunk) {
           markdownOutput.append(chunk);
           markdownTail.follow();
         },

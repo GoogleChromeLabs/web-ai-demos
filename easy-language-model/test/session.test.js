@@ -221,7 +221,7 @@ describe('prompting', () => {
     const markdown = [];
     await session
       .promptStreamingHTML('x', {
-        onMarkdown: (chunk) => markdown.push(chunk),
+        onMarkdownChunk: (chunk) => markdown.push(chunk),
       })
       .pipeTo(renderStreamingHTML(into));
 

@@ -142,10 +142,18 @@ export class EasySession {
     return this.#history.map((message) => ({ ...message }));
   }
 
+  /**
+   * @param {LanguageModelPrompt} input
+   * @param {LanguageModelPromptOptions} [options]
+   */
   measureContextUsage(input, options) {
     return this.#session.measureContextUsage(input, options);
   }
 
+  /**
+   * @param {LanguageModelPrompt} input
+   * @param {LanguageModelAppendOptions} [options]
+   */
   async append(input, options) {
     await this.#session.append(input, options);
     this.#record(toHistoryEntries(input));
@@ -178,6 +186,7 @@ export class EasySession {
     this.#compactor = null;
   }
 
+  /** @param {LanguageModelCloneOptions} [options] */
   async clone(options) {
     const clone = new EasySession(await this.#session.clone(options), {
       createOptions: this.#createOptions,
@@ -195,7 +204,7 @@ export class EasySession {
    * Sanitizer API before you get it.
    *
    * @param {LanguageModelPrompt} input
-   * @param {object} [options] Passed through to the raw session.
+   * @param {LanguageModelPromptOptions} [options] Passed through to the raw session.
    * @returns {Promise<string>}
    */
   async prompt(input, options) {
@@ -221,7 +230,7 @@ export class EasySession {
    * sanitizer would remove something, the stream stops.
    *
    * @param {LanguageModelPrompt} input
-   * @param {object} [options]
+   * @param {LanguageModelPromptOptions} [options]
    * @returns {ReadableStream<string>} Markdown chunks.
    */
   promptStreaming(input, options) {
@@ -281,7 +290,7 @@ export class EasySession {
    * ```
    *
    * @param {LanguageModelPrompt} input
-   * @param {object} [options]
+   * @param {LanguageModelPromptOptions} [options]
    * @returns {Promise<string>} The complete HTML.
    */
   async promptHTML(input, options) {
@@ -311,9 +320,9 @@ export class EasySession {
    * ```
    *
    * @param {LanguageModelPrompt} input
-   * @param {object} [options]
-   * @param {(chunk: string) => void} [options.onMarkdown] Receives the raw
-   *   Markdown as it arrives, so the same response can drive a second view
+   * @param {LanguageModelPromptOptions & {onMarkdownChunk?: (chunk: string) => void}} [options]
+   *   The stream yields the HTML. `onMarkdownChunk` hands back the Markdown it
+   *   was converted from, as it arrives, so one response can drive both views
    *   without paying for a second inference.
    * @returns {ReadableStream<string>} HTML chunks.
    */
@@ -321,7 +330,7 @@ export class EasySession {
     return toReadableStream(this.#streamHtml(input, options));
   }
 
-  async *#streamHtml(input, { onMarkdown, ...options } = {}) {
+  async *#streamHtml(input, { onMarkdownChunk, ...options } = {}) {
     const entries = toHistoryEntries(input);
     const pending = [];
     let unsafeAttribute = null;
@@ -335,7 +344,7 @@ export class EasySession {
 
     let full = '';
     let emitted = '';
-    // How much of the raw Markdown `onMarkdown` has seen. Held back at a tag
+    // How much of the raw Markdown `onMarkdownChunk` has seen. Held back at a tag
     // boundary exactly like promptStreaming(), so both hand out the same
     // vetted text.
     let markdownEmitted = 0;
@@ -361,11 +370,11 @@ export class EasySession {
         return;
       }
 
-      if (onMarkdown) {
+      if (onMarkdownChunk) {
         const tagStart = pendingTagStart(full);
         const boundary = tagStart === -1 ? full.length : tagStart;
         if (boundary > markdownEmitted) {
-          onMarkdown(full.slice(markdownEmitted, boundary));
+          onMarkdownChunk(full.slice(markdownEmitted, boundary));
           markdownEmitted = boundary;
         }
       }
@@ -383,8 +392,8 @@ export class EasySession {
     }
 
     // The response is complete and vetted, so anything held back is safe now.
-    if (onMarkdown && markdownEmitted < full.length) {
-      onMarkdown(full.slice(markdownEmitted));
+    if (onMarkdownChunk && markdownEmitted < full.length) {
+      onMarkdownChunk(full.slice(markdownEmitted));
     }
 
     // Markdown can only close the trailing tags at the very end.

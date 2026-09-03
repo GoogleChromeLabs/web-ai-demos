@@ -6,14 +6,15 @@
   "type": "module",
   "files": [
     "dist",
-    "src"
+    "src",
+    "vendor"
   ],
   "main": "./dist/easy-language-model.umd.cjs",
   "module": "./dist/easy-language-model.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/types/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
+      "types": "./dist/types/src/index.d.ts",
       "import": "./dist/easy-language-model.js",
       "require": "./dist/easy-language-model.umd.cjs"
     }
@@ -21,7 +22,7 @@
   "sideEffects": false,
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc",
+    "build": "vite build && tsc && node scripts/add-types-reference.mjs",
     "build:demo": "vite build --config vite.demo.config.js",
     "preview": "vite preview --config vite.demo.config.js",
     "format": "prettier --write .",

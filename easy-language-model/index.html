@@ -79,7 +79,8 @@
         call, so one prompt is one inference. Its chunks are piped into
         <code>renderStreamingHTML()</code> to build the DOM on the left, tapped
         by a <code>TransformStream</code> on the way past for the listing at the
-        bottom, and <code>onMarkdown</code> gives the raw Markdown on the right.
+        bottom, and <code>onMarkdownChunk</code> gives the raw Markdown on the
+        right.
       </p>
 
       <div id="panes">

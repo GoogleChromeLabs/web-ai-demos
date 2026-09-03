@@ -176,7 +176,12 @@ export function createOutputGuard({
     enabled,
     sanitizer,
     check,
-    /** Throws `UnsafeModelOutputError` if `text` contains unsafe markup. */
+    /**
+     * Throws `UnsafeModelOutputError` if `text` contains unsafe markup.
+     *
+     * @param {string} text
+     * @param {{partialOutput?: string}} [detail]
+     */
     assertSafe(text, { partialOutput } = {}) {
       const { removed, sanitized } = check(text);
       if (removed) {

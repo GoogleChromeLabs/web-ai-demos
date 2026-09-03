@@ -40,6 +40,28 @@ function splitOptions(options) {
 }
 
 /**
+ * The wrapper's own create options, on top of everything the Prompt API takes.
+ *
+ * @typedef {object} EasyCreateOptions
+ * @property {Sanitizer|SanitizerConfig|'default'|false} [sanitizer] Vets model
+ *   output. `false` turns the check off. Default: the Sanitizer API default.
+ * @property {boolean} [ignoreFencedCode] Exempt fenced and inline code from the
+ *   check, so asking for an HTML snippet isn't flagged. Default `true`.
+ * @property {'throw'|'stop'} [unsafeOutput] What to do when the sanitizer
+ *   removes something. Default `'throw'`.
+ * @property {(detail: {output: string, sanitized: string, partialOutput: string}) => void} [onUnsafeOutput]
+ *   Always called on detection, whichever strategy is set.
+ * @property {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [onDownloadProgress]
+ * @property {(state: string, detail: object) => void} [onDownloadStateChange]
+ * @property {HTMLProgressElement} [progress] Driven automatically, including
+ *   the indeterminate phase while the model is unpacked.
+ * @property {'wait'|'throw'|'ignore'} [userActivation] What to do when a
+ *   download needs a gesture the page doesn't have. Default `'wait'`.
+ * @property {() => void} [onUserActivationRequired] Your cue to prompt for a click.
+ * @property {object} [compact] Defaults for `session.compact()`.
+ */
+
+/**
  * A near drop-in replacement for the global `LanguageModel`.
  *
  * Same shape, same options, same return values, with the boilerplate that
@@ -81,24 +103,7 @@ export class EasyLanguageModel {
    * Everything `LanguageModel.create()` accepts is forwarded untouched. The
    * options below are the wrapper's own.
    *
-   * @param {object} [options]
-   * @param {Sanitizer|object|'default'|false} [options.sanitizer] Vets model
-   *   output. `false` turns the check off. Default: the Sanitizer API default.
-   * @param {boolean} [options.ignoreFencedCode] Exempt fenced and inline code
-   *   from the check, so asking for an HTML snippet isn't flagged. Default `true`.
-   * @param {'throw'|'stop'} [options.unsafeOutput] What to do when the
-   *   sanitizer removes something. Default `'throw'`.
-   * @param {(detail: object) => void} [options.onUnsafeOutput] Always called on
-   *   detection, whichever strategy is set.
-   * @param {(progress: {loaded: number, total: number, percent: number}) => void} [options.onDownloadProgress]
-   * @param {(state: string, detail: object) => void} [options.onDownloadStateChange]
-   * @param {HTMLProgressElement} [options.progress] Driven automatically,
-   *   including the indeterminate phase while the model is unpacked.
-   * @param {'wait'|'throw'|'ignore'} [options.userActivation] What to do when a
-   *   download needs a gesture the page doesn't have. Default `'wait'`.
-   * @param {() => void} [options.onUserActivationRequired] Your cue to prompt
-   *   for a click.
-   * @param {object} [options.compact] Defaults for `session.compact()`.
+   * @param {LanguageModelCreateOptions & EasyCreateOptions} [options]
    * @returns {Promise<EasySession>}
    */
   static async create(options = {}) {

@@ -12,6 +12,10 @@
  * `partialOutput`, the sanitized version of the offending text on `sanitized`.
  */
 export class UnsafeModelOutputError extends Error {
+  /**
+   * @param {string} message
+   * @param {{output?: string, sanitized?: string, partialOutput?: string}} [detail]
+   */
   constructor(message, { output, sanitized, partialOutput } = {}) {
     super(message);
     this.name = 'UnsafeModelOutputError';
@@ -37,6 +41,10 @@ export class UserActivationRequiredError extends Error {
  * reports `"unavailable"` for the requested configuration.
  */
 export class LanguageModelUnavailableError extends Error {
+  /**
+   * @param {string} message
+   * @param {{availability?: Availability}} [detail]
+   */
   constructor(message, { availability } = {}) {
     super(message);
     this.name = 'LanguageModelUnavailableError';
