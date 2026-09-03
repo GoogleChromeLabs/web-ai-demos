@@ -4,7 +4,6 @@
  */
 
 export { EasyLanguageModel } from './easy-language-model.js';
-export { EasySession } from './easy-session.js';
 export {
   LanguageModelUnavailableError,
   SanitizerUnavailableError,

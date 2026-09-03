@@ -368,7 +368,7 @@ const stats = await session.compact();
 </td></tr>
 </table>
 
-`compact()` swaps the underlying session in place: the `EasySession` object
+`compact()` swaps the underlying session in place: your `EasyLanguageModel`
 stays valid, and listeners registered through it are re-attached. `system`
 messages and non-text content pass through verbatim — a system prompt is an
 instruction, not a transcript. Fenced code is kept verbatim too, so summarizing
@@ -380,12 +380,17 @@ re-thrown.
 
 ### `EasyLanguageModel`
 
+One class, both roles, as with `LanguageModel`: the statics are the way in, and
+what they hand back is an instance of the same class.
+
 - **`EasyLanguageModel.supported`** — whether the Prompt API exists.
 - **`EasyLanguageModel.availability(options)`** — same as
   `LanguageModel.availability()`; returns `'unavailable'` when the API is
   missing rather than throwing.
-- **`EasyLanguageModel.create(options)`** — returns an `EasySession`. Every
-  `LanguageModel.create()` option is forwarded. In addition:
+- **`EasyLanguageModel.create(options)`** — resolves with an
+  `EasyLanguageModel`, the same way `LanguageModel.create()` resolves with a
+  `LanguageModel`. Every `LanguageModel.create()` option is forwarded. In
+  addition:
 
 | Option                                                   | Default               | What it does                                                                                                 |
 | -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -401,7 +406,7 @@ re-thrown.
 | `onUserActivationRequired()`                             | —                     | Your cue to reveal a button or other affordance.                                                             |
 | `compact`                                                | —                     | Defaults for `session.compact()`.                                                                            |
 
-### `EasySession`
+### Instance members
 
 | Member                                                                                                                                                               | Notes                                                                                                  |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
