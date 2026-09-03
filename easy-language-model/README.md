@@ -425,7 +425,6 @@ what they hand back is an instance of the same class.
 | ----------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `create(options)`       | `create(options)`       | Checks availability with the same options, installs the download monitor, and waits for a gesture if the model has to be fetched. |
 | `availability(options)` | `availability(options)` | Returns `'unavailable'` when the API is missing, instead of throwing.                                                             |
-| `params()`              | `params()`              | Unchanged.                                                                                                                        |
 | —                       | `supported`             | **Added.** Whether the Prompt API exists at all.                                                                                  |
 
 Calling `create()` forwards every `LanguageModel.create()` option and adds
@@ -455,7 +454,7 @@ Added by the wrapper:
 | `promptStreamingHTML(input, {onMarkdownChunk, …})` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                  |
 | `compact(options)`                                 | Summarizes the conversation and restarts the session. Returns `{before, after, saved, reduction, messages, languages}`. |
 | `history`                                          | The conversation as the current session sees it, which is what `compact()` summarizes.                                  |
-| `session`                                          | The raw `LanguageModel`. Its only members this class lacks are the deprecated and extension-only ones below.            |
+| `session`                                          | The raw `LanguageModel`. Everything web-standard is wrapped, so this is for whatever the Prompt API adds next.          |
 
 Everything else is the Prompt API's, and behaves the same unless noted:
 
@@ -469,10 +468,11 @@ Everything else is the Prompt API's, and behaves the same unless noted:
 | `addEventListener()`, `removeEventListener()`, `oncontextoverflow`       | same                | Re-attached to the replacement session when `compact()` swaps it.               |
 | `measureContextUsage()`, `contextUsage`, `contextWindow`, `samplingMode` | same                | Passed straight through.                                                        |
 
-The instance members `measureInputUsage()`, `inputUsage`, `inputQuota`,
-`onquotaoverflow`, `topK` and `temperature` are deprecated or extension-only, so
-they are not wrapped; reach them through `session`. Both `topK` and `temperature` are
-still accepted as `create()` options and forwarded like any other.
+Nothing deprecated or extension-only is wrapped or documented here, so
+`measureInputUsage()`, `inputUsage`, `inputQuota`, `onquotaoverflow`, `topK`,
+`temperature` and `LanguageModel.params()` have no counterpart. Use
+`samplingMode` instead of `topK` and `temperature`; it is the member that
+replaced them.
 
 ### Exports
 

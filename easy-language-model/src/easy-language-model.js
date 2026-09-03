@@ -170,11 +170,6 @@ export class EasyLanguageModel {
     return LanguageModel.availability(toCoreOptions(options));
   }
 
-  /** Same as `LanguageModel.params()`. Extension and experimental contexts only. */
-  static params() {
-    return LanguageModel.params();
-  }
-
   /**
    * Creates a session.
    *
