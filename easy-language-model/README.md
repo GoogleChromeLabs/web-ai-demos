@@ -383,14 +383,16 @@ re-thrown.
 One class, both roles, as with `LanguageModel`: the statics are the way in, and
 what they hand back is an instance of the same class.
 
-- **`EasyLanguageModel.supported`** — whether the Prompt API exists.
-- **`EasyLanguageModel.availability(options)`** — same as
-  `LanguageModel.availability()`; returns `'unavailable'` when the API is
-  missing rather than throwing.
-- **`EasyLanguageModel.create(options)`** — resolves with an
-  `EasyLanguageModel`, the same way `LanguageModel.create()` resolves with a
-  `LanguageModel`. Every `LanguageModel.create()` option is forwarded. In
-  addition:
+#### Statics
+
+| `LanguageModel`         | `EasyLanguageModel`     | Difference                                                                                                                        |
+| ----------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `create(options)`       | `create(options)`       | Checks availability with the same options, installs the download monitor, and waits for a gesture if the model has to be fetched. |
+| `availability(options)` | `availability(options)` | Returns `'unavailable'` when the API is missing, instead of throwing.                                                             |
+| `params()`              | `params()`              | Unchanged.                                                                                                                        |
+| —                       | `supported`             | **Added.** Whether the Prompt API exists at all.                                                                                  |
+
+`create()` forwards every `LanguageModel.create()` option and adds these:
 
 | Option                                                   | Default               | What it does                                                                                                 |
 | -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -408,16 +410,32 @@ what they hand back is an instance of the same class.
 
 ### Instance members
 
-| Member                                                                                                                                                               | Notes                                                                                                  |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `prompt(input, options)`                                                                                                                                             | Sanitized.                                                                                             |
-| `promptStreaming(input, options)`                                                                                                                                    | `ReadableStream` of vetted Markdown chunks.                                                            |
-| `promptHTML(input, options)`                                                                                                                                         | The whole response as HTML, safe to assign.                                                            |
-| `promptStreamingHTML(input, {onMarkdownChunk, …})`                                                                                                                   | `ReadableStream` of HTML chunks at parser granularity; concatenate for the full HTML. No side effects. |
-| `compact(options)`                                                                                                                                                   | Returns `{before, after, saved, reduction, messages, languages}`.                                      |
-| `history`                                                                                                                                                            | The conversation as the current session sees it.                                                       |
-| `session`                                                                                                                                                            | The raw `LanguageModel`.                                                                               |
-| `append`, `clone`, `destroy`, `measureContextUsage`, `contextUsage`, `contextWindow`, `samplingMode`, `addEventListener`, `removeEventListener`, `oncontextoverflow` | Pass-throughs.                                                                                         |
+Added by the wrapper:
+
+| Member                                             | What it is                                                                                                              |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `promptHTML(input, options)`                       | The whole response as HTML rather than Markdown, safe to assign.                                                        |
+| `promptStreamingHTML(input, {onMarkdownChunk, …})` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                  |
+| `compact(options)`                                 | Summarizes the conversation and restarts the session. Returns `{before, after, saved, reduction, messages, languages}`. |
+| `history`                                          | The conversation as the current session sees it, which is what `compact()` summarizes.                                  |
+| `session`                                          | The raw `LanguageModel`, for anything the wrapper doesn't cover.                                                        |
+
+Everything else is the Prompt API's, and behaves the same unless noted:
+
+| `LanguageModel`                                                          | `EasyLanguageModel` | Difference                                                                      |
+| ------------------------------------------------------------------------ | ------------------- | ------------------------------------------------------------------------------- |
+| `prompt(input, options)`                                                 | same                | Vetted with the Sanitizer API before you get it.                                |
+| `promptStreaming(input, options)`                                        | same                | Every chunk vetted, and an unfinished tag is held back rather than handed over. |
+| `append(input, options)`                                                 | same                | Also recorded in `history`, so `compact()` sees it.                             |
+| `clone(options)`                                                         | same                | Resolves with an `EasyLanguageModel` carrying a copy of `history`.              |
+| `destroy()`                                                              | same                | Also releases the Summarizer and Language Detector that `compact()` cached.     |
+| `addEventListener()`, `removeEventListener()`, `oncontextoverflow`       | same                | Re-attached to the replacement session when `compact()` swaps it.               |
+| `measureContextUsage()`, `contextUsage`, `contextWindow`, `samplingMode` | same                | Passed straight through.                                                        |
+
+The instance members `measureInputUsage()`, `inputUsage`, `inputQuota`,
+`onquotaoverflow`, `topK` and `temperature` are deprecated or extension-only, so
+they are not wrapped; reach them through `session`. `topK` and `temperature` are
+still accepted as `create()` options and forwarded like any other.
 
 ### Exports
 
