@@ -5,13 +5,13 @@ A near drop-in wrapper for the Prompt API's
 same options, same return values, with the boilerplate that every production
 built-in AI app ends up writing folded in:
 
-|                        | Prompt API                                                        | `EasyLanguageModel`                                                                                                                       |
-| ---------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sanitizing output**  | Sanitize and diff every response yourself to see what was removed | [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) on `prompt()` and `promptStreaming()`, on by default |
-| **Rendering Markdown** | Bring your own streaming parser                                   | `promptStreamingHTML()` emits HTML chunks; pipe them into `renderStreamingHTML()`                                                         |
-| **Long conversations** | Manage `contextUsage` and rebuild the session yourself            | `session.compact()`                                                                                                                       |
-| **Model downloads**    | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
-| **User activation**    | `create()` fails if the page has no gesture                       | Waits for one, or tells you to ask                                                                                                        |
+|                                  | Prompt API                                                        | `EasyLanguageModel`                                                                                                                       |
+| -------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sanitizing output**            | Sanitize and diff every response yourself to see what was removed | [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) on `prompt()` and `promptStreaming()`, on by default |
+| **Rendering HTML from Markdown** | Bring your own streaming parser                                   | `promptStreamingHTML()` emits HTML chunks; pipe them into `renderStreamingHTML()`                                                         |
+| **Long conversations**           | Manage `contextUsage` and rebuild the session yourself            | `session.compact()`                                                                                                                       |
+| **Model downloads**              | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
+| **User activation**              | `create()` fails if the page has no gesture                       | Waits for one, or tells you to ask                                                                                                        |
 
 Everything else — `append()`, `clone()`, `measureContextUsage()`,
 `contextUsage`, `contextWindow`, `contextoverflow`, `responseConstraint`,
