@@ -115,7 +115,7 @@ function splitOptions(options) {
  *   Always called on detection, whichever strategy is set.
  * @property {HTMLProgressElement} [downloadProgress] Driven automatically,
  *   including the indeterminate phase while the model is unpacked.
- * @property {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [onDownloadProgress]
+ * @property {(progress: {resource: string, loaded: number, total: number}) => void} [onDownloadProgress]
  *   The same events as a callback. Independent of `downloadProgress`: pass
  *   either, both, or neither.
  * @property {HTMLElement} [activationButton] Revealed when the download needs

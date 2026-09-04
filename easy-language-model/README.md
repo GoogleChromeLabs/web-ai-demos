@@ -451,11 +451,11 @@ arriving:
 ```js
 const session = await EasyLanguageModel.create({
   ...options,
-  onDownloadProgress({ resource, percent }) {
+  onDownloadProgress({ resource, loaded, total }) {
     // 'language-model' while create() runs, then 'summarizer' and
     // 'language-detector' the first time compact() does.
-    status.textContent =
-      `Downloading ${resource}: ${Math.round(percent * 100)}%`;
+    const percent = Math.round((loaded / total) * 100);
+    status.textContent = `Downloading ${resource}: ${percent}%`;
   },
 });
 ```
@@ -484,14 +484,14 @@ re-thrown.
 Calling `create()` forwards every `LanguageModel.create()` option and adds
 these:
 
-| Option                                                   | Default               | What it does                                                                                                                                                                               |
-| -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                      |
-| `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                                                                                                 |
-| `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                |
-| `onDownloadProgress({resource, loaded, total, percent})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
-| `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                    |
-| `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                                                                                                     |
+| Option                                          | Default               | What it does                                                                                                                                                                               |
+| ----------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sanitizer`                                     | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                      |
+| `ignoreFencedCode`                              | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                                                                                                 |
+| `downloadProgress`                              | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                |
+| `onDownloadProgress({resource, loaded, total})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
+| `activationButton`                              | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                    |
+| `activationHint`                                | —                     | Shown and hidden with the button, for the line saying why it appeared.                                                                                                                     |
 
 ### Instance members
 

@@ -173,12 +173,13 @@ async function createSession() {
     // <progress> element is enough to get a correct one, including the
     // indeterminate phase while the model is unpacked into memory.
     downloadProgress,
-    onDownloadProgress({ resource, percent }) {
+    onDownloadProgress({ resource, loaded, total }) {
       // Compacting downloads a summarizer and a language detector of its own,
       // so say which one is arriving.
+      const percent = Math.round((loaded / total) * 100);
       setState(
         'downloading',
-        `Downloading ${resource.replace(/-/g, ' ')}: ${Math.round(percent * 100)}%`
+        `Downloading ${resource.replace(/-/g, ' ')}: ${percent}%`
       );
     },
 

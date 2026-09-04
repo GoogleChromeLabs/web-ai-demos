@@ -7,18 +7,18 @@
  * Normalizes a `downloadprogress` event into the shape callers are handed.
  *
  * A `total` of 1 means the browser is reporting a fraction rather than a byte
- * count, and it can be absent entirely, so `percent` is worked out here rather
- * than by every caller. Every download callback in the library goes through this, so
- * they all carry the same fields.
+ * count, and it can be absent entirely, which would make `loaded / total` NaN.
+ * Both are settled here so that division is always safe to do. Every download
+ * callback in the library goes through this, so they all carry the same fields.
  *
  * @param {{loaded: number, total?: number}} event
  * @param {string} resource What is being downloaded.
- * @returns {{resource: string, loaded: number, total: number, percent: number}}
+ * @returns {{resource: string, loaded: number, total: number}}
  */
 export function normalizeDownloadProgress(event, resource) {
   const total = event.total > 0 ? event.total : 1;
   const loaded = Number.isFinite(event.loaded) ? event.loaded : 0;
-  return { resource, loaded, total, percent: Math.min(1, loaded / total) };
+  return { resource, loaded: Math.min(loaded, total), total };
 }
 
 /**
@@ -30,7 +30,7 @@ export function normalizeDownloadProgress(event, resource) {
  * once the bytes are all in and the browser is unpacking the model.
  *
  * @param {object} options
- * @param {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [options.onDownloadProgress]
+ * @param {(progress: {resource: string, loaded: number, total: number}) => void} [options.onDownloadProgress]
  * @param {HTMLProgressElement} [options.downloadProgress]
  * @param {(monitor: EventTarget) => void} [options.monitor] The caller's own monitor.
  */
@@ -57,10 +57,10 @@ export function createDownloadReporter({
     monitor(m) {
       m.addEventListener('downloadprogress', (event) => {
         const reported = normalizeDownloadProgress(event, 'language-model');
-        const { total, loaded, percent } = reported;
+        const { total, loaded } = reported;
 
         if (downloadProgress) {
-          if (percent < 1) {
+          if (loaded < total) {
             downloadProgress.hidden = false;
             downloadProgress.max = total;
             downloadProgress.value = loaded;

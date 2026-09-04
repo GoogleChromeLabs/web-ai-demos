@@ -12,16 +12,23 @@ import { Compactor } from '../src/compact.js';
 import { normalizeDownloadProgress } from '../src/download.js';
 import { EasyLanguageModel } from '../src/easy-language-model.js';
 
-/** Every progress payload must be usable as `Math.round(percent * 100)`. */
+/**
+ * Every payload must survive the percentage an app works out from it, which is
+ * the whole reason `loaded` and `total` are settled before being handed over.
+ */
 function assertUsable(progress, label) {
-  for (const field of ['loaded', 'total', 'percent']) {
+  for (const field of ['loaded', 'total']) {
     assert.ok(
       Number.isFinite(progress[field]),
       `${label}: ${field} was ${progress[field]}`
     );
   }
   assert.equal(typeof progress.resource, 'string', `${label}: resource`);
-  assert.ok(progress.percent >= 0 && progress.percent <= 1, `${label}: range`);
+  const percent = Math.round((progress.loaded / progress.total) * 100);
+  assert.ok(
+    Number.isFinite(percent) && percent >= 0 && percent <= 100,
+    `${label}: loaded / total came out as ${percent}`
+  );
 }
 
 class FakeMonitor extends EventTarget {}
@@ -33,19 +40,20 @@ function fireProgress(monitor, detail) {
 }
 
 describe('normalizeDownloadProgress', () => {
-  it('computes percent from a byte count', () => {
+  it('passes a byte count through', () => {
     const p = normalizeDownloadProgress({ loaded: 50, total: 200 }, 'x');
-    assert.deepEqual(p, {
-      resource: 'x',
-      loaded: 50,
-      total: 200,
-      percent: 0.25,
-    });
+    assert.deepEqual(p, { resource: 'x', loaded: 50, total: 200 });
   });
 
   it('treats a missing total as a fraction', () => {
-    assertUsable(normalizeDownloadProgress({ loaded: 0.4 }, 'x'), 'no total');
-    assert.equal(normalizeDownloadProgress({ loaded: 0.4 }, 'x').percent, 0.4);
+    const p = normalizeDownloadProgress({ loaded: 0.4 }, 'x');
+    assertUsable(p, 'no total');
+    assert.deepEqual(p, { resource: 'x', loaded: 0.4, total: 1 });
+  });
+
+  it('never reports more loaded than total', () => {
+    const p = normalizeDownloadProgress({ loaded: 5, total: 2 }, 'x');
+    assert.equal(p.loaded, 2, 'so a percentage can never exceed 100');
   });
 
   it('survives a zero total and a missing loaded', () => {
@@ -100,8 +108,8 @@ describe('progress payloads reaching the app', () => {
   });
 
   // The compactor downloads a Summarizer and a LanguageDetector of its own.
-  // These used to report {resource, loaded, total} with no percent, so an app
-  // doing Math.round(percent * 100) rendered NaN.
+  // These used to arrive unnormalized, so an app working out a percentage from
+  // them rendered NaN.
   it('reports usable payloads while compacting', async () => {
     const seen = [];
     stub('Summarizer', {

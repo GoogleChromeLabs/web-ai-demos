@@ -150,7 +150,7 @@ describe('creating a session', () => {
     await EasyLanguageModel.create({
       ...NO_SANITIZER,
       downloadProgress,
-      onDownloadProgress: (p) => seen.push(p.percent),
+      onDownloadProgress: (p) => seen.push(p.loaded / p.total),
     });
 
     assert.deepEqual(seen, [0.25, 0.5, 1], 'every event reported');
