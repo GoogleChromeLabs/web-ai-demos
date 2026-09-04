@@ -169,6 +169,9 @@ output.setHTML(answer);
 </td><td>
 
 ```js
+// Safe: `answer` is Sanitizer-checked
+// automatically, and prompt() throws
+// rather than hand back unsafe markup.
 const answer = await session.prompt(prompt);
 output.setHTML(answer);
 ```
