@@ -59,29 +59,30 @@ function waitForClick(button, { signal } = {}) {
  * a button is what opts into waiting.
  *
  * @param {object} options
- * @param {HTMLElement} [options.activationButton] Revealed while waiting, and
- *   hidden again afterwards, the same way `progress` is driven.
- * @param {() => void} [options.onUserActivationRequired]
+ * @param {HTMLElement} [options.activationButton] Revealed while waiting,
+ *   hidden again afterwards, and the only thing whose click counts.
+ * @param {HTMLElement} [options.hint] Revealed and hidden alongside it, for the
+ *   line of text saying why the button appeared.
  * @param {AbortSignal} [options.signal]
  * @returns {Promise<boolean>} Whether it waited.
  */
-export async function ensureUserActivation({
-  activationButton,
-  onUserActivationRequired,
-  signal,
-}) {
+export async function ensureUserActivation({ activationButton, hint, signal }) {
   if (!activationButton || hasUserActivation()) {
     return false;
   }
 
-  activationButton.hidden = false;
-  onUserActivationRequired?.();
+  const shown = [activationButton, hint].filter(Boolean);
+  for (const element of shown) {
+    element.hidden = false;
+  }
   try {
     await waitForClick(activationButton, { signal });
   } finally {
-    // Also on abort: a button that outlives the wait is worse than one that
-    // never appeared.
-    activationButton.hidden = true;
+    // Also on abort: an affordance that outlives the wait is worse than one
+    // that never appeared.
+    for (const element of shown) {
+      element.hidden = true;
+    }
   }
   return true;
 }

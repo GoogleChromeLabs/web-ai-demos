@@ -22,6 +22,15 @@ export function isPromptApiSupported() {
 export async function createRawSession(createOptions, easy) {
   const reporter = createDownloadReporter(easy);
 
+  // The elements handed over are the wrapper's to drive, so they start hidden
+  // whether or not the markup said so, and are revealed only if it turns out a
+  // gesture is needed.
+  for (const element of [easy.activationButton, easy.hint]) {
+    if (element) {
+      element.hidden = true;
+    }
+  }
+
   // Forwarded as given. A dictionary ignores members it doesn't declare, so
   // whatever the Prompt API adds next reaches both calls without a change here,
   // and the two can never disagree about the same session.
@@ -37,7 +46,7 @@ export async function createRawSession(createOptions, easy) {
   if (availability !== 'available') {
     await ensureUserActivation({
       activationButton: easy.activationButton,
-      onUserActivationRequired: easy.onUserActivationRequired,
+      hint: easy.hint,
       signal: createOptions.signal,
     });
   }

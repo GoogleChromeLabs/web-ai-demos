@@ -9,7 +9,7 @@ const $ = (id) => document.getElementById(id);
 
 const stateBadge = $('state-badge');
 const statusText = $('status');
-const activationHint = $('activation-hint');
+const hint = $('activation-hint');
 const activationButton = $('activation-btn');
 const downloadProgress = $('download-progress');
 const app = $('app');
@@ -179,13 +179,10 @@ async function createSession() {
     },
 
     // The gesture requirement only applies when something has to be
-    // downloaded. The wrapper reveals this button, waits for a click on it,
-    // and hides it again, so none of that is written here.
+    // downloaded. The wrapper reveals both of these, waits for a click on the
+    // button, and hides them again, so none of that is written here.
     activationButton,
-    onUserActivationRequired() {
-      activationHint.hidden = false;
-      addLogEntry('Waiting for a click to start the download.', 'warn');
-    },
+    hint,
   });
 
   // The browser evicts the oldest message pairs when the window fills. This
@@ -223,7 +220,6 @@ async function init() {
     return;
   }
 
-  activationHint.hidden = true;
   setState('ready', 'Ready.');
   app.hidden = false;
   updateContextDisplay();

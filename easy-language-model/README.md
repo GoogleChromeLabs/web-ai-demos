@@ -31,11 +31,12 @@ import { EasyLanguageModel } from 'easy-language-model';
 
 ### Creating a session
 
-Both columns use the same three elements from the page, all starting hidden:
-`progress`, `activationButton`, and a `hint` explaining why the button
-appeared. The first two are named after the options they're passed as, and the
-wrapper reveals each when it's needed and hides it again afterwards. On the
-left, `waitForClick()` is a helper you would write yourself.
+Both columns use the same three elements from the page: `progress`,
+`activationButton`, and a `hint` explaining why the button appeared. On the
+right all three are handed over, and the wrapper hides them, reveals each when
+it's needed, and hides it again afterwards, so the markup doesn't have to start
+them hidden either. On the left, `waitForClick()` is a helper you would write
+yourself.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -111,11 +112,8 @@ const session = await EasyLanguageModel.create({
   ...options,
   progress,
   activationButton,
-  onUserActivationRequired() {
-    hint.hidden = false;
-  },
+  hint,
 });
-hint.hidden = true;
 ```
 
 </td></tr>
@@ -126,14 +124,11 @@ browser starts unpacking the model. That takes an unknown amount of time, so
 the indicator has to go indeterminate, which the wrapper does for you.
 Both columns check availability first, and neither can skip it: it is the
 only way to learn that the feature can't be offered at all, and the wrapper
-doesn't second-guess the answer. `create()` asks again for its own reasons, to
-drive the progress element and to know whether a gesture is needed, but an
-unavailable model is the Prompt API's own error to throw.
+doesn't second-guess the answer.
 
 The button needs no click handler of your own: the wrapper listens on it, and
 only on it. A click elsewhere doesn't count, because the gesture it granted may
-already be spent by the time `create()` runs. `onUserActivationRequired` is left
-for anything else you want to show, like the hint here.
+already be spent by the time `create()` runs.
 
 Leave `activationButton` out if you'd rather drive `create()` from your own
 button's handler. With nothing to wait on the wrapper waits for nothing:
@@ -422,7 +417,7 @@ these:
 | `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
 | `activationButton`                                       | —                     | Revealed when a download needs a gesture, listened to, and hidden once clicked. Without one, no waiting.     |
-| `onUserActivationRequired()`                             | —                     | Fires alongside, for a hint or a log line.                                                                   |
+| `hint`                                                   | —                     | Shown and hidden with the button, for the line saying why it appeared.                                       |
 | `compact`                                                | —                     | Defaults for `session.compact()`.                                                                            |
 
 ### Instance members
