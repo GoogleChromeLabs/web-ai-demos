@@ -241,7 +241,7 @@ Both `promptHTML()` and `promptStreamingHTML()` are `prompt()` and
 you get back is HTML. The one-shot form hands over the whole response at once:
 
 ```js
-// Safe by construction: the parser escapes the model's text.
+// Safe as the parser escapes the model's text.
 output.setHTML(await session.promptHTML(prompt));
 ```
 
@@ -266,9 +266,14 @@ which has to be handed the whole response every time it grows:
 <tr valign="top"><td>
 
 ```js
+// Check first, then re-parse and re-render
+// the whole response on every chunk.
 let chunks = '';
 for await (const chunk of stream) {
   chunks += chunk;
+  if (isUnsafe(chunks)) {
+    return;
+  }
   output.innerHTML = marked.parse(chunks);
 }
 ```
@@ -276,6 +281,7 @@ for await (const chunk of stream) {
 </td><td>
 
 ```js
+// Safe as the parser escapes the model's text.
 await session
   .promptStreamingHTML(prompt)
   .pipeTo(renderStreamingHTML(output));
