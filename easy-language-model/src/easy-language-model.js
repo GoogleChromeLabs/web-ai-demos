@@ -133,7 +133,7 @@ function splitOptions(options) {
  * shape, same options, same return values, with the boilerplate that every
  * production Prompt API app ends up writing folded in:
  *
- * - Output is vetted with the Sanitizer API before it can reach the DOM.
+ * - Output is sanitized with the Sanitizer API before it can reach the DOM.
  * - `promptHTML()` and `promptStreamingHTML()` return HTML rather than Markdown.
  * - `compact()` summarizes a conversation to reclaim context.
  * - Download progress is reported without opting in.
@@ -303,7 +303,7 @@ export class EasyLanguageModel {
   }
 
   /**
-   * Like `LanguageModel.promptStreaming()`, but every chunk is vetted before
+   * Like `LanguageModel.promptStreaming()`, but every chunk is sanitized before
    * it's handed over.
    *
    * The check runs against everything received so far, not each chunk in
@@ -348,7 +348,7 @@ export class EasyLanguageModel {
       }
     }
 
-    // The response is complete and vetted, so anything held back is safe now:
+    // The response is complete and sanitized, so anything held back is safe now:
     // an unterminated tag at the end is inert.
     if (emittedLength < full.length) {
       yield full.slice(emittedLength);
@@ -415,7 +415,7 @@ export class EasyLanguageModel {
     const entries = toHistoryEntries(input);
     const pending = [];
 
-    // Nothing here vets the response, because nothing here can render it
+    // Nothing here sanitizes the response, because nothing here can render it
     // unsafely. The parser escapes every run of text, emits only tags it chose
     // itself, and drops an `href` or `src` whose scheme isn't safe, so markup
     // the model wrote arrives as visible text rather than as elements. Stopping
@@ -431,7 +431,7 @@ export class EasyLanguageModel {
     let emitted = '';
     // How much of the raw Markdown `onMarkdownChunk` has seen. Held back at a tag
     // boundary exactly like promptStreaming(), so both hand out the same
-    // vetted text.
+    // sanitized text.
     let markdownEmitted = 0;
 
     for await (const chunk of readStream(
