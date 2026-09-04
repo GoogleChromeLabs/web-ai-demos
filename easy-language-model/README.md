@@ -477,12 +477,9 @@ Everything else is `LanguageModel`'s, and behaves the same.
 
 The entry point exports three things: `EasyLanguageModel`,
 `renderStreamingHTML(element)`, the `WritableStream` shown above, and
-`markdownToHtml()`, the parser as a `TransformStream`. The last two are
-re-exported from
-[`streaming-markdown-html`](https://www.npmjs.com/package/streaming-markdown-html),
-so nothing here needs a second package in your dependencies. It builds
-nodes with `createElement` and `append` and never from a string, so it works on
-pages that enforce Trusted Types — which is why every chunk
+`markdownToHtml()`, the parser as a `TransformStream`. `renderStreamingHTML()`
+builds nodes with `createElement` and `append` and never from a string, so it
+works on pages that enforce Trusted Types — which is why every chunk
 `promptStreamingHTML()` yields is a single token rather than a balanced
 fragment. A fragment would force `insertAdjacentHTML`, and such pages refuse it.
 
