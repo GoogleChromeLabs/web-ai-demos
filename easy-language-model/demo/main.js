@@ -3,11 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  EasyLanguageModel,
-  renderStreamingHTML,
-  UnsafeModelOutputError,
-} from '../src/index.js';
+import { EasyLanguageModel, renderStreamingHTML } from '../src/index.js';
+
+/**
+ * Whether this is the wrapper rejecting the response, rather than the model
+ * failing to produce one. Both are `OperationError`; only the first carries the
+ * sanitized text alongside it.
+ */
+const isUnsafeOutput = (error) =>
+  error.name === 'OperationError' && 'sanitized' in error;
 
 const $ = (id) => document.getElementById(id);
 
@@ -274,7 +278,7 @@ form.addEventListener('submit', async (event) => {
     if (error.name === 'AbortError') {
       // Whatever arrived before the abort stays on screen.
       addLogEntry(`Stopped after ${chunkCount} HTML chunks.`, 'warn');
-    } else if (error instanceof UnsafeModelOutputError) {
+    } else if (isUnsafeOutput(error)) {
       addLogEntry(
         `Unsafe output blocked: ${error.output.slice(-120)}`,
         'error'

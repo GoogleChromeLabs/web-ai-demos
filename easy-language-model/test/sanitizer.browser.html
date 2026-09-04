@@ -111,7 +111,7 @@
           script.response = 'Sure: <img src="pwned" onerror="alert(1)">';
           eq(
             await nameOfThrown(() => session.prompt('x')),
-            'UnsafeModelOutputError',
+            'OperationError',
             'error'
           );
         });
@@ -120,7 +120,7 @@
           script.response = 'ok then <img src=x onerror=alert(1)> more text';
           eq(
             await nameOfThrown(() => drain(session.promptStreaming('x'))),
-            'UnsafeModelOutputError',
+            'OperationError',
             'error'
           );
         });
@@ -129,7 +129,7 @@
           script.response = 'text <img src=x onerror=alert(1)> more';
           eq(
             await nameOfThrown(() => session.promptHTML('x')),
-            'UnsafeModelOutputError',
+            'OperationError',
             'error'
           );
         });
@@ -138,7 +138,7 @@
           script.response = 'text <img src=x onerror=alert(1)> more';
           eq(
             await nameOfThrown(() => drain(session.promptStreamingHTML('x'))),
-            'UnsafeModelOutputError',
+            'OperationError',
             'error'
           );
         });
@@ -154,7 +154,9 @@
           } catch (error) {
             thrown = error;
           }
-          eq(thrown?.name, 'UnsafeModelOutputError', 'error');
+          eq(thrown?.name, 'OperationError', 'error');
+          eq(thrown instanceof DOMException, true, "the platform's own error");
+          eq(typeof thrown?.sanitized, 'string', 'sanitized text rides along');
           eq(chunks.join(''), 'safe start ', 'handed over before the throw');
           eq(thrown?.partialOutput, 'safe start ', 'and reported on the error');
         });

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UnsafeModelOutputError } from './errors.js';
+import { unsafeOutputError } from './unsafe-output.js';
 import { isSafeUrl } from 'streaming-markdown-html';
 
 /** Whether the browser implements the HTML Sanitizer API. */
@@ -143,7 +143,7 @@ export function createOutputGuard({
     sanitizer,
     check,
     /**
-     * Throws `UnsafeModelOutputError` if `text` contains unsafe markup.
+     * Throws an `OperationError` if `text` contains unsafe markup.
      *
      * @param {string} text
      * @param {{partialOutput?: string}} [detail]
@@ -151,7 +151,7 @@ export function createOutputGuard({
     assertSafe(text, { partialOutput } = {}) {
       const { removed, sanitized } = check(text);
       if (removed) {
-        throw new UnsafeModelOutputError(
+        throw unsafeOutputError(
           'The model produced output containing markup that the Sanitizer ' +
             'API removed. Rendering was stopped.',
           { output: text, sanitized, partialOutput }

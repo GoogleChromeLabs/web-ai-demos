@@ -5,7 +5,7 @@
 
 import { Compactor } from './compact.js';
 import { createRawSession, isPromptApiSupported } from './create-session.js';
-import { UnsafeModelOutputError } from './errors.js';
+import { unsafeOutputError } from './unsafe-output.js';
 import { createHtmlTokenStreamer } from 'streaming-markdown-html';
 import { createOutputGuard } from './sanitizer.js';
 
@@ -588,7 +588,7 @@ export class EasyLanguageModel {
   }
 
   #reportUnsafe(detail) {
-    throw new UnsafeModelOutputError(
+    throw unsafeOutputError(
       'The model produced output containing markup that the Sanitizer API ' +
         'removed. Rendering was stopped.',
       detail
