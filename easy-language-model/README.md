@@ -533,13 +533,6 @@ prompt, a context bar with
 compact and reset, stop for a response in flight, and a button that fills in an
 injection prompt so you can watch rendering stop mid-response.
 
-## The Markdown parser
-
-The parser that turns the model's Markdown into HTML is a vendored, modified
-copy of [streaming-markdown](https://github.com/thetarnav/streaming-markdown).
-What was changed and what it deliberately does not support are written up in
-[`vendor/README.md`](vendor/README.md).
-
 ## Test
 
 ```sh
