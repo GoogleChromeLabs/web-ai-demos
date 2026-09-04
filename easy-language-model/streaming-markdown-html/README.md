@@ -19,6 +19,8 @@ Two things make it browser-specific on purpose:
   with `createElement`, `setAttribute`, and `append` alone, so it works on pages
   that enforce Trusted Types, where `innerHTML` and `insertAdjacentHTML` throw.
 
+## Install
+
 ```sh
 npm install streaming-markdown-html
 ```
@@ -53,40 +55,79 @@ Concatenating them all gives the complete, well-formed HTML.
 
 ## Putting those chunks on the page
 
-`renderStreamingHTML(element)` is a `WritableStream` that takes those chunks and
-builds the DOM as they arrive, appending nodes rather than re-parsing anything:
+If the Markdown already arrives as a stream, the whole thing is one expression.
+`markdownToHtml()` is the streamer above as a `TransformStream`, and
+`renderStreamingHTML(element)` is a `WritableStream` that builds the DOM as the
+chunks arrive, appending nodes rather than re-parsing anything:
 
 ```js
 import {
-  createHtmlTokenStreamer,
+  markdownToHtml,
   renderStreamingHTML,
 } from 'streaming-markdown-html';
 
-const writer = renderStreamingHTML(document.querySelector('#out')).getWriter();
-const streamer = createHtmlTokenStreamer({
-  onHtml: (html) => writer.write(html),
-});
-
-for await (const markdown of source) {
-  streamer.write(markdown);
-}
-streamer.end();
-await writer.close();
+await markdownStream
+  .pipeThrough(markdownToHtml())
+  .pipeTo(renderStreamingHTML(document.querySelector('#out')));
 ```
 
-Keeping each chunk to a single token is what makes this possible without an HTML
-string sink: a balanced fragment would need `insertAdjacentHTML`.
+Keeping each chunk to a single token is what makes that last step possible
+without an HTML string sink: a balanced fragment would need
+`insertAdjacentHTML`. Because it's an ordinary pipeline, a `TransformStream` in
+the middle sees the HTML on its way past, and backpressure works the way it
+does anywhere else.
 
 `isSafeUrl(value)` is exported too, for callers that want the same check
 elsewhere.
 
-## What was fixed
+## With the Prompt API
 
-The parser started as a copy of
-[streaming-markdown](https://github.com/thetarnav/streaming-markdown) 0.2.15
-(MIT, Damian Tarnawski). Upstream is unmaintained — the last substantive commit
-was May 2025, and it describes itself as an experiment — but its append-only
-design is exactly what token-level streaming needs. Every fix below lives in
+`LanguageModel` streams Markdown, which is exactly what the pipeline above
+takes. `promptStreaming()` returns a `ReadableStream`, so rendering a response
+as it is generated is those same three lines:
+
+```js
+import {
+  markdownToHtml,
+  renderStreamingHTML,
+} from 'streaming-markdown-html';
+
+const session = await LanguageModel.create();
+const output = document.querySelector('#out');
+
+await session
+  .promptStreaming('Explain streams, with a short table.')
+  .pipeThrough(markdownToHtml())
+  .pipeTo(renderStreamingHTML(output));
+```
+
+A model's chunks split wherever the tokenizer happened to split them, mid-word
+and mid-construct, which is the case this parser is built for: a `**bold**` or a
+table row spread over three chunks is held until it is complete, and nothing
+already on the page is touched again.
+
+Two things this does not do, both of which matter if the prompt is anything a
+user can influence. It does not vet the Markdown: a model told to emit
+`<img src=x onerror=…>` will emit it, and while this parser escapes it into text
+rather than markup, you want to know it happened. And it does not stop the
+response. For both, see
+[`easy-language-model`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/easy-language-model),
+a Prompt API wrapper that runs the response through the
+[Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API)
+and uses this package underneath.
+
+## Prior art
+
+This is not a parser written from scratch. It is a fork of
+[streaming-markdown](https://github.com/thetarnav/streaming-markdown) 0.2.15 by
+Damian Tarnawski (MIT), which is where the append-only design and the whole
+tokenizer come from. That design is the hard part and the reason for building on
+it: emitting only new tokens is what lets a caller append to the DOM instead of
+re-rendering.
+
+It is a fork rather than a dependency because upstream is unmaintained. The last
+substantive commit was May 2025 and it describes itself as an experiment, so
+there was nowhere to send these fixes. Each one lives in
 [`parser.js`](parser.js), marked with a `FIX:` comment, and is measured against
 a CommonMark + GFM reference:
 

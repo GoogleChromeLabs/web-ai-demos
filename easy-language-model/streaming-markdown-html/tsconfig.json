@@ -16,6 +16,7 @@
     "index.js",
     "parser.js",
     "renderer.js",
+    "markdown-to-html.js",
     "render-stream.js",
     "safe-url.js"
   ]

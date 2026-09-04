@@ -4,5 +4,6 @@
  */
 
 export { createHtmlTokenStreamer } from './renderer.js';
+export { markdownToHtml } from './markdown-to-html.js';
 export { renderStreamingHTML } from './render-stream.js';
 export { isSafeUrl } from './safe-url.js';

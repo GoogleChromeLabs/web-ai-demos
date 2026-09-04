@@ -1,6 +1,6 @@
 {
   "name": "streaming-markdown-html",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A streaming Markdown-to-HTML parser for browsers: append-only, token-granularity output you can pipe straight into an element.",
   "license": "(Apache-2.0 AND MIT)",
   "author": "Thomas Steiner <tomac@google.com>",
@@ -24,6 +24,7 @@
     "index.js",
     "parser.js",
     "renderer.js",
+    "markdown-to-html.js",
     "render-stream.js",
     "safe-url.js",
     "types",
