@@ -31,12 +31,11 @@ import { EasyLanguageModel } from 'easy-language-model';
 
 ### Creating a session
 
-Both columns use the same three elements from the page, all starting hidden: an
-`HTMLProgressElement`, a button to start the download, and a line of text saying
-why it appeared. On the right the first two are handed over as `progress` and
-`activationButton`, and the wrapper reveals each when it's needed and hides it
-again afterwards. On the left, `waitForClick()` is a helper you would write
-yourself.
+Both columns use the same three elements from the page, all starting hidden:
+`progress`, `activationButton`, and a `hint` explaining why the button
+appeared. The first two are named after the options they're passed as, and the
+wrapper reveals each when it's needed and hides it again afterwards. On the
+left, `waitForClick()` is a helper you would write yourself.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -64,10 +63,10 @@ if (availability !== 'available') {
   downloading = true;
   progress.hidden = false;
   if (!navigator.userActivation.isActive) {
-    enableButton.hidden = false;
+    activationButton.hidden = false;
     hint.hidden = false;
-    await waitForClick(enableButton);
-    enableButton.hidden = true;
+    await waitForClick(activationButton);
+    activationButton.hidden = true;
     hint.hidden = true;
   }
 }
@@ -111,7 +110,7 @@ if (availability === 'unavailable') {
 const session = await EasyLanguageModel.create({
   ...options,
   progress,
-  activationButton: enableButton,
+  activationButton,
   onUserActivationRequired() {
     hint.hidden = false;
   },
