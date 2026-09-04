@@ -511,50 +511,42 @@ try {
 
 ## How the sanitization works
 
-Only `prompt()` and `promptStreaming()` vet anything, because they are the only
-two that hand back a string whose destination this can't know: right for
+Only `prompt()` and `promptStreaming()` check anything. They hand back a string,
+and the wrapper can't know where it's headed: escaping would be right for
 `setHTML()`, wrong for `textContent`, wrong again for anything parsed as JSON.
-Escaping would presume a sink, so they throw instead and let you decide.
+So they throw and leave the decision to you. The HTML methods never throw over
+model output, because the parser can't render it unsafely: it escapes every run
+of text, emits only tags it picked itself, and drops an `href` or `src` whose
+scheme isn't safe.
 
-`promptHTML()` and `promptStreamingHTML()` never throw over model output. They
-can't render it unsafely: the parser escapes every run of text, emits only tags
-it chose itself, and drops an `href` or `src` whose scheme isn't safe, so
-`<img src=x onerror=…>` from the model reaches the page as visible text and
-`[click](javascript:…)` reaches it as a link with no destination. Refusing on
-top of that would throw away answers that were never dangerous, and "how do I
-show an image?" is answered with an inline `<img>` constantly.
+<details>
+<summary>How the check works, and four details</summary>
 
-The model's raw Markdown is what gets sanitized, because that's the only part the
+The model's raw Markdown is what gets checked, since that's the only part the
 model authored. The Sanitizer API doesn't report what it removed, so the wrapper
-parses that output twice inside a document with no browsing context — once with
-`setHTML()`, once with `setHTMLUnsafe()` — and compares the two serializations.
-Both go through the same parser and serializer, so any difference is something
-the sanitizer took out. Because the document is inert, neither parse runs script
-or fetches anything.
+parses that output twice inside a document with no browsing context, once with
+`setHTML()` and once with `setHTMLUnsafe()`, and compares the serializations:
+any difference is something the sanitizer took out. That document is inert, so
+neither parse runs script or fetches anything, and the HTML methods build their
+DOM there too, so an image URL the model invented is never requested.
 
-The HTML methods build their DOM in that same inert document, so an image URL
-the model invented is never requested.
-
-Four details worth knowing:
-
-- **The check runs on the accumulated response, not on each chunk.** Dangerous
-  markup can straddle a chunk boundary. A tag that's still being written is
-  also held back rather than emitted, so a half-finished
-  `<img src=x onerror=…` never reaches you.
-- **Fenced and inline code are exempt by default.** A Markdown renderer emits
-  code as text, so `<iframe>` inside a fence is displayed, not executed.
-  Without this, asking the model for an HTML snippet would be flagged every
-  time. Set `ignoreFencedCode: false` if you render code some other way. This
-  only affects the two string methods; the HTML ones don't check at all.
+- **The check runs on the accumulated response, not on each chunk**, because
+  dangerous markup can straddle a boundary. A tag still being written is held
+  back too, so a half-finished `<img src=x onerror=…` never reaches you.
+- **Fenced and inline code are exempt by default**, since a Markdown renderer
+  shows code as text rather than running it. Without this, asking for an HTML
+  snippet would be flagged every time. Set `ignoreFencedCode: false` if you
+  render code some other way.
 - **URL schemes are checked separately.** The Sanitizer API's default
   configuration removes unsafe elements and attributes but deliberately doesn't
-  filter URLs, so `[click](javascript:alert(1))` would otherwise survive.
-  Both `href` and `src` are restricted to `http`, `https`, `mailto`, `tel`,
-  `sms`, `ftp`, relative URLs, and `data:` URLs for real image types.
+  filter URLs, so `href` and `src` are restricted to `http`, `https`, `mailto`,
+  `tel`, `sms`, `ftp`, relative URLs, and `data:` URLs for real image types.
 - **A link's URL arrives after its text.** Markdown writes `[docs](url)`, so the
-  parser only knows the `href` once the token closes. Links, images, and
-  task-list checkboxes are therefore emitted as one finished element rather than
-  as an opening tag followed by text. They're small, so nothing visibly stalls.
+  `href` is only known once the token closes. Links, images, and task-list
+  checkboxes are held back until then, and still arrive as single-token chunks
+  rather than as one balanced fragment.
+
+</details>
 
 ## Demo
 
