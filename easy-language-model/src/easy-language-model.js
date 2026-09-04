@@ -86,7 +86,6 @@ function toHistoryEntries(input) {
 const EASY_OPTION_KEYS = new Set([
   'sanitizer',
   'ignoreFencedCode',
-  'onUnsafeOutput',
   'onDownloadProgress',
   'progress',
   'userActivation',
@@ -117,7 +116,6 @@ function splitOptions(options) {
  *   output. `false` turns the check off. Default: the Sanitizer API default.
  * @property {boolean} [ignoreFencedCode] Exempt fenced and inline code from the
  *   check, so asking for an HTML snippet isn't flagged. Default `true`.
- * @property {(detail: {output: string, sanitized: string, partialOutput: string}) => void} [onUnsafeOutput]
  *   Always called on detection, whichever strategy is set.
  * @property {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [onDownloadProgress]
  * @property {HTMLProgressElement} [progress] Driven automatically, including
@@ -593,7 +591,6 @@ export class EasyLanguageModel {
   }
 
   #reportUnsafe(detail) {
-    this.#easy.onUnsafeOutput?.(detail);
     throw new UnsafeModelOutputError(
       'The model produced output containing markup that the Sanitizer API ' +
         'removed. Rendering was stopped.',

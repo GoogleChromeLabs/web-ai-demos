@@ -429,7 +429,6 @@ these:
 | -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                        |
 | `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                   |
-| `onUnsafeOutput(detail)`                                 | —                     | Called before the throw. `detail` has `output`, `sanitized`, `partialOutput`.                                |
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
 | `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |

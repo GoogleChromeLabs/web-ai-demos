@@ -159,21 +159,6 @@
           eq(thrown?.partialOutput, 'safe start ', 'and reported on the error');
         });
 
-        await test('onUnsafeOutput fires before the throw', async () => {
-          const seen = [];
-          const watched = await EasyLanguageModel.create({
-            onUnsafeOutput: (detail) => seen.push(detail),
-            userActivation: 'ignore',
-          });
-          script.response = 'text <img src=x onerror=alert(1)> more';
-          eq(
-            await nameOfThrown(() => drain(watched.promptStreaming('x'))),
-            'UnsafeModelOutputError',
-            'error'
-          );
-          eq(seen.length > 0, true, 'reported');
-        });
-
         await test('fenced HTML is not treated as an attack', async () => {
           script.response =
             'Here is HTML:\n\n```html\n<iframe src="x"></iframe>\n```\n';

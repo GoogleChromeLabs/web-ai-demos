@@ -177,11 +177,6 @@ async function createSession() {
       activationHint.hidden = false;
       addLogEntry('Waiting for a user gesture to start the download.', 'warn');
     },
-
-    // Fires whenever the Sanitizer API removes something from the response.
-    onUnsafeOutput({ output }) {
-      addLogEntry(`Unsafe output blocked: ${output.slice(-120)}`, 'error');
-    },
   });
 
   // The browser evicts the oldest message pairs when the window fills. This
@@ -273,6 +268,10 @@ form.addEventListener('submit', async (event) => {
       // Whatever arrived before the abort stays on screen.
       addLogEntry(`Stopped after ${chunkCount} HTML chunks.`, 'warn');
     } else if (error instanceof UnsafeModelOutputError) {
+      addLogEntry(
+        `Unsafe output blocked: ${error.output.slice(-120)}`,
+        'error'
+      );
       htmlOutput.replaceChildren();
       htmlTail.reset();
       const warning = document.createElement('p');
