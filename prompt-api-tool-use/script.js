@@ -26,8 +26,8 @@ When someone asks which package is the most popular, work through these steps
 in order:
 
 1. Call search_npm_packages once.
-2. Call get_repo_stars for every single package that search returned, one call
-   at a time, until none are left.
+2. Call get_repo_stars once, passing every single package that search returned
+   in the "repositories" array of that one call.
 3. Only once you hold a star count for every package, name the winner.
 
 Never compare star counts before you have looked all of them up, and never
@@ -354,13 +354,18 @@ function logTurnStart(question) {
 // Reports which of a tool's required arguments the model left out. Small
 // models regularly call a tool with `arguments: {}`, and running the tool
 // anyway sends undefined values to the API: a wasted request, answered with a
-// misleading error. `get_repo_stars` with no arguments asks GitHub about
-// `/repos/undefined/undefined` and reports "not found", which reads as "that
-// repository does not exist" rather than "you forgot the arguments".
+// misleading error. `get_repo_stars` with no arguments would ask GitHub about
+// nothing at all and report "not found", which reads as "that repository does
+// not exist" rather than "you forgot the arguments". An empty array counts as
+// left out for the same reason: `repositories: []` is a call with no work in
+// it.
 function missingArguments(tool, args) {
   const required = tool.inputSchema?.required ?? [];
   return required.filter((key) => {
     const value = args?.[key];
+    if (Array.isArray(value)) {
+      return value.length === 0;
+    }
     return value === undefined || value === null || value === '';
   });
 }
