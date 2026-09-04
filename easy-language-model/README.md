@@ -472,27 +472,11 @@ Added by the wrapper:
 | `compact({onStatus})`                 | Summarizes the conversation and restarts the session. `onStatus` is called once per message, since each is a separate Summarizer call. Returns `{before, after, saved, reduction, messages, languages}`. |
 | `history`                             | The conversation as the current session sees it, which is what `compact()` summarizes.                                                                                                                   |
 
-Everything else is the Prompt API's, and behaves the same unless noted:
-
-| `LanguageModel`                                                          | `EasyLanguageModel` | Difference                                                                         |
-| ------------------------------------------------------------------------ | ------------------- | ---------------------------------------------------------------------------------- |
-| `prompt(input, options)`                                                 | same                | Vetted with the Sanitizer API before you get it.                                   |
-| `promptStreaming(input, options)`                                        | same                | Every chunk sanitized, and an unfinished tag is held back rather than handed over. |
-| `append(input, options)`                                                 | same                | Also recorded in `history`, so `compact()` sees it.                                |
-| `clone(options)`                                                         | same                | Resolves with an `EasyLanguageModel` carrying a copy of `history`.                 |
-| `destroy()`                                                              | same                | Also releases the Summarizer and Language Detector that `compact()` cached.        |
-| `addEventListener()`, `removeEventListener()`, `oncontextoverflow`       | same                | Re-attached to the replacement session when `compact()` swaps it.                  |
-| `measureContextUsage()`, `contextUsage`, `contextWindow`, `samplingMode` | same                | Passed straight through.                                                           |
-
-Every web-standard member is wrapped, and there is no way through to the
-session underneath, so nothing deprecated or extension-only is reachable.
-Options are another matter: they are forwarded exactly as given, which is what
-keeps `availability()` and `create()` in agreement and means a new one works
-without a change here.
+Everything else is `LanguageModel`'s, and behaves the same.
 
 ### Exports
 
-The entry point exports six things: `EasyLanguageModel`, the four errors, and
+The entry point exports two things: `EasyLanguageModel` and
 `renderStreamingHTML(element)`, the `WritableStream` shown above. It builds
 nodes with `createElement` and `append` and never from a string, so it works on
 pages that enforce Trusted Types — which is why every chunk
