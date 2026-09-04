@@ -8,11 +8,17 @@ import { WriterPromptBuilder } from './writer-prompt-builder.js';
 
 /**
  * Writer API Polyfill
- * Backed by Prompt API Polyfill (LanguageModel)
+ * Backed by the browser's LanguageModel API. Unlike the other Task API
+ * polyfills, it does not fall back to the Prompt API polyfill.
  */
 
 export class Writer extends BaseTaskModel {
   #options;
+
+  // The Writer API is not polyfilled on top of the Prompt API polyfill: it is
+  // only backed by a LanguageModel implementation the browser already
+  // provides.
+  static _canUsePromptApiPolyfill = false;
 
   constructor(session, builder, options) {
     super(session, builder);
@@ -61,7 +67,12 @@ export class Writer extends BaseTaskModel {
       expectedContextLanguages,
     };
 
-    await this.ensureLanguageModel();
+    if (!(await this.ensureLanguageModel())) {
+      throw new DOMException(
+        'The Writer API polyfill requires the LanguageModel API, which is not available.',
+        'NotSupportedError'
+      );
+    }
     this._checkContext();
     const builder = new WriterPromptBuilder(validatedOptions);
     const { systemPrompt } = builder.buildPrompt('');

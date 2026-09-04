@@ -11,12 +11,17 @@ specifically:
 - **Translator API**
 - **SemanticEmbedder API**
 
-The Summarizer, Writer, Rewriter, Language Detector, and Translator polyfills
-are backed by the
+The Summarizer, Language Detector, and Translator polyfills are backed by the
 [`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill),
 which is automatically loaded if `window.LanguageModel` is not detected. This
 means they support the same
 [dynamic backends](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill#supported-backends).
+
+The Writer and Rewriter polyfills are backed by `window.LanguageModel` as well,
+but they never load the `prompt-api-polyfill`. If the browser does not expose
+the LanguageModel API, `Writer.availability()` and `Rewriter.availability()`
+resolve with `'unavailable'`, and `Writer.create()` and `Rewriter.create()`
+reject with a `NotSupportedError`.
 
 The SemanticEmbedder polyfill is backed by
 [EmbeddingGemma 300M](https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX)
