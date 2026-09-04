@@ -174,15 +174,26 @@ label {
   display: grid;
   gap: 1.5rem;
   grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  grid-template-rows: auto 1fr;
 }
 
 #panes > section {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+/* The gap owns the spacing now, so the heading's own margin would double it. */
+#panes > section > h2 {
   margin: 0;
 }
 
 .prose,
 #markdown-output {
   display: block;
+  margin: 0;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
   padding: 0.25rem 1rem;
