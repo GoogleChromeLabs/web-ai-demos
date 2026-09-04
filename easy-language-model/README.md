@@ -32,22 +32,12 @@ import { EasyLanguageModel } from 'easy-language-model';
 
 ### Creating a session
 
-Three separate concerns have to line up before a session exists: the
-availability check has to use the _same_ options as `create()`, a download
-needs a progress indicator, and starting that download needs a user gesture.
-
-Both sides check availability, so what's left over is the real difference:
-wiring the monitor, handling the extracting state, and waiting for a gesture.
-Keeping the Prompt API's own options in one object is what makes the two calls
-agree by construction; the wrapper's options are spread in at `create()` time
-and never have to be repeated.
-
 Both columns use the same three elements from the page. One is an
 `HTMLProgressElement`, handed over as `progress`. The other two, `enableButton`
-and `hint`, start hidden, are revealed only when a gesture is needed — something
-to click, and a line saying why — and are hidden again once the session exists. On the left, `waitForClick()` is a
-helper you would write yourself, which is what `onUserActivationRequired`
-replaces.
+and `hint`, start hidden, are revealed only when a gesture is needed (something
+to click, and a line saying why), and are hidden again once the session exists.
+On the left, `waitForClick()` is a helper you would write yourself, which is
+what `onUserActivationRequired` replaces.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
