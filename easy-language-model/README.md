@@ -368,10 +368,11 @@ Compacting is the proactive alternative: summarize the history with the
 and restart the session with those summaries as `initialPrompts`, which the
 browser never evicts.
 
-By hand that means tracking every message, detecting each one's language,
-summarizing it, destroying the session, building a new one, and re-registering
-every listener — while keeping an untouched copy of the history in case any of
-that fails. What comes back is
+`contextoverflow` fires the moment eviction starts, which is the cue to
+compact. By hand that means tracking every message, detecting each one's
+language, summarizing it, destroying the session, building a new one, and
+re-registering every listener on it, while keeping an untouched copy of the
+history in case any of that fails. What comes back is
 `{ before, after, saved, reduction, messages, languages }`.
 
 <table>
@@ -379,34 +380,49 @@ that fails. What comes back is
 <tr valign="top"><td>
 
 ```js
-const compacted = [];
-for (const message of history) {
-  const lang = (await detectLanguage(message.content))
-    ?? navigator.language;
-  const format = looksLikeMarkdown(message.content)
-    ? 'markdown'
-    : 'plain-text';
-  const summarizer =
-    await getSummarizer(format, lang);
-  compacted.push({
-    role: message.role,
-    content: await summarizer.summarize(
-      message.content,
-      { context: '…' },
-    ),
+session.addEventListener(
+  'contextoverflow',
+  onOverflow,
+);
+
+async function onOverflow() {
+  const compacted = [];
+  for (const message of history) {
+    const lang =
+      (await detectLanguage(message.content))
+      ?? navigator.language;
+    const format =
+      looksLikeMarkdown(message.content)
+        ? 'markdown'
+        : 'plain-text';
+    const summarizer =
+      await getSummarizer(format, lang);
+    compacted.push({
+      role: message.role,
+      content: await summarizer.summarize(
+        message.content,
+        { context: '…' },
+      ),
+    });
+  }
+  session.destroy();
+  session = await LanguageModel.create({
+    initialPrompts: compacted,
   });
+  // The replacement has no listeners.
+  session.addEventListener(
+    'contextoverflow',
+    onOverflow,
+  );
 }
-session.destroy();
-session = await LanguageModel.create({
-  initialPrompts: compacted,
-});
-session.addEventListener('contextoverflow', …);
 ```
 
 </td><td>
 
 ```js
-const stats = await session.compact();
+session.oncontextoverflow = async () => {
+  const stats = await session.compact();
+};
 ```
 
 </td></tr>
