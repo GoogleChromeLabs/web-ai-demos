@@ -32,20 +32,28 @@ import {
 ```
 
 Nothing else is required. `expectedInputs` and `expectedOutputs` default to
-`[{ type: 'text', languages: ['en'] }]`, and `availability()` and `create()` are
-given the same defaults, so the two can't end up asking about different models:
+`[{ type: 'text', languages: ['en'] }]`, and both calls below are given the same
+defaults, so they can't end up asking about different models:
 
 ```js
 if ((await EasyLanguageModel.availability()) === 'unavailable') return;
 
 const session = await EasyLanguageModel.create();
-// Sanitizer-checked, so this is safe to assign.
-output.setHTML(await session.prompt('Explain streams in one sentence.'));
+
+await session
+  .promptStreamingHTML('Explain streams in one sentence.')
+  .pipeTo(renderStreamingHTML(output));
 ```
 
+The model writes Markdown. `promptStreamingHTML()` turns it into HTML as it
+arrives, a tag or a run of text at a time, and `renderStreamingHTML()` appends
+that to the page without re-parsing anything already on it. For the whole
+response in one piece, `prompt()` gives you the Markdown and `promptHTML()` the
+HTML.
+
 The API is below, and [Side by side](#side-by-side) works through what you'd
-add for a production app: a progress bar, a gesture to start the download, HTML
-instead of Markdown, and a way to survive a full context window.
+add for a production app: a progress bar, a gesture to start the download, and
+a way to survive a full context window.
 
 ## API
 
