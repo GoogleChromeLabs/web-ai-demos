@@ -28,17 +28,6 @@ npm install easy-language-model
 import { EasyLanguageModel } from 'easy-language-model';
 ```
 
-Requires a browser with the Prompt API and the HTML Sanitizer API. Pass
-`sanitizer: false` to run without the latter.
-
-There are two dependencies.
-[`streaming-markdown-html`](https://www.npmjs.com/package/streaming-markdown-html)
-does the Markdown half and is kept external rather than bundled, so it stays a
-single copy if you use it directly too.
-[`@types/dom-chromium-ai`](https://www.npmjs.com/package/@types/dom-chromium-ai)
-ships no code at all: the published declarations build on it so the Prompt API's
-own types resolve in your editor.
-
 ## Side by side
 
 ### Creating a session
