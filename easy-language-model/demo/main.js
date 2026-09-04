@@ -10,6 +10,7 @@ const $ = (id) => document.getElementById(id);
 const stateBadge = $('state-badge');
 const statusText = $('status');
 const activationHint = $('activation-hint');
+const activationButton = $('activation-btn');
 const downloadProgress = $('download-progress');
 const app = $('app');
 const unsupported = $('unsupported');
@@ -178,11 +179,12 @@ async function createSession() {
     },
 
     // The gesture requirement only applies when something has to be
-    // downloaded, and the wrapper waits for one instead of failing.
-    userActivation: 'wait',
+    // downloaded. The wrapper reveals this button, waits for a click on it,
+    // and hides it again, so none of that is written here.
+    activationButton,
     onUserActivationRequired() {
       activationHint.hidden = false;
-      addLogEntry('Waiting for a user gesture to start the download.', 'warn');
+      addLogEntry('Waiting for a click to start the download.', 'warn');
     },
   });
 

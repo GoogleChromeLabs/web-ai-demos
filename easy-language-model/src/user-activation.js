@@ -3,25 +3,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Events that grant transient user activation.
-const ACTIVATION_EVENTS = ['pointerdown', 'keydown', 'click', 'touchend'];
-
 /** Whether the page currently has transient user activation. */
 export function hasUserActivation() {
   return navigator.userActivation?.isActive ?? true;
 }
 
 /**
- * Resolves once the user interacts with the page.
+ * Resolves when `button` is clicked.
  *
+ * Only that button counts. Listening to the whole document would resolve on a
+ * click the user meant for something else, and the gesture it granted may be
+ * spent by the time `create()` runs.
+ *
+ * @param {EventTarget} button
  * @param {object} [options]
  * @param {AbortSignal} [options.signal]
- * @param {EventTarget} [options.target] Defaults to the document.
  */
-export function waitForUserActivation({ signal, target = document } = {}) {
-  if (hasUserActivation()) {
-    return Promise.resolve();
-  }
+function waitForClick(button, { signal } = {}) {
   return new Promise((resolve, reject) => {
     const controller = new AbortController();
     const settle = (fn, value) => {
@@ -36,19 +34,17 @@ export function waitForUserActivation({ signal, target = document } = {}) {
         signal: controller.signal,
       });
     }
-    for (const type of ACTIVATION_EVENTS) {
-      target.addEventListener(
-        type,
-        (event) => {
-          // Only a real interaction grants activation; a synthetic event would
-          // resolve here and then fail in create().
-          if (event.isTrusted) {
-            settle(resolve);
-          }
-        },
-        { signal: controller.signal, capture: true }
-      );
-    }
+    button.addEventListener(
+      'click',
+      (event) => {
+        // Only a real click grants activation. A dispatched one would resolve
+        // here and then fail in create().
+        if (event.isTrusted) {
+          settle(resolve);
+        }
+      },
+      { signal: controller.signal }
+    );
   });
 }
 
@@ -58,23 +54,34 @@ export function waitForUserActivation({ signal, target = document } = {}) {
  * Chrome only requires a gesture when the model isn't downloaded yet, so this
  * is a no-op for an `"available"` model.
  *
+ * With no `activationButton` there is nothing to wait on, so `create()` is
+ * called as it stands and rejects the way the Prompt API rejects. Handing over
+ * a button is what opts into waiting.
+ *
  * @param {object} options
- * @param {'wait'|'ignore'} options.mode
+ * @param {HTMLElement} [options.activationButton] Revealed while waiting, and
+ *   hidden again afterwards, the same way `progress` is driven.
  * @param {() => void} [options.onUserActivationRequired]
  * @param {AbortSignal} [options.signal]
+ * @returns {Promise<boolean>} Whether it waited.
  */
 export async function ensureUserActivation({
-  mode,
+  activationButton,
   onUserActivationRequired,
   signal,
 }) {
-  // 'ignore' hands the requirement back to the caller: `create()` is called
-  // without a gesture and rejects with the browser's own error, which is the
-  // mode to use when driving it from a click handler of your own.
-  if (mode === 'ignore' || hasUserActivation()) {
+  if (!activationButton || hasUserActivation()) {
     return false;
   }
+
+  activationButton.hidden = false;
   onUserActivationRequired?.();
-  await waitForUserActivation({ signal });
+  try {
+    await waitForClick(activationButton, { signal });
+  } finally {
+    // Also on abort: a button that outlives the wait is worse than one that
+    // never appeared.
+    activationButton.hidden = true;
+  }
   return true;
 }

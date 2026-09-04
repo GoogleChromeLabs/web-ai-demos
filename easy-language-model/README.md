@@ -31,12 +31,12 @@ import { EasyLanguageModel } from 'easy-language-model';
 
 ### Creating a session
 
-Both columns use the same three elements from the page. One is an
-`HTMLProgressElement`, handed over as `progress`. The other two, `enableButton`
-and `hint`, start hidden, are revealed only when a gesture is needed (something
-to click, and a line saying why), and are hidden again once the session exists.
-On the left, `waitForClick()` is a helper you would write yourself, which is
-what `onUserActivationRequired` replaces.
+Both columns use the same three elements from the page, all starting hidden: an
+`HTMLProgressElement`, a button to start the download, and a line of text saying
+why it appeared. On the right the first two are handed over as `progress` and
+`activationButton`, and the wrapper reveals each when it's needed and hides it
+again afterwards. On the left, `waitForClick()` is a helper you would write
+yourself.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -66,7 +66,7 @@ if (availability !== 'available') {
   if (!navigator.userActivation.isActive) {
     enableButton.hidden = false;
     hint.hidden = false;
-    await waitForClick();
+    await waitForClick(enableButton);
     enableButton.hidden = true;
     hint.hidden = true;
   }
@@ -111,12 +111,11 @@ if (availability === 'unavailable') {
 const session = await EasyLanguageModel.create({
   ...options,
   progress,
+  activationButton: enableButton,
   onUserActivationRequired() {
-    enableButton.hidden = false;
     hint.hidden = false;
   },
 });
-enableButton.hidden = true;
 hint.hidden = true;
 ```
 
@@ -132,12 +131,15 @@ doesn't second-guess the answer. `create()` asks again for its own reasons, to
 drive the progress element and to know whether a gesture is needed, but an
 unavailable model is the Prompt API's own error to throw.
 
-The button needs no click handler: any trusted click, tap, or key press
-anywhere on the page releases the wait and `create()` resolves. It's there to
-give the user something to aim at, and the hint to explain what it's for. Use
-`userActivation: 'ignore'` instead if you'd rather drive `create()` from your own
-button's handler: the wrapper won't wait, and `create()` rejects with the
-browser's own error if there's no gesture.
+The button needs no click handler of your own: the wrapper listens on it, and
+only on it. A click elsewhere doesn't count, because the gesture it granted may
+already be spent by the time `create()` runs. `onUserActivationRequired` is left
+for anything else you want to show, like the hint here.
+
+Leave `activationButton` out if you'd rather drive `create()` from your own
+button's handler. With nothing to wait on the wrapper waits for nothing:
+`create()` is called as it stands and rejects with the browser's own error if
+the page has no activation.
 
 ### Prompting
 
@@ -420,8 +422,8 @@ these:
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
 | `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
-| `userActivation`                                         | `'wait'`              | `'wait'` for a gesture, or `'ignore'` to call `create()` anyway.                                             |
-| `onUserActivationRequired()`                             | —                     | Your cue to reveal a button or other affordance.                                                             |
+| `activationButton`                                       | —                     | Revealed when a download needs a gesture, listened to, and hidden once clicked. Without one, no waiting.     |
+| `onUserActivationRequired()`                             | —                     | Fires alongside, for a hint or a log line.                                                                   |
 | `compact`                                                | —                     | Defaults for `session.compact()`.                                                                            |
 
 ### Instance members

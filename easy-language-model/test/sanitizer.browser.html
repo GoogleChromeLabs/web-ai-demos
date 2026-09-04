@@ -103,9 +103,7 @@
       } else {
         const script = { response: '', sessions: [] };
         stubGlobals({ LanguageModel: fakeLanguageModel(script) });
-        const session = await EasyLanguageModel.create({
-          userActivation: 'ignore',
-        });
+        const session = await EasyLanguageModel.create();
 
         await test('prompt() throws on unsafe output', async () => {
           script.response = 'Sure: <img src="pwned" onerror="alert(1)">';

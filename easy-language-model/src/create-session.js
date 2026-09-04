@@ -36,7 +36,7 @@ export async function createRawSession(createOptions, easy) {
   // A gesture is only required when something has to be downloaded.
   if (availability !== 'available') {
     await ensureUserActivation({
-      mode: easy.userActivation ?? 'wait',
+      activationButton: easy.activationButton,
       onUserActivationRequired: easy.onUserActivationRequired,
       signal: createOptions.signal,
     });

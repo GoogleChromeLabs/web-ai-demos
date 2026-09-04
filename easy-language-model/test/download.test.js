@@ -89,7 +89,6 @@ describe('progress payloads reaching the app', () => {
     });
 
     await EasyLanguageModel.create({
-      userActivation: 'ignore',
       // linkedom has no Sanitizer API; this test is about progress reporting.
       sanitizer: false,
       onDownloadProgress: (p) => seen.push(p),

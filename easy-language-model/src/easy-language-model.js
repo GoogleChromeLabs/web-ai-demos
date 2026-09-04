@@ -85,7 +85,7 @@ const EASY_OPTION_KEYS = new Set([
   'ignoreFencedCode',
   'onDownloadProgress',
   'progress',
-  'userActivation',
+  'activationButton',
   'onUserActivationRequired',
   'compact',
   // Replaced by the wrapper's own monitor, which then calls this one.
@@ -117,9 +117,10 @@ function splitOptions(options) {
  * @property {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [onDownloadProgress]
  * @property {HTMLProgressElement} [progress] Driven automatically, including
  *   the indeterminate phase while the model is unpacked.
- * @property {'wait'|'ignore'} [userActivation] What to do when a
- *   download needs a gesture the page doesn't have. Default `'wait'`.
- * @property {() => void} [onUserActivationRequired] Your cue to prompt for a click.
+ * @property {HTMLElement} [activationButton] Revealed when the download needs
+ *   a gesture, and hidden once it's clicked. Without one, `create()` is called
+ *   as it stands and rejects if the page has no activation.
+ * @property {() => void} [onUserActivationRequired] Fires alongside, for a hint or a log line.
  * @property {object} [compact] Defaults for `session.compact()`.
  */
 

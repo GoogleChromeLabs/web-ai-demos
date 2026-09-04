@@ -15,7 +15,7 @@ import { fakeCompactionApis, fakeLanguageModel, stubGlobals } from './stubs.js';
 // Sanitization needs the real HTML Sanitizer API, which Node has no
 // implementation of. Those behaviours are covered by test/sanitizer.browser.html
 // instead; everything here is about session plumbing.
-const NO_SANITIZER = { sanitizer: false, userActivation: 'ignore' };
+const NO_SANITIZER = { sanitizer: false };
 
 let restore = () => {};
 afterEach(() => {
@@ -45,33 +45,62 @@ const drain = async (stream) => {
 };
 
 describe('creating a session', () => {
-  it('waits for a gesture when the model must be downloaded', async () => {
+  it('waits for the button when the model must be downloaded', async () => {
     const script = newScript();
     install(script, {
       availability: ['downloadable'],
       userActivation: { isActive: false },
     });
+    const button = document.createElement('button');
+    button.hidden = true;
+    document.body.append(button);
 
     let asked = 0;
     const pending = EasyLanguageModel.create({
       ...NO_SANITIZER,
-      userActivation: 'wait',
+      activationButton: button,
       onUserActivationRequired: () => asked++,
     });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
     assert.equal(asked, 1, 'should have asked for a gesture');
-    assert.equal(
-      script.sessions.length,
-      0,
-      'must not create before the gesture'
-    );
+    assert.equal(button.hidden, false, 'and revealed the button');
+    assert.equal(script.sessions.length, 0, 'must not create before the click');
 
-    // Only a trusted event releases the wait, so `isTrusted` has to be forced
+    // Only a trusted click releases the wait, so `isTrusted` has to be forced
     // on: it is a read-only getter.
-    const gesture = new DomEvent('pointerdown', { bubbles: true });
-    Object.defineProperty(gesture, 'isTrusted', { value: true });
-    document.dispatchEvent(gesture);
+    const click = new DomEvent('click', { bubbles: true });
+    Object.defineProperty(click, 'isTrusted', { value: true });
+    button.dispatchEvent(click);
+    await pending;
+    assert.equal(script.sessions.length, 1);
+    assert.equal(button.hidden, true, 'and hid it again');
+  });
+
+  it('takes no notice of clicks anywhere else', async () => {
+    const script = newScript();
+    install(script, {
+      availability: ['downloadable'],
+      userActivation: { isActive: false },
+    });
+    const button = document.createElement('button');
+    document.body.append(button);
+
+    const pending = EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      activationButton: button,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const stray = new DomEvent('click', { bubbles: true });
+    Object.defineProperty(stray, 'isTrusted', { value: true });
+    document.body.dispatchEvent(stray);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(script.sessions.length, 0, 'a stray click must not count');
+
+    const onButton = new DomEvent('click', { bubbles: true });
+    Object.defineProperty(onButton, 'isTrusted', { value: true });
+    button.dispatchEvent(onButton);
     await pending;
     assert.equal(script.sessions.length, 1);
   });
@@ -82,16 +111,15 @@ describe('creating a session', () => {
     let asked = 0;
     await EasyLanguageModel.create({
       ...NO_SANITIZER,
-      userActivation: 'wait',
+      activationButton: document.createElement('button'),
       onUserActivationRequired: () => asked++,
     });
     assert.equal(asked, 0);
   });
 
-  it("leaves the gesture to the browser under 'ignore'", async () => {
-    // No gesture and a download pending, but 'ignore' means the caller drives
-    // create() themselves: the wrapper neither waits nor invents an error, so
-    // create() is reached and whatever the browser says stands.
+  it('creates without waiting when no button is given', async () => {
+    // Nothing to wait on, so the wrapper invents no wait: create() is called
+    // as it stands and the browser decides.
     let reached = false;
     install(newScript(), {
       availability: ['downloadable'],
@@ -100,10 +128,7 @@ describe('creating a session', () => {
         reached = true;
       },
     });
-    await EasyLanguageModel.create({
-      sanitizer: false,
-      userActivation: 'ignore',
-    });
+    await EasyLanguageModel.create(NO_SANITIZER);
     assert.ok(reached, 'create() was called without waiting for a gesture');
   });
 
