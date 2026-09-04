@@ -528,7 +528,8 @@ npm run dev
 
 One prompt is one inference, shown three ways: the live DOM, the raw Markdown
 the model produced, and the HTML chunks that built the DOM. Around that are the
-download states as they happen, the user-gesture prompt, a context bar with
+availability check and download progress as they happen, the user-gesture
+prompt, a context bar with
 compact and reset, stop for a response in flight, and a button that fills in an
 injection prompt so you can watch rendering stop mid-response.
 
@@ -562,15 +563,18 @@ boundaries land mid-construct and several of these bugs only appear there.
 
 ### Known deviations
 
-Four things are deliberately not supported, and are pinned by tests in
+These are deliberately not supported, and each is pinned by a test in
 [`test/markdown.test.js`](test/markdown.test.js) so a future fix shows up as a
 failure rather than a silent change:
 
-- **Setext headings** (`Title` over `=====`) and **loose lists**. Both are only
-  recognizable after the content they affect has already been emitted, and an
-  append-only parser cannot revise what it emitted. Supporting them means
-  holding every paragraph back by a line, which is the cost this design exists
-  to avoid. Models use `#` headings essentially always.
+- **Setext headings** (`Title` over `=====`), and anything about a list that is
+  only knowable after the fact: whether it is loose, and whether a second
+  paragraph belongs to the item above it. Each is recognizable only once the
+  content it affects has been emitted, and an append-only parser cannot revise
+  what it emitted. Supporting them means holding every paragraph back by a line,
+  which is the cost this design exists to avoid. Models use `#` headings
+  essentially always.
+- **Block constructs inside a list item.** `- # h` keeps the `#` as text.
 - **Reference links** (`[t][r]` with a `[r]: url` definition). The definition
   can appear anywhere later in the document, so resolving it needs a second
   pass. The anchors come out without an `href`, so they render as plain text
@@ -580,6 +584,8 @@ failure rather than a silent change:
   URLs and `[text](url)` links both work.
 - **Table column alignment**. The reference parser emits the deprecated `align`
   attribute, which sanitizers strip anyway.
+- **The space before a two-space hard break**, which is kept rather than
+  trimmed. It renders identically.
 
 ## Test
 
@@ -589,7 +595,7 @@ npm test
 
 Runs in Node against a DOM shim, covering the Markdown pipeline (every
 construct checked against a CommonMark reference at several chunk sizes),
-session plumbing (user activation, download states, `compact()`, listener
+session plumbing (user activation, the progress element, `compact()`, listener
 re-attachment, error recovery), and download progress payloads.
 
 Sanitization is the one thing Node can't cover, since it has no HTML Sanitizer
