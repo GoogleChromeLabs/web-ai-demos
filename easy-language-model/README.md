@@ -488,8 +488,7 @@ it; `npm run build` emits both.
 ### Errors
 
 None of its own. Everything rejects the way `LanguageModel` rejects: a missing
-gesture, an unavailable model, and an aborted call all come through untouched,
-and a browser without the Sanitizer API gets a `TypeError`.
+gesture, an unavailable model, and an aborted call all come through untouched.
 
 Output the Sanitizer stripped is an `OperationError`, which the Prompt API
 defines as a prompt failing "for any other reason", and which is what happened:
