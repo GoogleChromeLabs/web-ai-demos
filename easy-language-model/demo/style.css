@@ -240,6 +240,11 @@ pre {
   color: var(--warn);
 }
 
+/* The whole summary line is the control, so it should say so on hover. */
+summary {
+  cursor: pointer;
+}
+
 .error {
   color: var(--error);
 }
