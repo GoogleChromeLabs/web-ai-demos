@@ -91,6 +91,18 @@ function renderFollowing(element, tail) {
   });
 }
 
+/**
+ * Focuses the prompt field with the caret after the text, not before it.
+ *
+ * `focus()` alone leaves the caret at position 0 on a field whose value came
+ * from the markup and has never been edited, so the prefilled prompt reads as
+ * if the cursor were in the wrong place.
+ */
+function focusPrompt() {
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+}
+
 function clearOutputs() {
   htmlOutput.replaceChildren();
   markdownOutput.textContent = '';
@@ -222,7 +234,7 @@ async function init() {
   setState('ready', 'Ready.');
   app.hidden = false;
   updateContextDisplay();
-  input.focus();
+  focusPrompt();
 }
 
 form.addEventListener('submit', async (event) => {
@@ -290,7 +302,7 @@ form.addEventListener('submit', async (event) => {
   controller = null;
   updateContextDisplay();
   setBusy(false);
-  input.focus();
+  focusPrompt();
 });
 
 compactButton.addEventListener('click', async () => {
@@ -339,12 +351,12 @@ resetButton.addEventListener('click', async () => {
   }
   updateContextDisplay();
   setBusy(false);
-  input.focus();
+  focusPrompt();
 });
 
 attackButton.addEventListener('click', () => {
   input.value = ATTACK_PROMPT;
-  input.focus();
+  focusPrompt();
 });
 
 init();
