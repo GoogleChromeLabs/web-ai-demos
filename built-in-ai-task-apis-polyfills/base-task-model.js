@@ -14,6 +14,13 @@ export class BaseTaskModel {
   #destructionController = new AbortController();
   #destructionReason = null;
 
+  /**
+   * Whether the Prompt API polyfill may be loaded to back this API when the
+   * LanguageModel API is missing. Subclasses that must not fall back to it set
+   * this to `false`.
+   */
+  static _canUsePromptApiPolyfill = true;
+
   constructor(session, builder) {
     this.#session = session;
     this.#builder = builder;
@@ -67,7 +74,9 @@ export class BaseTaskModel {
       return p;
     }
     const p = (async () => {
-      await this.ensureLanguageModel();
+      if (!(await this.ensureLanguageModel())) {
+        return 'unavailable';
+      }
       const lmOptions = {
         expectedInputs: [
           {
@@ -92,17 +101,32 @@ export class BaseTaskModel {
     return p;
   }
 
+  /**
+   * Makes sure a LanguageModel implementation is available, loading the Prompt
+   * API polyfill if the API is missing and this API is allowed to fall back to
+   * it.
+   * @returns {Promise<boolean>} Whether a LanguageModel is available.
+   */
   static async ensureLanguageModel() {
     const win = this.__window || globalThis;
-    if (typeof win !== 'undefined' && !win.LanguageModel) {
+    if (typeof win === 'undefined') {
+      return false;
+    }
+    if (!win.LanguageModel) {
+      if (!this._canUsePromptApiPolyfill) {
+        return false;
+      }
       await import('prompt-api-polyfill');
     }
+    return !!win.LanguageModel;
   }
 
   static availability(options = {}) {
     const p = (async () => {
       this._checkContext();
-      await this.ensureLanguageModel();
+      if (!(await this.ensureLanguageModel())) {
+        return 'unavailable';
+      }
       const lmOptions = {
         expectedInputs: [
           {

@@ -8,11 +8,17 @@ import { RewriterPromptBuilder } from './rewriter-prompt-builder.js';
 
 /**
  * Rewriter API Polyfill
- * Backed by Prompt API Polyfill (LanguageModel)
+ * Backed by the browser's LanguageModel API. Unlike the other Task API
+ * polyfills, it does not fall back to the Prompt API polyfill.
  */
 
 export class Rewriter extends BaseTaskModel {
   #options;
+
+  // The Rewriter API is not polyfilled on top of the Prompt API polyfill: it is
+  // only backed by a LanguageModel implementation the browser already
+  // provides.
+  static _canUsePromptApiPolyfill = false;
 
   constructor(session, builder, options) {
     super(session, builder);
@@ -61,7 +67,12 @@ export class Rewriter extends BaseTaskModel {
       expectedContextLanguages,
     };
 
-    await this.ensureLanguageModel();
+    if (!(await this.ensureLanguageModel())) {
+      throw new DOMException(
+        'The Rewriter API polyfill requires the LanguageModel API, which is not available.',
+        'NotSupportedError'
+      );
+    }
     this._checkContext();
     const builder = new RewriterPromptBuilder(validatedOptions);
     const { systemPrompt } = builder.buildPrompt('');
