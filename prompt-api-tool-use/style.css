@@ -1,0 +1,324 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright 2026 Google LLC
+ */
+
+:root {
+  color-scheme: dark light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  max-width: 1028px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: light-dark(#111, #eee);
+}
+h1 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+p.subtitle {
+  color: light-dark(#555, #aaa);
+  margin-bottom: 1.25rem;
+  max-width: 70ch;
+}
+/* A prerequisite, not prose: set apart from the description above it so it
+   does not read as one more sentence about the demo. */
+p.requirement {
+  max-width: 70ch;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid light-dark(#8a6d00, #d9b64a);
+  background: light-dark(#fffaf0, #241f14);
+}
+p.requirement code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: light-dark(#f4ecd8, #332c1a);
+  padding: 0.1em 0.35em;
+}
+
+/* Status line */
+#status {
+  /* Deliberately not a box: bordered and filled, stretched across the row
+     next to a button, it read as a text field the user could type into. */
+  color: light-dark(#555, #aaa);
+  padding: 0.4rem 0;
+  margin-bottom: 0.75rem;
+}
+
+/* Download progress */
+#dl-progress {
+  width: 100%;
+  display: none;
+  margin-bottom: 0.75rem;
+}
+
+/* Example prompts */
+#examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+button.example {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  padding: 0.35rem 0.6rem;
+  background: light-dark(#fff, #1b1b1b);
+  border: 1px solid light-dark(#ccc, #555);
+  border-radius: 999px;
+  cursor: pointer;
+}
+button.example:hover {
+  background: light-dark(#f0f0f0, #2a2a2a);
+}
+
+/* Chat */
+#chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.message {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid light-dark(#ddd, #444);
+  /* Matched to half a single line's height, so a one-line message comes out
+     as a pill like the example buttons, and a longer one stays rounded
+     instead of turning into a stadium. */
+  border-radius: 1rem;
+  white-space: pre-wrap;
+  max-width: 70ch;
+}
+.message.user {
+  align-self: flex-end;
+  background: light-dark(#e8eeff, #1d2740);
+  border-color: light-dark(#bfd0f5, #35497a);
+  /* The corner on the sender's side is tightened, so the two sides of the
+     conversation lean away from each other. */
+  border-bottom-right-radius: 0.25rem;
+}
+.message.assistant {
+  align-self: flex-start;
+  background: light-dark(#f0f7f2, #16231b);
+  border-color: light-dark(#c8e0d1, #2d4735);
+  border-bottom-left-radius: 0.25rem;
+  /* Streamed Markdown is rendered to real elements, so the pre-wrap used for
+     plain messages would double up the whitespace. */
+  white-space: normal;
+}
+/* The global reset strips margins, so the Markdown elements need their own. */
+.message.assistant :is(p, ul, ol, pre, blockquote, table) {
+  margin-bottom: 0.6rem;
+}
+.message.assistant :is(h1, h2, h3, h4) {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+.message.assistant :is(ul, ol) {
+  padding-left: 1.2rem;
+}
+.message.assistant li {
+  margin-bottom: 0.2rem;
+}
+.message.assistant > :last-child {
+  margin-bottom: 0;
+}
+.message.assistant :is(code, pre) {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+.message.assistant code {
+  background: light-dark(#f0f0f0, #2a2a2a);
+  padding: 0.1em 0.3em;
+}
+.message.assistant pre {
+  background: light-dark(#f6f6f6, #222);
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+.message.assistant pre code {
+  background: none;
+  padding: 0;
+}
+.message.assistant a {
+  color: light-dark(#1a56b8, #7fb0f2);
+}
+.message.error {
+  align-self: flex-start;
+  background: light-dark(#fff0f0, #331d1d);
+  border-color: light-dark(#e0b4b4, #6b3333);
+  border-bottom-left-radius: 0.25rem;
+}
+
+/* Tool calls */
+.tool-call {
+  /* Neutral default, used by a tool the model invented. Each declared tool
+     overrides these two below, keyed by its color slot. */
+  --tool-ink: light-dark(#555, #aaa);
+  --tool-bg: light-dark(#f6f6f6, #1e1e1e);
+  border-left: 3px solid var(--tool-ink);
+  background: var(--tool-bg);
+  padding: 0.4rem 0.6rem;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+.tool-call summary {
+  cursor: pointer;
+  color: var(--tool-ink);
+}
+
+/* One slot per tool, assigned in declaration order. */
+.tool-call[data-tool='0'] {
+  --tool-ink: light-dark(#8a6d00, #d9b64a);
+  --tool-bg: light-dark(#fffaf0, #241f14);
+}
+.tool-call[data-tool='1'] {
+  --tool-ink: light-dark(#12667f, #6cc3e0);
+  --tool-bg: light-dark(#f0fafd, #14212a);
+}
+.tool-call[data-tool='2'] {
+  --tool-ink: light-dark(#6b3f9e, #b998e8);
+  --tool-bg: light-dark(#faf5ff, #1f1a2b);
+}
+.tool-call[data-tool='3'] {
+  --tool-ink: light-dark(#2c7a4b, #7fce9c);
+  --tool-bg: light-dark(#f2fbf6, #16241c);
+}
+.tool-call[data-tool='4'] {
+  --tool-ink: light-dark(#a5457a, #eb9cc6);
+  --tool-bg: light-dark(#fff5fa, #2a1722);
+}
+.tool-call[data-tool='5'] {
+  --tool-ink: light-dark(#9c5518, #e0a86c);
+  --tool-bg: light-dark(#fff7f0, #2a1d14);
+}
+
+/* A failed call is a failure first and a tool second. */
+.tool-call.failed {
+  --tool-ink: light-dark(#b03030, #e07070);
+  --tool-bg: light-dark(#fff5f5, #2a1616);
+}
+.tool-call pre {
+  margin-top: 0.4rem;
+  max-height: 14rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Composer */
+#composer {
+  display: flex;
+  gap: 0.5rem;
+}
+#user-input {
+  flex: 1;
+  font: inherit;
+  color: inherit;
+  padding: 0.5rem 0.6rem;
+  background: light-dark(#fff, #1b1b1b);
+  border: 1px solid light-dark(#ccc, #555);
+}
+#send-btn {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+#send-btn[aria-disabled='true'],
+#user-input[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Controls */
+#controls {
+  display: flex;
+  gap: 0.5rem;
+  /* Center, so the status text sits with the buttons rather than stretching
+     to their height. */
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+#controls #status {
+  flex: 1;
+  margin-bottom: 0;
+}
+#reset-btn,
+#activate-btn {
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#reset-btn[aria-disabled='true'],
+#activate-btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Debug view */
+#debug {
+  margin-top: 1.5rem;
+  border-top: 1px solid light-dark(#ddd, #444);
+  padding-top: 0.75rem;
+}
+#debug > summary {
+  cursor: pointer;
+  color: light-dark(#555, #aaa);
+}
+#debug-log {
+  margin-top: 0.75rem;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+.exchange-turn {
+  margin: 1rem 0 0.5rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid light-dark(#ddd, #444);
+  font-weight: bold;
+}
+.exchange {
+  margin-bottom: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-left: 3px solid transparent;
+  background: light-dark(#f7f7f7, #1b1b1b);
+}
+.exchange.sent {
+  border-left-color: light-dark(#3b6ea5, #6f9fd8);
+}
+.exchange.received {
+  border-left-color: light-dark(#3f7d51, #7bbf8e);
+}
+.exchange-label {
+  color: light-dark(#555, #aaa);
+  margin-bottom: 0.2rem;
+}
+.exchange pre {
+  max-height: 18rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#debug-toolbar {
+  margin-top: 0.75rem;
+}
+#copy-debug {
+  font: inherit;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+
+.exchange.failed {
+  border-left-color: light-dark(#b03030, #e07070);
+}
