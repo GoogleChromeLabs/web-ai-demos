@@ -11,19 +11,28 @@ import { isSafeUrl } from './sanitizer.js';
 const ENTITY =
   /&(?:#\d{1,7}|#[xX][0-9a-fA-F]{1,6}|[a-zA-Z][a-zA-Z0-9]{1,31});/g;
 const entityCache = new Map();
+let entityProbe = null;
 
 function decodeEntities(doc, text) {
   if (!text.includes('&')) {
+    return text;
+  }
+  entityProbe ??= doc.createElement('div');
+  if (typeof entityProbe.setHTML !== 'function') {
+    // No Sanitizer API, so no safe way to resolve a named reference. Leaving
+    // it alone shows `&copy;` literally, which beats throwing.
     return text;
   }
   return text.replace(ENTITY, (entity) => {
     let decoded = entityCache.get(entity);
     if (decoded === undefined) {
       // The match can only be `&...;` with no markup in it, so letting the
-      // parser resolve it is safe and gets the full HTML entity table for free.
-      const probe = doc.createElement('div');
-      probe.innerHTML = entity;
-      decoded = probe.textContent || entity;
+      // parser resolve it gets the full HTML entity table for free. It has to
+      // be setHTML() rather than innerHTML: pages that enforce Trusted Types
+      // refuse innerHTML, and refusing it here would break every response
+      // containing an entity, not just an unsafe one.
+      entityProbe.setHTML(entity);
+      decoded = entityProbe.textContent || entity;
       entityCache.set(entity, decoded);
     }
     return decoded;

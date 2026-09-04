@@ -32,6 +32,15 @@ if (!document.implementation) {
   });
 }
 
+// linkedom has no setHTML(); the renderer uses it to resolve entity references
+// because innerHTML is refused on pages that enforce Trusted Types. linkedom's
+// innerHTML resolves them, so it stands in here.
+if (typeof Element.prototype.setHTML !== 'function') {
+  Element.prototype.setHTML = function setHTML(html) {
+    this.innerHTML = html;
+  };
+}
+
 // `isSafeUrl()` resolves relative URLs against the document base.
 if (!document.baseURI) {
   Object.defineProperty(document, 'baseURI', {
