@@ -9,7 +9,7 @@ const $ = (id) => document.getElementById(id);
 
 const stateBadge = $('state-badge');
 const statusText = $('status');
-const hint = $('activation-hint');
+const activationHint = $('activation-hint');
 const activationButton = $('activation-btn');
 const downloadProgress = $('download-progress');
 const app = $('app');
@@ -182,7 +182,7 @@ async function createSession() {
     // downloaded. The wrapper reveals both of these, waits for a click on the
     // button, and hides them again, so none of that is written here.
     activationButton,
-    hint,
+    activationHint,
   });
 
   // The browser evicts the oldest message pairs when the window fills. This

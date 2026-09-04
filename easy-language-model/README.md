@@ -31,12 +31,10 @@ import { EasyLanguageModel } from 'easy-language-model';
 
 ### Creating a session
 
-Both columns use the same three elements from the page: `progress`,
-`activationButton`, and a `hint` explaining why the button appeared. On the
-right all three are handed over, and the wrapper hides them, reveals each when
-it's needed, and hides it again afterwards, so the markup doesn't have to start
-them hidden either. On the left, `waitForClick()` is a helper you would write
-yourself.
+Both columns use the same three elements from the page: `progress`, a button to
+start the download, and a line of text saying why it appeared. On the right all
+three are handed over by name. On the left, `waitForClick()` is a helper you
+would write yourself.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -65,10 +63,10 @@ if (availability !== 'available') {
   progress.hidden = false;
   if (!navigator.userActivation.isActive) {
     activationButton.hidden = false;
-    hint.hidden = false;
+    activationHint.hidden = false;
     await waitForClick(activationButton);
     activationButton.hidden = true;
-    hint.hidden = true;
+    activationHint.hidden = true;
   }
 }
 
@@ -112,7 +110,7 @@ const session = await EasyLanguageModel.create({
   ...options,
   progress,
   activationButton,
-  hint,
+  activationHint,
 });
 ```
 
@@ -126,14 +124,12 @@ Both columns check availability first, and neither can skip it: it is the
 only way to learn that the feature can't be offered at all, and the wrapper
 doesn't second-guess the answer.
 
-The button needs no click handler of your own: the wrapper listens on it, and
-only on it. A click elsewhere doesn't count, because the gesture it granted may
-already be spent by the time `create()` runs.
+`activationButton` and `activationHint` need no handling of your own. Both are
+hidden from the moment `create()` is called, shown if a gesture turns out to be
+needed, and hidden again afterwards. Pass both, or just the button.
 
 Leave `activationButton` out if you'd rather drive `create()` from your own
-button's handler. With nothing to wait on the wrapper waits for nothing:
-`create()` is called as it stands and rejects with the browser's own error if
-the page has no activation.
+button's handler.
 
 ### Prompting
 
@@ -416,8 +412,8 @@ these:
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
 | `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
-| `activationButton`                                       | —                     | Revealed when a download needs a gesture, listened to, and hidden once clicked. Without one, no waiting.     |
-| `hint`                                                   | —                     | Shown and hidden with the button, for the line saying why it appeared.                                       |
+| `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.      |
+| `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                       |
 | `compact`                                                | —                     | Defaults for `session.compact()`.                                                                            |
 
 ### Instance members

@@ -61,17 +61,21 @@ function waitForClick(button, { signal } = {}) {
  * @param {object} options
  * @param {HTMLElement} [options.activationButton] Revealed while waiting,
  *   hidden again afterwards, and the only thing whose click counts.
- * @param {HTMLElement} [options.hint] Revealed and hidden alongside it, for the
- *   line of text saying why the button appeared.
+ * @param {HTMLElement} [options.activationHint] Revealed and hidden alongside
+ *   it, for the line of text saying why the button appeared.
  * @param {AbortSignal} [options.signal]
  * @returns {Promise<boolean>} Whether it waited.
  */
-export async function ensureUserActivation({ activationButton, hint, signal }) {
+export async function ensureUserActivation({
+  activationButton,
+  activationHint,
+  signal,
+}) {
   if (!activationButton || hasUserActivation()) {
     return false;
   }
 
-  const shown = [activationButton, hint].filter(Boolean);
+  const shown = [activationButton, activationHint].filter(Boolean);
   for (const element of shown) {
     element.hidden = false;
   }

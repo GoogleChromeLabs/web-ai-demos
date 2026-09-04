@@ -52,20 +52,20 @@ describe('creating a session', () => {
       userActivation: { isActive: false },
     });
     const button = document.createElement('button');
-    const hint = document.createElement('p');
+    const activationHint = document.createElement('p');
     // Left visible on purpose: the wrapper owns them once they're handed over.
-    hint.hidden = false;
-    document.body.append(button, hint);
+    activationHint.hidden = false;
+    document.body.append(button, activationHint);
 
     const pending = EasyLanguageModel.create({
       ...NO_SANITIZER,
       activationButton: button,
-      hint,
+      activationHint,
     });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
     assert.equal(button.hidden, false, 'revealed the button');
-    assert.equal(hint.hidden, false, 'and the hint with it');
+    assert.equal(activationHint.hidden, false, 'and the hint with it');
     assert.equal(script.sessions.length, 0, 'must not create before the click');
 
     // Only a trusted click releases the wait, so `isTrusted` has to be forced
@@ -76,7 +76,7 @@ describe('creating a session', () => {
     await pending;
     assert.equal(script.sessions.length, 1);
     assert.equal(button.hidden, true, 'hid the button again');
-    assert.equal(hint.hidden, true, 'and the hint with it');
+    assert.equal(activationHint.hidden, true, 'and the hint with it');
   });
 
   it('takes no notice of clicks anywhere else', async () => {
@@ -111,14 +111,14 @@ describe('creating a session', () => {
     const script = newScript();
     install(script, { userActivation: { isActive: false } });
     const button = document.createElement('button');
-    const hint = document.createElement('p');
+    const activationHint = document.createElement('p');
     await EasyLanguageModel.create({
       ...NO_SANITIZER,
       activationButton: button,
-      hint,
+      activationHint,
     });
     assert.equal(button.hidden, true, 'never revealed');
-    assert.equal(hint.hidden, true, 'nor the hint');
+    assert.equal(activationHint.hidden, true, 'nor the hint');
   });
 
   it('creates without waiting when no button is given', async () => {

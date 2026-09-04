@@ -86,7 +86,7 @@ const EASY_OPTION_KEYS = new Set([
   'onDownloadProgress',
   'progress',
   'activationButton',
-  'hint',
+  'activationHint',
   'compact',
   // Replaced by the wrapper's own monitor, which then calls this one.
   'monitor',
@@ -120,8 +120,8 @@ function splitOptions(options) {
  * @property {HTMLElement} [activationButton] Revealed when the download needs
  *   a gesture, and hidden once it's clicked. Without one, `create()` is called
  *   as it stands and rejects if the page has no activation.
- * @property {HTMLElement} [hint] Shown and hidden with the button, for the line
- *   of text saying why it appeared.
+ * @property {HTMLElement} [activationHint] Shown and hidden with the button,
+ *   for the line of text saying why it appeared.
  * @property {object} [compact] Defaults for `session.compact()`.
  */
 

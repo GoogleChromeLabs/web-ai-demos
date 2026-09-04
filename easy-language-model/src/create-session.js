@@ -25,7 +25,7 @@ export async function createRawSession(createOptions, easy) {
   // The elements handed over are the wrapper's to drive, so they start hidden
   // whether or not the markup said so, and are revealed only if it turns out a
   // gesture is needed.
-  for (const element of [easy.activationButton, easy.hint]) {
+  for (const element of [easy.activationButton, easy.activationHint]) {
     if (element) {
       element.hidden = true;
     }
@@ -46,7 +46,7 @@ export async function createRawSession(createOptions, easy) {
   if (availability !== 'available') {
     await ensureUserActivation({
       activationButton: easy.activationButton,
-      hint: easy.hint,
+      activationHint: easy.activationHint,
       signal: createOptions.signal,
     });
   }
