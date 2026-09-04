@@ -427,11 +427,40 @@ async function onOverflow() {
 ```js
 session.oncontextoverflow = async () => {
   const stats = await session.compact();
+  console.log(
+    `Compacted ${stats.messages} messages, ` +
+      `${Math.round(stats.before.usage)} → ` +
+      `${Math.round(stats.after.usage)} tokens ` +
+      `(${Math.round(stats.reduction * 100)}% smaller), ` +
+      `languages: ${stats.languages.join(', ')}`,
+  );
 };
 ```
 
 </td></tr>
 </table>
+
+To summarize each message in the language it was written in, compacting also
+reaches for the
+[Language Detector API](https://developer.mozilla.org/en-US/docs/Web/API/LanguageDetector).
+Both it and the Summarizer are models of their own, so the first `compact()` on
+a device may have two more downloads to wait for. The `onDownloadProgress` you
+passed to `create()` reports those as well, with `resource` naming which one is
+arriving:
+
+```js
+const session = await EasyLanguageModel.create({
+  ...options,
+  onDownloadProgress({ resource, percent }) {
+    // 'language-model' while create() runs, then 'summarizer' and
+    // 'language-detector' the first time compact() does.
+    status.textContent =
+      `Downloading ${resource}: ${Math.round(percent * 100)}%`;
+  },
+});
+```
+
+They're fetched once and reused, so later calls have nothing to download.
 
 Compaction swaps the underlying session in place: your `EasyLanguageModel`
 stays valid, and listeners registered through it are re-attached. Messages with
