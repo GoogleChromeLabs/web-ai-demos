@@ -200,6 +200,7 @@ describe('creating a session', () => {
     const api = await import('../src/index.js');
     assert.deepEqual(Object.keys(api).sort(), [
       'EasyLanguageModel',
+      'markdownToHtml',
       'renderStreamingHTML',
     ]);
   });

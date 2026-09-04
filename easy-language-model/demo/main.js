@@ -3,8 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EasyLanguageModel } from '../src/index.js';
-import { markdownToHtml, renderStreamingHTML } from 'streaming-markdown-html';
+import {
+  EasyLanguageModel,
+  markdownToHtml,
+  renderStreamingHTML,
+} from '../src/index.js';
 
 const $ = (id) => document.getElementById(id);
 

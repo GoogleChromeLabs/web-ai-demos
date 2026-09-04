@@ -24,7 +24,10 @@ npm install easy-language-model
 ```
 
 ```js
-import { EasyLanguageModel } from 'easy-language-model';
+import {
+  EasyLanguageModel,
+  renderStreamingHTML,
+} from 'easy-language-model';
 ```
 
 ## Side by side
@@ -253,10 +256,7 @@ Concatenating every chunk yields the complete, well-formed HTML.
 
 Consuming that stream has no side effects. To put the response on screen, pipe
 it into `renderStreamingHTML()`, a `WritableStream` that builds the DOM by
-appending nodes as they arrive, so nothing is ever re-parsed. Both come from
-[`streaming-markdown-html`](https://www.npmjs.com/package/streaming-markdown-html),
-a separate package that does the Markdown half and knows nothing about the
-Prompt API. The other column
+appending nodes as they arrive, so nothing is ever re-parsed. The other column
 reaches for [`marked`](https://marked.js.org/), an ordinary Markdown parser,
 which has to be handed the whole response every time it grows:
 
@@ -311,11 +311,11 @@ await session
 
 To show the rendered output beside the raw Markdown, split the response with
 `tee()` and run one branch through the parser yourself. `markdownToHtml()` is
-what `promptStreamingHTML()` uses internally, from the same package as
-`renderStreamingHTML()`, so both views come from one inference:
+what `promptStreamingHTML()` uses internally, so both views come from one
+inference:
 
 ```js
-import { markdownToHtml, renderStreamingHTML } from 'streaming-markdown-html';
+import { markdownToHtml, renderStreamingHTML } from 'easy-language-model';
 
 const [rawBranch, htmlBranch] = session.promptStreaming(prompt).tee();
 
@@ -475,8 +475,12 @@ Everything else is `LanguageModel`'s, and behaves the same.
 
 ### Exports
 
-The entry point exports two things: `EasyLanguageModel` and
-`renderStreamingHTML(element)`, the `WritableStream` shown above. It builds
+The entry point exports three things: `EasyLanguageModel`,
+`renderStreamingHTML(element)`, the `WritableStream` shown above, and
+`markdownToHtml()`, the parser as a `TransformStream`. The last two are
+re-exported from
+[`streaming-markdown-html`](https://www.npmjs.com/package/streaming-markdown-html),
+so nothing here needs a second package in your dependencies. It builds
 nodes with `createElement` and `append` and never from a string, so it works on
 pages that enforce Trusted Types — which is why every chunk
 `promptStreamingHTML()` yields is a single token rather than a balanced
