@@ -115,7 +115,7 @@ function splitOptions(options) {
  *   Always called on detection, whichever strategy is set.
  * @property {HTMLProgressElement} [downloadProgress] Driven automatically,
  *   including the indeterminate phase while the model is unpacked.
- * @property {(progress: {resource: string, loaded: number, total: number}) => void} [onDownloadProgress]
+ * @property {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [onDownloadProgress]
  *   The same events as a callback. Independent of `downloadProgress`: pass
  *   either, both, or neither.
  * @property {HTMLElement} [activationButton] Revealed when the download needs
@@ -463,7 +463,7 @@ export class EasyLanguageModel {
    * @param {(status: string) => void} [options.onStatus] Called once per
    *   message, since each is a separate Summarizer call and a long
    *   conversation takes a while.
-   * @returns {Promise<{before: object, after: object, saved: number, reduction: number, messages: number, languages: string[]}>}
+   * @returns {Promise<{before: object, after: object, saved: number, reduction: number, percent: number, messages: number, languages: string[]}>}
    */
   async compact(options = {}) {
     this.#compactor ??= new Compactor({
@@ -504,12 +504,14 @@ export class EasyLanguageModel {
       window: this.#session.contextWindow,
     };
     const saved = before.usage - after.usage;
+    const reduction = before.usage > 0 ? saved / before.usage : 0;
 
     return {
       before,
       after,
       saved,
-      reduction: before.usage > 0 ? saved / before.usage : 0,
+      reduction,
+      percent: Math.round(reduction * 100),
       messages: messages.length,
       languages,
     };

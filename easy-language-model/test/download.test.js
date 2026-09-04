@@ -17,17 +17,16 @@ import { EasyLanguageModel } from '../src/easy-language-model.js';
  * the whole reason `loaded` and `total` are settled before being handed over.
  */
 function assertUsable(progress, label) {
-  for (const field of ['loaded', 'total']) {
+  for (const field of ['loaded', 'total', 'percent']) {
     assert.ok(
       Number.isFinite(progress[field]),
       `${label}: ${field} was ${progress[field]}`
     );
   }
   assert.equal(typeof progress.resource, 'string', `${label}: resource`);
-  const percent = Math.round((progress.loaded / progress.total) * 100);
   assert.ok(
-    Number.isFinite(percent) && percent >= 0 && percent <= 100,
-    `${label}: loaded / total came out as ${percent}`
+    progress.percent >= 0 && progress.percent <= 100,
+    `${label}: percent was ${progress.percent}`
   );
 }
 
@@ -40,20 +39,21 @@ function fireProgress(monitor, detail) {
 }
 
 describe('normalizeDownloadProgress', () => {
-  it('passes a byte count through', () => {
+  it('works percent out from a byte count', () => {
     const p = normalizeDownloadProgress({ loaded: 50, total: 200 }, 'x');
-    assert.deepEqual(p, { resource: 'x', loaded: 50, total: 200 });
+    assert.deepEqual(p, { resource: 'x', loaded: 50, total: 200, percent: 25 });
   });
 
   it('treats a missing total as a fraction', () => {
     const p = normalizeDownloadProgress({ loaded: 0.4 }, 'x');
     assertUsable(p, 'no total');
-    assert.deepEqual(p, { resource: 'x', loaded: 0.4, total: 1 });
+    assert.deepEqual(p, { resource: 'x', loaded: 0.4, total: 1, percent: 40 });
   });
 
   it('never reports more loaded than total', () => {
     const p = normalizeDownloadProgress({ loaded: 5, total: 2 }, 'x');
-    assert.equal(p.loaded, 2, 'so a percentage can never exceed 100');
+    assert.equal(p.loaded, 2);
+    assert.equal(p.percent, 100, 'never over 100');
   });
 
   it('survives a zero total and a missing loaded', () => {
@@ -108,8 +108,8 @@ describe('progress payloads reaching the app', () => {
   });
 
   // The compactor downloads a Summarizer and a LanguageDetector of its own.
-  // These used to arrive unnormalized, so an app working out a percentage from
-  // them rendered NaN.
+  // These used to report {resource, loaded, total} with no percent, so an app
+  // doing Math.round(percent * 100) rendered NaN.
   it('reports usable payloads while compacting', async () => {
     const seen = [];
     stub('Summarizer', {

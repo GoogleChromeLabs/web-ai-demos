@@ -8,17 +8,26 @@
  *
  * A `total` of 1 means the browser is reporting a fraction rather than a byte
  * count, and it can be absent entirely, which would make `loaded / total` NaN.
- * Both are settled here so that division is always safe to do. Every download
- * callback in the library goes through this, so they all carry the same fields.
+ * Both are settled here, and `percent` is worked out from them: a whole number
+ * from 0 to 100, ready to put on the page. Every download callback in the
+ * library goes through this, so they all carry the same fields.
  *
  * @param {{loaded: number, total?: number}} event
  * @param {string} resource What is being downloaded.
- * @returns {{resource: string, loaded: number, total: number}}
+ * @returns {{resource: string, loaded: number, total: number, percent: number}}
  */
 export function normalizeDownloadProgress(event, resource) {
   const total = event.total > 0 ? event.total : 1;
-  const loaded = Number.isFinite(event.loaded) ? event.loaded : 0;
-  return { resource, loaded: Math.min(loaded, total), total };
+  const loaded = Math.min(
+    Number.isFinite(event.loaded) ? event.loaded : 0,
+    total
+  );
+  return {
+    resource,
+    loaded,
+    total,
+    percent: Math.round((loaded / total) * 100),
+  };
 }
 
 /**
@@ -30,7 +39,7 @@ export function normalizeDownloadProgress(event, resource) {
  * once the bytes are all in and the browser is unpacking the model.
  *
  * @param {object} options
- * @param {(progress: {resource: string, loaded: number, total: number}) => void} [options.onDownloadProgress]
+ * @param {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [options.onDownloadProgress]
  * @param {HTMLProgressElement} [options.downloadProgress]
  * @param {(monitor: EventTarget) => void} [options.monitor] The caller's own monitor.
  */

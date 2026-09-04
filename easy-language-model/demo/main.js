@@ -173,10 +173,9 @@ async function createSession() {
     // <progress> element is enough to get a correct one, including the
     // indeterminate phase while the model is unpacked into memory.
     downloadProgress,
-    onDownloadProgress({ resource, loaded, total }) {
+    onDownloadProgress({ resource, percent }) {
       // Compacting downloads a summarizer and a language detector of its own,
       // so say which one is arriving.
-      const percent = Math.round((loaded / total) * 100);
       setState(
         'downloading',
         `Downloading ${resource.replace(/-/g, ' ')}: ${percent}%`
@@ -320,7 +319,7 @@ compactButton.addEventListener('click', async () => {
     addLogEntry(
       `Compacted ${stats.messages} messages: ` +
         `${Math.round(stats.before.usage)} → ${Math.round(stats.after.usage)} ` +
-        `tokens (${Math.round(stats.reduction * 100)}% smaller), ` +
+        `tokens (${stats.percent}% smaller), ` +
         `languages: ${stats.languages.join(', ')}.`
     );
     setState('ready', 'Session compacted.');

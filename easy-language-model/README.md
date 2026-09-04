@@ -377,7 +377,7 @@ compact. By hand that means tracking every message, detecting each one's
 language, summarizing it, destroying the session, building a new one, and
 re-registering every listener on it, while keeping an untouched copy of the
 history in case any of that fails. `session.compact()` returns
-`{ before, after, saved, reduction, messages, languages }`. You can continue
+`{ before, after, saved, reduction, percent, messages, languages }`. You can continue
 using the existing `session`.
 
 <table>
@@ -431,7 +431,7 @@ session.oncontextoverflow = async () => {
     `Compacted ${stats.messages} messages, ` +
       `${Math.round(stats.before.usage)} → ` +
       `${Math.round(stats.after.usage)} tokens ` +
-      `(${Math.round(stats.reduction * 100)}% smaller), ` +
+      `(${stats.percent}% smaller), ` +
       `languages: ${stats.languages.join(', ')}`,
   );
 };
@@ -451,10 +451,9 @@ arriving:
 ```js
 const session = await EasyLanguageModel.create({
   ...options,
-  onDownloadProgress({ resource, loaded, total }) {
+  onDownloadProgress({ resource, percent }) {
     // 'language-model' while create() runs, then 'summarizer' and
     // 'language-detector' the first time compact() does.
-    const percent = Math.round((loaded / total) * 100);
     status.textContent = `Downloading ${resource}: ${percent}%`;
   },
 });
@@ -484,25 +483,25 @@ re-thrown.
 Calling `create()` forwards every `LanguageModel.create()` option and adds
 these:
 
-| Option                                          | Default               | What it does                                                                                                                                                                               |
-| ----------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sanitizer`                                     | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                      |
-| `ignoreFencedCode`                              | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                                                                                                 |
-| `downloadProgress`                              | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                |
-| `onDownloadProgress({resource, loaded, total})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
-| `activationButton`                              | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                    |
-| `activationHint`                                | —                     | Shown and hidden with the button, for the line saying why it appeared.                                                                                                                     |
+| Option                                                   | Default               | What it does                                                                                                                                                                                                                          |
+| -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                                                                 |
+| `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                                                                                                                                            |
+| `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                                                           |
+| `onDownloadProgress({resource, loaded, total, percent})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. `percent` is a whole number from 0 to 100. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
+| `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                                                               |
+| `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                                                                                                                                                |
 
 ### Instance members
 
 Added by the wrapper:
 
-| Member                                | What it is                                                                                                                                                                                               |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `promptHTML(input, options)`          | The whole response as HTML rather than Markdown, safe to assign.                                                                                                                                         |
-| `promptStreamingHTML(input, options)` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                                                                                                   |
-| `compact({onStatus})`                 | Summarizes the conversation and restarts the session. `onStatus` is called once per message, since each is a separate Summarizer call. Returns `{before, after, saved, reduction, messages, languages}`. |
-| `history`                             | The conversation as the current session sees it, which is what `compact()` summarizes.                                                                                                                   |
+| Member                                | What it is                                                                                                                                                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `promptHTML(input, options)`          | The whole response as HTML rather than Markdown, safe to assign.                                                                                                                                                  |
+| `promptStreamingHTML(input, options)` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                                                                                                            |
+| `compact({onStatus})`                 | Summarizes the conversation and restarts the session. `onStatus` is called once per message, since each is a separate Summarizer call. Returns `{before, after, saved, reduction, percent, messages, languages}`. |
+| `history`                             | The conversation as the current session sees it, which is what `compact()` summarizes.                                                                                                                            |
 
 Everything else is `LanguageModel`'s, and behaves the same.
 
