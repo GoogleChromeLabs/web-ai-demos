@@ -484,14 +484,14 @@ re-thrown.
 Calling `create()` forwards every `LanguageModel.create()` option and adds
 these:
 
-| Option                                                   | Default               | What it does                                                                                                 |
-| -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                        |
-| `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                   |
-| `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
-| `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
-| `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.      |
-| `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                       |
+| Option                                                   | Default               | What it does                                                                                                                                                                               |
+| -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                      |
+| `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                                                                                                 |
+| `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                |
+| `onDownloadProgress({resource, loaded, total, percent})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
+| `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                    |
+| `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                                                                                                     |
 
 ### Instance members
 
