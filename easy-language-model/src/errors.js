@@ -24,25 +24,3 @@ export class UnsafeModelOutputError extends Error {
     this.partialOutput = partialOutput;
   }
 }
-
-/**
- * Thrown when the model needs to be downloaded but the page hasn't been
- * interacted with, and `userActivation: 'throw'` was requested.
- */
-export class UserActivationRequiredError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'UserActivationRequiredError';
-  }
-}
-
-/**
- * Thrown when output sanitization was requested (the default) but the browser
- * doesn't implement the HTML Sanitizer API.
- */
-export class SanitizerUnavailableError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'SanitizerUnavailableError';
-  }
-}

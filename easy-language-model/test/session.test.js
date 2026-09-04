@@ -88,15 +88,23 @@ describe('creating a session', () => {
     assert.equal(asked, 0);
   });
 
-  it('throws rather than waiting when asked to', async () => {
+  it("leaves the gesture to the browser under 'ignore'", async () => {
+    // No gesture and a download pending, but 'ignore' means the caller drives
+    // create() themselves: the wrapper neither waits nor invents an error, so
+    // create() is reached and whatever the browser says stands.
+    let reached = false;
     install(newScript(), {
       availability: ['downloadable'],
       userActivation: { isActive: false },
+      onCreate: () => {
+        reached = true;
+      },
     });
-    await assert.rejects(
-      EasyLanguageModel.create({ sanitizer: false, userActivation: 'throw' }),
-      { name: 'UserActivationRequiredError' }
-    );
+    await EasyLanguageModel.create({
+      sanitizer: false,
+      userActivation: 'ignore',
+    });
+    assert.ok(reached, 'create() was called without waiting for a gesture');
   });
 
   it('drives a progress element through the download and hides it after', async () => {
@@ -163,9 +171,7 @@ describe('creating a session', () => {
     const api = await import('../src/index.js');
     assert.deepEqual(Object.keys(api).sort(), [
       'EasyLanguageModel',
-      'SanitizerUnavailableError',
       'UnsafeModelOutputError',
-      'UserActivationRequiredError',
       'renderStreamingHTML',
     ]);
   });

@@ -157,8 +157,9 @@ unavailable model is the Prompt API's own error to throw.
 The button needs no click handler: any trusted click, tap, or key press
 anywhere on the page releases the wait and `create()` resolves. It's there to
 give the user something to aim at, and the hint to explain what it's for. Use
-`userActivation: 'throw'` instead if you'd rather drive `create()` from your own
-button's handler and treat a missing gesture as an error.
+`userActivation: 'ignore'` instead if you'd rather drive `create()` from your own
+button's handler: the wrapper won't wait, and `create()` rejects with the
+browser's own error if there's no gesture.
 
 ### Prompting
 
@@ -440,7 +441,7 @@ these:
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
 | `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
-| `userActivation`                                         | `'wait'`              | `'wait'`, `'throw'`, or `'ignore'`.                                                                          |
+| `userActivation`                                         | `'wait'`              | `'wait'` for a gesture, or `'ignore'` to call `create()` anyway.                                             |
 | `onUserActivationRequired()`                             | —                     | Your cue to reveal a button or other affordance.                                                             |
 | `compact`                                                | —                     | Defaults for `session.compact()`.                                                                            |
 
@@ -487,9 +488,11 @@ it; `npm run build` emits both.
 
 ### Errors
 
-`UnsafeModelOutputError`, `UserActivationRequiredError`,
-`SanitizerUnavailableError`. Anything the Prompt API itself throws comes
-through untouched.
+`UnsafeModelOutputError`, and only that one. It reports something no other
+layer knows: the Sanitizer API removed markup from this response. Everything
+else is the platform's own error, passed through untouched — a missing gesture,
+an unavailable model, and an aborted call all reject the way `LanguageModel`
+rejects, and a browser without the Sanitizer API gets a `TypeError`.
 
 ## How the sanitization works
 

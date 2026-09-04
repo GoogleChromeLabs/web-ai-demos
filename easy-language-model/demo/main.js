@@ -7,7 +7,6 @@ import {
   EasyLanguageModel,
   renderStreamingHTML,
   UnsafeModelOutputError,
-  UserActivationRequiredError,
 } from '../src/index.js';
 
 const $ = (id) => document.getElementById(id);
@@ -221,11 +220,7 @@ async function init() {
   try {
     session = await createSession();
   } catch (error) {
-    if (error instanceof UserActivationRequiredError) {
-      setState('downloadable', error.message);
-    } else {
-      setState('unavailable', error.message);
-    }
+    setState('unavailable', error.message);
     addLogEntry(`${error.name}: ${error.message}`, 'error');
     return;
   }

@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UserActivationRequiredError } from './errors.js';
-
 // Events that grant transient user activation.
 const ACTIVATION_EVENTS = ['pointerdown', 'keydown', 'click', 'touchend'];
 
@@ -61,7 +59,7 @@ export function waitForUserActivation({ signal, target = document } = {}) {
  * is a no-op for an `"available"` model.
  *
  * @param {object} options
- * @param {'wait'|'throw'|'ignore'} options.mode
+ * @param {'wait'|'ignore'} options.mode
  * @param {() => void} [options.onUserActivationRequired]
  * @param {AbortSignal} [options.signal]
  */
@@ -70,15 +68,11 @@ export async function ensureUserActivation({
   onUserActivationRequired,
   signal,
 }) {
+  // 'ignore' hands the requirement back to the caller: `create()` is called
+  // without a gesture and rejects with the browser's own error, which is the
+  // mode to use when driving it from a click handler of your own.
   if (mode === 'ignore' || hasUserActivation()) {
     return false;
-  }
-  if (mode === 'throw') {
-    throw new UserActivationRequiredError(
-      'The model needs to be downloaded, which requires transient user ' +
-        'activation. Call create() from a click, tap, or key press handler, ' +
-        "or use userActivation: 'wait'."
-    );
   }
   onUserActivationRequired?.();
   await waitForUserActivation({ signal });

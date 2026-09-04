@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SanitizerUnavailableError, UnsafeModelOutputError } from './errors.js';
+import { UnsafeModelOutputError } from './errors.js';
 import { isSafeUrl } from 'streaming-markdown-html';
 
 /** Whether the browser implements the HTML Sanitizer API. */
@@ -26,7 +26,7 @@ function getInertDocument() {
 
 function assertSanitizerSupport() {
   if (!isSanitizerSupported()) {
-    throw new SanitizerUnavailableError(
+    throw new TypeError(
       "This browser doesn't support the HTML Sanitizer API. Pass " +
         '`sanitizer: false` to opt out of output sanitization, or load a ' +
         'Sanitizer API polyfill.'

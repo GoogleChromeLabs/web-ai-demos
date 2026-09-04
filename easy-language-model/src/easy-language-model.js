@@ -117,7 +117,7 @@ function splitOptions(options) {
  * @property {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [onDownloadProgress]
  * @property {HTMLProgressElement} [progress] Driven automatically, including
  *   the indeterminate phase while the model is unpacked.
- * @property {'wait'|'throw'|'ignore'} [userActivation] What to do when a
+ * @property {'wait'|'ignore'} [userActivation] What to do when a
  *   download needs a gesture the page doesn't have. Default `'wait'`.
  * @property {() => void} [onUserActivationRequired] Your cue to prompt for a click.
  * @property {object} [compact] Defaults for `session.compact()`.
