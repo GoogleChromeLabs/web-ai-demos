@@ -151,7 +151,7 @@ Checking it first:
 const doc =
   document.implementation.createHTMLDocument();
 
-const wasSanitized = (html) => {
+const isUnsafe = (html) => {
   const safe = doc.createElement('div');
   safe.setHTML(html);
   const unsafe = doc.createElement('div');
@@ -160,7 +160,7 @@ const wasSanitized = (html) => {
 };
 
 const answer = await session.prompt(prompt);
-if (wasSanitized(answer)) {
+if (isUnsafe(answer)) {
   throw new Error('Unsafe output.');
 }
 output.setHTML(answer);
@@ -203,11 +203,13 @@ would rather the check cover fences as well.
 <tr valign="top"><td>
 
 ```js
+// Check the whole response so far, not the
+// chunk: a tag can straddle a boundary.
 const stream = session.promptStreaming(prompt);
 let chunks = '';
 for await (const chunk of stream) {
   chunks += chunk;
-  if (wasSanitized(chunks)) {
+  if (isUnsafe(chunks)) {
     return;
   }
   output.append(chunk);
@@ -217,6 +219,9 @@ for await (const chunk of stream) {
 </td><td>
 
 ```js
+// Chunks are vetted on the way past, and the
+// stream errors rather than hand over one
+// that isn't safe.
 const stream = session.promptStreaming(prompt);
 for await (const chunk of stream) {
   output.append(chunk);
@@ -226,10 +231,8 @@ for await (const chunk of stream) {
 </td></tr>
 </table>
 
-The check on the left runs against everything received so far, not each chunk
-alone, because a tag can straddle a chunk boundary. On the right the stream
-errors instead of handing you an unsafe chunk. Both append the chunks as text;
-the model writes Markdown, and turning that into HTML is the next section.
+Both append the chunks as text; the model writes Markdown, and turning that into
+HTML is the next section.
 
 ### HTML instead of Markdown
 
