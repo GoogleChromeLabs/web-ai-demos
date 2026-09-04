@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as smd from '../vendor/streaming-markdown.js';
-import { isSafeUrl } from './sanitizer.js';
+import * as smd from './parser.js';
+import { isSafeUrl } from './safe-url.js';
 
 // CommonMark resolves entity references in text; upstream passes them through,
 // so `AT&amp;T` rendered as the literal `AT&amp;T` and `&copy;` never became ©.

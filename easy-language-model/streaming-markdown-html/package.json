@@ -1,0 +1,38 @@
+{
+  "name": "streaming-markdown-html",
+  "version": "0.1.0",
+  "description": "A streaming Markdown-to-HTML parser for browsers: append-only, token-granularity output you can pipe straight into an element.",
+  "license": "(Apache-2.0 AND MIT)",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "parser.js",
+    "renderer.js",
+    "render-stream.js",
+    "safe-url.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "markdown",
+    "html",
+    "streaming",
+    "parser",
+    "commonmark",
+    "llm"
+  ],
+  "devDependencies": {
+    "linkedom": "^0.18.13",
+    "marked": "^18.0.11",
+    "prettier": "^3.4.2"
+  }
+}

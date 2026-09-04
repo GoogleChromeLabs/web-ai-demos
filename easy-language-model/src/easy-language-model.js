@@ -9,7 +9,7 @@ import {
   LanguageModelUnavailableError,
   UnsafeModelOutputError,
 } from './errors.js';
-import { createHtmlTokenStreamer } from './markdown-html.js';
+import { createHtmlTokenStreamer } from 'streaming-markdown-html';
 import { createOutputGuard } from './sanitizer.js';
 
 async function* readStream(stream) {

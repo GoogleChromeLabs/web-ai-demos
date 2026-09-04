@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
-import { createHtmlTokenStreamer } from '../src/markdown-html.js';
-import { renderStreamingHTML } from '../src/render-stream.js';
+import { createHtmlTokenStreamer } from '../renderer.js';
+import { renderStreamingHTML } from '../render-stream.js';
 import { normalizeHtml } from './normalize.js';
 
 /**
@@ -96,7 +96,7 @@ describe('renderStreamingHTML', () => {
   // renderer must not reach for one.
   it('never uses a string-to-DOM sink', () => {
     const source = readFileSync(
-      new URL('../src/render-stream.js', import.meta.url),
+      new URL('../render-stream.js', import.meta.url),
       'utf8'
     );
     for (const sink of [

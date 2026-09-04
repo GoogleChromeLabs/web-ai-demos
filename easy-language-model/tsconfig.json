@@ -13,5 +13,5 @@
     "skipLibCheck": true,
     "rootDir": "."
   },
-  "include": ["src/**/*.js", "vendor/**/*.js"]
+  "include": ["src/**/*.js"]
 }

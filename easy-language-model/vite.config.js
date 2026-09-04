@@ -14,6 +14,14 @@ export default defineConfig({
       name: 'EasyLanguageModel',
       fileName: 'easy-language-model',
     },
+    rollupOptions: {
+      // A declared dependency, so consumers resolve their own copy rather than
+      // getting a second one baked in here.
+      external: ['streaming-markdown-html'],
+      output: {
+        globals: { 'streaming-markdown-html': 'StreamingMarkdownHtml' },
+      },
+    },
     sourcemap: true,
   },
 });

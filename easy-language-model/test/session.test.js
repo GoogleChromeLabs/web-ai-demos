@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 
 import { EasyLanguageModel } from '../src/easy-language-model.js';
-import { renderStreamingHTML } from '../src/render-stream.js';
+import { renderStreamingHTML } from 'streaming-markdown-html';
 import { fakeCompactionApis, fakeLanguageModel, stubGlobals } from './stubs.js';
 
 // Sanitization needs the real HTML Sanitizer API, which Node has no

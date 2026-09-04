@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { marked } from 'marked';
 
-import { createHtmlTokenStreamer } from '../src/markdown-html.js';
-import { renderStreamingHTML } from '../src/render-stream.js';
+import { createHtmlTokenStreamer } from '../renderer.js';
+import { renderStreamingHTML } from '../render-stream.js';
 import { normalizeHtml } from './normalize.js';
 
 marked.setOptions({ gfm: true, breaks: false });
