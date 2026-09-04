@@ -91,6 +91,13 @@ const EASY_OPTION_KEYS = new Set([
   'monitor',
 ]);
 
+/**
+ * What the Prompt API is asked for when you don't say. Both calls go through
+ * `splitOptions()`, so `availability()` and `create()` fill the gap the same
+ * way and can't end up asking about different models.
+ */
+const DEFAULT_EXPECTED = [{ type: 'text', languages: ['en'] }];
+
 function splitOptions(options) {
   const easy = {};
   const createOptions = {};
@@ -101,6 +108,8 @@ function splitOptions(options) {
       createOptions[key] = value;
     }
   }
+  createOptions.expectedInputs ??= DEFAULT_EXPECTED;
+  createOptions.expectedOutputs ??= DEFAULT_EXPECTED;
   return { easy, createOptions };
 }
 

@@ -165,6 +165,38 @@ describe('creating a session', () => {
     assert.equal(downloadProgress.hidden, true);
   });
 
+  it('fills in text/en for both calls when nothing is expected', async () => {
+    const asked = [];
+    const created = [];
+    install(newScript(), { onCreate: (o) => created.push(o) });
+    const LanguageModel = globalThis.LanguageModel;
+    const availability = LanguageModel.availability.bind(LanguageModel);
+    LanguageModel.availability = async (o) => {
+      asked.push(o);
+      return availability(o);
+    };
+
+    await EasyLanguageModel.create(NO_SANITIZER);
+    const expected = [{ type: 'text', languages: ['en'] }];
+    for (const seen of [asked[0], created[0]]) {
+      assert.deepEqual(seen.expectedInputs, expected);
+      assert.deepEqual(seen.expectedOutputs, expected);
+    }
+  });
+
+  it('leaves what you did expect alone', async () => {
+    const created = [];
+    install(newScript(), { onCreate: (o) => created.push(o) });
+    const mine = [{ type: 'text', languages: ['fr'] }];
+    await EasyLanguageModel.create({ ...NO_SANITIZER, expectedInputs: mine });
+    assert.deepEqual(created[0].expectedInputs, mine, 'yours kept');
+    assert.deepEqual(
+      created[0].expectedOutputs,
+      [{ type: 'text', languages: ['en'] }],
+      'the other still filled in'
+    );
+  });
+
   it('forwards unknown options to both calls, unchanged', async () => {
     const script = newScript();
     const created = [];

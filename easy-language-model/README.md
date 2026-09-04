@@ -10,6 +10,7 @@ already folded in:
 | -------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sanitizing output**            | Sanitize and diff every response yourself to see what was removed | [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) on `prompt()` and `promptStreaming()`, on by default |
 | **Rendering HTML from Markdown** | Bring your own streaming parser                                   | `promptStreamingHTML()` emits HTML chunks; pipe them into `renderStreamingHTML()`                                                         |
+| **Markdown to HTML**             | Bring your own parser                                             | `markdownToHtml()`, a `TransformStream` to pipe a Markdown stream through                                                                 |
 | **Session history**              | Bring your own transcript                                         | `session.history`, recorded as you go, `append()` included                                                                                |
 | **Long conversations**           | Manage `contextUsage` and rebuild the session yourself            | `session.compact()`                                                                                                                       |
 | **Model downloads**              | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
@@ -28,6 +29,97 @@ import {
   EasyLanguageModel,
   renderStreamingHTML,
 } from 'easy-language-model';
+```
+
+Nothing else is required. `expectedInputs` and `expectedOutputs` default to
+`[{ type: 'text', languages: ['en'] }]`, and `availability()` and `create()` are
+given the same defaults, so the two can't end up asking about different models:
+
+```js
+if ((await EasyLanguageModel.availability()) === 'unavailable') return;
+
+const session = await EasyLanguageModel.create();
+// Sanitizer-checked, so this is safe to assign.
+output.setHTML(await session.prompt('Explain streams in one sentence.'));
+```
+
+The API is below, and [Side by side](#side-by-side) works through what you'd
+add for a production app: a progress bar, a gesture to start the download, HTML
+instead of Markdown, and a way to survive a full context window.
+
+## API
+
+### `EasyLanguageModel`
+
+#### Statics
+
+| `LanguageModel`         | `EasyLanguageModel`     | Difference                                                                                                                               |
+| ----------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `create(options)`       | `create(options)`       | Installs the download monitor, and waits for a click on `activationButton` if the model has to be fetched. Never refuses on your behalf. |
+| `availability(options)` | `availability(options)` | Returns `'unavailable'` when the API is missing, instead of throwing.                                                                    |
+
+Calling `create()` forwards every `LanguageModel.create()` option and adds
+these:
+
+| Option                                                   | Default               | What it does                                                                                                                                                                                                                          |
+| -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                                                                 |
+| `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                                                                                                                                            |
+| `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                                                           |
+| `onDownloadProgress({resource, loaded, total, percent})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. `percent` is a whole number from 0 to 100. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
+| `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                                                               |
+| `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                                                                                                                                                |
+
+### Instance members
+
+Added by the wrapper:
+
+| Member                                | What it is                                                                                                                                                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `promptHTML(input, options)`          | The whole response as HTML rather than Markdown, ready for `setHTML()`.                                                                                                                                           |
+| `promptStreamingHTML(input, options)` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                                                                                                            |
+| `compact({onStatus})`                 | Summarizes the conversation and restarts the session. `onStatus` is called once per message, since each is a separate Summarizer call. Returns `{before, after, saved, reduction, percent, messages, languages}`. |
+| `history`                             | The conversation as the current session sees it, which is what `compact()` summarizes.                                                                                                                            |
+
+Everything else is `LanguageModel`'s, and behaves the same.
+
+### Exports
+
+The entry point exports three things: `EasyLanguageModel`,
+`renderStreamingHTML(element)`, a `WritableStream` that renders HTML chunks into
+an element as they arrive, and `markdownToHtml()`, the parser as a
+`TransformStream`.
+
+`renderStreamingHTML()` builds nodes with `createElement` and `append` and never
+from a string, so it works on pages that enforce Trusted Types. That is why
+every chunk `promptStreamingHTML()` yields is a single token rather than a
+balanced fragment: a fragment would force `insertAdjacentHTML`, and such pages
+refuse it.
+
+TypeScript declarations are generated from the source and published alongside
+it; `npm run build` emits both.
+
+### Errors
+
+None of its own. Everything rejects the way `LanguageModel` rejects: a missing
+gesture, an unavailable model, and an aborted call all come through untouched.
+
+Output the Sanitizer stripped is an `OperationError`, which the Prompt API
+defines as a prompt failing "for any other reason", and which is what happened:
+the prompt ran, and its output can't be handed over. The offending text rides
+along on the error, and `sanitized` is what tells it apart from an
+`OperationError` the model itself raised:
+
+```js
+try {
+  output.setHTML(await session.prompt(prompt));
+} catch (error) {
+  if (error.name === 'OperationError' && 'sanitized' in error) {
+    // The response was rejected, not the request. `output` is what the model
+    // wrote, `sanitized` what survived, and on the streaming methods
+    // `partialOutput` is what was handed over before the stop.
+  }
+}
 ```
 
 ## Side by side
@@ -356,8 +448,7 @@ try {
 An aborted turn is not written to `history`, so what the wrapper thinks was said
 does not drift from the session, which matters because `compact()` reads it.
 
-To start over instead, destroy the session and make a new one, the same thing
-the [Prompt API playground](../prompt-api-playground/) does:
+To start over instead, destroy the session and make a new one:
 
 ```js
 session.destroy();
@@ -468,78 +559,6 @@ is an instruction, not a transcript. Fenced code is kept verbatim too, so
 summarizing doesn't mangle code samples. If anything fails after the old session is gone,
 the untouched history is used to rebuild a working session before the error is
 re-thrown.
-
-## API
-
-### `EasyLanguageModel`
-
-#### Statics
-
-| `LanguageModel`         | `EasyLanguageModel`     | Difference                                                                                                                               |
-| ----------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `create(options)`       | `create(options)`       | Installs the download monitor, and waits for a click on `activationButton` if the model has to be fetched. Never refuses on your behalf. |
-| `availability(options)` | `availability(options)` | Returns `'unavailable'` when the API is missing, instead of throwing.                                                                    |
-
-Calling `create()` forwards every `LanguageModel.create()` option and adds
-these:
-
-| Option                                                   | Default               | What it does                                                                                                                                                                                                                          |
-| -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                                                                 |
-| `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                                                                                                                                            |
-| `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                                                           |
-| `onDownloadProgress({resource, loaded, total, percent})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. `percent` is a whole number from 0 to 100. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
-| `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                                                               |
-| `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                                                                                                                                                |
-
-### Instance members
-
-Added by the wrapper:
-
-| Member                                | What it is                                                                                                                                                                                                        |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `promptHTML(input, options)`          | The whole response as HTML rather than Markdown, safe to assign.                                                                                                                                                  |
-| `promptStreamingHTML(input, options)` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                                                                                                            |
-| `compact({onStatus})`                 | Summarizes the conversation and restarts the session. `onStatus` is called once per message, since each is a separate Summarizer call. Returns `{before, after, saved, reduction, percent, messages, languages}`. |
-| `history`                             | The conversation as the current session sees it, which is what `compact()` summarizes.                                                                                                                            |
-
-Everything else is `LanguageModel`'s, and behaves the same.
-
-### Exports
-
-The entry point exports three things: `EasyLanguageModel`,
-`renderStreamingHTML(element)`, the `WritableStream` shown above, and
-`markdownToHtml()`, the parser as a `TransformStream`. `renderStreamingHTML()`
-builds nodes with `createElement` and `append` and never from a string, so it
-works on pages that enforce Trusted Types — which is why every chunk
-`promptStreamingHTML()` yields is a single token rather than a balanced
-fragment. A fragment would force `insertAdjacentHTML`, and such pages refuse it.
-
-TypeScript declarations are generated from the source and published alongside
-it; `npm run build` emits both.
-
-### Errors
-
-None of its own. Everything rejects the way `LanguageModel` rejects: a missing
-gesture, an unavailable model, and an aborted call all come through untouched.
-
-Output the Sanitizer stripped is an `OperationError`, which the Prompt API
-defines as a prompt failing "for any other reason", and which is what happened:
-the prompt ran, and its output can't be handed over. The offending text rides
-along on the error, and `sanitized` is what tells it apart from an
-`OperationError` the model itself raised:
-
-```js
-try {
-  output.setHTML(await session.prompt(prompt));
-} catch (error) {
-  if (error.name === 'OperationError' && 'sanitized' in error) {
-    // The response was rejected, not the request. `output` is what the model
-    // wrote, `sanitized` what survived, and on the streaming methods
-    // `partialOutput` is what was handed over before the stop.
-  }
-}
-```
 
 ## How the sanitization works
 
