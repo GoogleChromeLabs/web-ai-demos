@@ -269,7 +269,9 @@ Concatenating every chunk yields the complete, well-formed HTML.
 
 Consuming that stream has no side effects. To put the response on screen, pipe
 it into `renderStreamingHTML()`, a `WritableStream` that builds the DOM by
-appending nodes as they arrive, so nothing is ever re-parsed. The other column
+appending nodes as they arrive, so nothing is ever re-parsed. Both come from
+[`streaming-markdown-html`](streaming-markdown-html/), a separate package that
+does the Markdown half and knows nothing about the Prompt API. The other column
 reaches for [`marked`](https://marked.js.org/), an ordinary Markdown parser,
 which has to be handed the whole response every time it grows:
 
@@ -539,10 +541,11 @@ injection prompt so you can watch rendering stop mid-response.
 npm test
 ```
 
-Runs in Node against a DOM shim, covering the Markdown pipeline (every
-construct checked against a CommonMark reference at several chunk sizes),
-session plumbing (user activation, the progress element, `compact()`, listener
-re-attachment, error recovery), and download progress payloads.
+Runs in Node against a DOM shim, covering session plumbing (user activation,
+the progress element, `compact()`, listener re-attachment, error recovery) and
+download progress payloads. The Markdown pipeline has its own suite, in
+[`streaming-markdown-html`](streaming-markdown-html/), where every construct is
+checked against a CommonMark reference at several chunk sizes.
 
 Sanitization is the one thing Node can't cover, since it has no HTML Sanitizer
 API. Those cases live in a page instead:

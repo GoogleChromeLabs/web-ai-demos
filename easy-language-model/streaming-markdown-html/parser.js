@@ -23,10 +23,22 @@
  *   character opened it so the right one closes it. `~~strikethrough~~` still
  *   works: two tildes not followed by a third fail out to the inline path.
  *
- * The built-in DOM and logger renderers were dropped; `markdown-html.js` has
- * the renderer this project uses instead. Entity decoding, table-cell
- * trimming, link titles, image alt text and the `language-` class prefix are
- * fixed there rather than here.
+ * - Entity references in text are resolved, so `AT&amp;T` and `&copy;` come out
+ *   as `AT&T` and ©. A reference split across two chunks is held back until the
+ *   rest of it arrives. Code spans and code blocks keep theirs literal.
+ * - A table cell's content is trimmed, as GFM specifies, rather than carrying
+ *   the padding from `| a |` through as text.
+ * - `[t](url "Title")` splits the title off instead of swallowing it into the
+ *   destination, where it broke the link.
+ * - `![alt](src)` keeps its alt text, accumulated through `altText` because it
+ *   arrives in pieces and ends up as an attribute rather than as text.
+ * - A fenced block's language becomes `language-js`, the convention syntax
+ *   highlighters look for, rather than a bare `js`.
+ * - `~~text~~` is `<del>`, which is what GFM specifies, rather than `<s>`.
+ *
+ * `tokenToTags()` names the HTML element each token becomes, so a renderer
+ * doesn't have to carry its own copy of that mapping. The built-in DOM and
+ * logger renderers were dropped; `renderer.js` has the one this package uses.
  *
  * Every snake_case identifier was renamed to camelCase to match the rest of
  * this project. SCREAMING_SNAKE constants kept their convention. That makes a
@@ -183,11 +195,126 @@ export function tokenToString(type) {
   }
 }
 
+/*  FIX: CommonMark resolves entity references in text; upstream passed them
+    through, so `AT&amp;T` rendered as the literal `AT&amp;T` and `&copy;` never
+    became ©. Resolving needs the full HTML entity table, so the browser's own
+    parser does it, through setHTML() rather than innerHTML: pages enforcing
+    Trusted Types refuse innerHTML, and refusing it here would break every
+    response containing an entity rather than only an unsafe one.
+*/
+const ENTITY =
+  /&(?:#\d{1,7}|#[xX][0-9a-fA-F]{1,6}|[a-zA-Z][a-zA-Z0-9]{1,31});/g;
+/** A reference cut short by a chunk boundary, held until the rest arrives. */
+const PARTIAL_ENTITY = /&[a-zA-Z#]?[a-zA-Z0-9]{0,31}$/;
+const entityCache = new Map();
+let entityProbe = null;
+
+function decodeEntities(text) {
+  if (!text.includes('&')) return text;
+  if (entityProbe === null) {
+    entityProbe =
+      typeof document === 'undefined'
+        ? false
+        : document.implementation.createHTMLDocument('').createElement('div');
+    if (entityProbe && typeof entityProbe.setHTML !== 'function') {
+      entityProbe = false;
+    }
+  }
+  // Without the Sanitizer API there is no safe way to resolve a named
+  // reference. Leaving it alone shows `&copy;` literally, which beats throwing.
+  if (entityProbe === false) return text;
+
+  return text.replace(ENTITY, (entity) => {
+    let decoded = entityCache.get(entity);
+    if (decoded === undefined) {
+      entityProbe.setHTML(entity);
+      decoded = entityProbe.textContent || entity;
+      entityCache.set(entity, decoded);
+    }
+    return decoded;
+  });
+}
+
+/**
+ * The HTML element a token becomes.
+ *
+ * FIX: upstream left this to each renderer, which made sense when it aimed to
+ * be renderer-agnostic. This parser targets HTML, so the vocabulary lives here:
+ * one place decides that a strike is `<del>` and a fence is `<pre><code>`.
+ *
+ * A fence needs two elements, so this returns an array, outermost first. Table
+ * rows and cells are the exception and stay with the renderer, since `<thead>`
+ * versus `<tbody>` and `<th>` versus `<td>` depend on where in the table the
+ * token lands rather than on the token itself.
+ *
+ * @param   {Token} type
+ * @returns {string[]}
+ */
+export function tokenToTags(type) {
+  switch (type) {
+    case BLOCKQUOTE:
+      return ['blockquote'];
+    case PARAGRAPH:
+      return ['p'];
+    case LINE_BREAK:
+      return ['br'];
+    case RULE:
+      return ['hr'];
+    case HEADING_1:
+    case HEADING_2:
+    case HEADING_3:
+    case HEADING_4:
+    case HEADING_5:
+    case HEADING_6:
+      return [`h${headingToLevel(type)}`];
+    case ITALIC_AST:
+    case ITALIC_UND:
+      return ['em'];
+    case STRONG_AST:
+    case STRONG_UND:
+      return ['strong'];
+    case STRIKE:
+      return ['del'];
+    case CODE_INLINE:
+      return ['code'];
+    case RAW_URL:
+    case LINK:
+      return ['a'];
+    case IMAGE:
+      return ['img'];
+    case LIST_UNORDERED:
+      return ['ul'];
+    case LIST_ORDERED:
+      return ['ol'];
+    case LIST_ITEM:
+      return ['li'];
+    case CHECKBOX:
+      return ['input'];
+    case CODE_BLOCK:
+    case CODE_FENCE:
+      return ['pre', 'code'];
+    case TABLE:
+      return ['table'];
+    case EQUATION_BLOCK:
+      return ['equation-block'];
+    case EQUATION_INLINE:
+      return ['equation-inline'];
+    default:
+      return ['span'];
+  }
+}
+
 export const HREF = 1,
   SRC = 2,
   LANG = 4,
   CHECKED = 8,
-  START = 16;
+  START = 16,
+  /*  FIX: upstream had neither. A link's title was left glued to the end of
+      its href, and an image's alt text was emitted as a child of the <img>,
+      where it serializes away.
+  */
+  TITLE = 32,
+  ALT = 64;
 
 /** @enum {(typeof Attr)[keyof typeof Attr]} */
 export const Attr = /** @type {const} */ ({
@@ -196,6 +323,8 @@ export const Attr = /** @type {const} */ ({
   Lang: LANG,
   Checked: CHECKED,
   Start: START,
+  Title: TITLE,
+  Alt: ALT,
 });
 
 /**
@@ -213,6 +342,10 @@ export function attrToHtmlAttr(type) {
       return 'checked';
     case START:
       return 'start';
+    case TITLE:
+      return 'title';
+    case ALT:
+      return 'alt';
   }
 }
 
@@ -303,6 +436,9 @@ export function parser(renderer) {
     fenceStart: 0,
     fenceChar: '',
     lastTextChar: '',
+    altText: '', // FIX: an image's alt arrives in pieces; see addText
+    trimCellStart: false, // FIX: see addText
+    entityTail: '', // FIX: a reference split across chunks; see addText
     spaces: new Uint8Array(TOKEN_ARRAY_CAP),
     indent: '',
     indentLen: 0,
@@ -326,13 +462,63 @@ export function parserEnd(p) {
 function addText(p) {
   if (p.text.length === 0) return;
   console.assert(p.len > 0, 'Never adding text to root');
+  /*  FIX: `![alt](src)` delivers the alt as text. An <img> has no children, so
+      a renderer would drop it; it is an attribute.
+  */
+  if (p.tokens[p.len] === IMAGE) {
+    // Held until the image closes: the text arrives in pieces, and an
+    // attribute is set, not appended.
+    p.altText += p.text;
+    p.text = '';
+    return;
+  }
+  /*  FIX: GFM trims a table cell's content. Upstream emitted the padding from
+      `| a |` as text, leaving every renderer to undo it. The leading run goes
+      at the start of the cell, the trailing run when it closes.
+  */
+  if (p.tokens[p.len] === TABLE_CELL) {
+    if (p.trimCellStart) {
+      p.text = p.text.replace(/^[ \t]+/, '');
+      if (p.text !== '') p.trimCellStart = false;
+    }
+    if (p.pending === '|' || p.pending === '\n') {
+      p.text = p.text.replace(/[ \t]+$/, '');
+    }
+    if (p.text === '') return;
+  }
   /*  FIX: the emphasis rules need the character before a delimiter, but text
         is flushed at arbitrary points — a chunk boundary can empty p.text right
         before an `_`. Remember the last character that went out.
     */
   p.lastTextChar = p.text[p.text.length - 1];
-  p.renderer.addText(p.renderer.data, p.text);
+
+  // References are literal inside code, and are resolved everywhere else.
+  const token = p.tokens[p.len];
+  if (token === CODE_INLINE || token === CODE_FENCE || token === CODE_BLOCK) {
+    p.renderer.addText(p.renderer.data, p.text);
+    p.text = '';
+    return;
+  }
+
+  let text = p.entityTail + p.text;
+  p.entityTail = '';
+  const partial = PARTIAL_ENTITY.exec(text);
+  if (partial) {
+    p.entityTail = partial[0];
+    text = text.slice(0, partial.index);
+  }
   p.text = '';
+  if (text !== '') {
+    p.renderer.addText(p.renderer.data, decodeEntities(text));
+  }
+}
+
+/** Emits a held-back partial reference literally; it was never completed. */
+function flushEntityTail(p) {
+  if (p.entityTail === '' || p.len === 0) return;
+  const text = p.entityTail;
+  p.entityTail = '';
+  p.renderer.addText(p.renderer.data, text);
 }
 
 /**
@@ -362,7 +548,8 @@ function pushText(p, text) {
  * @param   {Parser} p
  * @returns {void  } */
 function endToken(p) {
-  p.lastTextChar = ''; // FIX: see addText
+  flushEntityTail(p); // FIX: see addText
+  p.lastTextChar = '';
   console.assert(p.len > 0, 'No nodes to end');
   p.len -= 1;
   p.token = /** @type {Token} */ (p.tokens[p.len]);
@@ -374,7 +561,14 @@ function endToken(p) {
  * @param   {Token } token
  * @returns {void  } */
 function addToken(p, token) {
-  p.lastTextChar = ''; // FIX: see addText
+  flushEntityTail(p); // FIX: see addText
+  p.lastTextChar = '';
+  if (token === IMAGE) {
+    p.altText = '';
+  }
+  if (token === TABLE_CELL) {
+    p.trimCellStart = true;
+  }
   /*
      If a list doesn't start with a list item
      it means that there was a newline after the list:
@@ -804,10 +998,13 @@ export function parserWrite(p, chunk) {
               addToken(p, CODE_FENCE);
               p.fenceChar = fenceChar;
               if (p.pending.length > p.fenceStart) {
+                /*  FIX: emit the class a syntax highlighter looks for,
+                    rather than the bare language name.
+                */
                 p.renderer.setAttr(
                   p.renderer.data,
                   LANG,
-                  p.pending.slice(p.fenceStart)
+                  `language-${p.pending.slice(p.fenceStart)}`
                 );
               }
               clearRootPending(p);
@@ -1292,8 +1489,30 @@ export function parserWrite(p, chunk) {
                 */
           if (')' === char) {
             const type = p.token === LINK ? HREF : SRC;
-            const url = p.pending.slice(2);
-            p.renderer.setAttr(p.renderer.data, type, url);
+            /*  FIX: `[t](url "Title")` carries a title after the destination.
+                Upstream handed the whole thing over as the URL, which broke
+                the link.
+            */
+            if (p.token === IMAGE && p.altText !== '') {
+              p.renderer.setAttr(p.renderer.data, ALT, p.altText);
+              p.altText = '';
+            }
+            const destination = p.pending.slice(2);
+            const titled = /^(.*?)\s+(?:"([^"]*)"|'([^']*)')$/.exec(
+              destination
+            );
+            p.renderer.setAttr(
+              p.renderer.data,
+              type,
+              titled ? titled[1] : destination
+            );
+            if (titled) {
+              p.renderer.setAttr(
+                p.renderer.data,
+                TITLE,
+                titled[2] ?? titled[3]
+              );
+            }
             endToken(p);
             p.pending = '';
           } else {
