@@ -315,7 +315,11 @@ what `promptStreamingHTML()` uses internally, so both views come from one
 inference:
 
 ```js
-import { markdownToHtml, renderStreamingHTML } from 'easy-language-model';
+import {
+  EasyLanguageModel,
+  markdownToHtml,
+  renderStreamingHTML,
+} from 'easy-language-model';
 
 const [rawBranch, htmlBranch] = session.promptStreaming(prompt).tee();
 
