@@ -15,8 +15,7 @@ already folded in:
 | **Model downloads**              | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
 | **User activation**              | `create()` fails if the page has no gesture                       | Waits for one, after giving you the cue to ask                                                                                            |
 
-Everything else is passed through untouched, including anything the Prompt API
-adds after this was written.
+Everything else is passed through untouched.
 
 ## Install
 
