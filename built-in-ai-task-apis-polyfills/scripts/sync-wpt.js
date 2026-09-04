@@ -134,12 +134,12 @@ async function main() {
 
     // Filter for test files we want to load in index.html
     const testFiles = allFiles.filter(
-      (f) => f.endsWith('.js') && !f.includes('resources/')
+      (f) => f.endsWith('.js') && !f.includes('resources/'),
     );
 
     fs.writeFileSync(
       path.join(WPT_BASE_DIR, 'tests.json'),
-      JSON.stringify(testFiles, null, 2)
+      JSON.stringify(testFiles, null, 2),
     );
 
     console.log('Successfully synchronized WPT tests.');

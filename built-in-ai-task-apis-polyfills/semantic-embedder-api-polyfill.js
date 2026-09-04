@@ -77,7 +77,7 @@ async function isModelCached(modelId, dtype) {
     // generation_config.json is an optional text-generation config that the
     // transformers.js cache doesn't always persist; exclude it from the check.
     const essential = result.files.filter(
-      (f) => f.file !== 'generation_config.json'
+      (f) => f.file !== 'generation_config.json',
     );
     return essential.length > 0 && essential.every((f) => f.cached);
   } catch {
@@ -213,7 +213,7 @@ if (isWorker) {
         }
 
         const prefixedInputs = inputs.map((text) =>
-          applyPrefix(text, options.taskType)
+          applyPrefix(text, options.taskType),
         );
 
         // Measure each input on its own first, so the reported token count is
@@ -221,7 +221,7 @@ if (isWorker) {
         // batch. Counting the batch in one pass is not an option: padding it
         // to an over-long member throws inside the tokenizer.
         const tokenCounts = prefixedInputs.map((text) =>
-          workerTokenizer(text).input_ids.dims.at(-1)
+          workerTokenizer(text).input_ids.dims.at(-1),
         );
 
         const tokenized = await workerTokenizer(prefixedInputs, {
@@ -404,7 +404,7 @@ export class SemanticEmbedder {
             loaded,
             total: 1,
             lengthComputable: true,
-          })
+          }),
         );
       };
     }
@@ -496,7 +496,7 @@ export class SemanticEmbedder {
         () => {
           embedder.destroy(options.signal.reason);
         },
-        { once: true }
+        { once: true },
       );
     }
 
@@ -507,7 +507,7 @@ export class SemanticEmbedder {
     if (this.#destroyed) {
       const p = Promise.reject(
         this.#destructionReason ||
-          new DOMException('The embedder has been destroyed.', 'AbortError')
+          new DOMException('The embedder has been destroyed.', 'AbortError'),
       );
       p.catch(() => {});
       return p;
@@ -530,7 +530,7 @@ export class SemanticEmbedder {
       !VALID_TASK_TYPES.has(options.taskType)
     ) {
       throw new TypeError(
-        `Failed to execute 'embed': The provided value '${options.taskType}' is not a valid enum value of type EmbedderTaskType.`
+        `Failed to execute 'embed': The provided value '${options.taskType}' is not a valid enum value of type EmbedderTaskType.`,
       );
     }
 
@@ -648,7 +648,7 @@ if (typeof globalThis !== 'undefined' && globalThis.document) {
     try {
       const descriptor = Object.getOwnPropertyDescriptor(
         HTMLIFrameElement.prototype,
-        'contentWindow'
+        'contentWindow',
       );
       if (descriptor?.get) {
         Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
@@ -695,7 +695,7 @@ if (typeof globalThis !== 'undefined' && globalThis.document) {
 
   if (globalThis[apiName]?.__isPolyfill) {
     console.log(
-      `Polyfill: window.${apiName} is now backed by the ${apiName} API polyfill.`
+      `Polyfill: window.${apiName} is now backed by the ${apiName} API polyfill.`,
     );
   }
 }

@@ -13,7 +13,7 @@ const WPT_DIR = path.join(ROOT_DIR, 'tests', 'wpt');
 const PROMPT_API_POLYFILL_DIR = path.resolve(
   ROOT_DIR,
   '..',
-  'prompt-api-polyfill'
+  'prompt-api-polyfill',
 );
 
 // Configuration scanning from prompt-api-polyfill
@@ -23,7 +23,7 @@ const backendFiles = fs.existsSync(backendsDir)
       .readdirSync(backendsDir)
       .filter(
         (file) =>
-          file.endsWith('.js') && file !== 'base.js' && file !== 'defaults.js'
+          file.endsWith('.js') && file !== 'base.js' && file !== 'defaults.js',
       )
   : [];
 
@@ -42,7 +42,7 @@ const backendConfigs = {};
 const localEnvFile = path.join(ROOT_DIR, '.env.json');
 if (fs.existsSync(localEnvFile)) {
   backendConfigs['FIREBASE_CONFIG'] = JSON.parse(
-    fs.readFileSync(localEnvFile, 'utf8')
+    fs.readFileSync(localEnvFile, 'utf8'),
   );
 }
 
@@ -345,7 +345,7 @@ for (const api of apis) {
 
   // Generate index.html with matrix
   const backendNames = activeBackends.map((k) =>
-    k.replace('_CONFIG', '').toLowerCase()
+    k.replace('_CONFIG', '').toLowerCase(),
   );
   const apiIndexHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -401,7 +401,7 @@ for (const api of apis) {
                       })
                       .join('')}
                 </tr>
-            `
+            `,
               )
               .join('')}
         </tbody>
@@ -439,7 +439,7 @@ const rootIndexHtml = `<!DOCTYPE html>
                 <a href="${api}/index.html"><strong>${api.toUpperCase()}</strong></a>
                 (${apiTests[api].length} tests × ${activeBackends.length} backends)
             </li>
-        `
+        `,
           )
           .join('')}
     </ul>

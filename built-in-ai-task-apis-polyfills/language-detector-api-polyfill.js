@@ -32,7 +32,7 @@ class LanguageDetectorPromptBuilder {
           },
         ],
         null,
-        2
+        2,
       ),
     },
     {
@@ -53,7 +53,7 @@ class LanguageDetectorPromptBuilder {
           },
         ],
         null,
-        2
+        2,
       ),
     },
     {
@@ -74,7 +74,7 @@ class LanguageDetectorPromptBuilder {
           },
         ],
         null,
-        2
+        2,
       ),
     },
     {
@@ -95,7 +95,7 @@ class LanguageDetectorPromptBuilder {
           },
         ],
         null,
-        2
+        2,
       ),
     },
     {
@@ -116,7 +116,7 @@ class LanguageDetectorPromptBuilder {
           },
         ],
         null,
-        2
+        2,
       ),
     },
     {
@@ -137,7 +137,7 @@ class LanguageDetectorPromptBuilder {
           },
         ],
         null,
-        2
+        2,
       ),
     },
     {
@@ -158,7 +158,7 @@ class LanguageDetectorPromptBuilder {
           },
         ],
         null,
-        2
+        2,
       ),
     },
   ];
@@ -198,8 +198,8 @@ export class LanguageDetector extends BaseTaskModel {
       ? [
           ...new Set(
             options.expectedInputLanguages.map((tag) =>
-              this._validateLanguageTag(tag)
-            )
+              this._validateLanguageTag(tag),
+            ),
           ),
         ]
       : null;
@@ -242,7 +242,7 @@ export class LanguageDetector extends BaseTaskModel {
         () => {
           detector.destroy(options.signal.reason);
         },
-        { once: true }
+        { once: true },
       );
     }
 
@@ -346,5 +346,5 @@ export class LanguageDetector extends BaseTaskModel {
 BaseTaskModel.exposeAPIGlobally(
   'LanguageDetector',
   LanguageDetector,
-  '__FORCE_LANGUAGE_DETECTOR_POLYFILL__'
+  '__FORCE_LANGUAGE_DETECTOR_POLYFILL__',
 );

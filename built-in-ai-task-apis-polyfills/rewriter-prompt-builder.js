@@ -109,7 +109,7 @@ export class RewriterPromptBuilder {
       systemPrompt,
       /\*\*(Japanese|English)\*\*/g,
       `**${this.getLanguageName(outputLanguage)}**`,
-      'language'
+      'language',
     );
 
     // 3. Parametrize Context Instructions
@@ -122,7 +122,7 @@ export class RewriterPromptBuilder {
         systemPrompt,
         contextInstruction,
         '',
-        'context instruction'
+        'context instruction',
       );
     }
 
