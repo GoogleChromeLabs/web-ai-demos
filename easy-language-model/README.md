@@ -460,18 +460,17 @@ these:
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
 | `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.      |
 | `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                       |
-| `compact`                                                | —                     | Defaults for `session.compact()`.                                                                            |
 
 ### Instance members
 
 Added by the wrapper:
 
-| Member                                | What it is                                                                                                              |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `promptHTML(input, options)`          | The whole response as HTML rather than Markdown, safe to assign.                                                        |
-| `promptStreamingHTML(input, options)` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                  |
-| `compact(options)`                    | Summarizes the conversation and restarts the session. Returns `{before, after, saved, reduction, messages, languages}`. |
-| `history`                             | The conversation as the current session sees it, which is what `compact()` summarizes.                                  |
+| Member                                | What it is                                                                                                                                                                                               |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `promptHTML(input, options)`          | The whole response as HTML rather than Markdown, safe to assign.                                                                                                                                         |
+| `promptStreamingHTML(input, options)` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                                                                                                   |
+| `compact({onStatus})`                 | Summarizes the conversation and restarts the session. `onStatus` is called once per message, since each is a separate Summarizer call. Returns `{before, after, saved, reduction, messages, languages}`. |
+| `history`                             | The conversation as the current session sees it, which is what `compact()` summarizes.                                                                                                                   |
 
 Everything else is the Prompt API's, and behaves the same unless noted:
 

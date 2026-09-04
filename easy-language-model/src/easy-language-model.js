@@ -87,7 +87,6 @@ const EASY_OPTION_KEYS = new Set([
   'downloadProgress',
   'activationButton',
   'activationHint',
-  'compact',
   // Replaced by the wrapper's own monitor, which then calls this one.
   'monitor',
 ]);
@@ -122,7 +121,6 @@ function splitOptions(options) {
  *   as it stands and rejects if the page has no activation.
  * @property {HTMLElement} [activationHint] Shown and hidden with the button,
  *   for the line of text saying why it appeared.
- * @property {object} [compact] Defaults for `session.compact()`.
  */
 
 /**
@@ -466,10 +464,9 @@ export class EasyLanguageModel {
    * @returns {Promise<{before: object, after: object, saved: number, reduction: number, messages: number, languages: string[]}>}
    */
   async compact(options = {}) {
-    const compactOptions = { ...this.#easy.compact, ...options };
     this.#compactor ??= new Compactor({
       onDownloadProgress: this.#easy.onDownloadProgress,
-      ...compactOptions,
+      ...options,
     });
 
     const before = {
