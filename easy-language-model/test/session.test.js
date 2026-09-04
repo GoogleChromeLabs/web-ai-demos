@@ -146,23 +146,23 @@ describe('creating a session', () => {
     install(script, { availability: ['downloadable'] });
 
     const seen = [];
-    const progress = document.createElement('progress');
+    const downloadProgress = document.createElement('progress');
     await EasyLanguageModel.create({
       ...NO_SANITIZER,
-      progress,
+      downloadProgress,
       onDownloadProgress: (p) => seen.push(p.percent),
     });
 
     assert.deepEqual(seen, [0.25, 0.5, 1], 'every event reported');
-    assert.equal(progress.hidden, true, 'hidden once ready');
+    assert.equal(downloadProgress.hidden, true, 'hidden once ready');
   });
 
   it('leaves the progress element alone when nothing is downloaded', async () => {
     const script = newScript();
     install(script);
-    const progress = document.createElement('progress');
-    await EasyLanguageModel.create({ ...NO_SANITIZER, progress });
-    assert.equal(progress.hidden, true);
+    const downloadProgress = document.createElement('progress');
+    await EasyLanguageModel.create({ ...NO_SANITIZER, downloadProgress });
+    assert.equal(downloadProgress.hidden, true);
   });
 
   it('forwards unknown options to both calls, unchanged', async () => {

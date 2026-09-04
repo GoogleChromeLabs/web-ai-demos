@@ -31,8 +31,8 @@ import { EasyLanguageModel } from 'easy-language-model';
 
 ### Creating a session
 
-Both columns use the same three elements from the page: `progress`, a button to
-start the download, and a line of text saying why it appeared. On the right all
+Both columns use the same three elements from the page: `downloadProgress`, a
+button to start the download, and a line of text saying why it appeared. On the right all
 three are handed over by name. On the left, `waitForClick()` is a helper you
 would write yourself.
 
@@ -60,7 +60,7 @@ if (availability === 'unavailable') {
 let downloading = false;
 if (availability !== 'available') {
   downloading = true;
-  progress.hidden = false;
+  downloadProgress.hidden = false;
   if (!navigator.userActivation.isActive) {
     activationButton.hidden = false;
     activationHint.hidden = false;
@@ -76,15 +76,15 @@ const session = await LanguageModel.create({
     m.addEventListener(
       'downloadprogress',
       (e) => {
-        progress.value = e.loaded;
+        downloadProgress.value = e.loaded;
         if (downloading && e.loaded === 1) {
-          progress.removeAttribute('value');
+          downloadProgress.removeAttribute('value');
         }
       },
     );
   },
 });
-progress.hidden = true;
+downloadProgress.hidden = true;
 ```
 
 </td><td>
@@ -108,7 +108,7 @@ if (availability === 'unavailable') {
 
 const session = await EasyLanguageModel.create({
   ...options,
-  progress,
+  downloadProgress,
   activationButton,
   activationHint,
 });
@@ -413,7 +413,7 @@ these:
 | `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                        |
 | `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                   |
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
-| `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
+| `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
 | `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.      |
 | `activationHint`                                         | —                     | Shown and hidden with the button, for the line saying why it appeared.                                       |

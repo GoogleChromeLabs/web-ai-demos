@@ -26,17 +26,17 @@ export function normalizeDownloadProgress(event, resource) {
  *
  * Unlike the raw Prompt API, where `monitor` is opt-in, the wrapper always
  * installs one. A caller's own `monitor` still runs, and a `<progress>` element
- * passed as `progress` is driven automatically, including going indeterminate
+ * passed as `downloadProgress` is driven automatically, including going indeterminate
  * once the bytes are all in and the browser is unpacking the model.
  *
  * @param {object} options
  * @param {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [options.onDownloadProgress]
- * @param {HTMLProgressElement} [options.progress]
+ * @param {HTMLProgressElement} [options.downloadProgress]
  * @param {(monitor: EventTarget) => void} [options.monitor] The caller's own monitor.
  */
 export function createDownloadReporter({
   onDownloadProgress,
-  progress,
+  downloadProgress,
   monitor,
 } = {}) {
   // The model was missing when we started, so a download really is happening.
@@ -46,10 +46,10 @@ export function createDownloadReporter({
     /** Called with the result of `availability()`. */
     reportAvailability(availability) {
       downloadExpected = availability !== 'available';
-      if (progress) {
-        progress.hidden = !downloadExpected;
-        progress.value = 0;
-        progress.max = 1;
+      if (downloadProgress) {
+        downloadProgress.hidden = !downloadExpected;
+        downloadProgress.value = 0;
+        downloadProgress.max = 1;
       }
     },
 
@@ -59,17 +59,17 @@ export function createDownloadReporter({
         const reported = normalizeDownloadProgress(event, 'language-model');
         const { total, loaded, percent } = reported;
 
-        if (progress) {
+        if (downloadProgress) {
           if (percent < 1) {
-            progress.hidden = false;
-            progress.max = total;
-            progress.value = loaded;
+            downloadProgress.hidden = false;
+            downloadProgress.max = total;
+            downloadProgress.value = loaded;
           } else if (downloadExpected) {
             // All bytes are in, but the model still has to be unpacked and
             // loaded into memory. Nobody can say how long that takes, so the
             // bar goes indeterminate.
-            progress.hidden = false;
-            progress.removeAttribute('value');
+            downloadProgress.hidden = false;
+            downloadProgress.removeAttribute('value');
           }
         }
 
@@ -80,10 +80,10 @@ export function createDownloadReporter({
 
     /** Called once the session exists. */
     reportReady() {
-      if (progress) {
-        progress.hidden = true;
-        progress.value = 0;
-        progress.max = 1;
+      if (downloadProgress) {
+        downloadProgress.hidden = true;
+        downloadProgress.value = 0;
+        downloadProgress.max = 1;
       }
     },
   };

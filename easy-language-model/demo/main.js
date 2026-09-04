@@ -168,7 +168,7 @@ async function createSession() {
     // Download reporting needs no opting in. Handing the wrapper a
     // <progress> element is enough to get a correct one, including the
     // indeterminate phase while the model is unpacked into memory.
-    progress: downloadProgress,
+    downloadProgress,
     onDownloadProgress({ resource, percent }) {
       // Compacting downloads a summarizer and a language detector of its own,
       // so say which one is arriving.
