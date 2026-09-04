@@ -148,9 +148,11 @@ hint.hidden = true;
 On the left, `e.loaded === 1` is the moment the bytes are all in and the
 browser starts unpacking the model. That takes an unknown amount of time, so
 the indicator has to go indeterminate, which the wrapper does for you.
-Checking availability is optional on the
-right — `create()` checks anyway and throws `LanguageModelUnavailableError` —
-but it is worth asking first if you would rather not offer the feature at all.
+Both columns check availability first, and neither can skip it: it is the
+only way to learn that the feature can't be offered at all, and the wrapper
+doesn't second-guess the answer. `create()` asks again for its own reasons, to
+drive the progress element and to know whether a gesture is needed, but an
+unavailable model is the Prompt API's own error to throw.
 
 The button needs no click handler: any trusted click, tap, or key press
 anywhere on the page releases the wait and `create()` resolves. It's there to
@@ -486,7 +488,8 @@ it; `npm run build` emits both.
 ### Errors
 
 `UnsafeModelOutputError`, `UserActivationRequiredError`,
-`LanguageModelUnavailableError`, `SanitizerUnavailableError`.
+`SanitizerUnavailableError`. Anything the Prompt API itself throws comes
+through untouched.
 
 ## How the sanitization works
 

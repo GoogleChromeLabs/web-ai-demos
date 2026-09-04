@@ -88,7 +88,7 @@ export function stubGlobals(values) {
  */
 export function fakeLanguageModel(
   script,
-  { availability = [], onCreate } = {}
+  { availability = [], onCreate, createRejects = false } = {}
 ) {
   const queue = [...availability];
   return {
@@ -98,6 +98,12 @@ export function fakeLanguageModel(
     },
     async create(options) {
       onCreate?.(options);
+      if (createRejects) {
+        // What the Prompt API itself throws for a model it can't provide.
+        const error = new Error('The model is unavailable on this device.');
+        error.name = 'InvalidStateError';
+        throw error;
+      }
       fireProgress(options.monitor, ...(script.progress ?? []));
       const session = new FakeSession(options, script);
       script.sessions.push(session);

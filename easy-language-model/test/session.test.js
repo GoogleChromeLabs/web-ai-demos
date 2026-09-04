@@ -163,7 +163,6 @@ describe('creating a session', () => {
     const api = await import('../src/index.js');
     assert.deepEqual(Object.keys(api).sort(), [
       'EasyLanguageModel',
-      'LanguageModelUnavailableError',
       'SanitizerUnavailableError',
       'UnsafeModelOutputError',
       'UserActivationRequiredError',
@@ -191,11 +190,29 @@ describe('creating a session', () => {
     assert.equal(EasyLanguageModel.params, undefined, 'params');
   });
 
-  it('rejects when the model is unavailable', async () => {
-    install(newScript(), { availability: ['unavailable'] });
-    await assert.rejects(EasyLanguageModel.create(NO_SANITIZER), {
-      name: 'LanguageModelUnavailableError',
+  it('lets the Prompt API report an unavailable model itself', async () => {
+    // `availability()` is the caller's to check. `create()` asks only to drive
+    // download reporting and the gesture check, and never pre-empts the Prompt
+    // API's own error with one of its own.
+    install(newScript(), {
+      availability: ['unavailable'],
+      createRejects: true,
     });
+    await assert.rejects(EasyLanguageModel.create(NO_SANITIZER), (error) => {
+      assert.notEqual(error.name, 'LanguageModelUnavailableError');
+      assert.match(error.message, /unavailable/i);
+      return true;
+    });
+  });
+
+  it('reports an unsupported browser through availability()', async () => {
+    const { LanguageModel } = globalThis;
+    delete globalThis.LanguageModel;
+    try {
+      assert.equal(await EasyLanguageModel.availability(), 'unavailable');
+    } finally {
+      globalThis.LanguageModel = LanguageModel;
+    }
   });
 });
 

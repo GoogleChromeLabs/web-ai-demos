@@ -37,22 +37,6 @@ export class UserActivationRequiredError extends Error {
 }
 
 /**
- * Thrown when the Prompt API isn't implemented, or when `availability()`
- * reports `"unavailable"` for the requested configuration.
- */
-export class LanguageModelUnavailableError extends Error {
-  /**
-   * @param {string} message
-   * @param {{availability?: Availability}} [detail]
-   */
-  constructor(message, { availability } = {}) {
-    super(message);
-    this.name = 'LanguageModelUnavailableError';
-    this.availability = availability;
-  }
-}
-
-/**
  * Thrown when output sanitization was requested (the default) but the browser
  * doesn't implement the HTML Sanitizer API.
  */

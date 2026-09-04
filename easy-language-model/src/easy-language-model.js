@@ -5,10 +5,7 @@
 
 import { Compactor } from './compact.js';
 import { createRawSession, isPromptApiSupported } from './create-session.js';
-import {
-  LanguageModelUnavailableError,
-  UnsafeModelOutputError,
-} from './errors.js';
+import { UnsafeModelOutputError } from './errors.js';
 import { createHtmlTokenStreamer } from 'streaming-markdown-html';
 import { createOutputGuard } from './sanitizer.js';
 

@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LanguageModelUnavailableError } from './errors.js';
 import { createDownloadReporter } from './download.js';
 import { ensureUserActivation } from './user-activation.js';
 
@@ -21,28 +20,17 @@ export function isPromptApiSupported() {
  * @returns {Promise<LanguageModel>}
  */
 export async function createRawSession(createOptions, easy) {
-  if (!isPromptApiSupported()) {
-    throw new LanguageModelUnavailableError(
-      "This browser doesn't support the Prompt API (`LanguageModel`)."
-    );
-  }
-
   const reporter = createDownloadReporter(easy);
 
   // Forwarded as given. A dictionary ignores members it doesn't declare, so
   // whatever the Prompt API adds next reaches both calls without a change here,
   // and the two can never disagree about the same session.
+  //
+  // Asked here for the download reporter and the gesture check below, not to
+  // decide whether to proceed: call `availability()` before `create()` and act
+  // on what it says. An unavailable model is `LanguageModel.create()`'s own
+  // error to throw, and it throws a better one than a wrapper could invent.
   const availability = await LanguageModel.availability(createOptions);
-
-  if (availability === 'unavailable') {
-    reporter.reportAvailability(availability);
-    throw new LanguageModelUnavailableError(
-      'The Prompt API is unavailable on this device for the requested ' +
-        'configuration.',
-      { availability }
-    );
-  }
-
   reporter.reportAvailability(availability);
 
   // A gesture is only required when something has to be downloaded.

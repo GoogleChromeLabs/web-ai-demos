@@ -6,7 +6,6 @@
 export { EasyLanguageModel } from './easy-language-model.js';
 export { renderStreamingHTML } from 'streaming-markdown-html';
 export {
-  LanguageModelUnavailableError,
   SanitizerUnavailableError,
   UnsafeModelOutputError,
   UserActivationRequiredError,
