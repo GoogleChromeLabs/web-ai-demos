@@ -28,15 +28,9 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         classifier: resolve(__dirname, 'demo-classifier.html'),
-        'language-detector': resolve(
-          __dirname,
-          'demo-language-detector.html'
-        ),
+        'language-detector': resolve(__dirname, 'demo-language-detector.html'),
         rewriter: resolve(__dirname, 'demo-rewriter.html'),
-        'semantic-embedder': resolve(
-          __dirname,
-          'demo-semantic-embedder.html'
-        ),
+        'semantic-embedder': resolve(__dirname, 'demo-semantic-embedder.html'),
         summarizer: resolve(__dirname, 'demo-summarizer.html'),
         translator: resolve(__dirname, 'demo-translator.html'),
         writer: resolve(__dirname, 'demo-writer.html'),

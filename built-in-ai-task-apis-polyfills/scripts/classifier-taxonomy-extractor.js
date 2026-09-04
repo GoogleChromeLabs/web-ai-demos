@@ -54,11 +54,11 @@ function updateBuilder(taxonomyData) {
     if (regex.test(content)) {
       content = content.replace(
         regex,
-        `${startMarker}\n  ${newData}\n  ${endMarker}`
+        `${startMarker}\n  ${newData}\n  ${endMarker}`,
       );
     } else {
       throw new Error(
-        'Could not find #taxonomyData in classifier-prompt-builder.js'
+        'Could not find #taxonomyData in classifier-prompt-builder.js',
       );
     }
   } else {
@@ -71,7 +71,7 @@ function updateBuilder(taxonomyData) {
 
   fs.writeFileSync(OUTPUT_FILE, content);
   console.log(
-    'Successfully updated classifier-prompt-builder.js with the latest taxonomy data.'
+    'Successfully updated classifier-prompt-builder.js with the latest taxonomy data.',
   );
 }
 

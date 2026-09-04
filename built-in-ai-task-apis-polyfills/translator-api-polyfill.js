@@ -33,7 +33,7 @@ export class Translator extends BaseTaskModel {
   static create(options) {
     if (!options || !options.sourceLanguage || !options.targetLanguage) {
       return Promise.reject(
-        new TypeError('sourceLanguage and targetLanguage are required')
+        new TypeError('sourceLanguage and targetLanguage are required'),
       );
     }
     const p = this._createInternal(options);
@@ -67,7 +67,7 @@ export class Translator extends BaseTaskModel {
       session,
       builder,
       sourceLanguage,
-      targetLanguage
+      targetLanguage,
     );
 
     if (options.signal) {
@@ -76,7 +76,7 @@ export class Translator extends BaseTaskModel {
         () => {
           translator.destroy(options.signal.reason);
         },
-        { once: true }
+        { once: true },
       );
     }
 
@@ -114,5 +114,5 @@ export class Translator extends BaseTaskModel {
 BaseTaskModel.exposeAPIGlobally(
   'Translator',
   Translator,
-  '__FORCE_TRANSLATOR_POLYFILL__'
+  '__FORCE_TRANSLATOR_POLYFILL__',
 );

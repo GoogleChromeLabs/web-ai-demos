@@ -93,7 +93,7 @@ The web is a vast place. Built-in AI APIs like the Language Detector API allow d
         firebaseConfig = await response.json();
       } catch (e) {
         console.warn(
-          'Firebase config (.env.json) not found, relying on local LanguageDetector if available.'
+          'Firebase config (.env.json) not found, relying on local LanguageDetector if available.',
         );
       }
       window.FIREBASE_CONFIG = firebaseConfig;
