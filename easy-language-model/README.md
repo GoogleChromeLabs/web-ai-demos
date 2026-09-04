@@ -372,8 +372,9 @@ browser never evicts.
 compact. By hand that means tracking every message, detecting each one's
 language, summarizing it, destroying the session, building a new one, and
 re-registering every listener on it, while keeping an untouched copy of the
-history in case any of that fails. What comes back is
-`{ before, after, saved, reduction, messages, languages }`.
+history in case any of that fails. `session.compact()` returns
+`{ before, after, saved, reduction, messages, languages }`. You can continue
+using the existing `session`.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
