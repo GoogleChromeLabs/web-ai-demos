@@ -13,7 +13,7 @@ already folded in:
 | **Session history**              | Bring your own transcript                                         | `session.history`, recorded as you go, `append()` included                                                                                |
 | **Long conversations**           | Manage `contextUsage` and rebuild the session yourself            | `session.compact()`                                                                                                                       |
 | **Model downloads**              | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
-| **User activation**              | `create()` fails if the page has no gesture                       | Waits for one, after giving you the cue to ask                                                                                            |
+| **User activation**              | `create()` fails if the page has no gesture                       | Hand over a button and it waits for a click on it, showing and hiding it for you                                                          |
 
 Everything else is passed through untouched.
 
@@ -35,9 +35,9 @@ import {
 ### Creating a session
 
 Both columns use the same three elements from the page: `downloadProgress`, a
-button to start the download, and a line of text saying why it appeared. On the right all
-three are handed over by name. On the left, `waitForClick()` is a helper you
-would write yourself.
+button to start the download, and a line of text saying why it appeared. On the
+right all three are handed over by name. On the left, `waitForClick()` is a
+helper you would write yourself.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -377,8 +377,8 @@ compact. By hand that means tracking every message, detecting each one's
 language, summarizing it, destroying the session, building a new one, and
 re-registering every listener on it, while keeping an untouched copy of the
 history in case any of that fails. `session.compact()` returns
-`{ before, after, saved, reduction, percent, messages, languages }`. You can continue
-using the existing `session`.
+`{ before, after, saved, reduction, percent, messages, languages }`. You can
+continue using the existing `session`.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -464,8 +464,8 @@ They're fetched once and reused, so later calls have nothing to download.
 Compaction swaps the underlying session in place: your `EasyLanguageModel`
 stays valid, and listeners registered through it are re-attached. Messages with
 the `system` role, and non-text content, pass through verbatim — a system prompt
-is an instruction, not a transcript. Fenced code is kept verbatim too, so summarizing
-doesn't mangle code samples. If anything fails after the old session is gone,
+is an instruction, not a transcript. Fenced code is kept verbatim too, so
+summarizing doesn't mangle code samples. If anything fails after the old session is gone,
 the untouched history is used to rebuild a working session before the error is
 re-thrown.
 
@@ -475,10 +475,10 @@ re-thrown.
 
 #### Statics
 
-| `LanguageModel`         | `EasyLanguageModel`     | Difference                                                                                                                        |
-| ----------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `create(options)`       | `create(options)`       | Checks availability with the same options, installs the download monitor, and waits for a gesture if the model has to be fetched. |
-| `availability(options)` | `availability(options)` | Returns `'unavailable'` when the API is missing, instead of throwing.                                                             |
+| `LanguageModel`         | `EasyLanguageModel`     | Difference                                                                                                                               |
+| ----------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `create(options)`       | `create(options)`       | Installs the download monitor, and waits for a click on `activationButton` if the model has to be fetched. Never refuses on your behalf. |
+| `availability(options)` | `availability(options)` | Returns `'unavailable'` when the API is missing, instead of throwing.                                                                    |
 
 Calling `create()` forwards every `LanguageModel.create()` option and adds
 these:
