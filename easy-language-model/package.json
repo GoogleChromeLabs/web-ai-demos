@@ -44,6 +44,6 @@
   },
   "dependencies": {
     "@types/dom-chromium-ai": "^0.0.17",
-    "streaming-markdown-html": "file:./streaming-markdown-html"
+    "streaming-markdown-html": "^0.1.0"
   }
 }

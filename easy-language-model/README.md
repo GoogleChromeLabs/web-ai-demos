@@ -31,10 +31,13 @@ import { EasyLanguageModel } from 'easy-language-model';
 Requires a browser with the Prompt API and the HTML Sanitizer API. Pass
 `sanitizer: false` to run without the latter.
 
-Nothing is bundled at runtime. The single dependency,
-[`@types/dom-chromium-ai`](https://www.npmjs.com/package/@types/dom-chromium-ai),
-ships no code: the published declarations build on it so the Prompt API's own
-types resolve in your editor.
+There are two dependencies.
+[`streaming-markdown-html`](https://www.npmjs.com/package/streaming-markdown-html)
+does the Markdown half and is kept external rather than bundled, so it stays a
+single copy if you use it directly too.
+[`@types/dom-chromium-ai`](https://www.npmjs.com/package/@types/dom-chromium-ai)
+ships no code at all: the published declarations build on it so the Prompt API's
+own types resolve in your editor.
 
 ## Side by side
 
@@ -270,8 +273,9 @@ Concatenating every chunk yields the complete, well-formed HTML.
 Consuming that stream has no side effects. To put the response on screen, pipe
 it into `renderStreamingHTML()`, a `WritableStream` that builds the DOM by
 appending nodes as they arrive, so nothing is ever re-parsed. Both come from
-[`streaming-markdown-html`](streaming-markdown-html/), a separate package that
-does the Markdown half and knows nothing about the Prompt API. The other column
+[`streaming-markdown-html`](https://www.npmjs.com/package/streaming-markdown-html),
+a separate package that does the Markdown half and knows nothing about the
+Prompt API. The other column
 reaches for [`marked`](https://marked.js.org/), an ordinary Markdown parser,
 which has to be handed the whole response every time it grows:
 
