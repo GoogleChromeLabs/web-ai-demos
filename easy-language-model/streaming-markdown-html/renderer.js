@@ -248,7 +248,7 @@ export function createHtmlTokenStreamer({ onHtml, onUnsafe } = {}) {
   const parser = smd.parser(renderer);
 
   return {
-    root,
+    /** @param {string} chunk Markdown, in whatever pieces it arrives. */
     write(chunk) {
       smd.parserWrite(parser, chunk);
     },

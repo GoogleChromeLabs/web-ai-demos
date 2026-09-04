@@ -20,6 +20,10 @@ const SAFE_URL_SCHEMES = new Set([
 
 const SAFE_DATA_URL = /^data:image\/(?:png|jpeg|gif|webp|avif)[;,]/i;
 
+/**
+ * @param {string} value A URL, absolute or relative.
+ * @returns {boolean} Whether it is safe to put in an `href` or `src`.
+ */
 export function isSafeUrl(value) {
   const trimmed = value.trim();
   // Empty, fragment-only, and root/query-relative URLs can't carry a scheme.

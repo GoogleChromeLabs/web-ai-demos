@@ -23,6 +23,10 @@ Two things make it browser-specific on purpose:
 npm install streaming-markdown-html
 ```
 
+It needs a DOM, so it runs in a browser rather than in Node: both entry points
+reach for `document`. It has no runtime dependencies, and ships TypeScript
+declarations.
+
 ## Markdown in, HTML chunks out
 
 `createHtmlTokenStreamer()` takes Markdown a piece at a time and calls you back

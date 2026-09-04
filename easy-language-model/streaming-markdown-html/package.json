@@ -3,10 +3,22 @@
   "version": "0.1.0",
   "description": "A streaming Markdown-to-HTML parser for browsers: append-only, token-granularity output you can pipe straight into an element.",
   "license": "(Apache-2.0 AND MIT)",
+  "author": "Thomas Steiner <tomac@google.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git",
+    "directory": "easy-language-model/streaming-markdown-html"
+  },
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/easy-language-model/streaming-markdown-html#readme",
+  "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "type": "module",
   "main": "./index.js",
+  "types": "./types/index.d.ts",
   "exports": {
-    ".": "./index.js"
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
+    }
   },
   "files": [
     "index.js",
@@ -14,13 +26,16 @@
     "renderer.js",
     "render-stream.js",
     "safe-url.js",
+    "types",
     "README.md",
     "LICENSE"
   ],
   "sideEffects": false,
   "scripts": {
+    "build": "tsc",
     "test": "node --test \"test/*.test.js\"",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepublishOnly": "npm test && npm run build"
   },
   "keywords": [
     "markdown",
@@ -33,6 +48,7 @@
   "devDependencies": {
     "linkedom": "^0.18.13",
     "marked": "^18.0.11",
-    "prettier": "^3.4.2"
+    "prettier": "^3.4.2",
+    "typescript": "^7.0.2"
   }
 }

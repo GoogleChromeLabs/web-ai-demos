@@ -1,0 +1,4 @@
+dist/
+dist-demo/
+node_modules/
+streaming-markdown-html/types/
