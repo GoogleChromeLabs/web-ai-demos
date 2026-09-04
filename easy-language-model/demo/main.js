@@ -5,14 +5,6 @@
 
 import { EasyLanguageModel, renderStreamingHTML } from '../src/index.js';
 
-/**
- * Whether this is the wrapper rejecting the response, rather than the model
- * failing to produce one. Both are `OperationError`; only the first carries the
- * sanitized text alongside it.
- */
-const isUnsafeOutput = (error) =>
-  error.name === 'OperationError' && 'sanitized' in error;
-
 const $ = (id) => document.getElementById(id);
 
 const stateBadge = $('state-badge');
@@ -274,23 +266,22 @@ form.addEventListener('submit', async (event) => {
       )
       .pipeTo(renderFollowing(htmlOutput, htmlTail));
     addLogEntry(`Response complete, ${chunkCount} HTML chunks.`);
+    // The HTML methods can't render markup the model wrote: the parser escapes
+    // it. Saying so when it happens is the point of the injection button.
+    if (
+      htmlOutput.querySelector('img, script, iframe') === null &&
+      /<(?:img|script|iframe)\b/i.test(markdownOutput.textContent)
+    ) {
+      addLogEntry(
+        'The model emitted markup; it was escaped and is shown as text, ' +
+          'not built into elements.',
+        'warn'
+      );
+    }
   } catch (error) {
     if (error.name === 'AbortError') {
       // Whatever arrived before the abort stays on screen.
       addLogEntry(`Stopped after ${chunkCount} HTML chunks.`, 'warn');
-    } else if (isUnsafeOutput(error)) {
-      addLogEntry(
-        `Unsafe output blocked: ${error.output.slice(-120)}`,
-        'error'
-      );
-      htmlOutput.replaceChildren();
-      htmlTail.reset();
-      const warning = document.createElement('p');
-      warning.className = 'error';
-      warning.textContent =
-        'Rendering stopped: the Sanitizer API removed part of the response, ' +
-        'so it was treated as an injection attempt.';
-      htmlOutput.append(warning);
     } else {
       addLogEntry(`${error.name}: ${error.message}`, 'error');
     }

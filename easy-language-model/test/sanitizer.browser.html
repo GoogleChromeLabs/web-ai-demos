@@ -125,22 +125,47 @@
           );
         });
 
-        await test('promptHTML() throws on unsafe output', async () => {
+        await test('promptHTML() escapes markup instead of refusing it', async () => {
           script.response = 'text <img src=x onerror=alert(1)> more';
+          const html = await session.promptHTML('x');
           eq(
             await nameOfThrown(() => session.promptHTML('x')),
-            'OperationError',
-            'error'
+            null,
+            'no throw'
+          );
+          // The parser escaped it, so it is text on the page, not an element.
+          eq(html.includes('&lt;img'), true, 'escaped');
+          eq(html.includes('onerror="'), false, 'no live attribute');
+          const el = document.createElement('div');
+          el.setHTML(html);
+          eq(el.querySelectorAll('img').length, 0, 'no <img> created');
+          eq(
+            el.textContent.includes('<img src=x onerror=alert(1)>'),
+            true,
+            'visible as text'
           );
         });
 
-        await test('promptStreamingHTML() errors on unsafe output', async () => {
+        await test('promptStreamingHTML() renders it rather than stopping', async () => {
           script.response = 'text <img src=x onerror=alert(1)> more';
+          const chunks = [];
+          for await (const chunk of session.promptStreamingHTML('x')) {
+            chunks.push(chunk);
+          }
+          eq(chunks.join('').includes('&lt;img'), true, 'escaped');
           eq(
-            await nameOfThrown(() => drain(session.promptStreamingHTML('x'))),
-            'OperationError',
-            'error'
+            chunks.join('').includes(' more'),
+            true,
+            'the whole response arrived'
           );
+        });
+
+        await test('a javascript: link keeps its text and loses its href', async () => {
+          script.response = 'see [this](javascript:alert(1)) please';
+          const html = await session.promptHTML('x');
+          eq(html.includes('javascript:'), false, 'href dropped');
+          eq(html.includes('this'), true, 'link text kept');
+          eq(html.includes('please'), true, 'response not truncated');
         });
 
         await test('an unfinished tag is never handed out', async () => {

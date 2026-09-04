@@ -2,8 +2,9 @@
 
 A near drop-in wrapper for the Prompt API's
 [`LanguageModel`](https://developer.chrome.com/docs/ai/prompt-api). Same shape,
-same options, same return values, with the boilerplate that every production
-built-in AI app ends up writing folded in:
+same options, same return values, but with the security guardrails and
+convenience methods that every production built-in AI app would end up writing
+already folded in:
 
 |                                  | Prompt API                                                        | `EasyLanguageModel`                                                                                                                       |
 | -------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -11,7 +12,7 @@ built-in AI app ends up writing folded in:
 | **Rendering HTML from Markdown** | Bring your own streaming parser                                   | `promptStreamingHTML()` emits HTML chunks; pipe them into `renderStreamingHTML()`                                                         |
 | **Long conversations**           | Manage `contextUsage` and rebuild the session yourself            | `session.compact()`                                                                                                                       |
 | **Model downloads**              | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
-| **User activation**              | `create()` fails if the page has no gesture                       | Waits for one, or tells you to ask                                                                                                        |
+| **User activation**              | `create()` fails if the page has no gesture                       | Waits for one, after giving you the cue to ask                                                                                            |
 
 Everything else — `append()`, `clone()`, `measureContextUsage()`,
 `contextUsage`, `contextWindow`, `contextoverflow`, `responseConstraint`,
@@ -212,7 +213,8 @@ ends up executing. Checking costs a helper, because the Sanitizer API doesn't
 report what it removed: the only way to find out is to parse twice and compare;
 see [How the sanitization works](#how-the-sanitization-works). On the right the
 response is already vetted, and `prompt()` throws an `OperationError` when it
-isn't, carrying what the model wrote and what survived.
+isn't, carrying what the model wrote and what survived. (`promptHTML()` doesn't
+need to throw; see [How the sanitization works](#how-the-sanitization-works).)
 
 Why `setHTML()` once the response has been checked? Because the check
 deliberately exempts fenced code (a Markdown renderer shows that as text rather
@@ -512,6 +514,19 @@ try {
 
 ## How the sanitization works
 
+Only `prompt()` and `promptStreaming()` vet anything, because they are the only
+two that hand back a string whose destination this can't know: right for
+`setHTML()`, wrong for `textContent`, wrong again for anything parsed as JSON.
+Escaping would presume a sink, so they throw instead and let you decide.
+
+`promptHTML()` and `promptStreamingHTML()` never throw over model output. They
+can't render it unsafely: the parser escapes every run of text, emits only tags
+it chose itself, and drops an `href` or `src` whose scheme isn't safe, so
+`<img src=x onerror=…>` from the model reaches the page as visible text and
+`[click](javascript:…)` reaches it as a link with no destination. Refusing on
+top of that would throw away answers that were never dangerous, and "how do I
+show an image?" is answered with an inline `<img>` constantly.
+
 The model's raw Markdown is what gets vetted, because that's the only part the
 model authored. The Sanitizer API doesn't report what it removed, so the wrapper
 parses that output twice inside a document with no browsing context — once with
@@ -520,12 +535,8 @@ Both go through the same parser and serializer, so any difference is something
 the sanitizer took out. Because the document is inert, neither parse runs script
 or fetches anything.
 
-The HTML from `promptStreamingHTML()` needs no scrub of its own: every tag is
-one the Markdown parser picked from a fixed set, all text is escaped by the DOM
-serializer, and the only model-supplied values that reach an attribute are
-`href` and `src`, which are scheme-checked before they're set. With no `into`
-element the DOM is built in that same inert document, so an image URL the model
-invented is never requested.
+The HTML methods build their DOM in that same inert document, so an image URL
+the model invented is never requested.
 
 Four details worth knowing:
 
@@ -536,7 +547,8 @@ Four details worth knowing:
 - **Fenced and inline code are exempt by default.** A Markdown renderer emits
   code as text, so `<iframe>` inside a fence is displayed, not executed.
   Without this, asking the model for an HTML snippet would be flagged every
-  time. Set `ignoreFencedCode: false` if you render code some other way.
+  time. Set `ignoreFencedCode: false` if you render code some other way. This
+  only affects the two string methods; the HTML ones don't check at all.
 - **URL schemes are checked separately.** The Sanitizer API's default
   configuration removes unsafe elements and attributes but deliberately doesn't
   filter URLs, so `[click](javascript:alert(1))` would otherwise survive.
@@ -559,7 +571,8 @@ the model produced, and the HTML chunks that built the DOM. Around that are the
 availability check and download progress as they happen, the user-gesture
 prompt, a context bar with
 compact and reset, stop for a response in flight, and a button that fills in an
-injection prompt so you can watch rendering stop mid-response.
+injection prompt so you can watch the markup arrive as text rather than as
+elements.
 
 ## Test
 

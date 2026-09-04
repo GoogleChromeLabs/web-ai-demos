@@ -412,13 +412,17 @@ export class EasyLanguageModel {
   async *#streamHtml(input, { onMarkdownChunk, ...options } = {}) {
     const entries = toHistoryEntries(input);
     const pending = [];
-    let unsafeAttribute = null;
 
+    // Nothing here vets the response, because nothing here can render it
+    // unsafely. The parser escapes every run of text, emits only tags it chose
+    // itself, and drops an `href` or `src` whose scheme isn't safe, so markup
+    // the model wrote arrives as visible text rather than as elements. Stopping
+    // on top of that refuses answers that were never dangerous, and a question
+    // like "how do I show an image?" is answered with an inline `<img>` all the
+    // time. The string methods are where the check earns its place: those hand
+    // back text whose destination this can't know.
     const streamer = createHtmlTokenStreamer({
       onHtml: (html) => pending.push(html),
-      onUnsafe: (detail) => {
-        unsafeAttribute = detail;
-      },
     });
 
     let full = '';
@@ -428,26 +432,10 @@ export class EasyLanguageModel {
     // vetted text.
     let markdownEmitted = 0;
 
-    const reportUnsafeAttribute = () => {
-      this.#reportUnsafe({
-        output: `${unsafeAttribute.attribute}="${unsafeAttribute.value}"`,
-        sanitized: '',
-        partialOutput: emitted,
-      });
-    };
-
     for await (const chunk of readStream(
       this.#session.promptStreaming(input, options)
     )) {
       full += chunk;
-      // Guard the raw Markdown first: a Markdown renderer escapes stray HTML
-      // into text, so a bad response would render harmlessly, but an injection
-      // attempt is still a reason to stop rather than to display it.
-      const { removed, sanitized } = this.#guard.check(full);
-      if (removed) {
-        this.#reportUnsafe({ output: full, sanitized, partialOutput: emitted });
-        return;
-      }
 
       if (onMarkdownChunk) {
         const tagStart = pendingTagStart(full);
@@ -459,10 +447,6 @@ export class EasyLanguageModel {
       }
 
       streamer.write(chunk);
-      if (unsafeAttribute) {
-        reportUnsafeAttribute();
-        return;
-      }
       while (pending.length > 0) {
         const html = pending.shift();
         emitted += html;
@@ -470,17 +454,12 @@ export class EasyLanguageModel {
       }
     }
 
-    // The response is complete and vetted, so anything held back is safe now.
     if (onMarkdownChunk && markdownEmitted < full.length) {
       onMarkdownChunk(full.slice(markdownEmitted));
     }
 
     // Markdown can only close the trailing tags at the very end.
     streamer.end();
-    if (unsafeAttribute) {
-      reportUnsafeAttribute();
-      return;
-    }
     while (pending.length > 0) {
       yield pending.shift();
     }
