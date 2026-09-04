@@ -241,8 +241,7 @@ Both `promptHTML()` and `promptStreamingHTML()` are `prompt()` and
 you get back is HTML. The one-shot form hands over the whole response at once:
 
 ```js
-// Safe by construction rather than by checking: the parser escapes the model's
-// text and only ever emits tags it picked itself.
+// Safe by construction: the parser escapes the model's text.
 output.setHTML(await session.promptHTML(prompt));
 ```
 
