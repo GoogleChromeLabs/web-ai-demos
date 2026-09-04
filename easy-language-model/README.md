@@ -421,7 +421,6 @@ re-thrown.
 | ----------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `create(options)`       | `create(options)`       | Checks availability with the same options, installs the download monitor, and waits for a gesture if the model has to be fetched. |
 | `availability(options)` | `availability(options)` | Returns `'unavailable'` when the API is missing, instead of throwing.                                                             |
-| —                       | `supported`             | **Added.** Whether the Prompt API exists at all.                                                                                  |
 
 Calling `create()` forwards every `LanguageModel.create()` option and adds
 these:
@@ -430,8 +429,7 @@ these:
 | -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                        |
 | `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the check, so asking for an HTML snippet isn't flagged.                   |
-| `unsafeOutput`                                           | `'throw'`             | `'throw'` or `'stop'` (end the stream quietly).                                                              |
-| `onUnsafeOutput(detail)`                                 | —                     | Called on detection either way. `detail` has `output`, `sanitized`, `partialOutput`.                         |
+| `onUnsafeOutput(detail)`                                 | —                     | Called before the throw. `detail` has `output`, `sanitized`, `partialOutput`.                                |
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | Download progress. `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
 | `progress`                                               | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.  |
 | `monitor`                                                | —                     | Your own `create()` monitor. Still called; the wrapper adds its own rather than replacing yours.             |
@@ -470,7 +468,7 @@ without a change here.
 
 ### Exports
 
-Besides `EasyLanguageModel` and the errors, the entry point exports
+The entry point exports six things: `EasyLanguageModel`, the four errors, and
 `renderStreamingHTML(element)`, the `WritableStream` shown above. It builds
 nodes with `createElement` and `append` and never from a string, so it works on
 pages that enforce Trusted Types — which is why every chunk

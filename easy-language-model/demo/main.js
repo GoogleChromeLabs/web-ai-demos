@@ -193,18 +193,15 @@ async function createSession() {
 }
 
 async function init() {
-  if (!EasyLanguageModel.supported) {
-    unsupported.hidden = false;
-    $('status-panel').hidden = true;
-    return;
-  }
-
   setState('checking', 'Checking availability…');
+  // One call covers both questions: availability() reports 'unavailable' when
+  // the Prompt API isn't there at all.
   const availability = await EasyLanguageModel.availability(MODEL_OPTIONS);
   addLogEntry(`availability: ${availability}`);
 
   if (availability === 'unavailable') {
-    setState('unavailable', 'The model is unavailable on this device.');
+    unsupported.hidden = false;
+    $('status-panel').hidden = true;
     return;
   }
   setState(

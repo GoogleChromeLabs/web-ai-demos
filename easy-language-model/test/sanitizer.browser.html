@@ -49,11 +49,8 @@
     <ol id="results"></ol>
 
     <script type="module">
-      import {
-        EasyLanguageModel,
-        isSanitizerSupported,
-        renderStreamingHTML,
-      } from '/src/index.js';
+      import { EasyLanguageModel, renderStreamingHTML } from '/src/index.js';
+      import { isSanitizerSupported } from '/src/sanitizer.js';
       import { fakeLanguageModel, stubGlobals } from '/test/stubs.js';
 
       const results = document.getElementById('results');
@@ -148,23 +145,32 @@
 
         await test('an unfinished tag is never handed out', async () => {
           script.response = 'safe start <img src=x onerror=alert(1)> tail';
-          const lenient = await EasyLanguageModel.create({
-            unsafeOutput: 'stop',
-            userActivation: 'ignore',
-          });
-          const chunks = await drain(lenient.promptStreaming('x'));
-          eq(chunks.join(''), 'safe start ', 'emitted text');
+          const chunks = [];
+          let thrown = null;
+          try {
+            for await (const chunk of session.promptStreaming('x')) {
+              chunks.push(chunk);
+            }
+          } catch (error) {
+            thrown = error;
+          }
+          eq(thrown?.name, 'UnsafeModelOutputError', 'error');
+          eq(chunks.join(''), 'safe start ', 'handed over before the throw');
+          eq(thrown?.partialOutput, 'safe start ', 'and reported on the error');
         });
 
-        await test("unsafeOutput 'stop' reports instead of throwing", async () => {
+        await test('onUnsafeOutput fires before the throw', async () => {
           const seen = [];
-          const lenient = await EasyLanguageModel.create({
-            unsafeOutput: 'stop',
+          const watched = await EasyLanguageModel.create({
             onUnsafeOutput: (detail) => seen.push(detail),
             userActivation: 'ignore',
           });
           script.response = 'text <img src=x onerror=alert(1)> more';
-          await drain(lenient.promptStreaming('x'));
+          eq(
+            await nameOfThrown(() => drain(watched.promptStreaming('x'))),
+            'UnsafeModelOutputError',
+            'error'
+          );
           eq(seen.length > 0, true, 'reported');
         });
 

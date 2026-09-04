@@ -86,7 +86,6 @@ function toHistoryEntries(input) {
 const EASY_OPTION_KEYS = new Set([
   'sanitizer',
   'ignoreFencedCode',
-  'unsafeOutput',
   'onUnsafeOutput',
   'onDownloadProgress',
   'progress',
@@ -118,8 +117,6 @@ function splitOptions(options) {
  *   output. `false` turns the check off. Default: the Sanitizer API default.
  * @property {boolean} [ignoreFencedCode] Exempt fenced and inline code from the
  *   check, so asking for an HTML snippet isn't flagged. Default `true`.
- * @property {'throw'|'stop'} [unsafeOutput] What to do when the sanitizer
- *   removes something. Default `'throw'`.
  * @property {(detail: {output: string, sanitized: string, partialOutput: string}) => void} [onUnsafeOutput]
  *   Always called on detection, whichever strategy is set.
  * @property {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [onDownloadProgress]
@@ -146,11 +143,6 @@ function splitOptions(options) {
  * - The user activation requirement is handled for you.
  */
 export class EasyLanguageModel {
-  /** Whether the Prompt API exists in this browser. */
-  static get supported() {
-    return isPromptApiSupported();
-  }
-
   /**
    * Same as `LanguageModel.availability()`. The wrapper's own options can be
    * passed straight through, so one object serves this and `create()`.
@@ -307,10 +299,7 @@ export class EasyLanguageModel {
     const output = await this.#session.prompt(input, options);
     const { removed, sanitized } = this.#guard.check(output);
     if (removed) {
-      // Throws unless `unsafeOutput: 'stop'`, in which case the flagged text is
-      // handed back but kept out of the history.
       this.#reportUnsafe({ output, sanitized, partialOutput: '' });
-      return output;
     }
     this.#record([...entries, { role: 'assistant', content: output }]);
     return output;
@@ -516,9 +505,9 @@ export class EasyLanguageModel {
    * this wrapper are re-attached, and the object stays usable throughout.
    *
    * @param {object} [options]
-   * @param {(status: string) => void} [options.onStatus]
-   * @param {boolean} [options.preserveCodeFences] Keep fenced code verbatim. Default `true`.
-   * @param {number} [options.confidenceThreshold] Language detection cutoff. Default `0.7`.
+   * @param {(status: string) => void} [options.onStatus] Called once per
+   *   message, since each is a separate Summarizer call and a long
+   *   conversation takes a while.
    * @returns {Promise<{before: object, after: object, saved: number, reduction: number, messages: number, languages: string[]}>}
    */
   async compact(options = {}) {
@@ -605,12 +594,10 @@ export class EasyLanguageModel {
 
   #reportUnsafe(detail) {
     this.#easy.onUnsafeOutput?.(detail);
-    if ((this.#easy.unsafeOutput ?? 'throw') !== 'stop') {
-      throw new UnsafeModelOutputError(
-        'The model produced output containing markup that the Sanitizer API ' +
-          'removed. Rendering was stopped.',
-        detail
-      );
-    }
+    throw new UnsafeModelOutputError(
+      'The model produced output containing markup that the Sanitizer API ' +
+        'removed. Rendering was stopped.',
+      detail
+    );
   }
 }

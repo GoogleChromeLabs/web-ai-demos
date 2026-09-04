@@ -60,10 +60,6 @@ export class Compactor {
     this.#options = options;
   }
 
-  get #fallbackLanguage() {
-    return this.#options.fallbackLanguage ?? navigator.language;
-  }
-
   #report(status) {
     this.#options.onStatus?.(status);
   }
@@ -89,11 +85,13 @@ export class Compactor {
     return this.#detector;
   }
 
-  /** Top detected language, or `null` when the detector isn't confident. */
-  async detectLanguage(
-    text,
-    threshold = this.#options.confidenceThreshold ?? 0.7
-  ) {
+  /**
+   * Top detected language, or `null` when the detector isn't confident.
+   *
+   * Below this confidence the caller falls back to `navigator.language`, which
+   * beats acting on an uncertain detection.
+   */
+  async detectLanguage(text, threshold = 0.7) {
     const detector = await this.#getDetector();
     if (!detector) {
       return null;
@@ -167,9 +165,6 @@ export class Compactor {
 
   /** Summarizes prose, passing fenced code through untouched. */
   async #summarizeMessage(content, role, summarizer) {
-    if (this.#options.preserveCodeFences === false) {
-      return this.#summarize(content, role, summarizer);
-    }
     const parts = splitByCodeFences(content);
     if (parts.length === 1 && parts[0].type === 'prose') {
       return this.#summarize(parts[0].content, role, summarizer);
@@ -213,7 +208,7 @@ export class Compactor {
       if (detected) {
         languages.add(detected);
       }
-      const lang = detected ?? this.#fallbackLanguage;
+      const lang = detected ?? navigator.language;
       const format = looksLikeMarkdown(message.content)
         ? 'markdown'
         : 'plain-text';
@@ -231,7 +226,7 @@ export class Compactor {
 
     return {
       messages,
-      languages: languages.size > 0 ? [...languages] : [this.#fallbackLanguage],
+      languages: languages.size > 0 ? [...languages] : [navigator.language],
     };
   }
 

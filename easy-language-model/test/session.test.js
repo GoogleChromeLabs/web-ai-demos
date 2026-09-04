@@ -128,6 +128,69 @@ describe('creating a session', () => {
     assert.equal(progress.hidden, true);
   });
 
+  it('forwards unknown options to both calls, unchanged', async () => {
+    const script = newScript();
+    const created = [];
+    const asked = [];
+    install(script, { onCreate: (options) => created.push(options) });
+    const base = globalThis.LanguageModel;
+    globalThis.LanguageModel = {
+      ...base,
+      async availability(options) {
+        asked.push(options);
+        return 'available';
+      },
+    };
+
+    // Stand-in for whatever the Prompt API adds next.
+    const options = {
+      ...NO_SANITIZER,
+      somethingNew: 42,
+      samplingMode: 'balanced',
+    };
+    await EasyLanguageModel.availability(options);
+    await EasyLanguageModel.create(options);
+
+    assert.equal(asked[0].somethingNew, 42, 'reached availability()');
+    assert.equal(created[0].somethingNew, 42, 'reached create()');
+    for (const seen of [asked[0], created[0]]) {
+      assert.ok(!('sanitizer' in seen), "the wrapper's own options stay out");
+      assert.ok(!('userActivation' in seen), 'and so do its behaviour flags');
+    }
+  });
+
+  it('exports only what callers need', async () => {
+    const api = await import('../src/index.js');
+    assert.deepEqual(Object.keys(api).sort(), [
+      'EasyLanguageModel',
+      'LanguageModelUnavailableError',
+      'SanitizerUnavailableError',
+      'UnsafeModelOutputError',
+      'UserActivationRequiredError',
+      'renderStreamingHTML',
+    ]);
+  });
+
+  it('offers nothing beyond the Prompt API and its own additions', async () => {
+    install(newScript());
+    const session = await EasyLanguageModel.create(NO_SANITIZER);
+    // Removed as inventions: an escape hatch, a feature-detect availability()
+    // already covers, and deprecated or extension-only members.
+    for (const gone of [
+      'session',
+      'measureInputUsage',
+      'inputUsage',
+      'inputQuota',
+      'onquotaoverflow',
+      'topK',
+      'temperature',
+    ]) {
+      assert.ok(!(gone in session), gone);
+    }
+    assert.equal(EasyLanguageModel.supported, undefined, 'supported');
+    assert.equal(EasyLanguageModel.params, undefined, 'params');
+  });
+
   it('rejects when the model is unavailable', async () => {
     install(newScript(), { availability: ['unavailable'] });
     await assert.rejects(EasyLanguageModel.create(NO_SANITIZER), {
