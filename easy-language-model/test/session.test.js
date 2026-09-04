@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 
 import { EasyLanguageModel } from '../src/easy-language-model.js';
-import { renderStreamingHTML } from 'streaming-markdown-html';
+import { markdownToHtml, renderStreamingHTML } from 'streaming-markdown-html';
 import { fakeCompactionApis, fakeLanguageModel, stubGlobals } from './stubs.js';
 
 // Sanitization needs the real HTML Sanitizer API, which Node has no
@@ -328,24 +328,47 @@ describe('prompting', () => {
     assert.equal(into.innerHTML, '', 'rendering belongs to renderStreaming()');
   });
 
-  it('pipes into an element and surfaces the Markdown alongside', async () => {
+  it('pipes into an element', async () => {
     const script = newScript('# Title\n\nA **bold** para.\n');
     install(script);
     const session = await EasyLanguageModel.create(NO_SANITIZER);
 
     const into = document.createElement('div');
-    const markdown = [];
-    await session
-      .promptStreamingHTML('x', {
-        onMarkdownChunk: (chunk) => markdown.push(chunk),
-      })
-      .pipeTo(renderStreamingHTML(into));
+    await session.promptStreamingHTML('x').pipeTo(renderStreamingHTML(into));
 
     assert.equal(
       into.innerHTML,
       '<h1>Title</h1><p>A <strong>bold</strong> para.</p>'
     );
-    assert.equal(markdown.join(''), script.response);
+  });
+
+  it('gives both views from one response, through tee()', async () => {
+    // What onMarkdownChunk used to do, with nothing of the wrapper's own: the
+    // platform splits the stream and the parser is a TransformStream.
+    const script = newScript('# Title\n\nA **bold** para.\n');
+    install(script);
+    const session = await EasyLanguageModel.create(NO_SANITIZER);
+
+    const [rawBranch, htmlBranch] = session.promptStreaming('x').tee();
+    const into = document.createElement('div');
+    let markdown = '';
+    await Promise.all([
+      (async () => {
+        for await (const chunk of rawBranch) {
+          markdown += chunk;
+        }
+      })(),
+      htmlBranch
+        .pipeThrough(markdownToHtml())
+        .pipeTo(renderStreamingHTML(into)),
+    ]);
+
+    assert.equal(markdown, script.response, 'the Markdown, unchanged');
+    assert.equal(
+      into.innerHTML,
+      '<h1>Title</h1><p>A <strong>bold</strong> para.</p>',
+      'and the same HTML the wrapper would have built'
+    );
   });
 
   it('carries history into a clone without linking them', async () => {

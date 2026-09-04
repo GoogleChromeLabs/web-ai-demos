@@ -401,17 +401,14 @@ export class EasyLanguageModel {
    * ```
    *
    * @param {LanguageModelPrompt} input
-   * @param {LanguageModelPromptOptions & {onMarkdownChunk?: (chunk: string) => void}} [options]
-   *   The stream yields the HTML. `onMarkdownChunk` hands back the Markdown it
-   *   was converted from, as it arrives, so one response can drive both views
-   *   without paying for a second inference.
+   * @param {LanguageModelPromptOptions} [options] Passed through to the raw session.
    * @returns {ReadableStream<string>} HTML chunks.
    */
   promptStreamingHTML(input, options) {
     return toReadableStream(this.#streamHtml(input, options));
   }
 
-  async *#streamHtml(input, { onMarkdownChunk, ...options } = {}) {
+  async *#streamHtml(input, options) {
     const entries = toHistoryEntries(input);
     const pending = [];
 
@@ -429,35 +426,17 @@ export class EasyLanguageModel {
 
     let full = '';
     let emitted = '';
-    // How much of the raw Markdown `onMarkdownChunk` has seen. Held back at a tag
-    // boundary exactly like promptStreaming(), so both hand out the same
-    // sanitized text.
-    let markdownEmitted = 0;
 
     for await (const chunk of readStream(
       this.#session.promptStreaming(input, options)
     )) {
       full += chunk;
-
-      if (onMarkdownChunk) {
-        const tagStart = pendingTagStart(full);
-        const boundary = tagStart === -1 ? full.length : tagStart;
-        if (boundary > markdownEmitted) {
-          onMarkdownChunk(full.slice(markdownEmitted, boundary));
-          markdownEmitted = boundary;
-        }
-      }
-
       streamer.write(chunk);
       while (pending.length > 0) {
         const html = pending.shift();
         emitted += html;
         yield html;
       }
-    }
-
-    if (onMarkdownChunk && markdownEmitted < full.length) {
-      onMarkdownChunk(full.slice(markdownEmitted));
     }
 
     // Markdown can only close the trailing tags at the very end.

@@ -293,15 +293,11 @@ await session
 
 Because the response is a stream, the rest of the streams machinery comes with
 it. A `TransformStream` in the middle sees each HTML chunk on its way to the
-page, and `onMarkdownChunk` hands back the Markdown that HTML was converted
-from. One response can drive all three views, so showing the rendered output
-beside the raw Markdown costs one inference rather than two:
+page:
 
 ```js
 await session
-  .promptStreamingHTML(prompt, {
-    onMarkdownChunk: (chunk) => rawView.append(chunk),
-  })
+  .promptStreamingHTML(prompt)
   .pipeThrough(
     new TransformStream({
       transform(html, sink) {
@@ -311,6 +307,26 @@ await session
     })
   )
   .pipeTo(renderStreamingHTML(output));
+```
+
+To show the rendered output beside the raw Markdown, split the response with
+`tee()` and run one branch through the parser yourself. `markdownToHtml()` is
+what `promptStreamingHTML()` uses internally, from the same package as
+`renderStreamingHTML()`, so both views come from one inference:
+
+```js
+import { markdownToHtml, renderStreamingHTML } from 'streaming-markdown-html';
+
+const [rawBranch, htmlBranch] = session.promptStreaming(prompt).tee();
+
+await Promise.all([
+  (async () => {
+    for await (const chunk of rawBranch) {
+      rawView.append(chunk);
+    }
+  })(),
+  htmlBranch.pipeThrough(markdownToHtml()).pipeTo(renderStreamingHTML(output)),
+]);
 ```
 
 ### Stopping a response
@@ -433,12 +449,12 @@ these:
 
 Added by the wrapper:
 
-| Member                                             | What it is                                                                                                              |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `promptHTML(input, options)`                       | The whole response as HTML rather than Markdown, safe to assign.                                                        |
-| `promptStreamingHTML(input, {onMarkdownChunk, …})` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                  |
-| `compact(options)`                                 | Summarizes the conversation and restarts the session. Returns `{before, after, saved, reduction, messages, languages}`. |
-| `history`                                          | The conversation as the current session sees it, which is what `compact()` summarizes.                                  |
+| Member                                | What it is                                                                                                              |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `promptHTML(input, options)`          | The whole response as HTML rather than Markdown, safe to assign.                                                        |
+| `promptStreamingHTML(input, options)` | That HTML as a `ReadableStream` of chunks at parser granularity. Pipe it into `renderStreamingHTML()`.                  |
+| `compact(options)`                    | Summarizes the conversation and restarts the session. Returns `{before, after, saved, reduction, messages, languages}`. |
+| `history`                             | The conversation as the current session sees it, which is what `compact()` summarizes.                                  |
 
 Everything else is the Prompt API's, and behaves the same unless noted:
 

@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EasyLanguageModel, renderStreamingHTML } from '../src/index.js';
+import { EasyLanguageModel } from '../src/index.js';
+import { markdownToHtml, renderStreamingHTML } from 'streaming-markdown-html';
 
 const $ = (id) => document.getElementById(id);
 
@@ -242,27 +243,36 @@ form.addEventListener('submit', async (event) => {
 
   try {
     // `signal` goes straight through to the Prompt API, so Stop aborts the
-    // inference itself rather than ignoring the rest of it. The chunks are
-    // tapped for the listing on their way past, then written to the page.
-    await session
-      .promptStreamingHTML(prompt, {
-        signal: controller.signal,
-        onMarkdownChunk(chunk) {
+    // inference itself rather than ignoring the rest of it.
+    //
+    // Three views, one inference: tee() splits the Markdown stream, one branch
+    // feeding the raw view and the other the parser. A TransformStream in the
+    // middle taps the HTML chunks for the listing on their way to the page.
+    const [rawBranch, htmlBranch] = session
+      .promptStreaming(prompt, { signal: controller.signal })
+      .tee();
+
+    await Promise.all([
+      (async () => {
+        for await (const chunk of rawBranch) {
           markdownOutput.append(chunk);
           markdownTail.follow();
-        },
-      })
-      .pipeThrough(
-        new TransformStream({
-          transform(html, sink) {
-            chunkCount++;
-            htmlChunks.append(html);
-            chunksTail.follow();
-            sink.enqueue(html);
-          },
-        })
-      )
-      .pipeTo(renderFollowing(htmlOutput, htmlTail));
+        }
+      })(),
+      htmlBranch
+        .pipeThrough(markdownToHtml())
+        .pipeThrough(
+          new TransformStream({
+            transform(html, sink) {
+              chunkCount++;
+              htmlChunks.append(html);
+              chunksTail.follow();
+              sink.enqueue(html);
+            },
+          })
+        )
+        .pipeTo(renderFollowing(htmlOutput, htmlTail)),
+    ]);
     addLogEntry(`Response complete, ${chunkCount} HTML chunks.`);
     // The HTML methods can't render markup the model wrote: the parser escapes
     // it. Saying so when it happens is the point of the injection button.
