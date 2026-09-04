@@ -10,14 +10,13 @@ already folded in:
 | -------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sanitizing output**            | Sanitize and diff every response yourself to see what was removed | [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) on `prompt()` and `promptStreaming()`, on by default |
 | **Rendering HTML from Markdown** | Bring your own streaming parser                                   | `promptStreamingHTML()` emits HTML chunks; pipe them into `renderStreamingHTML()`                                                         |
+| **Session history**              | Nothing reads back what was said, so keep your own copy in step   | `session.history`, recorded as you go, `append()` included                                                                                |
 | **Long conversations**           | Manage `contextUsage` and rebuild the session yourself            | `session.compact()`                                                                                                                       |
 | **Model downloads**              | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
 | **User activation**              | `create()` fails if the page has no gesture                       | Waits for one, after giving you the cue to ask                                                                                            |
 
-Everything else — `append()`, `clone()`, `measureContextUsage()`,
-`contextUsage`, `contextWindow`, `contextoverflow`, `responseConstraint`,
-`initialPrompts`, `signal`, `tools`, multimodal input — is passed through
-untouched, including anything the Prompt API adds after this was written.
+Everything else is passed through untouched, including anything the Prompt API
+adds after this was written.
 
 ## Install
 
