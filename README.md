@@ -4,7 +4,7 @@ This repository contains demos related to client-side (in-browser) AI.
 
 ## List of demos
 
-Some of these demos use [Chrome built-in AI](https://developer.chrome.com/docs/ai/built-in). 
+Some of these demos use [Chrome built-in AI](https://developer.chrome.com/docs/ai/built-in).
 Others showcase generic client-side AI using Transformers.js or Google's Gemma model through MediaPipe.
 
 - `weather-ai`: Uses Chrome's built-in Prompt API to generate a human-readable description of the weather from structured weather data provided by the OpenWeatherMap API.
