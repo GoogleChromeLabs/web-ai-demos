@@ -1,0 +1,236 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Sanitizer tests — Easy Language Model</title>
+    <style>
+      body {
+        font:
+          14px/1.5 ui-monospace,
+          monospace;
+        margin: 2rem auto;
+        max-width: 60rem;
+        padding-inline: 1rem;
+      }
+      h1 {
+        font-size: 1.1rem;
+      }
+      p {
+        font-family: system-ui, sans-serif;
+        color: color-mix(in srgb, CanvasText 60%, Canvas);
+      }
+      #summary {
+        font-weight: bold;
+      }
+      .pass {
+        color: #15803d;
+      }
+      .fail {
+        color: #b91c1c;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sanitizer tests</h1>
+    <p>
+      These cover the behaviour that depends on the real HTML Sanitizer API,
+      which is why they can't live in <code>npm test</code> — Node has no
+      implementation of it. Everything else is covered there. Run with
+      <code>npm run dev</code> and open this page.
+    </p>
+    <div id="summary">Running…</div>
+    <ol id="results"></ol>
+
+    <script type="module">
+      import { EasyLanguageModel, renderStreamingHTML } from '/src/index.js';
+      import { isSanitizerSupported } from '/src/sanitizer.js';
+      import { fakeLanguageModel, stubGlobals } from '/test/stubs.js';
+
+      const results = document.getElementById('results');
+      const summary = document.getElementById('summary');
+      let failures = 0;
+
+      function report(name, error) {
+        const item = document.createElement('li');
+        item.className = error ? 'fail' : 'pass';
+        item.textContent = error ? `FAIL  ${name}\n      ${error}` : name;
+        results.append(item);
+        if (error) failures++;
+      }
+
+      async function test(name, fn) {
+        try {
+          await fn();
+          report(name);
+        } catch (error) {
+          report(name, error.message);
+        }
+      }
+
+      const eq = (actual, expected, what) => {
+        if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+          throw new Error(
+            `${what}: got ${JSON.stringify(actual)}, wanted ${JSON.stringify(expected)}`
+          );
+        }
+      };
+
+      const drain = async (stream) => {
+        const chunks = [];
+        for await (const chunk of stream) chunks.push(chunk);
+        return chunks;
+      };
+
+      const nameOfThrown = async (fn) => {
+        try {
+          await fn();
+          return null;
+        } catch (error) {
+          return error.name;
+        }
+      };
+
+      if (!isSanitizerSupported()) {
+        summary.textContent =
+          'This browser has no HTML Sanitizer API, so these tests cannot run.';
+      } else {
+        const script = { response: '', sessions: [] };
+        stubGlobals({ LanguageModel: fakeLanguageModel(script) });
+        const session = await EasyLanguageModel.create();
+
+        await test('prompt() throws on unsafe output', async () => {
+          script.response = 'Sure: <img src="pwned" onerror="alert(1)">';
+          eq(
+            await nameOfThrown(() => session.prompt('x')),
+            'OperationError',
+            'error'
+          );
+        });
+
+        await test('promptStreaming() errors on unsafe output', async () => {
+          script.response = 'ok then <img src=x onerror=alert(1)> more text';
+          eq(
+            await nameOfThrown(() => drain(session.promptStreaming('x'))),
+            'OperationError',
+            'error'
+          );
+        });
+
+        await test('promptHTML() escapes markup instead of refusing it', async () => {
+          script.response = 'text <img src=x onerror=alert(1)> more';
+          const html = await session.promptHTML('x');
+          eq(
+            await nameOfThrown(() => session.promptHTML('x')),
+            null,
+            'no throw'
+          );
+          // The parser escaped it, so it is text on the page, not an element.
+          eq(html.includes('&lt;img'), true, 'escaped');
+          eq(html.includes('onerror="'), false, 'no live attribute');
+          const el = document.createElement('div');
+          el.setHTML(html);
+          eq(el.querySelectorAll('img').length, 0, 'no <img> created');
+          eq(
+            el.textContent.includes('<img src=x onerror=alert(1)>'),
+            true,
+            'visible as text'
+          );
+        });
+
+        await test('promptStreamingHTML() renders it rather than stopping', async () => {
+          script.response = 'text <img src=x onerror=alert(1)> more';
+          const chunks = [];
+          for await (const chunk of session.promptStreamingHTML('x')) {
+            chunks.push(chunk);
+          }
+          eq(chunks.join('').includes('&lt;img'), true, 'escaped');
+          eq(
+            chunks.join('').includes(' more'),
+            true,
+            'the whole response arrived'
+          );
+        });
+
+        await test('a javascript: link keeps its text and loses its href', async () => {
+          script.response = 'see [this](javascript:alert(1)) please';
+          const html = await session.promptHTML('x');
+          eq(html.includes('javascript:'), false, 'href dropped');
+          eq(html.includes('this'), true, 'link text kept');
+          eq(html.includes('please'), true, 'response not truncated');
+        });
+
+        await test('an unfinished tag is never handed out', async () => {
+          script.response = 'safe start <img src=x onerror=alert(1)> tail';
+          const chunks = [];
+          let thrown = null;
+          try {
+            for await (const chunk of session.promptStreaming('x')) {
+              chunks.push(chunk);
+            }
+          } catch (error) {
+            thrown = error;
+          }
+          eq(thrown?.name, 'OperationError', 'error');
+          eq(thrown instanceof DOMException, true, "the platform's own error");
+          eq(typeof thrown?.sanitized, 'string', 'sanitized text rides along');
+          eq(chunks.join(''), 'safe start ', 'handed over before the throw');
+          eq(thrown?.partialOutput, 'safe start ', 'and reported on the error');
+        });
+
+        await test('fenced HTML is not treated as an attack', async () => {
+          script.response =
+            'Here is HTML:\n\n```html\n<iframe src="x"></iframe>\n```\n';
+          eq(
+            await nameOfThrown(() => drain(session.promptStreaming('x'))),
+            null,
+            'error'
+          );
+        });
+
+        await test('a bare < in prose streams through', async () => {
+          script.response = 'if 1 < 2 and 3 > 2 then done';
+          const chunks = await drain(session.promptStreaming('x'));
+          eq(chunks.join(''), script.response, 'text');
+        });
+
+        // Chrome, not linkedom: the sink must rebuild what the chunks describe.
+        await test('pipeTo() rebuilds the HTML the chunks describe', async () => {
+          script.response =
+            '# Title\n\nA **bold** [link](https://e.com/ "T") and `code`.\n\n' +
+            '- [x] done\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n';
+
+          const chunks = [];
+          const into = document.createElement('div');
+          await session
+            .promptStreamingHTML('x')
+            .pipeThrough(
+              new TransformStream({
+                transform(html, sink) {
+                  chunks.push(html);
+                  sink.enqueue(html);
+                },
+              })
+            )
+            .pipeTo(renderStreamingHTML(into));
+
+          eq(into.innerHTML, chunks.join(''), 'rendered DOM');
+        });
+
+        summary.textContent =
+          failures === 0
+            ? `All ${results.children.length} sanitizer tests passed.`
+            : `${failures} of ${results.children.length} failed.`;
+        summary.className = failures === 0 ? 'pass' : 'fail';
+      }
+      window.__done = true;
+      window.__failures = failures;
+    </script>
+  </body>
+</html>
