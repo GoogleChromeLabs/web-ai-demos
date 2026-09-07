@@ -42,8 +42,8 @@ Answer in one short paragraph. Always give the exact star counts the tools gave
 you, and never invent one.`;
 
 // The model is only told what a tool is called, what it does, and what it takes.
-// `execute()` stays on this side: the browser never runs it, the tool-call loop
-// below does.
+// `execute()` stays on the `tools.js` side: the browser never runs it, the
+// tool-call loop below does.
 const declarations = tools.map(({ name, description, inputSchema }) => ({
   name,
   description,
@@ -64,10 +64,8 @@ const toolColors = new Map(
 // warning that none was specified.
 const SESSION_OPTIONS = {
   expectedInputs: [
-    { type: 'text', languages: ['en'] },    
+    { type: 'text', languages: ['en'] },
     { type: 'tool-response' },
-    // If you want to replay a session later, tool calls become inputs.
-    { type: 'tool-call' },
   ],
   expectedOutputs: [
     { type: 'text', languages: ['en'] },
@@ -396,10 +394,9 @@ async function runTool(name, args) {
   const entry = appendToolCall(name, args ?? {});
   const started = performance.now();
   try {
-    // Tools return a JSON string, so parse it back for the `object` result.
-    const parsed = JSON.parse(await tool.execute(args ?? {}));
-    entry.finish(parsed, Math.round(performance.now() - started));
-    return { ok: true, value: parsed };
+    const result = await tool.execute(args ?? {});
+    entry.finish(result, Math.round(performance.now() - started));
+    return { ok: true, value: result };
   } catch (error) {
     entry.fail(String(error));
     return { ok: false, message: String(error) };

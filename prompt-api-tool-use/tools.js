@@ -23,7 +23,7 @@ const MAX_REPOS = 10;
 
 // ─── Implementations ─────────────────────────────────────────────────────────
 
-// Every implementation returns its result as a JSON string, and reports
+// Every implementation returns its result as a JavaScript object, and reports
 // failures as a returned `{ error, message }` rather than by throwing, so the
 // model can tell the user what went wrong instead of the turn dying.
 
@@ -110,13 +110,13 @@ async function getRepoStars({ repositories, owner, repo }) {
 
   const wanted = requested.filter((entry) => entry?.owner && entry?.repo);
   if (wanted.length === 0) {
-    return JSON.stringify({
+    return {
       error: 'invalid_arguments',
       message:
         'Call get_repo_stars with a "repositories" array whose entries each ' +
         'have an "owner" and a "repo", for example ' +
         '[{"owner": "GoogleChromeLabs", "repo": "web-ai-demos"}].',
-    });
+    };
   }
 
   // Capped at what one search can return, so a search result can always be
@@ -124,7 +124,7 @@ async function getRepoStars({ repositories, owner, repo }) {
   const results = await Promise.all(
     wanted.slice(0, MAX_REPOS).map(fetchRepoStars),
   );
-  return JSON.stringify({ repositories: results });
+  return { repositories: results };
 }
 
 async function searchNpmPackages({ query, limit = 3 }) {
@@ -169,17 +169,17 @@ async function searchNpmPackages({ query, limit = 3 }) {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      return JSON.stringify({
+      return {
         error: 'request_failed',
         message: `The npm registry responded with ${response.status}.`,
-      });
+      };
     }
     data = await response.json();
   } catch {
-    return JSON.stringify({
+    return {
       error: 'request_failed',
       message: 'The npm registry could not be reached.',
-    });
+    };
   }
 
   const packages = [];
@@ -231,12 +231,12 @@ async function searchNpmPackages({ query, limit = 3 }) {
   );
 
   if (packages.length === 0) {
-    return JSON.stringify({
+    return {
       error: 'no_results',
       message: `No npm packages with a GitHub repository matched "${query}".`,
-    });
+    };
   }
-  return JSON.stringify({ query, packages });
+  return { query, packages };
 }
 
 // ─── Declarations ────────────────────────────────────────────────────────────
