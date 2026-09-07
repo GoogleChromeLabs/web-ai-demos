@@ -14,6 +14,9 @@ export default defineConfig({
     svelte(),
     VitePWA({
       registerType: 'autoUpdate',
+      // chrome.dev does not serve .webmanifest, so emit the manifest as
+      // .json instead of vite-plugin-pwa's default manifest.webmanifest.
+      manifestFilename: 'manifest.json',
       includeAssets: ['favicon.png', 'pwa-icon-192.png', 'pwa-icon-512.png'],
       manifest: {
         name: 'Wordup',
