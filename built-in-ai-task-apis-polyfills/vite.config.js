@@ -25,13 +25,13 @@ export default defineConfig({
         rewriter: resolve(__dirname, 'rewriter-api-polyfill.js'),
         'language-detector': resolve(
           __dirname,
-          'language-detector-api-polyfill.js'
+          'language-detector-api-polyfill.js',
         ),
         translator: resolve(__dirname, 'translator-api-polyfill.js'),
         classifier: resolve(__dirname, 'classifier-api-polyfill.js'),
         'semantic-embedder': resolve(
           __dirname,
-          'semantic-embedder-api-polyfill.js'
+          'semantic-embedder-api-polyfill.js',
         ),
       },
       formats: ['es'],

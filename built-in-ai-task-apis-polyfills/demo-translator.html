@@ -121,7 +121,7 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
         firebaseConfig = await response.json();
       } catch (e) {
         console.warn(
-          'Firebase config (.env.json) not found, relying on local Translator if available.'
+          'Firebase config (.env.json) not found, relying on local Translator if available.',
         );
       }
       window.FIREBASE_CONFIG = firebaseConfig;
@@ -133,7 +133,7 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
       const targetLanguage = document.getElementById('targetLanguage');
       const translateBtn = document.getElementById('translateBtn');
       const translateStreamingBtn = document.getElementById(
-        'translateStreamingBtn'
+        'translateStreamingBtn',
       );
       const stopBtn = document.getElementById('stopBtn');
       const output = document.getElementById('output');
@@ -179,7 +179,7 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
               progress.value = e.loaded;
               progress.max = e.total;
               setStatus(
-                `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`
+                `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`,
               );
               if (e.loaded === e.total) {
                 setStatus('Model loaded.');

@@ -92,7 +92,7 @@ export class WriterPromptBuilder {
       systemPrompt,
       /You MUST write exclusively and entirely in (Japanese|English)\./,
       `You MUST write exclusively and entirely in ${this.getLanguageName(outputLanguage)}.`,
-      'language'
+      'language',
     );
 
     // 3. Parametrize Context Instructions
@@ -105,7 +105,7 @@ export class WriterPromptBuilder {
         systemPrompt,
         contextInstruction,
         '',
-        'context instruction'
+        'context instruction',
       );
     }
 

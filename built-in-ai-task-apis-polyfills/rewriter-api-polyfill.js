@@ -45,12 +45,12 @@ export class Rewriter extends BaseTaskModel {
       : null;
     const expectedInputLanguages = options.expectedInputLanguages
       ? options.expectedInputLanguages.map((tag) =>
-          this._validateLanguageTag(tag)
+          this._validateLanguageTag(tag),
         )
       : null;
     const expectedContextLanguages = options.expectedContextLanguages
       ? options.expectedContextLanguages.map((tag) =>
-          this._validateLanguageTag(tag)
+          this._validateLanguageTag(tag),
         )
       : null;
 
@@ -82,7 +82,7 @@ export class Rewriter extends BaseTaskModel {
         () => {
           rewriter.destroy(options.signal.reason);
         },
-        { once: true }
+        { once: true },
       );
     }
 
@@ -136,5 +136,5 @@ export class Rewriter extends BaseTaskModel {
 BaseTaskModel.exposeAPIGlobally(
   'Rewriter',
   Rewriter,
-  '__FORCE_REWRITER_POLYFILL__'
+  '__FORCE_REWRITER_POLYFILL__',
 );

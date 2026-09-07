@@ -762,7 +762,7 @@ JSON Schema for output:
         ClassifierPromptBuilder.#systemPromptTemplate,
         '{{taxonomy}}',
         taxonomyList,
-        'taxonomy'
+        'taxonomy',
       ),
       initialPrompts: [
         {

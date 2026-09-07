@@ -104,7 +104,7 @@ export class SummarizerPromptBuilder {
       systemPrompt,
       /The (summary|teaser|bullet points|headline) must be written in (Japanese|English)\./,
       `The $1 must be written in ${this.getLanguageName(outputLanguage)}.`,
-      'language'
+      'language',
     );
 
     // 3. Parametrize Context Instructions
@@ -115,13 +115,13 @@ export class SummarizerPromptBuilder {
     if (!hasContext) {
       const escapedInstr = contextInstruction.replace(
         /[.*+?^\${}()|[\]\\]/g,
-        '\\$&'
+        '\\$&',
       );
       systemPrompt = replaceOrThrow(
         systemPrompt,
         new RegExp(`\\n?${escapedInstr}`),
         '',
-        'context instruction'
+        'context instruction',
       );
     }
 

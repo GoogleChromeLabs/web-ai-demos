@@ -126,7 +126,7 @@ const writer = await Writer.create({
 });
 
 const result = await writer.write(
-  'Draft of an email to my boss telling her I will be late.'
+  'Draft of an email to my boss telling her I will be late.',
 );
 ```
 
@@ -138,7 +138,7 @@ const rewriter = await Rewriter.create({
 });
 
 const result = await rewriter.rewrite(
-  'I am writing to inform you that I will be late.'
+  'I am writing to inform you that I will be late.',
 );
 ```
 
@@ -224,7 +224,7 @@ function cosineSimilarity(a, b) {
 }
 
 const scores = docsResult.embeddings.map((e) =>
-  cosineSimilarity(queryVec, e.values)
+  cosineSimilarity(queryVec, e.values),
 );
 ```
 

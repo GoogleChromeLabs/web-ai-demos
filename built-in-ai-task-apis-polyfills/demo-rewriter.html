@@ -184,7 +184,7 @@ The Rewriter API provides a way to rewrite text while controlling the tone, form
         firebaseConfig = await response.json();
       } catch (e) {
         console.warn(
-          'Firebase config (.env.json) not found, relying on local Rewriter if available.'
+          'Firebase config (.env.json) not found, relying on local Rewriter if available.',
         );
       }
       window.FIREBASE_CONFIG = firebaseConfig;
@@ -196,10 +196,10 @@ The Rewriter API provides a way to rewrite text while controlling the tone, form
       const format = document.getElementById('format');
       const length = document.getElementById('length');
       const expectedInputLanguages = document.getElementById(
-        'expectedInputLanguages'
+        'expectedInputLanguages',
       );
       const expectedContextLanguages = document.getElementById(
-        'expectedContextLanguages'
+        'expectedContextLanguages',
       );
       const outputLanguage = document.getElementById('outputLanguage');
       const rewriteBtn = document.getElementById('rewriteBtn');

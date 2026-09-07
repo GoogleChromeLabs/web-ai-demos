@@ -49,7 +49,7 @@ export class Classifier extends BaseTaskModel {
         () => {
           classifier.destroy(options.signal.reason);
         },
-        { once: true }
+        { once: true },
       );
     }
 
@@ -146,5 +146,5 @@ export class Classifier extends BaseTaskModel {
 BaseTaskModel.exposeAPIGlobally(
   'Classifier',
   Classifier,
-  '__FORCE_CLASSIFIER_POLYFILL__'
+  '__FORCE_CLASSIFIER_POLYFILL__',
 );

@@ -146,7 +146,7 @@ export class BaseTaskModel {
     if (this.#destroyed) {
       const p = Promise.reject(
         this.#destructionReason ||
-          new DOMException('The summarizer has been destroyed.', 'AbortError')
+          new DOMException('The summarizer has been destroyed.', 'AbortError'),
       );
       p.catch(() => {});
       return p;
@@ -154,12 +154,12 @@ export class BaseTaskModel {
     const { userPrompt } = this.#builder.buildPrompt(input, options);
 
     const combinedSignal = AbortSignal.any(
-      [this.#destructionController.signal, options.signal].filter(Boolean)
+      [this.#destructionController.signal, options.signal].filter(Boolean),
     );
 
     if (combinedSignal.aborted) {
       const p = Promise.reject(
-        combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+        combinedSignal.reason || new DOMException('Aborted', 'AbortError'),
       );
       p.catch(() => {});
       return p;
@@ -173,7 +173,7 @@ export class BaseTaskModel {
       return await new Promise((resolve, reject) => {
         const onAbort = () => {
           reject(
-            combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+            combinedSignal.reason || new DOMException('Aborted', 'AbortError'),
           );
         };
         if (combinedSignal.aborted) {
@@ -218,7 +218,7 @@ export class BaseTaskModel {
 
     const _this = this;
     const combinedSignal = AbortSignal.any(
-      [this.#destructionController.signal, options.signal].filter(Boolean)
+      [this.#destructionController.signal, options.signal].filter(Boolean),
     );
 
     if (combinedSignal.aborted) {
@@ -232,8 +232,8 @@ export class BaseTaskModel {
             _this.#destructionReason ||
               new DOMException(
                 'The summarizer has been destroyed.',
-                'AbortError'
-              )
+                'AbortError',
+              ),
           );
           return;
         }
@@ -258,7 +258,8 @@ export class BaseTaskModel {
           }
           try {
             controller.error(
-              combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+              combinedSignal.reason ||
+                new DOMException('Aborted', 'AbortError'),
             );
           } catch {
             // Ignore if already closed/errored
@@ -279,7 +280,7 @@ export class BaseTaskModel {
 
           const stream = clonedSession.promptStreaming(
             userPrompt,
-            mergedOptions
+            mergedOptions,
           );
           reader = stream.getReader();
           while (true) {
@@ -305,19 +306,19 @@ export class BaseTaskModel {
     if (this.#destroyed) {
       const p = Promise.reject(
         this.#destructionReason ||
-          new DOMException('The summarizer has been destroyed.', 'AbortError')
+          new DOMException('The summarizer has been destroyed.', 'AbortError'),
       );
       p.catch(() => {});
       return p;
     }
 
     const combinedSignal = AbortSignal.any(
-      [this.#destructionController.signal, options.signal].filter(Boolean)
+      [this.#destructionController.signal, options.signal].filter(Boolean),
     );
 
     if (combinedSignal.aborted) {
       const p = Promise.reject(
-        combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+        combinedSignal.reason || new DOMException('Aborted', 'AbortError'),
       );
       p.catch(() => {});
       return p;
@@ -326,7 +327,7 @@ export class BaseTaskModel {
     const p = new Promise((resolve, reject) => {
       const onAbort = () =>
         reject(
-          combinedSignal.reason || new DOMException('Aborted', 'AbortError')
+          combinedSignal.reason || new DOMException('Aborted', 'AbortError'),
         );
 
       combinedSignal.addEventListener('abort', onAbort, {
@@ -428,7 +429,7 @@ export class BaseTaskModel {
       try {
         const descriptor = Object.getOwnPropertyDescriptor(
           HTMLIFrameElement.prototype,
-          'contentWindow'
+          'contentWindow',
         );
         if (descriptor && descriptor.get) {
           Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
@@ -475,7 +476,7 @@ export class BaseTaskModel {
 
     if (globalThis[apiName] && globalThis[apiName].__isPolyfill) {
       console.log(
-        `Polyfill: window.${apiName} is now backed by the ${apiName} API polyfill.`
+        `Polyfill: window.${apiName} is now backed by the ${apiName} API polyfill.`,
       );
     }
   }

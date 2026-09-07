@@ -25,7 +25,7 @@ const WriterPromptManager = {
         this.lengths.forEach((length) => {
           const opts = `{ tone: "${tone}", format: "${format}", length: "${length}", outputLanguage: "ja", sharedContext: 'SHARED_CONTEXT' }`;
           lines.push(
-            `await (await Writer.create(${opts})).write('INPUT_TEXT', { context: 'INPUT_CONTEXT' });`
+            `await (await Writer.create(${opts})).write('INPUT_TEXT', { context: 'INPUT_CONTEXT' });`,
           );
         });
       });
@@ -60,7 +60,7 @@ async function run() {
   copyToClipboard(snippet);
 
   console.log(
-    '\n1. Test snippets copied to clipboard. Paste them in chrome://on-device-internals console.'
+    '\n1. Test snippets copied to clipboard. Paste them in chrome://on-device-internals console.',
   );
   console.log("2. Click 'Dump' to download the log file.");
 
@@ -91,7 +91,7 @@ async function run() {
     copyToClipboard(finalCode);
 
     console.log(
-      '\n\x1b[32m✔ Success! Builder saved to writer-prompt-builder.js\x1b[0m'
+      '\n\x1b[32m✔ Success! Builder saved to writer-prompt-builder.js\x1b[0m',
     );
     console.log('✔ Final code also copied to your clipboard.');
   } catch (e) {

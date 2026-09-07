@@ -135,7 +135,7 @@ The new experimental fusion reactor at the ITER site in France has successfully 
         firebaseConfig = await response.json();
       } catch (e) {
         console.warn(
-          'Firebase config (.env.json) not found, relying on local LanguageModel if available.'
+          'Firebase config (.env.json) not found, relying on local LanguageModel if available.',
         );
       }
       window.FIREBASE_CONFIG = firebaseConfig;
