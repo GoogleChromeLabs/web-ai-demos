@@ -1,0 +1,73 @@
+<!--
+  SPDX-License-Identifier: Apache-2.0
+  Copyright 2026 Google LLC
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tool Use — Prompt API</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Tool Use — Prompt API</h1>
+    <p class="subtitle">
+      The model is given two tools: one that searches npm for packages that have
+      an associated GitHub repository, and one that looks up a repository's star
+      count. Ask a question that needs both and the model decides which tools to
+      call, in which order, and how to feed one result into the next. Every tool
+      call is logged below as it happens.
+    </p>
+
+    <p class="requirement" id="flag-note" hidden>
+      This demo requires the flag
+      <code>chrome://flags/#prompt-api-tool-use</code> to be enabled.
+    </p>
+
+    <div id="controls">
+      <div id="status" role="status">Initializing…</div>
+      <button id="activate-btn" type="button" hidden>Download the model</button>
+      <button id="reset-btn" type="button" aria-disabled="true">
+        Reset session
+      </button>
+    </div>
+    <progress id="dl-progress"></progress>
+
+    <div id="examples">
+      <button class="example" type="button">
+        Which npm package for CSV parsing is the most popular on GitHub?
+      </button>
+      <button class="example" type="button">
+        Find me three npm packages for date formatting and rank them by stars.
+      </button>
+      <button class="example" type="button">
+        How many stars does GoogleChromeLabs/browser-fs-access have?
+      </button>
+    </div>
+
+    <div id="chat"></div>
+
+    <form id="composer">
+      <input
+        id="user-input"
+        type="text"
+        autocomplete="off"
+        placeholder="Ask about npm packages or GitHub repositories…"
+        readonly
+        aria-disabled="true"
+      />
+      <button id="send-btn" type="submit" aria-disabled="true">Send</button>
+    </form>
+
+    <details id="debug">
+      <summary>Debug: messages exchanged with the model</summary>
+      <div id="debug-toolbar">
+        <button id="copy-debug" type="button">Copy as JSON</button>
+      </div>
+      <div id="debug-log"></div>
+    </details>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
