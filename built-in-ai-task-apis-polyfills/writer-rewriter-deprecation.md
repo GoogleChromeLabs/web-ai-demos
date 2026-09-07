@@ -103,34 +103,6 @@ try {
 
 `Rewriter` works the same way, with `rewrite()` in place of `write()`.
 
-## If you _do_ want a fallback
-
-The polyfill will not reach for one on its own, but it does not stand in your
-way either. It looks for `window.LanguageModel` at the moment you call
-`availability()` or `create()`, so if you load the
-[`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill)
-yourself first, Writer and Rewriter will use it, and its configuration globals
-apply again:
-
-```bash
-npm install prompt-api-polyfill
-```
-
-```js
-if (!('LanguageModel' in self)) {
-  // Your choice and trade-off. Configure a backend first, for example with
-  // window.GEMINI_CONFIG or window.TRANSFORMERS_CONFIG.
-  await import('prompt-api-polyfill');
-}
-await import('built-in-ai-task-apis-polyfills/writer');
-```
-
-Make that choice deliberately. A cloud backend sends your users' text to a third
-party and needs an API key you have to keep out of your client bundle, and a
-local backend downloads a model measured in hundreds of megabytes before the
-first word is written. Neither is a drop-in replacement, which is why it is
-opt-in.
-
 ## If you would rather not use the polyfill
 
 Prompt the model yourself. The system prompt templates behind these APIs are in
