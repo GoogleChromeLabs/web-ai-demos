@@ -176,6 +176,15 @@ describe('tool calling', () => {
       );
       return true;
     });
+
+    // The session took those turns, so dropping them here would leave history
+    // describing a conversation the model isn't having, and `compact()` reads
+    // history.
+    assert.deepEqual(
+      session.history.map((m) => m.role),
+      ['user', 'assistant', 'user', 'assistant', 'user', 'assistant'],
+      'the rounds it did spend are still recorded'
+    );
   });
 
   it('tells the model to answer on the final permitted round', async () => {

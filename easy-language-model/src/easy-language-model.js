@@ -406,7 +406,7 @@ export class EasyLanguageModel {
         return text;
       }
       if (this.#toolRoundsExhausted(++rounds)) {
-        throw toolLoopError(rounds - 1, calls);
+        throw this.#abandonToolLoop({ calls, text, rounds, pending });
       }
       next = await this.#toolRound(calls, { text, rounds, seen, pending });
     }
@@ -442,7 +442,7 @@ export class EasyLanguageModel {
         return;
       }
       if (this.#toolRoundsExhausted(++rounds)) {
-        throw toolLoopError(rounds - 1, calls);
+        throw this.#abandonToolLoop({ calls, text, rounds, pending });
       }
       next = await this.#toolRound(calls, { text, rounds, seen, pending });
     }
@@ -605,7 +605,12 @@ export class EasyLanguageModel {
       }
 
       if (this.#toolRoundsExhausted(++rounds)) {
-        throw toolLoopError(rounds - 1, calls);
+        throw this.#abandonToolLoop({
+          calls,
+          text: full,
+          rounds,
+          pending: history,
+        });
       }
       next = await this.#toolRound(calls, {
         text: full,
@@ -755,6 +760,26 @@ export class EasyLanguageModel {
   /** Whether the loop may take another round after the one just counted. */
   #toolRoundsExhausted(rounds) {
     return rounds > (this.#easy.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS);
+  }
+
+  /**
+   * Gives up on a loop the model won't end, keeping the history honest.
+   *
+   * The rounds already spent are recorded before throwing, because the session
+   * itself took those turns: dropping them here, the way an aborted turn is
+   * dropped, would leave `history` describing a conversation the model isn't
+   * having, and `compact()` reads `history`.
+   */
+  #abandonToolLoop({ calls, text, rounds, pending }) {
+    pending.push({
+      role: 'assistant',
+      content: [
+        ...(text ? [{ type: 'text', value: text }] : []),
+        ...calls.map((call) => ({ type: 'tool-call', value: call })),
+      ],
+    });
+    this.#record(pending);
+    return toolLoopError(rounds - 1, calls);
   }
 
   #record(entries) {
