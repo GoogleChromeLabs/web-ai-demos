@@ -8,21 +8,12 @@ top of `window.LanguageModel`, using the same system prompt templates Chrome
 used. Your calling code does not change.
 
 The polyfills are backed **exclusively** by the LanguageModel implementation the
-browser itself provides. Unlike the
-[Built-in AI Task APIs polyfills](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills),
-this package never loads the
-[`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill),
-and there is no way to opt into one:
+browser itself provides, with no fallback behind them and no way to opt into
+one:
 
 - `Writer.availability()` and `Rewriter.availability()` resolve with
   `'unavailable'` when `window.LanguageModel` is missing.
 - `Writer.create()` and `Rewriter.create()` reject with a `NotSupportedError`.
-
-If you want the Writer and Rewriter polyfills to keep working in browsers with
-no Prompt API at all, use
-[`built-in-ai-task-apis-polyfills`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills)
-instead, which falls back to the `prompt-api-polyfill` and its
-[dynamic backends](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill#supported-backends).
 
 ## Why the APIs are going away
 
@@ -78,8 +69,8 @@ const options = { tone: 'neutral', format: 'plain-text', outputLanguage: 'en' };
 
 switch (await Writer.availability(options)) {
   case 'unavailable':
-    // No Prompt API in this browser, so the Writer API can't work.
-    // Fall back to whatever your app did before.
+    // Either there is no window.LanguageModel, or it has no usable model for
+    // these options. Fall back to whatever your app did before.
     showPlainEditor();
     break;
   case 'downloadable':
