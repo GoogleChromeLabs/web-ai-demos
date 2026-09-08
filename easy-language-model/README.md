@@ -6,15 +6,16 @@ same options, same return values, but with the security guardrails and
 convenience methods that every production built-in AI app would end up writing
 already folded in:
 
-|                                  | `LanguageModel`                                                   | `EasyLanguageModel`                                                                                                                       |
-| -------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sanitizing output**            | Sanitize and diff every response yourself to see what was removed | [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) on `prompt()` and `promptStreaming()`, on by default |
-| **Rendering HTML from Markdown** | Bring your own streaming parser                                   | `promptStreamingHTML()` emits HTML chunks; pipe them into `renderStreamingHTML()`                                                         |
-| **Markdown to HTML**             | Bring your own parser                                             | `markdownToHtml()`, a `TransformStream` to pipe a Markdown stream through                                                                 |
-| **Session history**              | Bring your own transcript                                         | `session.history`, recorded as you go, `append()` included                                                                                |
-| **Long conversations**           | Manage `contextUsage` and rebuild the session yourself            | `session.compact()`                                                                                                                       |
-| **Model downloads**              | `monitor` is opt-in and easy to forget                            | Always on, with a `<progress>` element you can hand over                                                                                  |
-| **User activation**              | `create()` fails if the page has no gesture                       | Hand over a button and it waits for a click on it, showing and hiding it for you                                                          |
+|                                  | `LanguageModel`                                                                    | `EasyLanguageModel`                                                                                                                       |
+| -------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sanitizing output**            | Sanitize and diff every response yourself to see what was removed                  | [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) on `prompt()` and `promptStreaming()`, on by default |
+| **Rendering HTML from Markdown** | Bring your own streaming parser                                                    | `promptStreamingHTML()` emits HTML chunks; pipe them into `renderStreamingHTML()`                                                         |
+| **Markdown to HTML**             | Bring your own parser                                                              | `markdownToHtml()`, a `TransformStream` to pipe a Markdown stream through                                                                 |
+| **Tool calling**                 | Run the loop yourself: read the calls, run them, feed results back, cap the rounds | `tools` with an `execute` each, and every prompting method runs the loop for you                                                          |
+| **Session history**              | Bring your own transcript                                                          | `session.history`, recorded as you go, `append()` included                                                                                |
+| **Long conversations**           | Manage `contextUsage` and rebuild the session yourself                             | `session.compact()`                                                                                                                       |
+| **Model downloads**              | `monitor` is opt-in and easy to forget                                             | Always on, with a `<progress>` element you can hand over                                                                                  |
+| **User activation**              | `create()` fails if the page has no gesture                                        | Hand over a button and it waits for a click on it, showing and hiding it for you                                                          |
 
 Everything else is passed through untouched.
 
@@ -75,6 +76,9 @@ these:
 | `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the sanitization, so asking for an HTML snippet isn't flagged.                                                                                                                                                   |
 | `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                                                                         |
 | `onDownloadProgress({resource, loaded, total, percent})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. The `percent` field is a whole number from 0 to 100, and `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
+| `tools`                                                  | —                     | Tools the model may call, each `{name, description, inputSchema, execute}`. The `execute` half is yours and never reaches the Prompt API.                                                                                                           |
+| `maxToolRounds`                                          | `8`                   | How many rounds of tool calls to allow before giving up. A round can carry several calls.                                                                                                                                                           |
+| `onToolCall({name, arguments})`                          | —                     | Fires as each call is about to run, for a line of UI saying what is happening.                                                                                                                                                                      |
 | `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                                                                             |
 | `activationHint`                                         | —                     | Shown and hidden with `activationButton`, for the line saying why it appeared.                                                                                                                                                                      |
 
@@ -458,6 +462,142 @@ await Promise.all([
 ]);
 ```
 
+### Calling tools
+
+A model can't tell you today's weather, and asked anyway it will either say so
+or invent something plausible. Tools are how you give it a way to find out. A
+tool is two halves: the function that runs, and the declaration the model sees.
+Keep them together and hand both over; the wrapper strips `execute` before the
+declaration reaches the Prompt API.
+
+Every prompting method then runs the loop. The model asks for a tool, the
+wrapper runs it, feeds the result back, and repeats until an answer comes out.
+What you get is the answer.
+
+<table>
+<tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
+<tr valign="top"><td>
+
+```js
+let result = await session.prompt(question);
+let rounds = 0;
+
+while (Array.isArray(result)) {
+  const calls = result
+    .filter((part) => part.type === 'tool-call')
+    .map((part) => part.value);
+  if (!calls.length) break;
+  if (++rounds > MAX_ROUNDS) {
+    throw new Error('No answer.');
+  }
+
+  const content = [];
+  for (const call of calls) {
+    // Dispatch, check the arguments, catch the
+    // throw, strip the nulls, wrap the result in
+    // a LanguageModelToolSuccess or ToolError…
+    content.push(await runTool(call));
+  }
+  result = await session.prompt([
+    { role: 'user', content },
+  ]);
+}
+
+const answer =
+  typeof result === 'string'
+    ? result
+    : result
+        .filter((p) => p.type === 'text')
+        .map((p) => p.value)
+        .join('');
+```
+
+</td><td>
+
+```js
+const answer = await session.prompt(question);
+```
+
+</td></tr>
+</table>
+
+Declaring the tools is the whole of the setup. The content types tool calling
+needs are added for you: a session accepts text and nothing else until
+`expectedInputs` says otherwise, and declaring `tools` implies neither tool
+type, so passing them without `tool-response` produces a session that rejects
+the very results the tools exist to produce.
+
+```js
+const getWeather = {
+  name: 'get_weather',
+  description: 'Get the current weather in a location.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      location: {
+        type: 'string',
+        description: 'The city, for example "Hamburg, Germany".',
+      },
+    },
+    required: ['location'],
+  },
+  async execute({ location }) {
+    const response = await fetch(`https://weatherapi.example/?q=${location}`);
+    return response.json();
+  },
+};
+
+const options = { tools: [getWeather] };
+if ((await EasyLanguageModel.availability(options)) === 'unavailable') return;
+
+const session = await EasyLanguageModel.create({
+  ...options,
+  onToolCall: ({ name }) => (status.textContent = `Calling ${name}…`),
+});
+
+// One round of get_weather happens in here, and never reaches your code.
+console.log(await session.prompt('What is the weather in Hamburg?'));
+```
+
+Streaming works the same way, and yields only text: the tool calls are consumed
+on the way past, and one Markdown parser spans every round, so a tool call
+part-way through a sentence doesn't start a second document.
+
+```js
+await session
+  .promptStreamingHTML('What is the weather in Hamburg?')
+  .pipeTo(renderStreamingHTML(output));
+```
+
+Four things the loop does that are easy to leave out:
+
+- **A model can invent a tool, or call a real one with no arguments.** Both come
+  back to it as a tool error rather than an exception, so it can correct itself.
+  Running a tool with a missing argument is worse than refusing: a weather
+  lookup for `undefined` reports "no such location", which the model reads as
+  fact rather than as its own mistake.
+- **A tool that throws is reported, not re-thrown.** An error the model can read
+  is one it can recover from.
+- **`null` is stripped from results, at any depth.** One anywhere rejects the
+  whole turn with a message about circular references, and an API answering
+  `"description": null` for an empty field is enough to do it.
+- **A repeated call is answered from what it already has.** Asking for the same
+  tool with the same arguments twice is not progress, so the second time comes
+  back as a tool error pointing at the first result.
+
+Nothing forces a model to stop asking. The `maxToolRounds` option is the ceiling, eight by
+default, counted in rounds rather than calls because one round can carry several
+calls — the weather in three cities is three calls and one round. On the last
+permitted round the results go back with a note that no more tools are coming,
+so the model spends its final turn answering. If it asks again even then, the
+prompt throws an `OperationError` carrying `toolRounds` and the `toolCalls` it
+was still asking for.
+
+Raising the cap is usually the wrong fix. If a question needs more rounds than
+that, the tools are too small: one call that takes a list of packages beats one
+call per package, and a model that runs out of rounds tends to answer from the
+first result it saw rather than admit it ran out.
+
 ### Stopping a response
 
 A `signal` reaches the Prompt API unchanged on every prompting method, so an
@@ -665,8 +805,8 @@ npm test
 ```
 
 Runs in Node against a DOM shim, covering session plumbing (user activation,
-the progress element, `compact()`, listener re-attachment, error recovery) and
-download progress payloads. The Markdown pipeline has its own suite, in
+the progress element, `compact()`, listener re-attachment, error recovery),
+download progress payloads, and the tool-calling loop. The Markdown pipeline has its own suite, in
 [`streaming-markdown-html`](../streaming-markdown-html/), where every construct
 checked against a CommonMark reference at several chunk sizes.
 
