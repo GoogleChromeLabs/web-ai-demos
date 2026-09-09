@@ -114,7 +114,7 @@ Everything else is `LanguageModel`'s, and behaves the same.
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `EasyLanguageModel`            | The wrapper class, with `create()` and `availability()` as statics.                                                                                                                                               |
 | `renderStreamingHTML(element)` | A `WritableStream` that appends HTML chunks to `element` as they arrive, building nodes with `createElement` and `append` rather than from a string, so it works where Trusted Types forbid `insertAdjacentHTML`. |
-| `markdownToHtml()`             | A `TransformStream` from Markdown chunks to HTML chunks, the parser `promptStreamingHTML()` uses.                                                                                                                 |
+| `markdownToHtml()`             | A `TransformStream` that turns Markdown chunks into HTML chunks. This is the parser behind `promptStreamingHTML()`.                                                                                               |
 
 TypeScript declarations ship with the package and resolve on import; there is
 nothing to install or import separately. They pull in
