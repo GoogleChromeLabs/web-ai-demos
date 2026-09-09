@@ -77,6 +77,7 @@ function createTailFollower(element) {
 const htmlTail = createTailFollower(htmlOutput);
 const markdownTail = createTailFollower(markdownOutput);
 const chunksTail = createTailFollower(htmlChunks);
+const logTail = createTailFollower(log);
 
 /**
  * `renderStreamingHTML()`, plus following the newest content.
@@ -122,7 +123,9 @@ function addLogEntry(message, kind = '') {
   const item = document.createElement('li');
   item.className = kind;
   item.textContent = message;
-  log.prepend(item);
+  log.append(item);
+  // The list scrolls, so the newest entry would be the one out of sight.
+  logTail.follow();
 }
 
 function setState(state, message) {
