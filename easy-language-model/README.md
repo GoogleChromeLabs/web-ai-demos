@@ -796,8 +796,8 @@ Two tools are wired up, on APIs that need no key: the weather from
 and a conversion is three calls in one round, and the page contains no loop:
 `onToolCall` is the only tool-related line in it.
 
-One prompt is one inference, shown three ways: the live DOM, the raw Markdown
-the model produced, and the HTML chunks that built the DOM. Around that are the
+One prompt is one inference, shown three ways: the live HTML, the raw Markdown
+the model produced, and the HTML chunks that built it. Around that are the
 availability check and download progress as they happen, the user-gesture
 prompt, a context bar with
 compact and reset, stop for a response in flight, and a button that fills in an
