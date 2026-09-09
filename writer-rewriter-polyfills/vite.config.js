@@ -7,6 +7,10 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
+  // `public/` holds demo-only assets (demo-polyfill-mode.js). Vite copies it
+  // into the output directory by default, which would ship a demo helper
+  // inside the published package.
+  publicDir: false,
   server: {
     fs: {
       strict: false,
