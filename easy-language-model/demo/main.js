@@ -210,6 +210,18 @@ async function createSession() {
       setState('working', `Calling ${name.replace(/_/g, ' ')}(${detail})…`);
       addLogEntry(`tool: ${name}(${JSON.stringify(args)})`);
     },
+
+    // The other half of the pair, and the only way to see a call the wrapper
+    // refused: an invented tool, or one called without a required argument,
+    // never reaches `execute`, so nothing here would run either.
+    onToolResponse({ name, ok, result, errorMessage }) {
+      addLogEntry(
+        ok
+          ? `tool: ${name} → ${JSON.stringify(result)}`
+          : `tool: ${name} refused — ${errorMessage}`,
+        ok ? '' : 'warn'
+      );
+    },
   });
 
   // The browser evicts the oldest message pairs when the window fills. This

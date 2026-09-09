@@ -344,6 +344,44 @@ describe('tool calling', () => {
     ]);
   });
 
+  it('reports every outcome through onToolResponse', async () => {
+    install([
+      [{ type: 'tool-call', value: toolCall('get_stock', { ticker: 'X' }) }],
+      [{ type: 'tool-call', value: toolCall('get_weather', {}) }],
+      [
+        {
+          type: 'tool-call',
+          value: toolCall('get_weather', { location: 'Hamburg' }),
+        },
+      ],
+      'Done.',
+    ]);
+    const { tool } = weatherTool();
+    const seen = [];
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+      onToolResponse: (r) => seen.push(r),
+    });
+    await session.prompt('Everything?');
+
+    // The first two never reach `execute`, so this callback is the only place
+    // an app can see them at all.
+    assert.deepEqual(
+      seen.map((r) => [r.name, r.ok]),
+      [
+        ['get_stock', false],
+        ['get_weather', false],
+        ['get_weather', true],
+      ]
+    );
+    assert.match(seen[0].errorMessage, /no tool named/);
+    assert.match(seen[1].errorMessage, /without location/);
+    assert.deepEqual(seen[2].result, { temperatureC: 18 }, 'and the result');
+    assert.deepEqual(seen[2].arguments, { location: 'Hamburg' });
+    assert.equal(seen[2].errorMessage, undefined);
+  });
+
   it('streams only the text, running the tools on the way', async () => {
     install([
       [

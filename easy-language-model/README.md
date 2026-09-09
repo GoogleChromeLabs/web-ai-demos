@@ -70,17 +70,18 @@ a way to deal with a full context window.
 Calling `create()` forwards every `LanguageModel.create()` option and adds
 these:
 
-| Option                                                   | Default               | What it does                                                                                                                                                                                                                                        |
-| -------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sanitizer`                                              | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                                                                               |
-| `ignoreFencedCode`                                       | `true`                | Exempt fenced and inline code from the sanitization, so asking for an HTML snippet isn't flagged.                                                                                                                                                   |
-| `downloadProgress`                                       | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                                                                         |
-| `onDownloadProgress({resource, loaded, total, percent})` | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. The `percent` field is a whole number from 0 to 100, and `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
-| `tools`                                                  | —                     | Tools the model may call, each `{name, description, inputSchema, execute}`.                                                                                                                                                                         |
-| `maxToolRounds`                                          | `8`                   | How many rounds of tool calls to allow before giving up. A round can carry several calls.                                                                                                                                                           |
-| `onToolCall({name, arguments})`                          | —                     | Fires as each call is about to run, for a line of UI saying what is happening.                                                                                                                                                                      |
-| `activationButton`                                       | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                                                                             |
-| `activationHint`                                         | —                     | Shown and hidden with `activationButton`, for the line saying why it appeared.                                                                                                                                                                      |
+| Option                                                        | Default               | What it does                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sanitizer`                                                   | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                                                                               |
+| `ignoreFencedCode`                                            | `true`                | Exempt fenced and inline code from the sanitization, so asking for an HTML snippet isn't flagged.                                                                                                                                                   |
+| `downloadProgress`                                            | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                                                                         |
+| `onDownloadProgress({resource, loaded, total, percent})`      | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. The `percent` field is a whole number from 0 to 100, and `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
+| `tools`                                                       | —                     | Tools the model may call, each `{name, description, inputSchema, execute}`.                                                                                                                                                                         |
+| `maxToolRounds`                                               | `8`                   | How many rounds of tool calls to allow before giving up. A round can carry several calls.                                                                                                                                                           |
+| `onToolCall({name, arguments})`                               | —                     | Fires as each call is about to run, for a line of UI saying what is happening.                                                                                                                                                                      |
+| `onToolResponse({name, arguments, ok, result, errorMessage})` | —                     | Fires as each call resolves. Three of the ways one can fail never reach your `execute`, so this is where you see them.                                                                                                                              |
+| `activationButton`                                            | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                                                                             |
+| `activationHint`                                              | —                     | Shown and hidden with `activationButton`, for the line saying why it appeared.                                                                                                                                                                      |
 
 ### Instance members
 
@@ -472,13 +473,33 @@ declaration reaches the Prompt API.
 
 Every prompting method then runs the loop. The model asks for a tool, the
 wrapper runs it, feeds the result back, and repeats until an answer comes out.
-What you get is the answer.
+What you get is the answer. The content types tool calling needs are added for
+you as well: a session accepts text and nothing else until `expectedInputs`
+says otherwise, and declaring `tools` implies neither tool type, so passing
+them without `tool-response` produces a session that rejects the very results
+the tools exist to produce.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
 <tr valign="top"><td>
 
 ```js
+const options = {
+  expectedInputs: [
+    { type: 'text', languages: ['en'] },
+    { type: 'tool-response' },
+    { type: 'tool-call' },
+  ],
+  expectedOutputs: [
+    { type: 'text', languages: ['en'] },
+    { type: 'tool-call' },
+  ],
+  tools: [declarationOf(getWeather)],
+};
+if ((await LanguageModel.availability(options))
+    === 'unavailable') return;
+const session = await LanguageModel.create(options);
+
 let result = await session.prompt(question);
 let rounds = 0;
 
@@ -493,10 +514,13 @@ while (Array.isArray(result)) {
 
   const content = [];
   for (const call of calls) {
+    status.textContent = `Calling ${call.name}…`;
     // Dispatch, check the arguments, catch the
     // throw, strip the nulls, wrap the result in
     // a LanguageModelToolSuccess or ToolError…
-    content.push(await runTool(call));
+    const part = await runTool(call);
+    log(part.value.errorMessage ?? part.value.result);
+    content.push(part);
   }
   result = await session.prompt([
     { role: 'user', content },
@@ -515,49 +539,29 @@ const answer =
 </td><td>
 
 ```js
+const options = { tools: [getWeather] };
+if ((await EasyLanguageModel.availability(options))
+    === 'unavailable') return;
+const session = await EasyLanguageModel.create({
+  ...options,
+  onToolCall: ({ name }) =>
+    (status.textContent = `Calling ${name}…`),
+  onToolResponse: ({ result, errorMessage }) =>
+    log(errorMessage ?? result),
+});
+
 const answer = await session.prompt(question);
 ```
 
 </td></tr>
 </table>
 
-Declaring the tools is the whole of the setup. The content types tool calling
-needs are added for you: a session accepts text and nothing else until
-`expectedInputs` says otherwise, and declaring `tools` implies neither tool
-type, so passing them without `tool-response` produces a session that rejects
-the very results the tools exist to produce.
-
-```js
-const getWeather = {
-  name: 'get_weather',
-  description: 'Get the current weather in a location.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      location: {
-        type: 'string',
-        description: 'The city, for example "Hamburg, Germany".',
-      },
-    },
-    required: ['location'],
-  },
-  async execute({ location }) {
-    const response = await fetch(`https://weatherapi.example/?q=${location}`);
-    return response.json();
-  },
-};
-
-const options = { tools: [getWeather] };
-if ((await EasyLanguageModel.availability(options)) === 'unavailable') return;
-
-const session = await EasyLanguageModel.create({
-  ...options,
-  onToolCall: ({ name }) => (status.textContent = `Calling ${name}…`),
-});
-
-// One round of get_weather happens in here, and never reaches your code.
-console.log(await session.prompt('What is the weather in Hamburg?'));
-```
+The `onToolCall` and `onToolResponse` callbacks are the only hooks, and the
+second is worth having even when nothing is displayed. Three of the ways a call can fail never
+reach your `execute`: a tool the model invented, one called without a required
+argument, and one it already has the answer to. Without this callback a
+mistyped schema looks like a tool that silently never runs, while the model
+apologizes for not managing to look something up.
 
 Streaming works the same way, and yields only text: the tool calls are consumed
 on the way past, and one Markdown parser spans every round, so a tool call
@@ -569,34 +573,14 @@ await session
   .pipeTo(renderStreamingHTML(output));
 ```
 
-Four things the loop does that are easy to leave out:
-
-- **A model can invent a tool, or call a real one with no arguments.** Both come
-  back to it as a tool error rather than an exception, so it can correct itself.
-  Running a tool with a missing argument is worse than refusing: a weather
-  lookup for `undefined` reports "no such location", which the model reads as
-  fact rather than as its own mistake.
-- **A tool that throws is reported, not re-thrown.** An error the model can read
-  is one it can recover from.
-- **`null` is stripped from results, at any depth.** One anywhere rejects the
-  whole turn with a message about circular references, and an API answering
-  `"description": null` for an empty field is enough to do it.
-- **A repeated call is answered from what it already has.** Asking for the same
-  tool with the same arguments twice is not progress, so the second time comes
-  back as a tool error pointing at the first result.
-
-Nothing forces a model to stop asking. The `maxToolRounds` option is the ceiling, eight by
-default, counted in rounds rather than calls because one round can carry several
-calls — the weather in three cities is three calls and one round. On the last
-permitted round the results go back with a note that no more tools are coming,
-so the model spends its final turn answering. If it asks again even then, the
-prompt throws an `OperationError` carrying `toolRounds` and the `toolCalls` it
-was still asking for.
-
-Raising the cap is usually the wrong fix. If a question needs more rounds than
-that, the tools are too small: one call that takes a list of packages beats one
-call per package, and a model that runs out of rounds tends to answer from the
-first result it saw rather than admit it ran out.
+Nothing forces a model to stop asking. The `maxToolRounds` option is the
+ceiling, eight by default, counted in rounds rather than calls because one
+round can carry several calls. On the last permitted round the results go back
+with a note that no more tools are coming, so the model spends its final turn
+answering; if it asks again even then, the prompt throws an `OperationError`
+carrying `toolRounds` and the `toolCalls` it was still asking for. Raising the
+cap is usually the wrong fix: a question needing more rounds than that means
+the tools are too small, and one call taking a list beats one call per item.
 
 ### Stopping a response
 

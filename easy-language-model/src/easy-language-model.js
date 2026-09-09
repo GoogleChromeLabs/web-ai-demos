@@ -136,6 +136,7 @@ const EASY_OPTION_KEYS = new Set([
   'tools',
   'maxToolRounds',
   'onToolCall',
+  'onToolResponse',
   // Replaced by the wrapper's own monitor, which then calls this one.
   'monitor',
 ]);
@@ -200,6 +201,10 @@ function splitOptions(options) {
  * @property {(call: {name: string, arguments: object}) => void} [onToolCall]
  *   Fires as each call is about to run, for a line of UI saying what is
  *   happening.
+ * @property {(response: {name: string, arguments: object, ok: boolean, result?: unknown, errorMessage?: string}) => void} [onToolResponse]
+ *   Fires as each call resolves, whether it ran or the wrapper refused it.
+ *   Three of the ways a call can fail never reach your `execute` at all, so
+ *   without this a mistyped schema looks like a tool that silently never runs.
  */
 
 /**
@@ -738,7 +743,9 @@ export class EasyLanguageModel {
     const content = [];
     for (const call of calls) {
       this.#easy.onToolCall?.({ name: call.name, arguments: call.arguments });
-      content.push(await runToolCall(call, this.#toolsByName, { seen }));
+      const part = await runToolCall(call, this.#toolsByName, { seen });
+      this.#reportToolResponse(call, part);
+      content.push(part);
     }
 
     // On the last round the results go back with notice that no more tools are
@@ -755,6 +762,27 @@ export class EasyLanguageModel {
 
     pending.push({ role: 'user', content });
     return [{ role: 'user', content }];
+  }
+
+  /**
+   * Hands one finished call to `onToolResponse`.
+   *
+   * A refusal the wrapper decided on its own, an invented tool, a missing
+   * argument, or a call it has already answered, never runs `execute`, so this
+   * is the only place an app can see it happen.
+   */
+  #reportToolResponse(call, part) {
+    if (!this.#easy.onToolResponse) {
+      return;
+    }
+    const { errorMessage, result } = part.value;
+    this.#easy.onToolResponse({
+      name: call.name,
+      arguments: call.arguments,
+      ok: errorMessage === undefined,
+      result: result?.[0]?.value,
+      errorMessage,
+    });
   }
 
   /** Whether the loop may take another round after the one just counted. */
