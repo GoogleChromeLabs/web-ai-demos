@@ -1,0 +1,57 @@
+{
+  "name": "writer-rewriter-polyfills",
+  "version": "1.0.0",
+  "description": "Polyfills for the Writer and Rewriter APIs, backed exclusively by the browser's LanguageModel API",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./writer": "./dist/writer.js",
+    "./rewriter": "./dist/rewriter.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:demos": "vite build --config vite.demos.config.js",
+    "prepublishOnly": "npm run build",
+    "preview": "vite preview",
+    "start": "npm run dev",
+    "writer-prompt-extractor": "node scripts/writer-prompt-extractor.js",
+    "rewriter-prompt-extractor": "node scripts/rewriter-prompt-extractor.js",
+    "lint": "eslint .",
+    "fix": "npx prettier --write ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git",
+    "directory": "writer-rewriter-polyfills"
+  },
+  "sideEffects": true,
+  "author": "Google Chrome Labs",
+  "license": "Apache-2.0",
+  "keywords": [
+    "ai",
+    "polyfill",
+    "writer",
+    "rewriter",
+    "prompt-api",
+    "language-model",
+    "built-in-ai",
+    "web-ai"
+  ],
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/writer-rewriter-polyfills#readme",
+  "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "prettier-plugin-curly": "^0.4.1",
+    "vite": "^8.2.1"
+  }
+}
