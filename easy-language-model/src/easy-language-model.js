@@ -200,9 +200,10 @@ function splitOptions(options) {
  *   before giving up. Default 8. A round can carry several calls.
  * @property {(call: {callID: string, name: string, arguments: object}) => void} [onToolCall]
  *   Fires as each call is about to run, for a line of UI saying what is
- *   happening. Calls in a round are run one at a time, in the order the model
- *   asked, so a response always follows its own call; `callID` pairs the two
- *   regardless.
+ *   happening. A round's calls all start together, so responses come back in
+ *   whatever order the tools finish. Pair them on name and arguments: Chrome
+ *   sends an empty `callID` today, though it is passed through in case that
+ *   changes.
  * @property {(response: {callID: string, name: string, arguments: object, ok: boolean, result?: unknown, errorMessage?: string}) => void} [onToolResponse]
  *   Fires as each call resolves, whether it ran or the wrapper refused it.
  *   Three of the ways a call can fail never reach your `execute` at all, so
@@ -729,11 +730,6 @@ export class EasyLanguageModel {
    * number of rounds spent including this one.
    */
   async #toolRound(calls, { text, rounds, seen, pending }) {
-    // One call at a time, in the order the model asked. Running a round
-    // concurrently would finish sooner when the tools are independent, but the
-    // results would interleave in whatever order they happened to land, and a
-    // log of them would stop reading as call-and-answer. `callID` is on both
-    // callbacks so pairing survives if that ever changes.
     const maxRounds = this.#easy.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS;
 
     // Held rather than recorded: like any other turn, a round only reaches the
@@ -747,17 +743,29 @@ export class EasyLanguageModel {
       ],
     });
 
-    const content = [];
-    for (const call of calls) {
-      this.#easy.onToolCall?.({
-        callID: call.callID,
-        name: call.name,
-        arguments: call.arguments,
-      });
-      const part = await runToolCall(call, this.#toolsByName, { seen });
-      this.#reportToolResponse(call, part);
-      content.push(part);
-    }
+    // Every call in a round goes at once. The model asked for them together
+    // and they rarely depend on each other, so a round costs the slowest tool
+    // rather than the sum of all of them.
+    //
+    // `Promise.all` rather than racing completions into an array, because the
+    // order has to survive: Chrome sends an empty `callID` on every call as of
+    // 155, so position is the only thing tying a response to the call it
+    // answers. `onToolResponse` still fires as each one lands, so what an app
+    // sees interleaves even though what the model sees does not.
+    const content = await Promise.all(
+      calls.map(async (call) => {
+        // Runs before the first await in this callback, so every call is
+        // announced, in order, before any tool has started.
+        this.#easy.onToolCall?.({
+          callID: call.callID,
+          name: call.name,
+          arguments: call.arguments,
+        });
+        const part = await runToolCall(call, this.#toolsByName, { seen });
+        this.#reportToolResponse(call, part);
+        return part;
+      })
+    );
 
     // On the last round the results go back with notice that no more tools are
     // coming, so the model spends its final turn answering rather than asking

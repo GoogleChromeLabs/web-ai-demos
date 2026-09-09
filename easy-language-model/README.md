@@ -557,10 +557,13 @@ const answer = await session.prompt(question);
 </table>
 
 The `onToolCall` and `onToolResponse` callbacks are the only hooks. A round's
-calls run one at a time, in the order the model asked, so a response always
-follows its own call and a log of them reads as call and answer; `callID` is on
-both if you would rather pair them by identity. The second callback is worth
-having even when nothing is displayed. Three of the ways a call can fail never
+calls all run at once, so a round costs the slowest tool rather than the sum of
+them, and the responses come back in whatever order the tools finish. What the
+model receives is still in the order it asked, which matters more than it
+sounds: Chrome sends an empty `callID` on every call today, so position is all
+it has to match a result to a request. Pair them on name and arguments in your
+own UI for the same reason. The second callback is worth having even when
+nothing is displayed. Three of the ways a call can fail never
 reach your `execute`: a tool the model invented, one called without a required
 argument, and one it already has the answer to. Without this callback a
 mistyped schema looks like a tool that silently never runs, while the model

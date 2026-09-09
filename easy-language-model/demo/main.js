@@ -119,6 +119,11 @@ function clearOutputs() {
   chunksTail.reset();
 }
 
+/** How a call is written in the log, on the way out and on the way back. */
+function describeCall(name, args) {
+  return `${name}(${JSON.stringify(args ?? {})})`;
+}
+
 function addLogEntry(message, kind = '') {
   const item = document.createElement('li');
   item.className = kind;
@@ -205,22 +210,24 @@ async function createSession() {
     // The wrapper runs the whole call-and-feed-back loop, so nothing about it
     // appears in the submit handler. This is the only hook the demo needs: a
     // line saying what is being looked up while it happens.
-    // The two tool callbacks log as an arrow pair, out and back, so a round
-    // reads as calls and their answers rather than a run of similar lines.
+    // The two tool callbacks log as an arrow pair, out and back. A round's
+    // calls run together, so the answers arrive in whatever order the tools
+    // finish; repeating the call on the way back is what keeps a pair
+    // readable when two calls to the same tool are in flight at once.
     onToolCall({ name, arguments: args }) {
       const detail = Object.values(args ?? {}).join(', ');
       setState('working', `Calling ${name.replace(/_/g, ' ')}(${detail})…`);
-      addLogEntry(`▸ ${name}(${JSON.stringify(args)})`, 'tool-call');
+      addLogEntry(`▸ ${describeCall(name, args)}`, 'tool-call');
     },
 
     // The other half of the pair, and the only way to see a call the wrapper
     // refused: an invented tool, or one called without a required argument,
     // never reaches `execute`, so nothing here would run either.
-    onToolResponse({ name, ok, result, errorMessage }) {
+    onToolResponse({ name, arguments: args, ok, result, errorMessage }) {
       addLogEntry(
         ok
-          ? `◂ ${name} ${JSON.stringify(result)}`
-          : `◂ ${name} refused: ${errorMessage}`,
+          ? `◂ ${describeCall(name, args)} ${JSON.stringify(result)}`
+          : `◂ ${describeCall(name, args)} refused: ${errorMessage}`,
         ok ? 'tool-response' : 'tool-response warn'
       );
     },

@@ -386,9 +386,10 @@ describe('tool calling', () => {
     assert.equal(seen[2].errorMessage, undefined);
   });
 
-  it('runs a round one call at a time, in the order asked', async () => {
-    // A slow first tool and a fast second is where interleaving would show.
-    install([
+  it("runs a round's calls together, and keeps the order asked", async () => {
+    // The second tool finishes first, which is the whole point: serially this
+    // would take 40ms plus 0, and the log would have to read A then B.
+    const script = install([
       [
         {
           type: 'tool-call',
@@ -422,14 +423,51 @@ describe('tool calling', () => {
     });
     await session.prompt('both?');
 
+    // Both announced before either ran, and the slower one reports last.
     assert.deepEqual(order, [
       'call call-A',
-      'ran Hamburg',
-      'resp call-A',
       'call call-B',
       'ran Tokyo',
       'resp call-B',
+      'ran Hamburg',
+      'resp call-A',
     ]);
+
+    // What goes back to the model is still in the order it asked, whatever
+    // order the tools finished in.
+    const sent = script.sessions
+      .at(-1)
+      .prompts[1][0].content.filter((p) => p.type === 'tool-response');
+    assert.deepEqual(
+      sent.map((p) => p.value.callID),
+      ['call-A', 'call-B']
+    );
+    assert.deepEqual(sent[0].value.result[0].value, { city: 'Hamburg' });
+  });
+
+  it('still refuses a repeat when the round runs together', async () => {
+    // The dedup check and its bookkeeping both run before the first await, so
+    // two identical calls in one round cannot both slip through.
+    const same = { location: 'Hamburg' };
+    const script = install([
+      [
+        { type: 'tool-call', value: toolCall('get_weather', same, 'call-A') },
+        { type: 'tool-call', value: toolCall('get_weather', same, 'call-B') },
+      ],
+      'Reported.',
+    ]);
+    const { tool, calls } = weatherTool();
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+    });
+    await session.prompt('twice?');
+
+    assert.equal(calls.length, 1, 'the tool ran once');
+    const sent = script.sessions
+      .at(-1)
+      .prompts[1][0].content.filter((p) => p.type === 'tool-response');
+    assert.match(sent[1].value.errorMessage, /already called/);
   });
 
   it('streams only the text, running the tools on the way', async () => {
