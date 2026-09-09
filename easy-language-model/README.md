@@ -81,12 +81,12 @@ these, in four groups:
 
 ##### Tool calling
 
-| Option                                                                | Default | What it does                                                                                                                                                                                                                                                                  |
-| --------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tools`                                                               | —       | Tools the model may call, each `{name, description, inputSchema, execute}`. Passing this adds `tool-call` and `tool-response` to the expected content types, which a tool-calling session needs and declaring `tools` does not imply. Whatever you expected yourself is kept. |
-| `maxToolRounds`                                                       | `8`     | How many rounds of tool calls to allow before giving up. A round can carry several calls.                                                                                                                                                                                     |
-| `onToolCall({callID, name, arguments})`                               | —       | Fires as each call is about to run.                                                                                                                                                                                                                                           |
-| `onToolResponse({callID, name, arguments, ok, result, errorMessage})` | —       | Fires as each call resolves, refused ones included.                                                                                                                                                                                                                           |
+| Option                                                                | Default | What it does                                                                                                                                                                                                                                                                                                                    |
+| --------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tools`                                                               | —       | Tools the model may call, each `{name, description, inputSchema, execute}`. `execute` is called as `execute(args, {signal})`. Passing this adds `tool-call` and `tool-response` to the expected content types, which a tool-calling session needs and declaring `tools` does not imply. Whatever you expected yourself is kept. |
+| `maxToolRounds`                                                       | `8`     | How many rounds of tool calls to allow before giving up. A round can carry several calls.                                                                                                                                                                                                                                       |
+| `onToolCall({callID, name, arguments})`                               | —       | Fires as each call is about to run.                                                                                                                                                                                                                                                                                             |
+| `onToolResponse({callID, name, arguments, ok, result, errorMessage})` | —       | Fires as each call resolves, refused ones included.                                                                                                                                                                                                                                                                             |
 
 ##### User activation
 
@@ -583,6 +583,12 @@ callbacks carry the `callID` that pairs a response with its call.
 An invented tool, a missing required argument, and a repeat of a call already
 answered are each refused before `execute` runs. The `onToolResponse` callback
 is the only place those are visible.
+
+`execute` is called with the arguments the model sent and, as a second
+argument, the `signal` the prompting method was given, for handing to `fetch()`
+or anything else that takes one. Aborting rejects the prompt at once rather
+than at the end of the round, so a tool that ignores the signal cannot hold a
+stop button open; whatever it is doing is left to finish unwatched.
 
 The streaming methods yield only text; tool calls are consumed on the way past.
 One Markdown parser spans every round, so a tool call part-way through a

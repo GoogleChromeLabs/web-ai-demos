@@ -637,3 +637,143 @@ describe('tool calling', () => {
     assert.ok(script.sessions.at(-1));
   });
 });
+
+describe('aborting a tool round', () => {
+  /** A tool that stays in flight until the test lets it finish. */
+  function heldTool() {
+    const state = { signal: undefined, finished: false };
+    let markStarted;
+    let release;
+    const started = new Promise((resolve) => (markStarted = resolve));
+    const held = new Promise((resolve) => (release = resolve));
+    return {
+      state,
+      started,
+      release,
+      tool: {
+        name: 'get_weather',
+        description: 'Get the current weather in a location.',
+        inputSchema: {
+          type: 'object',
+          properties: { location: { type: 'string' } },
+          required: ['location'],
+        },
+        async execute(args, context) {
+          state.signal = context?.signal;
+          markStarted();
+          await held;
+          state.finished = true;
+          return { temperatureC: 18 };
+        },
+      },
+    };
+  }
+
+  /** One round of calls, then an answer. */
+  function weatherThenAnswer() {
+    return install([
+      [
+        {
+          type: 'tool-call',
+          value: toolCall('get_weather', { location: 'Hamburg' }),
+        },
+      ],
+      'Done.',
+    ]);
+  }
+
+  it('hands execute the signal the prompting method was given', async () => {
+    weatherThenAnswer();
+    const { tool, state, started, release } = heldTool();
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+    });
+
+    const controller = new AbortController();
+    const answer = session.prompt('Weather?', { signal: controller.signal });
+    await started;
+    release();
+    await answer;
+    assert.equal(state.signal, controller.signal);
+  });
+
+  it('rejects without waiting for the round to settle', async () => {
+    weatherThenAnswer();
+    const { tool, state, started, release } = heldTool();
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+    });
+
+    const controller = new AbortController();
+    const answer = session.prompt('Weather?', { signal: controller.signal });
+    await started;
+    controller.abort();
+
+    await assert.rejects(answer, { name: 'AbortError' });
+    // The point of the race: the tool is still running, and the caller
+    // already has its rejection.
+    assert.equal(state.finished, false);
+    release();
+  });
+
+  it('leaves nothing in history when a round is abandoned', async () => {
+    weatherThenAnswer();
+    const { tool, started, release } = heldTool();
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+    });
+
+    const controller = new AbortController();
+    const answer = session.prompt('Weather?', { signal: controller.signal });
+    await started;
+    controller.abort();
+    await assert.rejects(answer, { name: 'AbortError' });
+    release();
+
+    assert.deepEqual(session.history, []);
+  });
+
+  it('stops reporting responses once the signal has aborted', async () => {
+    weatherThenAnswer();
+    const { tool, started, release } = heldTool();
+    const reported = [];
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+      onToolResponse: (response) => reported.push(response),
+    });
+
+    const controller = new AbortController();
+    const answer = session.prompt('Weather?', { signal: controller.signal });
+    await started;
+    controller.abort();
+    await assert.rejects(answer, { name: 'AbortError' });
+
+    // Let the tool land after the turn it belonged to is gone.
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.deepEqual(reported, []);
+  });
+
+  it('refuses to start a round when the signal is already aborted', async () => {
+    weatherThenAnswer();
+    const { tool, state } = heldTool();
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+    });
+
+    const controller = new AbortController();
+    controller.abort();
+    await assert.rejects(
+      session.prompt('Weather?', { signal: controller.signal }),
+      {
+        name: 'AbortError',
+      }
+    );
+    assert.equal(state.finished, false);
+  });
+});

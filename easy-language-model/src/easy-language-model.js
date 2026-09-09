@@ -151,6 +151,39 @@ const DEFAULT_EXPECTED = [{ type: 'text', languages: ['en'] }];
 /** How many times the model may ask for tools before the loop gives up. */
 const DEFAULT_MAX_TOOL_ROUNDS = 8;
 
+/**
+ * Settles as soon as either the work finishes or the signal aborts.
+ *
+ * A tool that honors the signal stops on its own, but nothing makes a tool
+ * honor it, and waiting for the round either way would hold a `stop` button for
+ * as long as the slowest tool takes. Whatever keeps running is left to finish
+ * unwatched: its result answers a turn that no longer exists.
+ */
+async function untilAborted(work, signal) {
+  if (!signal) {
+    return work;
+  }
+  signal.throwIfAborted();
+  // A late failure from the work reaches nobody once the race is lost, and an
+  // unhandled rejection takes the process down in Node.
+  work.catch(() => {});
+  const done = new AbortController();
+  try {
+    return await Promise.race([
+      work,
+      new Promise((_, reject) => {
+        signal.addEventListener('abort', () => reject(signal.reason), {
+          once: true,
+          signal: done.signal,
+        });
+      }),
+    ]);
+  } finally {
+    // Drops the listener, so a long session doesn't pile one up per round.
+    done.abort();
+  }
+}
+
 function splitOptions(options) {
   const easy = {};
   const createOptions = {};
@@ -192,10 +225,12 @@ function splitOptions(options) {
  *   as it stands and rejects if the page has no activation.
  * @property {HTMLElement} [activationHint] Shown and hidden with the button,
  *   for the line of text saying why it appeared.
- * @property {Array<{name: string, description: string, inputSchema: object, execute: (args: object) => unknown}>} [tools]
+ * @property {Array<{name: string, description: string, inputSchema: object, execute: (args: object, context: {signal?: AbortSignal}) => unknown}>} [tools]
  *   Tools the model may call. `execute` is yours and never reaches the Prompt
  *   API; the rest is the declaration the model sees. Every prompting method
  *   runs the calls and feeds the results back until the model answers.
+ *   `execute` is handed the `signal` the prompting method was given, for
+ *   passing to `fetch()` and anything else that takes one.
  * @property {number} [maxToolRounds] How many rounds of tool calls to allow
  *   before giving up. Default 8. A round can carry several calls.
  * @property {(call: {callID: string, name: string, arguments: object}) => void} [onToolCall]
@@ -414,7 +449,13 @@ export class EasyLanguageModel {
       if (this.#toolRoundsExhausted(++rounds)) {
         throw this.#abandonToolLoop({ calls, text, rounds, pending });
       }
-      next = await this.#toolRound(calls, { text, rounds, seen, pending });
+      next = await this.#toolRound(calls, {
+        text,
+        rounds,
+        seen,
+        pending,
+        signal: options?.signal,
+      });
     }
   }
 
@@ -450,7 +491,13 @@ export class EasyLanguageModel {
       if (this.#toolRoundsExhausted(++rounds)) {
         throw this.#abandonToolLoop({ calls, text, rounds, pending });
       }
-      next = await this.#toolRound(calls, { text, rounds, seen, pending });
+      next = await this.#toolRound(calls, {
+        text,
+        rounds,
+        seen,
+        pending,
+        signal: options?.signal,
+      });
     }
   }
 
@@ -623,6 +670,7 @@ export class EasyLanguageModel {
         rounds,
         seen,
         pending: history,
+        signal: options?.signal,
       });
     }
   }
@@ -727,7 +775,7 @@ export class EasyLanguageModel {
    * caller has already had its `rounds` incremented, so `rounds` here is the
    * number of rounds spent including this one.
    */
-  async #toolRound(calls, { text, rounds, seen, pending }) {
+  async #toolRound(calls, { text, rounds, seen, pending, signal }) {
     const maxRounds = this.#easy.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS;
 
     // Held rather than recorded: like any other turn, a round only reaches the
@@ -750,19 +798,29 @@ export class EasyLanguageModel {
     // answers when a `callID` is missing. `onToolResponse` still fires as each
     // one lands, so what an app sees interleaves even though what the model
     // sees does not.
-    const content = await Promise.all(
-      calls.map(async (call) => {
-        // Runs before the first await in this callback, so every call is
-        // announced, in order, before any tool has started.
-        this.#easy.onToolCall?.({
-          callID: call.callID,
-          name: call.name,
-          arguments: call.arguments,
-        });
-        const part = await runToolCall(call, this.#toolsByName, { seen });
-        this.#reportToolResponse(call, part);
-        return part;
-      })
+    const content = await untilAborted(
+      Promise.all(
+        calls.map(async (call) => {
+          // Runs before the first await in this callback, so every call is
+          // announced, in order, before any tool has started.
+          this.#easy.onToolCall?.({
+            callID: call.callID,
+            name: call.name,
+            arguments: call.arguments,
+          });
+          const part = await runToolCall(call, this.#toolsByName, {
+            seen,
+            signal,
+          });
+          // A tool that ignored the signal still lands eventually. Reporting it
+          // would describe a turn the caller already stopped.
+          if (!signal?.aborted) {
+            this.#reportToolResponse(call, part);
+          }
+          return part;
+        })
+      ),
+      signal
     );
 
     // On the last round the results go back with notice that no more tools are

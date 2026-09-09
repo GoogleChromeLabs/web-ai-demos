@@ -71,8 +71,15 @@ export function withToolExpectations({ expectedInputs, expectedOutputs }) {
   };
 }
 
-/** Builds the `tool-response` part that answers one call. */
-export async function runToolCall(call, byName, { seen } = {}) {
+/**
+ * Builds the `tool-response` part that answers one call.
+ *
+ * `signal` is the one the caller passed to the prompting method, handed on so a
+ * tool can cancel its own work: `fetch()` and most APIs worth calling from a
+ * tool take one. It arrives as a second argument rather than mixed into
+ * `arguments`, which stay exactly what the model sent.
+ */
+export async function runToolCall(call, byName, { seen, signal } = {}) {
   const fail = (errorMessage) => ({
     type: 'tool-response',
     value: new LanguageModelToolError({
@@ -113,7 +120,7 @@ export async function runToolCall(call, byName, { seen } = {}) {
   seen?.add(signature);
 
   try {
-    const output = await tool.execute(args);
+    const output = await tool.execute(args, { signal });
     return {
       type: 'tool-response',
       value: new LanguageModelToolSuccess({

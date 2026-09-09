@@ -16,6 +16,14 @@
  * is where a small model gets lost.
  */
 
+/**
+ * Every `execute` takes the `AbortSignal` the prompting method was given as its
+ * second argument, and hands it to `fetch()`, so Stop cancels the request that
+ * is in flight rather than leaving it to finish unread. The default covers the
+ * WebMCP path at the bottom of this file, which calls `execute` with the
+ * arguments alone.
+ */
+
 /** Open-Meteo's weather codes, abridged to the ones worth naming. */
 const CONDITIONS = {
   0: 'clear sky',
@@ -35,8 +43,8 @@ const CONDITIONS = {
   95: 'thunderstorm',
 };
 
-async function fetchJson(url) {
-  const response = await fetch(url);
+async function fetchJson(url, signal) {
+  const response = await fetch(url, { signal });
   if (!response.ok) {
     throw new Error(`${response.status} from ${new URL(url).host}`);
   }
@@ -59,10 +67,11 @@ export const tools = [
       },
       required: ['name'],
     },
-    async execute({ name }) {
+    async execute({ name }, { signal } = {}) {
       const { results } = await fetchJson(
         'https://geocoding-api.open-meteo.com/v1/search?count=1&name=' +
-          encodeURIComponent(name)
+          encodeURIComponent(name),
+        signal
       );
       const place = results?.[0];
       if (!place) {
@@ -90,11 +99,12 @@ export const tools = [
       },
       required: ['latitude', 'longitude'],
     },
-    async execute({ latitude, longitude }) {
+    async execute({ latitude, longitude }, { signal } = {}) {
       const weather = await fetchJson(
         'https://api.open-meteo.com/v1/forecast' +
           `?latitude=${latitude}&longitude=${longitude}` +
-          '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code'
+          '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code',
+        signal
       );
       const now = weather.current;
       return {
@@ -117,11 +127,12 @@ export const tools = [
       },
       required: ['amount', 'from', 'to'],
     },
-    async execute({ amount, from, to }) {
+    async execute({ amount, from, to }, { signal } = {}) {
       const base = String(from).toUpperCase();
       const target = String(to).toUpperCase();
       const data = await fetchJson(
-        `https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${target}`
+        `https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${target}`,
+        signal
       );
       const rate = data.rates?.[target];
       if (rate === undefined) {
