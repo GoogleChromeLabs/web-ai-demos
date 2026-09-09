@@ -110,18 +110,16 @@ Everything else is `LanguageModel`'s, and behaves the same.
 
 ### Exports
 
-The entry point exports three things: `EasyLanguageModel`,
-`renderStreamingHTML(element)`, a `WritableStream` that renders HTML chunks into
-an element as they arrive, and `markdownToHtml()`, the parser as a
-`TransformStream`.
+| Export                         | What it is                                                                                                                                                                                                        |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EasyLanguageModel`            | The wrapper class, with `create()` and `availability()` as statics.                                                                                                                                               |
+| `renderStreamingHTML(element)` | A `WritableStream` that appends HTML chunks to `element` as they arrive, building nodes with `createElement` and `append` rather than from a string, so it works where Trusted Types forbid `insertAdjacentHTML`. |
+| `markdownToHtml()`             | A `TransformStream` from Markdown chunks to HTML chunks, the parser `promptStreamingHTML()` uses.                                                                                                                 |
 
-Every chunk `promptStreamingHTML()` yields is one tag or one run of text rather
-than a balanced fragment, so `renderStreamingHTML()` can build the DOM with
-`createElement` and `append` alone. It works on pages that enforce Trusted
-Types, where `insertAdjacentHTML` throws.
-
-TypeScript declarations are generated from the source and published alongside
-it; `npm run build` emits both.
+TypeScript declarations ship with the package and resolve on import; there is
+nothing to install or import separately. They pull in
+[`@types/dom-chromium-ai`](https://www.npmjs.com/package/@types/dom-chromium-ai),
+so `LanguageModel` and the other Prompt API globals are typed as well.
 
 ### Errors
 
