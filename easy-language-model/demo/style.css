@@ -183,7 +183,7 @@ label {
 #panes {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
   grid-template-rows: auto 1fr;
 }
 
@@ -201,7 +201,8 @@ label {
 }
 
 .prose,
-#markdown-output {
+#markdown-output,
+#html-chunks {
   display: block;
   margin: 0;
   border: 1px solid var(--line);
@@ -218,7 +219,8 @@ pre {
   font-size: 0.8125rem;
 }
 
-#markdown-output {
+#markdown-output,
+#html-chunks {
   padding: 1rem;
 }
 

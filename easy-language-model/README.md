@@ -68,20 +68,37 @@ a way to deal with a full context window.
 | `availability(options)` | `availability(options)` | Returns `'unavailable'` when the underlying `LanguageModel` is missing, instead of throwing, so no separate feature detection is necessary. |
 
 Calling `create()` forwards every `LanguageModel.create()` option and adds
-these:
+these, in four groups:
 
-| Option                                                                | Default               | What it does                                                                                                                                                                                                                                        |
-| --------------------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sanitizer`                                                           | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.                                                                                                                                                               |
-| `ignoreFencedCode`                                                    | `true`                | Exempt fenced and inline code from the sanitization, so asking for an HTML snippet isn't flagged.                                                                                                                                                   |
-| `downloadProgress`                                                    | —                     | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                                                                         |
-| `onDownloadProgress({resource, loaded, total, percent})`              | —                     | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. The `percent` field is a whole number from 0 to 100, and `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
-| `tools`                                                               | —                     | Tools the model may call, each `{name, description, inputSchema, execute}`.                                                                                                                                                                         |
-| `maxToolRounds`                                                       | `8`                   | How many rounds of tool calls to allow before giving up. A round can carry several calls.                                                                                                                                                           |
-| `onToolCall({callID, name, arguments})`                               | —                     | Fires as each call is about to run, for a line of UI saying what is happening.                                                                                                                                                                      |
-| `onToolResponse({callID, name, arguments, ok, result, errorMessage})` | —                     | Fires as each call resolves. Three of the ways one can fail never reach your `execute`, so this is where you see them.                                                                                                                              |
-| `activationButton`                                                    | —                     | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting.                                                                                                                                             |
-| `activationHint`                                                      | —                     | Shown and hidden with `activationButton`, for the line saying why it appeared.                                                                                                                                                                      |
+##### Sanitizing output
+
+| Option             | Default               | What it does                                                                                      |
+| ------------------ | --------------------- | ------------------------------------------------------------------------------------------------- |
+| `sanitizer`        | Sanitizer API default | `Sanitizer`, `SanitizerConfig`, `'default'`, or `false` to turn the output check off.             |
+| `ignoreFencedCode` | `true`                | Exempt fenced and inline code from the sanitization, so asking for an HTML snippet isn't flagged. |
+
+##### Model downloads
+
+| Option                                                   | Default | What it does                                                                                                                                                                                                                                        |
+| -------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downloadProgress`                                       | —       | An `HTMLProgressElement` to drive automatically, including going indeterminate while the model is unpacked.                                                                                                                                         |
+| `onDownloadProgress({resource, loaded, total, percent})` | —       | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. The `percent` field is a whole number from 0 to 100, and `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
+
+##### Tool calling
+
+| Option                                                                | Default | What it does                                                                                                           |
+| --------------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `tools`                                                               | —       | Tools the model may call, each `{name, description, inputSchema, execute}`.                                            |
+| `maxToolRounds`                                                       | `8`     | How many rounds of tool calls to allow before giving up. A round can carry several calls.                              |
+| `onToolCall({callID, name, arguments})`                               | —       | Fires as each call is about to run, for a line of UI saying what is happening.                                         |
+| `onToolResponse({callID, name, arguments, ok, result, errorMessage})` | —       | Fires as each call resolves. Three of the ways one can fail never reach your `execute`, so this is where you see them. |
+
+##### User activation
+
+| Option             | Default | What it does                                                                                            |
+| ------------------ | ------- | ------------------------------------------------------------------------------------------------------- |
+| `activationButton` | —       | Hidden by default, shown when a download needs a gesture, hidden once clicked. Without one, no waiting. |
+| `activationHint`   | —       | Shown and hidden with `activationButton`, for the line saying why it appeared.                          |
 
 ### Instance members
 

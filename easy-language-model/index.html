@@ -89,7 +89,7 @@
         Markdown goes to the right, and the other branch runs through
         <code>markdownToHtml()</code> into <code>renderStreamingHTML()</code> to
         build the DOM on the left, tapped by a <code>TransformStream</code> on
-        the way past for the listing at the bottom.
+        the way past for the listing beside them.
       </p>
 
       <div id="panes">
@@ -108,12 +108,15 @@
           </h2>
           <pre id="markdown-output"></pre>
         </section>
-      </div>
 
-      <details>
-        <summary>The HTML chunks <code>markdownToHtml()</code> yields</summary>
-        <pre id="html-chunks"></pre>
-      </details>
+        <section>
+          <h2>
+            <code>markdownToHtml()</code>
+            <span class="tag">the HTML chunks between</span>
+          </h2>
+          <pre id="html-chunks"></pre>
+        </section>
+      </div>
 
       <details id="log-details" open>
         <summary>Library events</summary>
