@@ -482,23 +482,16 @@ await Promise.all([
 
 ### Calling tools
 
-A model can't tell you today's weather, and asked anyway it will either say so
-or invent something plausible. Tools are how you give it a way to find out. A
-tool is two halves: the function that runs, and the declaration the model sees.
-Keep them together and hand both over; the wrapper strips `execute` before the
-declaration reaches the Prompt API.
+Hand over each tool with its `execute` attached; the wrapper strips that before
+the declaration reaches the Prompt API. Every prompting method then runs the
+loop and hands you the answer.
 
-Every prompting method then runs the loop. The model asks for a tool, the
-wrapper runs it, feeds the result back, and repeats until an answer comes out.
-What you get is the answer. The content types tool calling needs are added for
-you as well: a session accepts text and nothing else until `expectedInputs`
-says otherwise, and declaring `tools` implies neither tool type, so passing
-them without `tool-response` produces a session that rejects the very results
-the tools exist to produce. `tool-call` goes in as an input too, which is what
-lets a conversation carrying tool calls be replayed: without it, one tool call
-would leave the session uncompactable. Anything you expected yourself is kept,
-and `availability()` is given the same additions, so it can't end up asking
-about a different session from the one `create()` builds.
+The content types a tool-calling session needs are added too, since declaring
+`tools` implies none of them: `tool-response` so results are accepted at all,
+and `tool-call` as an input so a conversation carrying one can be replayed,
+which is what `compact()` does. Your own expectations are kept, and
+`availability()` gets the same additions, so it can't ask about a different
+session from the one `create()` builds.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -577,18 +570,16 @@ const answer = await session.prompt(question);
 </td></tr>
 </table>
 
-The `onToolCall` and `onToolResponse` callbacks are the only hooks. A round's
-calls all run at once, so a round costs the slowest tool rather than the sum of
-them, and the responses come back in whatever order the tools finish. What the
-model receives is still in the order it asked, which matters more than it
-sounds: Chrome sends an empty `callID` on every call today, so position is all
-it has to match a result to a request. Pair them on name and arguments in your
-own UI for the same reason. The second callback is worth having even when
-nothing is displayed. Three of the ways a call can fail never
-reach your `execute`: a tool the model invented, one called without a required
-argument, and one it already has the answer to. Without this callback a
-mistyped schema looks like a tool that silently never runs, while the model
-apologizes for not managing to look something up.
+A round's calls run at once, so it costs the slowest tool rather than the sum,
+and `onToolResponse` fires in whatever order they finish. The model still
+receives them in the order it asked, which matters: Chrome sends an empty
+`callID` today, so position is all it has to match a result to a request. Pair
+on name and arguments in your own UI for the same reason.
+
+Keep `onToolResponse` even when nothing is displayed. An invented tool, a
+missing argument, and a repeat it already answered are all refused before your
+`execute` runs, so without it a mistyped schema looks like a tool that silently
+never fires while the model apologizes for not finding anything.
 
 Streaming works the same way, and yields only text: the tool calls are consumed
 on the way past, and one Markdown parser spans every round, so a tool call
