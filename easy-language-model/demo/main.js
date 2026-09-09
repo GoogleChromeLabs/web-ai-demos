@@ -205,10 +205,12 @@ async function createSession() {
     // The wrapper runs the whole call-and-feed-back loop, so nothing about it
     // appears in the submit handler. This is the only hook the demo needs: a
     // line saying what is being looked up while it happens.
+    // The two tool callbacks log as an arrow pair, out and back, so a round
+    // reads as calls and their answers rather than a run of similar lines.
     onToolCall({ name, arguments: args }) {
       const detail = Object.values(args ?? {}).join(', ');
       setState('working', `Calling ${name.replace(/_/g, ' ')}(${detail})…`);
-      addLogEntry(`tool: ${name}(${JSON.stringify(args)})`);
+      addLogEntry(`▸ ${name}(${JSON.stringify(args)})`, 'tool-call');
     },
 
     // The other half of the pair, and the only way to see a call the wrapper
@@ -217,9 +219,9 @@ async function createSession() {
     onToolResponse({ name, ok, result, errorMessage }) {
       addLogEntry(
         ok
-          ? `tool: ${name} → ${JSON.stringify(result)}`
-          : `tool: ${name} refused — ${errorMessage}`,
-        ok ? '' : 'warn'
+          ? `◂ ${name} ${JSON.stringify(result)}`
+          : `◂ ${name} refused: ${errorMessage}`,
+        ok ? 'tool-response' : 'tool-response warn'
       );
     },
   });

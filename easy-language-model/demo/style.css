@@ -236,6 +236,27 @@ pre {
   padding-block: 0.15rem;
 }
 
+/* Tool traffic is the part worth picking out of the log: a rule down the side
+   marks it as one thread, and the response sits under the call it answers. */
+#log li:is(.tool-call, .tool-response) {
+  border-left: 2px solid var(--accent);
+  padding-left: 0.5rem;
+}
+
+#log li.tool-call {
+  color: var(--accent);
+}
+
+#log li.tool-response {
+  padding-left: 1.5rem;
+  color: var(--muted);
+}
+
+/* A refusal keeps the thread but takes the warning colour over the muted one. */
+#log li.tool-response.warn {
+  color: var(--warn);
+}
+
 .warn {
   color: var(--warn);
 }
