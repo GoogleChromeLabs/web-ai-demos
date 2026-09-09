@@ -115,8 +115,8 @@ The entry point exports three things: `EasyLanguageModel`,
 an element as they arrive, and `markdownToHtml()`, the parser as a
 `TransformStream`.
 
-Every chunk `promptStreamingHTML()` yields is a single token rather than a
-balanced fragment, so `renderStreamingHTML()` can build the DOM with
+Every chunk `promptStreamingHTML()` yields is one tag or one run of text rather
+than a balanced fragment, so `renderStreamingHTML()` can build the DOM with
 `createElement` and `append` alone. It works on pages that enforce Trusted
 Types, where `insertAdjacentHTML` throws.
 
@@ -366,7 +366,7 @@ you get back is HTML. The one-shot form hands over the whole response at once:
 output.setHTML(await session.promptHTML(prompt));
 ```
 
-The streaming form yields the same HTML as it arrives, one token per chunk: an
+The streaming form yields the same HTML as it arrives, a chunk at a time: an
 opening tag, a run of text, or a closing tag. A chunk is therefore not a
 balanced fragment, and `<p>` arrives before its text. Concatenated, the chunks
 are the complete document.
@@ -734,9 +734,9 @@ HTML methods build their DOM there too.
   filter URLs, so `href` and `src` are restricted to `http`, `https`, `mailto`,
   `tel`, `sms`, `ftp`, relative URLs, and `data:` URLs for real image types.
 - **A link's URL arrives after its text.** Markdown writes `[docs](url)`, so the
-  `href` is only known once the token closes. Links, images, and task-list
-  checkboxes are held back until then, and still arrive as single-token chunks
-  rather than as one balanced fragment.
+  `href` is only known once the element closes. Links, images, and task-list
+  checkboxes are held back until then, and still arrive as separate tag and
+  text chunks rather than as one balanced fragment.
 
 </details>
 
