@@ -198,10 +198,12 @@ function splitOptions(options) {
  *   runs the calls and feeds the results back until the model answers.
  * @property {number} [maxToolRounds] How many rounds of tool calls to allow
  *   before giving up. Default 8. A round can carry several calls.
- * @property {(call: {name: string, arguments: object}) => void} [onToolCall]
+ * @property {(call: {callID: string, name: string, arguments: object}) => void} [onToolCall]
  *   Fires as each call is about to run, for a line of UI saying what is
- *   happening.
- * @property {(response: {name: string, arguments: object, ok: boolean, result?: unknown, errorMessage?: string}) => void} [onToolResponse]
+ *   happening. Calls in a round are run one at a time, in the order the model
+ *   asked, so a response always follows its own call; `callID` pairs the two
+ *   regardless.
+ * @property {(response: {callID: string, name: string, arguments: object, ok: boolean, result?: unknown, errorMessage?: string}) => void} [onToolResponse]
  *   Fires as each call resolves, whether it ran or the wrapper refused it.
  *   Three of the ways a call can fail never reach your `execute` at all, so
  *   without this a mistyped schema looks like a tool that silently never runs.
@@ -727,6 +729,11 @@ export class EasyLanguageModel {
    * number of rounds spent including this one.
    */
   async #toolRound(calls, { text, rounds, seen, pending }) {
+    // One call at a time, in the order the model asked. Running a round
+    // concurrently would finish sooner when the tools are independent, but the
+    // results would interleave in whatever order they happened to land, and a
+    // log of them would stop reading as call-and-answer. `callID` is on both
+    // callbacks so pairing survives if that ever changes.
     const maxRounds = this.#easy.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS;
 
     // Held rather than recorded: like any other turn, a round only reaches the
@@ -742,7 +749,11 @@ export class EasyLanguageModel {
 
     const content = [];
     for (const call of calls) {
-      this.#easy.onToolCall?.({ name: call.name, arguments: call.arguments });
+      this.#easy.onToolCall?.({
+        callID: call.callID,
+        name: call.name,
+        arguments: call.arguments,
+      });
       const part = await runToolCall(call, this.#toolsByName, { seen });
       this.#reportToolResponse(call, part);
       content.push(part);
@@ -777,6 +788,7 @@ export class EasyLanguageModel {
     }
     const { errorMessage, result } = part.value;
     this.#easy.onToolResponse({
+      callID: call.callID,
       name: call.name,
       arguments: call.arguments,
       ok: errorMessage === undefined,

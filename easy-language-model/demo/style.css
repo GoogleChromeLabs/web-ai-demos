@@ -10,6 +10,10 @@
   --line: color-mix(in srgb, CanvasText 20%, Canvas);
   --surface: color-mix(in srgb, CanvasText 4%, Canvas);
   --accent: #4f46e5;
+  /* Accent as a background carries white text, so it has to stay dark. Accent
+     as text has to move with the scheme instead, or it is dark indigo on a
+     dark ground. Two variables, because one cannot do both. */
+  --accent-text: #4338ca;
   --warn: #b45309;
   --error: #b91c1c;
   --ok: #15803d;
@@ -123,6 +127,12 @@ input:not([type]) {
   border-radius: 0.375rem;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent-text: #a5b4fc;
+  }
+}
+
 button {
   font: inherit;
   padding: 0.5rem 0.9rem;
@@ -155,7 +165,7 @@ button.link {
   background: none;
   border: none;
   padding: 0;
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -229,7 +239,9 @@ pre {
   font-family: ui-monospace, monospace;
   max-height: 16rem;
   overflow: auto;
-  padding-left: 1.5rem;
+  /* Wide enough for a three-digit marker: the numbers live in this padding,
+     and anything that does not fit is clipped by the scroll container. */
+  padding-left: 2.75rem;
 }
 
 #log li {
@@ -239,12 +251,12 @@ pre {
 /* Tool traffic is the part worth picking out of the log: a rule down the side
    marks it as one thread, and the response sits under the call it answers. */
 #log li:is(.tool-call, .tool-response) {
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid var(--accent-text);
   padding-left: 0.5rem;
 }
 
 #log li.tool-call {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 #log li.tool-response {

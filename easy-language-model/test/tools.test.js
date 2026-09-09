@@ -340,7 +340,11 @@ describe('tool calling', () => {
 
     await session.prompt('Weather?');
     assert.deepEqual(announced, [
-      { name: 'get_weather', arguments: { location: 'Hamburg' } },
+      {
+        callID: 'get_weather-1',
+        name: 'get_weather',
+        arguments: { location: 'Hamburg' },
+      },
     ]);
   });
 
@@ -380,6 +384,52 @@ describe('tool calling', () => {
     assert.deepEqual(seen[2].result, { temperatureC: 18 }, 'and the result');
     assert.deepEqual(seen[2].arguments, { location: 'Hamburg' });
     assert.equal(seen[2].errorMessage, undefined);
+  });
+
+  it('runs a round one call at a time, in the order asked', async () => {
+    // A slow first tool and a fast second is where interleaving would show.
+    install([
+      [
+        {
+          type: 'tool-call',
+          value: toolCall('get_weather', { location: 'Hamburg' }, 'call-A'),
+        },
+        {
+          type: 'tool-call',
+          value: toolCall('get_weather', { location: 'Tokyo' }, 'call-B'),
+        },
+      ],
+      'Both reported.',
+    ]);
+    const order = [];
+    const tool = {
+      name: 'get_weather',
+      description: 'w',
+      inputSchema: { type: 'object', required: ['location'] },
+      async execute({ location }) {
+        await new Promise((r) =>
+          setTimeout(r, location === 'Hamburg' ? 40 : 0)
+        );
+        order.push(`ran ${location}`);
+        return { city: location };
+      },
+    };
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+      onToolCall: (c) => order.push(`call ${c.callID}`),
+      onToolResponse: (r) => order.push(`resp ${r.callID}`),
+    });
+    await session.prompt('both?');
+
+    assert.deepEqual(order, [
+      'call call-A',
+      'ran Hamburg',
+      'resp call-A',
+      'call call-B',
+      'ran Tokyo',
+      'resp call-B',
+    ]);
   });
 
   it('streams only the text, running the tools on the way', async () => {
