@@ -790,6 +790,12 @@ npm install
 npm run dev
 ```
 
+Two tools are wired up, on APIs that need no key: the weather from
+[Open-Meteo](https://open-meteo.com/) and currency rates from
+[Frankfurter](https://frankfurter.dev/). Asking for the weather in two cities
+and a conversion is three calls in one round, and the page contains no loop:
+`onToolCall` is the only tool-related line in it.
+
 One prompt is one inference, shown three ways: the live DOM, the raw Markdown
 the model produced, and the HTML chunks that built the DOM. Around that are the
 availability check and download progress as they happen, the user-gesture
