@@ -86,12 +86,12 @@ these, in four groups:
 
 ##### Tool calling
 
-| Option                                                                | Default | What it does                                                                                                           |
-| --------------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `tools`                                                               | —       | Tools the model may call, each `{name, description, inputSchema, execute}`.                                            |
-| `maxToolRounds`                                                       | `8`     | How many rounds of tool calls to allow before giving up. A round can carry several calls.                              |
-| `onToolCall({callID, name, arguments})`                               | —       | Fires as each call is about to run, for a line of UI saying what is happening.                                         |
-| `onToolResponse({callID, name, arguments, ok, result, errorMessage})` | —       | Fires as each call resolves. Three of the ways one can fail never reach your `execute`, so this is where you see them. |
+| Option                                                                | Default | What it does                                                                                                                                                                                                                                                                  |
+| --------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tools`                                                               | —       | Tools the model may call, each `{name, description, inputSchema, execute}`. Passing this adds `tool-call` and `tool-response` to the expected content types, which a tool-calling session needs and declaring `tools` does not imply. Whatever you expected yourself is kept. |
+| `maxToolRounds`                                                       | `8`     | How many rounds of tool calls to allow before giving up. A round can carry several calls.                                                                                                                                                                                     |
+| `onToolCall({callID, name, arguments})`                               | —       | Fires as each call is about to run, for a line of UI saying what is happening.                                                                                                                                                                                                |
+| `onToolResponse({callID, name, arguments, ok, result, errorMessage})` | —       | Fires as each call resolves. Three of the ways one can fail never reach your `execute`, so this is where you see them.                                                                                                                                                        |
 
 ##### User activation
 
@@ -494,7 +494,11 @@ What you get is the answer. The content types tool calling needs are added for
 you as well: a session accepts text and nothing else until `expectedInputs`
 says otherwise, and declaring `tools` implies neither tool type, so passing
 them without `tool-response` produces a session that rejects the very results
-the tools exist to produce.
+the tools exist to produce. `tool-call` goes in as an input too, which is what
+lets a conversation carrying tool calls be replayed: without it, one tool call
+would leave the session uncompactable. Anything you expected yourself is kept,
+and `availability()` is given the same additions, so it can't end up asking
+about a different session from the one `create()` builds.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>

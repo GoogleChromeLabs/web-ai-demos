@@ -126,6 +126,34 @@ describe('tool calling', () => {
     assert.ok(types(options.expectedOutputs).includes('tool-call'));
   });
 
+  it('adds the tool types without displacing what you expected', async () => {
+    const script = install(['fine']);
+    const { tool } = weatherTool();
+    await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+      expectedInputs: [
+        { type: 'text', languages: ['de', 'en'] },
+        { type: 'image' },
+      ],
+      expectedOutputs: [{ type: 'text', languages: ['de'] }],
+    });
+
+    // Appended, never rewritten: the languages and the image input are the
+    // caller's business, and only the missing tool types are filled in.
+    const { expectedInputs, expectedOutputs } = script.sessions.at(-1).options;
+    assert.deepEqual(expectedInputs, [
+      { type: 'text', languages: ['de', 'en'] },
+      { type: 'image' },
+      { type: 'tool-response' },
+      { type: 'tool-call' },
+    ]);
+    assert.deepEqual(expectedOutputs, [
+      { type: 'text', languages: ['de'] },
+      { type: 'tool-call' },
+    ]);
+  });
+
   it('records both halves of a round in history', async () => {
     install([
       [
