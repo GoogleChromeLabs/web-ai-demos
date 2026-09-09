@@ -138,3 +138,10 @@ export const tools = [
     },
   },
 ];
+
+// Register the tools for WebMCP, if the browser supports it.
+if ('modelContext' in document) {
+  for (const tool of tools) {
+    await document.modelContext.registerTool(tool);
+  }
+}
