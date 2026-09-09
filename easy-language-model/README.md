@@ -456,16 +456,20 @@ await Promise.all([
 
 ### Calling tools
 
-Hand over each tool with its `execute` attached; the wrapper strips that before
-the declaration reaches the Prompt API. Every prompting method then runs the
-loop and hands you the answer.
+Hand over each tool as `LanguageModelTool` defines it, `execute` included. Every
+prompting method then runs the loop and hands you the answer.
+
+The tool object is the same on both sides. Chrome 155 does not call `execute`
+itself; it surfaces every call to the caller instead, so what differs is who
+runs the loop.
 
 The content types a tool-calling session needs are added too, since declaring
-`tools` implies none of them: `tool-response` so results are accepted at all,
-and `tool-call` as an input so a conversation carrying one can be replayed,
-which is what `compact()` does. Your own expectations are kept, and
-`availability()` gets the same additions, so it can't ask about a different
-session from the one `create()` builds.
+`tools` implies none of them: `tool-call` as an output, which Chrome refuses the
+session without, `tool-response` so results are accepted at all, and `tool-call`
+as an input so a conversation carrying one can be replayed, which is what
+`compact()` does. Your own expectations are kept, and `availability()` gets the
+same additions, so it can't ask about a different session from the one
+`create()` builds.
 
 <table>
 <tr><th>Prompt API</th><th>EasyLanguageModel</th></tr>
@@ -480,9 +484,7 @@ const getWeather = {
     properties: { city: { type: 'string' } },
     required: ['city'],
   },
-};
-const implementations = {
-  get_weather: ({ city }) => forecast(city),
+  execute: ({ city }) => forecast(city),
 };
 
 const options = {
@@ -516,9 +518,9 @@ while (Array.isArray(result)) {
   const content = [];
   for (const call of calls) {
     status.textContent = `Calling ${call.name}…`;
-    // Look up implementations[call.name], check
-    // the arguments, catch the throw, strip the
-    // nulls, wrap the result in a
+    // Find the tool, check the arguments, call
+    // execute, catch the throw, strip the nulls,
+    // wrap the result in a
     // LanguageModelToolSuccess or ToolError…
     const part = await runTool(call);
     log(part.value.errorMessage ?? part.value.result);

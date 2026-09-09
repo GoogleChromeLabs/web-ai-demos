@@ -32,8 +32,10 @@ export function stripNullish(value) {
 /**
  * Splits the caller's tools into what the model sees and what actually runs.
  *
- * The two halves travel together because that is how they are easiest to write,
- * but `execute` must not reach `create()`.
+ * The two halves travel together because that is how they are easiest to write.
+ * Chrome ignores `execute` and surfaces every call to the caller, so dropping it
+ * from the declaration changes nothing today and keeps the loop ours if that
+ * ever changes.
  *
  * @param {Array<{name: string, description: string, inputSchema: object, execute: Function}>} tools
  */
