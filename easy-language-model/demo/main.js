@@ -125,6 +125,21 @@ function describeCall(name, args) {
   return `${name}(${JSON.stringify(args ?? {})})`;
 }
 
+/**
+ * What ties a response back to the call it answers.
+ *
+ * `callID` is the field for it, so prefer it. An implementation that leaves it
+ * empty still leaves the name and the arguments, which tell a round's calls
+ * apart on their own unless the model asked the same thing twice, and the
+ * wrapper refuses the second of those before it ever runs.
+ */
+function callKey({ callID, name, arguments: args }) {
+  return callID || describeCall(name, args);
+}
+
+/** When each in-flight call started, so the pair can report how long it took. */
+const startedAt = new Map();
+
 function addLogEntry(message, kind = '') {
   const item = document.createElement('li');
   item.className = kind;
@@ -268,20 +283,30 @@ async function createSession() {
     // calls run together, so the answers arrive in whatever order the tools
     // finish; repeating the call on the way back is what keeps a pair
     // readable when two calls to the same tool are in flight at once.
-    onToolCall({ name, arguments: args }) {
+    onToolCall(call) {
+      const { name, arguments: args } = call;
       const detail = Object.values(args ?? {}).join(', ');
       setState('working', `Calling ${name.replace(/_/g, ' ')}(${detail})…`);
       addLogEntry(`▸ ${describeCall(name, args)}`, 'tool-call');
+      startedAt.set(callKey(call), performance.now());
     },
 
     // The other half of the pair, and the only way to see a call the wrapper
     // refused: an invented tool, or one called without a required argument,
     // never reaches `execute`, so nothing here would run either.
-    onToolResponse({ name, arguments: args, ok, result, errorMessage }) {
+    onToolResponse(response) {
+      const { name, arguments: args, ok, result, errorMessage } = response;
+      const key = callKey(response);
+      const started = startedAt.get(key);
+      startedAt.delete(key);
+      const took =
+        started === undefined
+          ? ''
+          : ` after ${Math.round(performance.now() - started)} ms`;
       addLogEntry(
         ok
-          ? `◂ ${describeCall(name, args)} ${JSON.stringify(result)}`
-          : `◂ ${describeCall(name, args)} refused: ${errorMessage}`,
+          ? `◂ ${describeCall(name, args)}${took} ${JSON.stringify(result)}`
+          : `◂ ${describeCall(name, args)}${took} refused: ${errorMessage}`,
         ok ? 'tool-response' : 'tool-response warn'
       );
     },

@@ -515,17 +515,21 @@ while (Array.isArray(result)) {
     throw new Error('No answer.');
   }
 
-  const content = [];
-  for (const call of calls) {
-    status.textContent = `Calling ${call.name}…`;
-    // Find the tool, check the arguments, call
-    // execute, catch the throw, strip the nulls,
-    // wrap the result in a
-    // LanguageModelToolSuccess or ToolError…
-    const part = await runTool(call);
-    log(part.value.errorMessage ?? part.value.result);
-    content.push(part);
-  }
+  // Promise.all, not a for-await loop: the calls
+  // are independent, and the order still has to
+  // reach the model as the model asked for it.
+  const content = await Promise.all(
+    calls.map(async (call) => {
+      status.textContent = `Calling ${call.name}…`;
+      // Find the tool, check the arguments, call
+      // execute, catch the throw, strip the
+      // nulls, wrap the result in a
+      // LanguageModelToolSuccess or ToolError…
+      const part = await runTool(call);
+      log(part.value.errorMessage ?? part.value.result);
+      return part;
+    })
+  );
   result = await session.prompt([
     { role: 'user', content },
   ]);
@@ -573,9 +577,8 @@ const answer = await session.prompt(question);
 
 A round's calls run at once, so a round costs the slowest tool rather than the
 sum, and `onToolResponse` fires in completion order. What the model receives
-stays in the order it asked: Chrome sends an empty `callID` today, so position
-is all it has to match a result to a request. Pair on name and arguments in
-your own UI for the same reason.
+stays in the order it asked, whatever order the tools finished in. Both
+callbacks carry the `callID` that pairs a response with its call.
 
 An invented tool, a missing required argument, and a repeat of a call already
 answered are each refused before `execute` runs. The `onToolResponse` callback

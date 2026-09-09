@@ -201,9 +201,7 @@ function splitOptions(options) {
  * @property {(call: {callID: string, name: string, arguments: object}) => void} [onToolCall]
  *   Fires as each call is about to run, for a line of UI saying what is
  *   happening. A round's calls all start together, so responses come back in
- *   whatever order the tools finish. Pair them on name and arguments: Chrome
- *   sends an empty `callID` today, though it is passed through in case that
- *   changes.
+ *   whatever order the tools finish; `callID` pairs each one with its call.
  * @property {(response: {callID: string, name: string, arguments: object, ok: boolean, result?: unknown, errorMessage?: string}) => void} [onToolResponse]
  *   Fires as each call resolves, whether it ran or the wrapper refused it.
  *   Three of the ways a call can fail never reach your `execute` at all, so
@@ -748,10 +746,10 @@ export class EasyLanguageModel {
     // rather than the sum of all of them.
     //
     // `Promise.all` rather than racing completions into an array, because the
-    // order has to survive: Chrome sends an empty `callID` on every call as of
-    // 155, so position is the only thing tying a response to the call it
-    // answers. `onToolResponse` still fires as each one lands, so what an app
-    // sees interleaves even though what the model sees does not.
+    // order has to survive: position is what ties a response to the call it
+    // answers when a `callID` is missing. `onToolResponse` still fires as each
+    // one lands, so what an app sees interleaves even though what the model
+    // sees does not.
     const content = await Promise.all(
       calls.map(async (call) => {
         // Runs before the first await in this callback, so every call is
