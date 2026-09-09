@@ -790,11 +790,14 @@ npm install
 npm run dev
 ```
 
-Two tools are wired up, on APIs that need no key: the weather from
+Three tools are wired up, on APIs that need no key: geocoding and weather from
 [Open-Meteo](https://open-meteo.com/) and currency rates from
-[Frankfurter](https://frankfurter.dev/). Asking for the weather in two cities
-and a conversion is three calls in one round, and the page contains no loop:
-`onToolCall` is the only tool-related line in it.
+[Frankfurter](https://frankfurter.dev/). Looking a city up and reading the
+weather are separate tools on purpose, so the model has to chain them and the
+rounds are visible; a real app would rather have the one tool that takes a
+place name. Asking about two cities and a conversion runs several calls over a
+couple of rounds, and the page contains no loop: `onToolCall` is the only
+tool-related line in it.
 
 One prompt is one inference, shown three ways: the live HTML, the raw Markdown
 the model produced, and the HTML chunks that built it. Around that are the

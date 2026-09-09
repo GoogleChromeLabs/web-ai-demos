@@ -4,13 +4,16 @@
  */
 
 /**
- * Two tools the model can call, both on APIs that need no key and send CORS
+ * Three tools the model can call, all on APIs that need no key and send CORS
  * headers, so the demo works from any origin without a proxy.
  *
- * They do a whole job per call on purpose. `get_weather` takes a place name
- * rather than coordinates, even though that costs it a geocoding request,
- * because a tool that answers half a question makes the model spend a round
- * stitching the halves together. Rounds are the budget worth saving.
+ * `find_place` and `get_weather` are deliberately separate, even though one
+ * tool taking a place name would answer the same question in a single round.
+ * Splitting them is what makes the loop visible: the model has to look a city
+ * up, read the coordinates out of the answer, and call again with them, so the
+ * demo shows a chain rather than one lookup. In an app, prefer the tool that
+ * does the whole job. Rounds cost a model turn and context each, and a chain
+ * is where a small model gets lost.
  */
 
 /** Open-Meteo's weather codes, abridged to the ones worth naming. */
@@ -42,39 +45,59 @@ async function fetchJson(url) {
 
 export const tools = [
   {
-    name: 'get_weather',
+    name: 'find_place',
     description:
-      'Get the current weather in a place. Give the place by name; it is ' +
-      'looked up for you.',
+      'Look up the coordinates of a city or town. Call this before ' +
+      'get_weather, which needs coordinates rather than a name.',
     inputSchema: {
       type: 'object',
       properties: {
-        location: {
+        name: {
           type: 'string',
           description: 'A city or town, for example "Hamburg, Germany".',
         },
       },
-      required: ['location'],
+      required: ['name'],
     },
-    async execute({ location }) {
+    async execute({ name }) {
       const { results } = await fetchJson(
         'https://geocoding-api.open-meteo.com/v1/search?count=1&name=' +
-          encodeURIComponent(location)
+          encodeURIComponent(name)
       );
       const place = results?.[0];
       if (!place) {
         // Thrown rather than returned as an empty result: the wrapper turns
         // this into a tool error the model can read and correct.
-        throw new Error(`No place called ${location}.`);
+        throw new Error(`No place called ${name}.`);
       }
+      return {
+        place: [place.name, place.country].filter(Boolean).join(', '),
+        latitude: place.latitude,
+        longitude: place.longitude,
+      };
+    },
+  },
+  {
+    name: 'get_weather',
+    description:
+      'Get the current weather at a set of coordinates, which find_place ' +
+      'returns for a city name.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        latitude: { type: 'number', description: 'From find_place.' },
+        longitude: { type: 'number', description: 'From find_place.' },
+      },
+      required: ['latitude', 'longitude'],
+    },
+    async execute({ latitude, longitude }) {
       const weather = await fetchJson(
         'https://api.open-meteo.com/v1/forecast' +
-          `?latitude=${place.latitude}&longitude=${place.longitude}` +
+          `?latitude=${latitude}&longitude=${longitude}` +
           '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code'
       );
       const now = weather.current;
       return {
-        place: [place.name, place.country].filter(Boolean).join(', '),
         temperatureC: now.temperature_2m,
         humidityPercent: now.relative_humidity_2m,
         windKmh: now.wind_speed_10m,
