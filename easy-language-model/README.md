@@ -472,6 +472,19 @@ session from the one `create()` builds.
 <tr valign="top"><td>
 
 ```js
+const getWeather = {
+  name: 'get_weather',
+  description: 'Get the weather for a city.',
+  inputSchema: {
+    type: 'object',
+    properties: { city: { type: 'string' } },
+    required: ['city'],
+  },
+};
+const implementations = {
+  get_weather: ({ city }) => forecast(city),
+};
+
 const options = {
   expectedInputs: [
     { type: 'text', languages: ['en'] },
@@ -482,7 +495,7 @@ const options = {
     { type: 'text', languages: ['en'] },
     { type: 'tool-call' },
   ],
-  tools: [declarationOf(getWeather)],
+  tools: [getWeather],
 };
 if ((await LanguageModel.availability(options))
     === 'unavailable') return;
@@ -503,9 +516,10 @@ while (Array.isArray(result)) {
   const content = [];
   for (const call of calls) {
     status.textContent = `Calling ${call.name}…`;
-    // Dispatch, check the arguments, catch the
-    // throw, strip the nulls, wrap the result in
-    // a LanguageModelToolSuccess or ToolError…
+    // Look up implementations[call.name], check
+    // the arguments, catch the throw, strip the
+    // nulls, wrap the result in a
+    // LanguageModelToolSuccess or ToolError…
     const part = await runTool(call);
     log(part.value.errorMessage ?? part.value.result);
     content.push(part);
@@ -527,6 +541,17 @@ const answer =
 </td><td>
 
 ```js
+const getWeather = {
+  name: 'get_weather',
+  description: 'Get the weather for a city.',
+  inputSchema: {
+    type: 'object',
+    properties: { city: { type: 'string' } },
+    required: ['city'],
+  },
+  execute: ({ city }) => forecast(city),
+};
+
 const options = { tools: [getWeather] };
 if ((await EasyLanguageModel.availability(options))
     === 'unavailable') return;
