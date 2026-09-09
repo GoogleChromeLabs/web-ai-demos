@@ -280,6 +280,22 @@ summary {
   cursor: pointer;
 }
 
+/* The two collapsed views sit under the panes, and need air between them and
+   the output they describe. */
+#app > details {
+  margin-top: 1.5rem;
+}
+
+#history-output {
+  max-height: 24rem;
+  overflow: auto;
+  margin: 0.5rem 0 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+}
+
 .error {
   color: var(--error);
 }

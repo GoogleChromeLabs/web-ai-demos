@@ -33,6 +33,7 @@ const htmlOutput = $('html-output');
 const markdownOutput = $('markdown-output');
 const htmlChunks = $('html-chunks');
 const log = $('log');
+const historyOutput = $('history-output');
 
 const TOOLS_PROMPT =
   'What is the weather in Hamburg and in Tokyo right now, and what is ' +
@@ -139,6 +140,59 @@ function setState(state, message) {
   if (message) {
     statusText.textContent = message;
   }
+}
+
+/**
+ * Turns one history message into something `JSON.stringify` can hold.
+ *
+ * A tool call or response is a platform object whose fields live on the
+ * prototype, so stringifying one straight gives `{}`. Copying the fields out is
+ * also what you would do to put a conversation in storage and replay it later
+ * through `initialPrompts`.
+ */
+function dehydrate(message) {
+  if (typeof message.content === 'string') {
+    return message;
+  }
+  return {
+    role: message.role,
+    content: message.content.map((part) => {
+      const value = part.value;
+      if (part.type === 'tool-call') {
+        return {
+          type: part.type,
+          value: {
+            callID: value.callID,
+            name: value.name,
+            arguments: value.arguments,
+          },
+        };
+      }
+      if (part.type === 'tool-response') {
+        return {
+          type: part.type,
+          value: {
+            callID: value.callID,
+            name: value.name,
+            result: value.result ? [...value.result] : undefined,
+            errorMessage: value.errorMessage,
+          },
+        };
+      }
+      return part;
+    }),
+  };
+}
+
+function refreshHistory() {
+  if (!session) {
+    return;
+  }
+  historyOutput.textContent = JSON.stringify(
+    session.history.map(dehydrate),
+    null,
+    2
+  );
 }
 
 function updateContextDisplay() {
@@ -271,6 +325,7 @@ async function init() {
   setState('ready', 'Ready.');
   app.hidden = false;
   updateContextDisplay();
+  refreshHistory();
   focusPrompt();
 }
 
@@ -346,6 +401,7 @@ form.addEventListener('submit', async (event) => {
   // which is what compact() later summarizes.
   controller = null;
   updateContextDisplay();
+  refreshHistory();
   setBusy(false);
   focusPrompt();
 });
@@ -373,6 +429,7 @@ compactButton.addEventListener('click', async () => {
     setState('ready', 'Compaction failed; the session was restored.');
   }
   updateContextDisplay();
+  refreshHistory();
   setBusy(false);
 });
 
@@ -396,6 +453,7 @@ resetButton.addEventListener('click', async () => {
     setState('unavailable', error.message);
   }
   updateContextDisplay();
+  refreshHistory();
   setBusy(false);
   focusPrompt();
 });

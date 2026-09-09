@@ -96,7 +96,7 @@
         <section>
           <h2>
             <code>renderStreamingHTML()</code>
-            <span class="tag">live HTML, chunk by chunk</span>
+            <span class="tag">live HTML</span>
           </h2>
           <output id="html-output" class="prose"></output>
         </section>
@@ -112,7 +112,7 @@
         <section>
           <h2>
             <code>markdownToHtml()</code>
-            <span class="tag">the HTML chunks between</span>
+            <span class="tag">raw HTML chunks</span>
           </h2>
           <pre id="html-chunks"></pre>
         </section>
@@ -121,6 +121,11 @@
       <details id="log-details" open>
         <summary>Library events</summary>
         <ol id="log"></ol>
+      </details>
+
+      <details id="history-details">
+        <summary><code>session.history</code>, as JSON you could store</summary>
+        <pre id="history-output"></pre>
       </details>
     </main>
 
