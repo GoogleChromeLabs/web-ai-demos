@@ -66,6 +66,14 @@
           <button type="button" id="stop-btn" disabled>Stop</button>
         </div>
         <p class="hint">
+          Try the tools:
+          <button type="button" class="link" id="tools-btn">
+            ask about the weather in two cities and a currency conversion
+          </button>
+          — several calls over a couple of rounds, and no loop in this page's
+          code.
+        </p>
+        <p class="hint">
           Try an injection:
           <button type="button" class="link" id="attack-btn">
             fill in a prompt that makes the model emit an
@@ -81,14 +89,14 @@
         Markdown goes to the right, and the other branch runs through
         <code>markdownToHtml()</code> into <code>renderStreamingHTML()</code> to
         build the DOM on the left, tapped by a <code>TransformStream</code> on
-        the way past for the listing at the bottom.
+        the way past for the listing beside them.
       </p>
 
       <div id="panes">
         <section>
           <h2>
             <code>renderStreamingHTML()</code>
-            <span class="tag">live DOM, node by node</span>
+            <span class="tag">live HTML</span>
           </h2>
           <output id="html-output" class="prose"></output>
         </section>
@@ -100,18 +108,24 @@
           </h2>
           <pre id="markdown-output"></pre>
         </section>
-      </div>
 
-      <details>
-        <summary>
-          The HTML chunks <code>promptStreamingHTML()</code> yields
-        </summary>
-        <pre id="html-chunks"></pre>
-      </details>
+        <section>
+          <h2>
+            <code>markdownToHtml()</code>
+            <span class="tag">raw HTML chunks</span>
+          </h2>
+          <pre id="html-chunks"></pre>
+        </section>
+      </div>
 
       <details id="log-details" open>
         <summary>Library events</summary>
         <ol id="log"></ol>
+      </details>
+
+      <details id="history-details">
+        <summary><code>session.history</code>, as JSON</summary>
+        <pre id="history-output"></pre>
       </details>
     </main>
 

@@ -7,6 +7,42 @@
 
 class FakeMonitor extends EventTarget {}
 
+/**
+ * The tool-calling globals, which Node has no equivalent of.
+ *
+ * The Prompt API rejects a plain object where one of these is expected, so the
+ * wrapper constructs them and the tests need the constructors to exist.
+ */
+export function installToolGlobals() {
+  const define = (name, fields) => {
+    globalThis[name] = class {
+      constructor(init = {}) {
+        for (const field of fields) {
+          this[field] = init[field];
+        }
+      }
+    };
+    Object.defineProperty(globalThis[name], 'name', { value: name });
+  };
+  define('LanguageModelToolCall', ['callID', 'name', 'arguments']);
+  define('LanguageModelToolSuccess', ['callID', 'name', 'result']);
+  define('LanguageModelToolError', ['callID', 'name', 'errorMessage']);
+  return () => {
+    for (const name of [
+      'LanguageModelToolCall',
+      'LanguageModelToolSuccess',
+      'LanguageModelToolError',
+    ]) {
+      delete globalThis[name];
+    }
+  };
+}
+
+/** A tool call the way the model delivers one. */
+export function toolCall(name, args, callID = `${name}-1`) {
+  return new LanguageModelToolCall({ callID, name, arguments: args });
+}
+
 /** Fires a `downloadprogress` event on a freshly built monitor. */
 export function fireProgress(monitor, ...details) {
   const m = new FakeMonitor();
@@ -27,14 +63,42 @@ export class FakeSession extends EventTarget {
     this.contextWindow = 4096;
   }
 
-  async prompt() {
-    return this.script.response;
+  /** The next scripted turn, or the plain response when none is scripted. */
+  #nextTurn(input) {
+    this.prompts = this.prompts ?? [];
+    this.prompts.push(input);
+    if (!this.script.turns) {
+      return this.script.response;
+    }
+    const turn = this.script.turns[this.turnIndex ?? 0];
+    this.turnIndex = (this.turnIndex ?? 0) + 1;
+    return turn ?? this.script.response;
   }
 
-  promptStreaming() {
+  async prompt(input) {
+    return this.#nextTurn(input);
+  }
+
+  promptStreaming(input) {
+    const turn = this.#nextTurn(input);
+    // A turn carrying tool calls streams them as their own chunks, the way the
+    // Prompt API does: text as strings, each call as a structured chunk.
+    if (typeof turn !== 'string') {
+      const chunks = turn.map((part) =>
+        part.type === 'text' ? part.value : part
+      );
+      return new ReadableStream({
+        start(controller) {
+          for (const chunk of chunks) {
+            controller.enqueue(chunk);
+          }
+          controller.close();
+        },
+      });
+    }
     // Chunked small and mid-construct on purpose: that is where the awkward
     // cases live.
-    const parts = this.script.response.match(/[\s\S]{1,7}/g) ?? [];
+    const parts = turn.match(/[\s\S]{1,7}/g) ?? [];
     return new ReadableStream({
       start(controller) {
         for (const part of parts) {

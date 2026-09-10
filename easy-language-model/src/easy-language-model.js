@@ -8,6 +8,12 @@ import { createRawSession, isPromptApiSupported } from './create-session.js';
 import { unsafeOutputError } from './unsafe-output.js';
 import { createHtmlTokenStreamer } from 'streaming-markdown-html';
 import { createOutputGuard } from './sanitizer.js';
+import {
+  isToolUseSupported,
+  runToolCall,
+  splitTools,
+  withToolExpectations,
+} from './tools.js';
 
 async function* readStream(stream) {
   const reader = stream.getReader();
@@ -65,6 +71,46 @@ function pendingTagStart(text) {
   return match ? match.index : -1;
 }
 
+/**
+ * Splits one non-streaming turn into its text and the tools it asked for.
+ *
+ * `prompt()` resolves to a plain string when the model just talks, and to an
+ * array of parts when it wants a tool.
+ */
+function partsOfTurn(result) {
+  if (typeof result === 'string') {
+    return { text: result, calls: [] };
+  }
+  const parts = Array.isArray(result) ? result : [result];
+  return {
+    text: parts
+      .filter((part) => part.type === 'text')
+      .map((part) => part.value)
+      .join(''),
+    calls: parts
+      .filter((part) => part.type === 'tool-call')
+      .map((part) => part.value),
+  };
+}
+
+/**
+ * The error raised when the model keeps asking for tools without answering.
+ *
+ * `OperationError` is the Prompt API's own name for a prompt that failed "for
+ * any other reason", which is what this is. The calls it was still asking for
+ * ride along, and `toolCalls` is what tells this apart from an
+ * `OperationError` the model itself raised.
+ */
+function toolLoopError(rounds, calls) {
+  const error = new DOMException(
+    `The model asked for tools ${rounds} times without answering. ` +
+      'Raise `maxToolRounds`, or give it a tool that does more per call.',
+    'OperationError'
+  );
+  Object.assign(error, { toolRounds: rounds, toolCalls: calls });
+  return error;
+}
+
 /** Normalizes a `LanguageModelPrompt` into history entries. */
 function toHistoryEntries(input) {
   if (typeof input === 'string') {
@@ -87,6 +133,10 @@ const EASY_OPTION_KEYS = new Set([
   'downloadProgress',
   'activationButton',
   'activationHint',
+  'tools',
+  'maxToolRounds',
+  'onToolCall',
+  'onToolResponse',
   // Replaced by the wrapper's own monitor, which then calls this one.
   'monitor',
 ]);
@@ -97,6 +147,42 @@ const EASY_OPTION_KEYS = new Set([
  * way and can't end up asking about different models.
  */
 const DEFAULT_EXPECTED = [{ type: 'text', languages: ['en'] }];
+
+/** How many times the model may ask for tools before the loop gives up. */
+const DEFAULT_MAX_TOOL_ROUNDS = 8;
+
+/**
+ * Settles as soon as either the work finishes or the signal aborts.
+ *
+ * A tool that honors the signal stops on its own, but nothing makes a tool
+ * honor it, and waiting for the round either way would hold a `stop` button for
+ * as long as the slowest tool takes. Whatever keeps running is left to finish
+ * unwatched: its result answers a turn that no longer exists.
+ */
+async function untilAborted(work, signal) {
+  if (!signal) {
+    return work;
+  }
+  signal.throwIfAborted();
+  // A late failure from the work reaches nobody once the race is lost, and an
+  // unhandled rejection takes the process down in Node.
+  work.catch(() => {});
+  const done = new AbortController();
+  try {
+    return await Promise.race([
+      work,
+      new Promise((_, reject) => {
+        signal.addEventListener('abort', () => reject(signal.reason), {
+          once: true,
+          signal: done.signal,
+        });
+      }),
+    ]);
+  } finally {
+    // Drops the listener, so a long session doesn't pile one up per round.
+    done.abort();
+  }
+}
 
 function splitOptions(options) {
   const easy = {};
@@ -110,6 +196,12 @@ function splitOptions(options) {
   }
   createOptions.expectedInputs ??= DEFAULT_EXPECTED;
   createOptions.expectedOutputs ??= DEFAULT_EXPECTED;
+
+  if (easy.tools?.length) {
+    // The model is shown the declarations; `execute` stays on this side.
+    createOptions.tools = splitTools(easy.tools).declarations;
+    Object.assign(createOptions, withToolExpectations(createOptions));
+  }
   return { easy, createOptions };
 }
 
@@ -133,6 +225,22 @@ function splitOptions(options) {
  *   as it stands and rejects if the page has no activation.
  * @property {HTMLElement} [activationHint] Shown and hidden with the button,
  *   for the line of text saying why it appeared.
+ * @property {Array<{name: string, description: string, inputSchema: object, execute: (args: object, context: {signal?: AbortSignal}) => unknown}>} [tools]
+ *   Tools the model may call. `execute` is yours and never reaches the Prompt
+ *   API; the rest is the declaration the model sees. Every prompting method
+ *   runs the calls and feeds the results back until the model answers.
+ *   `execute` is handed the `signal` the prompting method was given, for
+ *   passing to `fetch()` and anything else that takes one.
+ * @property {number} [maxToolRounds] How many rounds of tool calls to allow
+ *   before giving up. Default 8. A round can carry several calls.
+ * @property {(call: {callID: string, name: string, arguments: object}) => void} [onToolCall]
+ *   Fires as each call is about to run, for a line of UI saying what is
+ *   happening. A round's calls all start together, so responses come back in
+ *   whatever order the tools finish; `callID` pairs each one with its call.
+ * @property {(response: {callID: string, name: string, arguments: object, ok: boolean, result?: unknown, errorMessage?: string}) => void} [onToolResponse]
+ *   Fires as each call resolves, whether it ran or the wrapper refused it.
+ *   Three of the ways a call can fail never reach your `execute` at all, so
+ *   without this a mistyped schema looks like a tool that silently never runs.
  */
 
 /**
@@ -160,6 +268,12 @@ export class EasyLanguageModel {
     if (!isPromptApiSupported()) {
       return 'unavailable';
     }
+    // Asking for tools where they don't exist is a session this browser can't
+    // give you, which is what 'unavailable' means. Throwing here would make
+    // feature detection something you have to wrap in a try.
+    if (options.tools?.length && !isToolUseSupported()) {
+      return 'unavailable';
+    }
     return LanguageModel.availability(splitOptions(options).createOptions);
   }
 
@@ -173,6 +287,13 @@ export class EasyLanguageModel {
    * @returns {Promise<EasyLanguageModel>}
    */
   static async create(options = {}) {
+    if (options.tools?.length && !isToolUseSupported()) {
+      throw new TypeError(
+        "This browser doesn't support tool calling. Enable " +
+          'chrome://flags/#prompt-api-tool-use, or create the session without ' +
+          '`tools`. `availability()` reports this as `unavailable`.'
+      );
+    }
     const { easy, createOptions } = splitOptions(options);
     const session = await createRawSession(createOptions, easy);
     // The signal belongs to this one call and can't be reused when the session
@@ -202,6 +323,9 @@ export class EasyLanguageModel {
   #listeners = [];
   #oncontextoverflow = null;
 
+  /** Name to tool, for dispatching what the model asks for. */
+  #toolsByName = new Map();
+
   /** @internal Use `EasyLanguageModel.create()`. */
   constructor(session, { createOptions, easy }) {
     this.#session = session;
@@ -211,6 +335,9 @@ export class EasyLanguageModel {
       sanitizer: easy.sanitizer,
       ignoreFencedCode: easy.ignoreFencedCode,
     });
+    if (easy.tools?.length) {
+      this.#toolsByName = splitTools(easy.tools).byName;
+    }
     for (const message of createOptions.initialPrompts ?? []) {
       this.#history.push({ role: message.role, content: message.content });
       this.#fullHistory.push({ role: message.role, content: message.content });
@@ -302,14 +429,34 @@ export class EasyLanguageModel {
    * @returns {Promise<string>}
    */
   async prompt(input, options) {
-    const entries = toHistoryEntries(input);
-    const output = await this.#session.prompt(input, options);
-    const { removed, sanitized } = this.#guard.check(output);
-    if (removed) {
-      this.#reportUnsafe({ output, sanitized, partialOutput: '' });
+    const pending = toHistoryEntries(input);
+    let next = input;
+    let rounds = 0;
+    const seen = new Set();
+
+    for (;;) {
+      const { text, calls } = partsOfTurn(
+        await this.#session.prompt(next, options)
+      );
+      if (calls.length === 0) {
+        const { removed, sanitized } = this.#guard.check(text);
+        if (removed) {
+          this.#reportUnsafe({ output: text, sanitized, partialOutput: '' });
+        }
+        this.#record([...pending, { role: 'assistant', content: text }]);
+        return text;
+      }
+      if (this.#toolRoundsExhausted(++rounds)) {
+        throw this.#abandonToolLoop({ calls, text, rounds, pending });
+      }
+      next = await this.#toolRound(calls, {
+        text,
+        rounds,
+        seen,
+        pending,
+        signal: options?.signal,
+      });
     }
-    this.#record([...entries, { role: 'assistant', content: output }]);
-    return output;
   }
 
   /**
@@ -329,7 +476,39 @@ export class EasyLanguageModel {
   }
 
   async *#streamText(input, options) {
-    const entries = toHistoryEntries(input);
+    const pending = toHistoryEntries(input);
+    let next = input;
+    let rounds = 0;
+    const seen = new Set();
+
+    for (;;) {
+      const calls = [];
+      const text = yield* this.#streamTurn(next, options, calls);
+      if (calls.length === 0) {
+        this.#record([...pending, { role: 'assistant', content: text }]);
+        return;
+      }
+      if (this.#toolRoundsExhausted(++rounds)) {
+        throw this.#abandonToolLoop({ calls, text, rounds, pending });
+      }
+      next = await this.#toolRound(calls, {
+        text,
+        rounds,
+        seen,
+        pending,
+        signal: options?.signal,
+      });
+    }
+  }
+
+  /**
+   * Streams one model turn, yielding sanitized text and collecting the tool
+   * calls into `calls`. Returns the turn's complete text.
+   *
+   * `promptStreaming()` yields a heterogeneous stream: text arrives as plain
+   * strings, and each tool call as its own structured chunk.
+   */
+  async *#streamTurn(input, options, calls) {
     let full = '';
     // How much of `full` has been handed out. The tail is held back while a tag
     // is still being written.
@@ -338,6 +517,12 @@ export class EasyLanguageModel {
     for await (const chunk of readStream(
       this.#session.promptStreaming(input, options)
     )) {
+      if (typeof chunk !== 'string') {
+        if (chunk.type === 'tool-call') {
+          calls.push(chunk.value);
+        }
+        continue;
+      }
       full += chunk;
       const { removed, sanitized } = this.#guard.check(full);
       if (removed) {
@@ -364,7 +549,7 @@ export class EasyLanguageModel {
       yield full.slice(emittedLength);
     }
 
-    this.#record([...entries, { role: 'assistant', content: full }]);
+    return full;
   }
 
   /**
@@ -419,8 +604,8 @@ export class EasyLanguageModel {
   }
 
   async *#streamHtml(input, options) {
-    const entries = toHistoryEntries(input);
-    const pending = [];
+    const history = toHistoryEntries(input);
+    const htmlChunks = [];
 
     // Nothing here sanitizes the response, because nothing here can render it
     // unsafely. The parser escapes every run of text, emits only tags it chose
@@ -430,32 +615,64 @@ export class EasyLanguageModel {
     // like "how do I show an image?" is answered with an inline `<img>` all the
     // time. The string methods are where the check earns its place: those hand
     // back text whose destination this can't know.
+    //
+    // One parser spans every round, so a tool call part-way through doesn't
+    // start a second document: what the model says before and after its tools
+    // is one piece of prose, and only the last round can close the tags.
     const streamer = createHtmlTokenStreamer({
-      onHtml: (html) => pending.push(html),
+      onHtml: (html) => htmlChunks.push(html),
     });
 
-    let full = '';
-    let emitted = '';
+    let next = input;
+    let rounds = 0;
+    const seen = new Set();
 
-    for await (const chunk of readStream(
-      this.#session.promptStreaming(input, options)
-    )) {
-      full += chunk;
-      streamer.write(chunk);
-      while (pending.length > 0) {
-        const html = pending.shift();
-        emitted += html;
-        yield html;
+    for (;;) {
+      const calls = [];
+      let full = '';
+
+      for await (const chunk of readStream(
+        this.#session.promptStreaming(next, options)
+      )) {
+        if (typeof chunk !== 'string') {
+          if (chunk.type === 'tool-call') {
+            calls.push(chunk.value);
+          }
+          continue;
+        }
+        full += chunk;
+        streamer.write(chunk);
+        while (htmlChunks.length > 0) {
+          yield htmlChunks.shift();
+        }
       }
-    }
 
-    // Markdown can only close the trailing tags at the very end.
-    streamer.end();
-    while (pending.length > 0) {
-      yield pending.shift();
-    }
+      if (calls.length === 0) {
+        // Markdown can only close the trailing tags at the very end.
+        streamer.end();
+        while (htmlChunks.length > 0) {
+          yield htmlChunks.shift();
+        }
+        this.#record([...history, { role: 'assistant', content: full }]);
+        return;
+      }
 
-    this.#record([...entries, { role: 'assistant', content: full }]);
+      if (this.#toolRoundsExhausted(++rounds)) {
+        throw this.#abandonToolLoop({
+          calls,
+          text: full,
+          rounds,
+          pending: history,
+        });
+      }
+      next = await this.#toolRound(calls, {
+        text: full,
+        rounds,
+        seen,
+        pending: history,
+        signal: options?.signal,
+      });
+    }
   }
 
   // ── Compacting ─────────────────────────────────────────────────────────────
@@ -550,6 +767,124 @@ export class EasyLanguageModel {
   }
 
   // ── Internals ──────────────────────────────────────────────────────────────
+
+  /**
+   * Runs the tools one round asked for, and records both halves of the round.
+   *
+   * Returns the next prompt input, or `null` when the loop has to stop. The
+   * caller has already had its `rounds` incremented, so `rounds` here is the
+   * number of rounds spent including this one.
+   */
+  async #toolRound(calls, { text, rounds, seen, pending, signal }) {
+    const maxRounds = this.#easy.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS;
+
+    // Held rather than recorded: like any other turn, a round only reaches the
+    // history once the exchange it belongs to finishes, so an abort part-way
+    // leaves nothing behind for `compact()` to read.
+    pending.push({
+      role: 'assistant',
+      content: [
+        ...(text ? [{ type: 'text', value: text }] : []),
+        ...calls.map((call) => ({ type: 'tool-call', value: call })),
+      ],
+    });
+
+    // Every call in a round goes at once. The model asked for them together
+    // and they rarely depend on each other, so a round costs the slowest tool
+    // rather than the sum of all of them.
+    //
+    // `Promise.all` rather than racing completions into an array, because the
+    // order has to survive: position is what ties a response to the call it
+    // answers when a `callID` is missing. `onToolResponse` still fires as each
+    // one lands, so what an app sees interleaves even though what the model
+    // sees does not.
+    const content = await untilAborted(
+      Promise.all(
+        calls.map(async (call) => {
+          // Runs before the first await in this callback, so every call is
+          // announced, in order, before any tool has started.
+          this.#easy.onToolCall?.({
+            callID: call.callID,
+            name: call.name,
+            arguments: call.arguments,
+          });
+          const part = await runToolCall(call, this.#toolsByName, {
+            seen,
+            signal,
+          });
+          // A tool that ignored the signal still lands eventually. Reporting it
+          // would describe a turn the caller already stopped.
+          if (!signal?.aborted) {
+            this.#reportToolResponse(call, part);
+          }
+          return part;
+        })
+      ),
+      signal
+    );
+
+    // On the last round the results go back with notice that no more tools are
+    // coming, so the model spends its final turn answering rather than asking
+    // again and being cut off mid-thought.
+    if (rounds >= maxRounds) {
+      content.push({
+        type: 'text',
+        value:
+          'This is the last tool result you will receive. Answer from what ' +
+          'you have now, and do not call any more tools.',
+      });
+    }
+
+    pending.push({ role: 'user', content });
+    return [{ role: 'user', content }];
+  }
+
+  /**
+   * Hands one finished call to `onToolResponse`.
+   *
+   * A refusal the wrapper decided on its own, an invented tool, a missing
+   * argument, or a call it has already answered, never runs `execute`, so this
+   * is the only place an app can see it happen.
+   */
+  #reportToolResponse(call, part) {
+    if (!this.#easy.onToolResponse) {
+      return;
+    }
+    const { errorMessage, result } = part.value;
+    this.#easy.onToolResponse({
+      callID: call.callID,
+      name: call.name,
+      arguments: call.arguments,
+      ok: errorMessage === undefined,
+      result: result?.[0]?.value,
+      errorMessage,
+    });
+  }
+
+  /** Whether the loop may take another round after the one just counted. */
+  #toolRoundsExhausted(rounds) {
+    return rounds > (this.#easy.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS);
+  }
+
+  /**
+   * Gives up on a loop the model won't end, keeping the history honest.
+   *
+   * The rounds already spent are recorded before throwing, because the session
+   * itself took those turns: dropping them here, the way an aborted turn is
+   * dropped, would leave `history` describing a conversation the model isn't
+   * having, and `compact()` reads `history`.
+   */
+  #abandonToolLoop({ calls, text, rounds, pending }) {
+    pending.push({
+      role: 'assistant',
+      content: [
+        ...(text ? [{ type: 'text', value: text }] : []),
+        ...calls.map((call) => ({ type: 'tool-call', value: call })),
+      ],
+    });
+    this.#record(pending);
+    return toolLoopError(rounds - 1, calls);
+  }
 
   #record(entries) {
     for (const entry of entries) {
