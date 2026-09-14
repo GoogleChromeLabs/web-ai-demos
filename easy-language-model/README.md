@@ -590,14 +590,6 @@ or anything else that takes one. Aborting rejects the prompt at once rather
 than at the end of the round, so a tool that ignores the signal cannot hold a
 stop button open; whatever it is doing is left to finish unwatched.
 
-What `execute` returns is declared to the model by what it is: a string as
-`text`, an `AudioBuffer` or `<audio>` element as `audio`, a `Blob`, `ImageData`,
-`ImageBitmap`, `VideoFrame`, or image, canvas, or video element as `image`, and
-anything else JSON-serializable as `object`, with its `null`s stripped. Raw
-bytes (an `ArrayBuffer` or a typed array) are `audio` when they start with a
-WAV, Ogg, FLAC, MP3, or M4A signature, and `image` otherwise. Returning `null`
-or nothing at all answers with empty text.
-
 The streaming methods yield only text; tool calls are consumed on the way past.
 One Markdown parser spans every round, so a tool call part-way through a
 sentence does not start a second document.
