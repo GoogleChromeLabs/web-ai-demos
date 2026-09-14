@@ -30,6 +30,81 @@ export function stripNullish(value) {
 }
 
 /**
+ * Whether `value` is an instance of any of the named globals, each looked up
+ * when asked, since not every context has every one: a worker has no DOM, and
+ * Node has no `ImageBitmap`.
+ */
+function isInstanceOf(value, names) {
+  return names.some((name) => {
+    const constructor = globalThis[name];
+    return typeof constructor === 'function' && value instanceof constructor;
+  });
+}
+
+const IMAGE_SOURCES = [
+  'Blob',
+  'HTMLCanvasElement',
+  'HTMLImageElement',
+  'HTMLVideoElement',
+  'ImageBitmap',
+  'ImageData',
+  'OffscreenCanvas',
+  'SVGImageElement',
+  'VideoFrame',
+];
+
+const AUDIO_SOURCES = ['AudioBuffer', 'HTMLAudioElement'];
+
+/**
+ * Raw bytes are a valid value for both `image` and `audio`, so the bytes
+ * decide: the common audio containers are recognized by their signature, and
+ * everything else is taken for an image.
+ *
+ * @param {ArrayBuffer | ArrayBufferView} buffer
+ * @returns {'image' | 'audio'}
+ */
+function sniffBufferType(buffer) {
+  const bytes = ArrayBuffer.isView(buffer)
+    ? new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+    : new Uint8Array(buffer);
+  const ascii = (start, end) =>
+    String.fromCharCode(...bytes.subarray(start, end));
+
+  const isAudio =
+    (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WAVE') ||
+    ascii(0, 4) === 'OggS' ||
+    ascii(0, 4) === 'fLaC' ||
+    ascii(0, 3) === 'ID3' ||
+    (ascii(4, 8) === 'ftyp' && ascii(8, 12) === 'M4A ') ||
+    // An MPEG audio frame sync, which a JPEG (FF D8) does not match.
+    (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0);
+  return isAudio ? 'audio' : 'image';
+}
+
+/**
+ * Wraps what `execute` returned in the result item the Prompt API wants, its
+ * `type` picked from the value itself.
+ *
+ * Only a structured result goes through stripNullish(). Walking a `Blob` or a
+ * typed array as if it were a plain object would hand the model `{}` or a map
+ * of indices in place of the image or audio it was.
+ *
+ * @returns {{type: 'text' | 'image' | 'audio' | 'object', value: unknown}}
+ */
+export function toToolResultItem(value) {
+  if (typeof value === 'string') return { type: 'text', value };
+  // A null result rejects the turn just as a nested one does, and a tool that
+  // returns nothing has nothing to say.
+  if (value == null) return { type: 'text', value: '' };
+  if (isInstanceOf(value, AUDIO_SOURCES)) return { type: 'audio', value };
+  if (isInstanceOf(value, IMAGE_SOURCES)) return { type: 'image', value };
+  if (value instanceof ArrayBuffer || ArrayBuffer.isView(value)) {
+    return { type: sniffBufferType(value), value };
+  }
+  return { type: 'object', value: stripNullish(value) };
+}
+
+/**
  * Splits the caller's tools into what the model sees and what actually runs.
  *
  * The two halves travel together because that is how they are easiest to write.
@@ -126,7 +201,7 @@ export async function runToolCall(call, byName, { seen, signal } = {}) {
       value: new LanguageModelToolSuccess({
         callID: call.callID,
         name: call.name,
-        result: [{ type: 'object', value: stripNullish(output) }],
+        result: [toToolResultItem(output)],
       }),
     };
   } catch (error) {

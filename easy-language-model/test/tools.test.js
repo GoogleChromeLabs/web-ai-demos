@@ -325,6 +325,61 @@ describe('tool calling', () => {
     });
   });
 
+  it('declares the type of a result from its value', async () => {
+    const wav = new TextEncoder().encode('RIFF\0\0\0\0WAVEfmt ');
+    const png = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+    const mp3 = new Uint8Array([0xff, 0xfb, 0x90, 0x44]);
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
+    const blob = new Blob(['<svg/>'], { type: 'image/svg+xml' });
+    const cases = [
+      ['Sunny.', 'text'],
+      [undefined, 'text'],
+      [null, 'text'],
+      [{ temperatureC: 18 }, 'object'],
+      [[18, 19], 'object'],
+      [18, 'object'],
+      [false, 'object'],
+      [blob, 'image'],
+      [png, 'image'],
+      [jpeg.buffer, 'image'],
+      [wav, 'audio'],
+      [new DataView(mp3.buffer), 'audio'],
+    ];
+
+    const script = install([
+      cases.map((_, i) => ({
+        type: 'tool-call',
+        value: toolCall('get_weather', { location: `City ${i}` }, `call-${i}`),
+      })),
+      'Done.',
+    ]);
+    const tool = {
+      name: 'get_weather',
+      description: 'w',
+      inputSchema: { type: 'object', required: ['location'] },
+      execute: ({ location }) => cases[Number(location.split(' ')[1])][0],
+    };
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+    });
+    await session.prompt('Weather?');
+
+    const items = responsesSentBack(script).map((value) => value.result[0]);
+    assert.deepEqual(
+      items.map((item) => item.type),
+      cases.map(([, type]) => type)
+    );
+    // A nullish result has nothing to say, and anything binary reaches the
+    // model as it was, not walked into a plain object by the null stripping.
+    assert.equal(items[1].value, '');
+    assert.equal(items[2].value, '');
+    assert.equal(items[7].value, blob);
+    assert.equal(items[8].value, png);
+  });
+
   it('turns a thrown tool into something the model can recover from', async () => {
     const script = install([
       [
