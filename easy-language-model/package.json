@@ -25,7 +25,8 @@
     "build:demo": "vite build --config vite.demo.config.js",
     "preview": "vite preview --config vite.demo.config.js",
     "format": "prettier --write .",
-    "test": "node --test \"test/*.test.js\""
+    "test": "node --test \"test/*.test.js\"",
+    "prepublishOnly": "npm test && npm run build"
   },
   "keywords": [
     "prompt-api",
