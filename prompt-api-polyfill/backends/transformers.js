@@ -3,15 +3,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { pipeline, TextStreamer, env } from '@huggingface/transformers';
+import {
+  ModelRegistry,
+  pipeline,
+  TextStreamer,
+  env,
+} from '@huggingface/transformers';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
+
+/**
+ * Pipelines currently loaded, shared by every session using the same model,
+ * device, and dtype (each combination loads different weights).
+ *
+ * `LanguageModel#clone()` creates a new backend instance so that per-session
+ * state stays separate. The pipeline is not per-session state, though: it is
+ * the model weights on the device. Holding one per backend instance meant
+ * every clone called `pipeline()` again and reloaded the whole model.
+ *
+ * @type {Map<string, {generator: Promise<Object>, ready: boolean, users: number}>}
+ */
+const generators = new Map();
+
+const generatorKey = (modelName, device, dtype) =>
+  `${modelName}|${device}|${dtype}`;
 
 /**
  * Transformers.js (ONNX Runtime) Backend
  */
 export default class TransformersBackend extends PolyfillBackend {
   #generator;
+  #generatorReady;
+  #shared;
   #tokenizer;
   #device;
   #dtype;
@@ -57,58 +80,122 @@ export default class TransformersBackend extends PolyfillBackend {
    * @param {EventTarget} [monitorTarget] - The event target to dispatch download progress events to.
    * @returns {Promise<Object>} The generator.
    */
-  async #ensureGenerator(monitorTarget) {
-    if (!this.#generator) {
-      const dispatch = (loaded) => {
-        if (!monitorTarget) {
-          return;
-        }
-        // Round to nearest 1/0x10000 (65536) as required by WPT
-        const precision = 1 / 65536;
-        const roundedLoaded = Math.floor(loaded / precision) * precision;
+  #ensureGenerator(monitorTarget) {
+    // One acquisition per backend instance, however many calls race to it.
+    this.#generatorReady ??= this.#acquireGenerator(monitorTarget);
+    return this.#generatorReady;
+  }
 
-        // Ensure strict monotonicity using the property set by the polyfill
-        if (roundedLoaded <= monitorTarget.__lastProgressLoaded) {
-          return;
-        }
+  async #acquireGenerator(monitorTarget) {
+    const dispatch = (loaded) => {
+      if (!monitorTarget) {
+        return;
+      }
+      // Round to nearest 1/0x10000 (65536) as required by WPT
+      const precision = 1 / 65536;
+      const roundedLoaded = Math.floor(loaded / precision) * precision;
 
-        monitorTarget.dispatchEvent(
-          new ProgressEvent('downloadprogress', {
-            loaded: roundedLoaded,
-            total: 1,
-            lengthComputable: true,
-          })
-        );
-        monitorTarget.__lastProgressLoaded = roundedLoaded;
+      // Ensure strict monotonicity using the property set by the polyfill
+      if (roundedLoaded <= monitorTarget.__lastProgressLoaded) {
+        return;
+      }
+
+      monitorTarget.dispatchEvent(
+        new ProgressEvent('downloadprogress', {
+          loaded: roundedLoaded,
+          total: 1,
+          lengthComputable: true,
+        })
+      );
+      monitorTarget.__lastProgressLoaded = roundedLoaded;
+    };
+
+    const progress_callback = (data) => {
+      if (data.status === 'progress_total') {
+        dispatch(data.progress / 100);
+      } else if (data.status === 'ready') {
+        dispatch(1);
+      }
+    };
+
+    // Initial 0% progress
+    dispatch(0);
+
+    const key = generatorKey(this.modelName, this.#device, this.#dtype);
+    let shared = generators.get(key);
+    if (!shared) {
+      // Progress goes to whichever session started the load. Sessions that
+      // join a pipeline already loading still see 0 and then 1.
+      shared = {
+        ready: false,
+        users: 0,
+        generator: pipeline('text-generation', this.modelName, {
+          device: this.#device,
+          dtype: this.#dtype,
+          progress_callback,
+        }),
       };
-
-      const progress_callback = (data) => {
-        if (data.status === 'progress_total') {
-          dispatch(data.progress / 100);
-        } else if (data.status === 'ready') {
-          dispatch(1);
-        }
-      };
-
-      // Initial 0% progress
-      dispatch(0);
-
-      this.#generator = await pipeline('text-generation', this.modelName, {
-        device: this.#device,
-        dtype: this.#dtype,
-        progress_callback,
-      });
-      this.#tokenizer = this.#generator.tokenizer;
+      generators.set(key, shared);
     }
+    shared.users += 1;
+    this.#shared = shared;
+
+    try {
+      this.#generator = await shared.generator;
+      shared.ready = true;
+    } catch (error) {
+      this.#release();
+      // A failed load is not kept, so the next session can try again.
+      if (generators.get(key) === shared) {
+        generators.delete(key);
+      }
+      throw error;
+    }
+    this.#tokenizer = this.#generator.tokenizer;
+
+    // Ensure 100% is dispatched once loading completes
+    dispatch(1);
     return this.#generator;
+  }
+
+  /**
+   * Gives up this session's share of the pipeline, disposing of it once no
+   * session is using it any more.
+   */
+  #release() {
+    const shared = this.#shared;
+    if (!shared) {
+      return;
+    }
+    this.#shared = undefined;
+    this.#generator = undefined;
+    this.#generatorReady = undefined;
+    shared.users -= 1;
+    if (shared.users > 0) {
+      return;
+    }
+    const key = generatorKey(this.modelName, this.#device, this.#dtype);
+    if (generators.get(key) === shared) {
+      generators.delete(key);
+    }
+    shared.generator.then((generator) => generator.dispose()).catch(() => {});
+  }
+
+  /**
+   * Called by the polyfill when the session is destroyed.
+   */
+  dispose() {
+    this.#release();
   }
 
   /**
    * Checks if the backend is available given the options.
    * @param {Object} options - LanguageModel options.
-   * @returns {string} 'available' or 'unavailable'.
+   * @param {Object} [config] - The backend configuration (`TRANSFORMERS_CONFIG`).
+   * @returns {Promise<string>} 'available', 'downloading', 'downloadable', or
+   *     'unavailable'.
    */
-  static availability(options) {
+  static async availability(options, config = {}) {
     if (options?.expectedInputs && Array.isArray(options.expectedInputs)) {
       for (const input of options.expectedInputs) {
         if (input.type === 'audio' || input.type === 'image') {
@@ -116,7 +203,27 @@ export default class TransformersBackend extends PolyfillBackend {
         }
       }
     }
-    return 'available';
+    const defaults = DEFAULT_MODELS.transformers;
+    const modelName = config.modelName || defaults.modelName;
+    const device = config.device || defaults.device || 'webgpu';
+    const dtype = config.dtype || defaults.dtype || 'q4f16';
+
+    const shared = generators.get(generatorKey(modelName, device, dtype));
+    if (shared) {
+      return shared.ready ? 'available' : 'downloading';
+    }
+    // Look in the same storage a load would use, before any backend instance
+    // has had the chance to switch it on.
+    env.experimental_useCrossOriginStorage = true;
+    // "available" means ready for immediate use. A model that still has to be
+    // fetched is "downloadable", which is what lets callers ask the user first.
+    try {
+      return (await ModelRegistry.is_cached(modelName, { device, dtype }))
+        ? 'available'
+        : 'downloadable';
+    } catch {
+      return 'downloadable';
+    }
   }
 
   /**
