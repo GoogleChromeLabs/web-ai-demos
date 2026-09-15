@@ -17,11 +17,24 @@ export default class PolyfillBackend {
   /**
    * Checks if the backend is available given the options.
    * @param {Object} _options - LanguageModel options.
-   * @returns {string} 'available', 'unavailable', 'downloadable', or 'downloading'.
+   * @param {Object} [_config] - The backend configuration, for backends whose
+   *     answer depends on which model is configured.
+   * @returns {string|Promise<string>} 'available', 'unavailable',
+   *     'downloadable', or 'downloading'.
    */
-  static availability(_options) {
+  static availability(_options, _config) {
     return 'available';
   }
+
+  /**
+   * Releases whatever this backend holds for its session. Called when the
+   * session is destroyed, and when creating or cloning it fails after the
+   * backend was set up. Must be safe to call more than once.
+   *
+   * Cloud backends hold nothing worth releasing. Local backends share a loaded
+   * model between sessions and use this to unload it once none is left.
+   */
+  dispose() {}
 
   /**
    * Creates a model session and stores it.

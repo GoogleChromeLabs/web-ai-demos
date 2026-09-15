@@ -3,15 +3,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CreateMLCEngine, prebuiltAppConfig } from '@mlc-ai/web-llm';
+import {
+  CreateMLCEngine,
+  hasModelInCache,
+  prebuiltAppConfig,
+} from '@mlc-ai/web-llm';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
+
+// Use the Cross-Origin Storage API if it's supported. Shared by loading and by
+// availability(), so the cache that is checked is the cache that is used.
+const APP_CONFIG = { ...prebuiltAppConfig, cacheBackend: 'cross-origin' };
+
+/**
+ * Engines currently loaded, by model name, shared by every session using them.
+ *
+ * `LanguageModel#clone()` creates a new backend instance so that per-session
+ * state (token counts, system instruction, response schema) stays separate.
+ * The engine is not per-session state, though: it is the model weights on the
+ * GPU. Holding one per backend instance meant every clone called
+ * `CreateMLCEngine` again and reloaded the whole model.
+ *
+ * @type {Map<string, {engine: Promise<Object>, ready: boolean, users: number}>}
+ */
+const engines = new Map();
 
 /**
  * WebLLM (MLC) Backend
  */
 export default class WebLLMBackend extends PolyfillBackend {
   #engine;
+  #engineReady;
+  #shared;
   #systemInstruction;
   // Accumulated token count across all rounds in this session. WebLLM only
   // reports incremental tokens per call (KV-cached prefix is not re-counted),
@@ -28,56 +51,113 @@ export default class WebLLMBackend extends PolyfillBackend {
    * @param {EventTarget} [monitorTarget] - The event target to dispatch download progress events to.
    * @returns {Promise<Object>} The engine.
    */
-  async #ensureEngine(monitorTarget) {
-    if (!this.#engine) {
-      const dispatch = (loaded) => {
-        if (!monitorTarget) {
-          return;
-        }
-        // Round to nearest 1/0x10000 (65536) as required by WPT
-        const precision = 1 / 65536;
-        const roundedLoaded = Math.floor(loaded / precision) * precision;
+  #ensureEngine(monitorTarget) {
+    // One acquisition per backend instance, however many calls race to it.
+    this.#engineReady ??= this.#acquireEngine(monitorTarget);
+    return this.#engineReady;
+  }
 
-        // Ensure strict monotonicity using the property set by the polyfill
-        if (roundedLoaded <= monitorTarget.__lastProgressLoaded) {
-          return;
-        }
+  async #acquireEngine(monitorTarget) {
+    const dispatch = (loaded) => {
+      if (!monitorTarget) {
+        return;
+      }
+      // Round to nearest 1/0x10000 (65536) as required by WPT
+      const precision = 1 / 65536;
+      const roundedLoaded = Math.floor(loaded / precision) * precision;
 
-        monitorTarget.dispatchEvent(
-          new ProgressEvent('downloadprogress', {
-            loaded: roundedLoaded,
-            total: 1,
-            lengthComputable: true,
-          })
-        );
-        monitorTarget.__lastProgressLoaded = roundedLoaded;
+      // Ensure strict monotonicity using the property set by the polyfill
+      if (roundedLoaded <= monitorTarget.__lastProgressLoaded) {
+        return;
+      }
+
+      monitorTarget.dispatchEvent(
+        new ProgressEvent('downloadprogress', {
+          loaded: roundedLoaded,
+          total: 1,
+          lengthComputable: true,
+        })
+      );
+      monitorTarget.__lastProgressLoaded = roundedLoaded;
+    };
+
+    // Initial 0% progress
+    dispatch(0);
+
+    let shared = engines.get(this.modelName);
+    if (!shared) {
+      // Progress goes to whichever session started the load. Sessions that
+      // join an engine already loading still see 0 and then 1.
+      shared = {
+        ready: false,
+        users: 0,
+        engine: CreateMLCEngine(this.modelName, {
+          appConfig: APP_CONFIG,
+          initProgressCallback: (progress) => {
+            dispatch(progress.progress);
+          },
+        }),
       };
-
-      // Initial 0% progress
-      dispatch(0);
-
-      // Use the Cross-Origin Storage API if it's supported.
-      const appConfig = { ...prebuiltAppConfig, cacheBackend: 'cross-origin' };
-
-      this.#engine = await CreateMLCEngine(this.modelName, {
-        appConfig,
-        initProgressCallback: (progress) => {
-          dispatch(progress.progress);
-        },
-      });
-
-      // Ensure 100% is dispatched once loading completes
-      dispatch(1);
+      engines.set(this.modelName, shared);
     }
+    shared.users += 1;
+    this.#shared = shared;
+
+    try {
+      this.#engine = await shared.engine;
+      shared.ready = true;
+    } catch (error) {
+      this.#release();
+      // A failed load is not kept, so the next session can try again.
+      if (engines.get(this.modelName) === shared) {
+        engines.delete(this.modelName);
+      }
+      this.#engineReady = undefined;
+      throw error;
+    }
+
+    // Ensure 100% is dispatched once loading completes
+    dispatch(1);
     return this.#engine;
+  }
+
+  /**
+   * Gives up this session's share of the engine, unloading it from the GPU
+   * once no session is using it any more.
+   */
+  #release() {
+    const shared = this.#shared;
+    if (!shared) {
+      return;
+    }
+    this.#shared = undefined;
+    this.#engine = undefined;
+    this.#engineReady = undefined;
+    shared.users -= 1;
+    if (shared.users > 0) {
+      return;
+    }
+    if (engines.get(this.modelName) === shared) {
+      engines.delete(this.modelName);
+    }
+    shared.engine.then((engine) => engine.unload()).catch(() => {});
+  }
+
+  /**
+   * Called by the polyfill when the session is destroyed.
+   */
+  dispose() {
+    this.#release();
   }
 
   /**
    * Checks if the backend is available given the options.
    * @param {Object} options - LanguageModel options.
-   * @returns {string} 'available' or 'unavailable'.
+   * @param {Object} [config] - The backend configuration (`WEBLLM_CONFIG`).
+   * @returns {Promise<string>} 'available', 'downloading', 'downloadable', or
+   *     'unavailable'.
    */
-  static availability(options) {
+  static async availability(options, config = {}) {
     if (options?.expectedInputs && Array.isArray(options.expectedInputs)) {
       for (const input of options.expectedInputs) {
         if (input.type === 'audio' || input.type === 'image') {
@@ -85,7 +165,20 @@ export default class WebLLMBackend extends PolyfillBackend {
         }
       }
     }
-    return 'available';
+    const modelName = config.modelName || DEFAULT_MODELS.webllm.modelName;
+    const shared = engines.get(modelName);
+    if (shared) {
+      return shared.ready ? 'available' : 'downloading';
+    }
+    // "available" means ready for immediate use. A model that still has to be
+    // fetched is "downloadable", which is what lets callers ask the user first.
+    try {
+      return (await hasModelInCache(modelName, APP_CONFIG))
+        ? 'available'
+        : 'downloadable';
+    } catch {
+      return 'downloadable';
+    }
   }
 
   /**

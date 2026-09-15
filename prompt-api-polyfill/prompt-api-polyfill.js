@@ -172,7 +172,10 @@ export class LanguageModel extends EventTarget {
       return 'unavailable';
     }
     const backendClass = await LanguageModel.#getBackendClass(win);
-    return backendClass.availability(options);
+    return backendClass.availability(
+      options,
+      LanguageModel.#getBackendInfo(win).configValue
+    );
   }
 
   static #backends = BACKENDS;
@@ -344,7 +347,14 @@ export class LanguageModel extends EventTarget {
       );
     }
 
-    if (availability === 'downloadable' || availability === 'downloading') {
+    // A download may only start from a user gesture. Only a missing gesture is
+    // an error: this used to throw for every downloadable model, which went
+    // unnoticed because the local backends never reported anything other than
+    // "available".
+    if (
+      (availability === 'downloadable' || availability === 'downloading') &&
+      !win.navigator?.userActivation?.isActive
+    ) {
       throw new (win.DOMException || globalThis.DOMException)(
         'Requires a user gesture when availability is "downloading" or "downloadable".',
         'NotAllowedError'
@@ -491,48 +501,59 @@ export class LanguageModel extends EventTarget {
       );
     }
 
-    const model = await backend.createSession(
-      resolvedOptions,
-      sessionParams,
-      monitorTarget
-    );
-
-    if (!(await dispatchProgress(1))) {
-      throw (
-        options.signal.reason ||
-        new (win.DOMException || globalThis.DOMException)(
-          'Aborted',
-          'AbortError'
-        )
+    // The backend may now hold a loaded model shared with other sessions, so
+    // anything that fails from here on has to give its share back.
+    let model;
+    try {
+      model = await backend.createSession(
+        resolvedOptions,
+        sessionParams,
+        monitorTarget
       );
-    }
 
-    // Initialize contextUsage with the tokens from the initial prompts.
-    if (resolvedOptions.initialPrompts?.length > 0) {
-      const fullHistory = [...initialHistory];
-      if (sessionParams.systemInstruction) {
-        fullHistory.unshift({
-          role: 'system',
-          parts: [{ text: sessionParams.systemInstruction }],
-        });
-      }
-      contextUsageValue = (await backend.countTokens(fullHistory)) || 0;
-
-      if (contextUsageValue > 1000000) {
-        const ErrorClass =
-          win.QuotaExceededError ||
-          win.DOMException ||
-          globalThis.QuotaExceededError ||
-          globalThis.DOMException;
-        const error = new ErrorClass(
-          'The initial prompts are too large, they exceed the quota.',
-          'QuotaExceededError'
+      if (!(await dispatchProgress(1))) {
+        throw (
+          options.signal.reason ||
+          new (win.DOMException || globalThis.DOMException)(
+            'Aborted',
+            'AbortError'
+          )
         );
-        Object.defineProperty(error, 'code', { value: 22, configurable: true });
-        error.requested = contextUsageValue;
-        error.quota = 1000000; // contextWindow
-        throw error;
       }
+
+      // Initialize contextUsage with the tokens from the initial prompts.
+      if (resolvedOptions.initialPrompts?.length > 0) {
+        const fullHistory = [...initialHistory];
+        if (sessionParams.systemInstruction) {
+          fullHistory.unshift({
+            role: 'system',
+            parts: [{ text: sessionParams.systemInstruction }],
+          });
+        }
+        contextUsageValue = (await backend.countTokens(fullHistory)) || 0;
+
+        if (contextUsageValue > 1000000) {
+          const ErrorClass =
+            win.QuotaExceededError ||
+            win.DOMException ||
+            globalThis.QuotaExceededError ||
+            globalThis.DOMException;
+          const error = new ErrorClass(
+            'The initial prompts are too large, they exceed the quota.',
+            'QuotaExceededError'
+          );
+          Object.defineProperty(error, 'code', {
+            value: 22,
+            configurable: true,
+          });
+          error.requested = contextUsageValue;
+          error.quota = 1000000; // contextWindow
+          throw error;
+        }
+      }
+    } catch (error) {
+      backend.dispose();
+      throw error;
     }
 
     return new this(
@@ -579,6 +600,8 @@ export class LanguageModel extends EventTarget {
     );
 
     if (options.signal?.aborted) {
+      // Give back the share of the model the new backend just took.
+      newBackend.dispose();
       throw (
         options.signal.reason ||
         new (this.#window.DOMException || globalThis.DOMException)(
@@ -601,6 +624,9 @@ export class LanguageModel extends EventTarget {
 
   destroy() {
     this.#validateContext();
+    if (!this.#destroyed) {
+      this.#backend.dispose();
+    }
     this.#destroyed = true;
     this.#history = null;
   }
