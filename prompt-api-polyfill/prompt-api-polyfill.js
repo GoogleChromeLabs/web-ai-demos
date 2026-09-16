@@ -589,6 +589,12 @@ export class LanguageModel extends EventTarget {
 
     const historyCopy = JSON.parse(JSON.stringify(this.#history));
     const mergedOptions = { ...this.#options, ...options };
+    // A per-prompt `responseConstraint` updates the generation config, which
+    // must not leak between a session and its clones.
+    const sessionParams = {
+      ...this.#sessionParams,
+      generationConfig: { ...this.#sessionParams.generationConfig },
+    };
 
     // Re-create the backend for the clone since it now holds state (#model)
     const BackendClass = await LanguageModel.#getBackendClass(this.#window);
@@ -596,7 +602,7 @@ export class LanguageModel extends EventTarget {
     const newBackend = new BackendClass(info.configValue);
     const newModel = await newBackend.createSession(
       mergedOptions,
-      this.#sessionParams
+      sessionParams
     );
 
     if (options.signal?.aborted) {
@@ -616,7 +622,7 @@ export class LanguageModel extends EventTarget {
       newModel,
       historyCopy,
       mergedOptions,
-      this.#sessionParams,
+      sessionParams,
       this.#contextUsage,
       this.#window
     );
@@ -662,20 +668,7 @@ export class LanguageModel extends EventTarget {
       return '[object Object]';
     }
 
-    if (options.responseConstraint) {
-      LanguageModel.#validateResponseConstraint(
-        options.responseConstraint,
-        this.#window
-      );
-      // Update Schema
-      const schema = this.#backend.convertSchema(options.responseConstraint);
-      this.#sessionParams.generationConfig.responseMimeType =
-        'application/json';
-      this.#sessionParams.generationConfig.responseSchema = schema;
-
-      // Re-create model with new config/schema (stored in backend)
-      this.#backend.createSession(this.#options, this.#sessionParams);
-    }
+    this.#applyResponseConstraint(options);
 
     // Process Input (Async conversion of Blob/Canvas/AudioBuffer)
     const workaroundPrefix = this.#getWorkaroundPrefix(input);
@@ -888,19 +881,7 @@ export class LanguageModel extends EventTarget {
         }
 
         try {
-          if (options.responseConstraint) {
-            LanguageModel.#validateResponseConstraint(
-              options.responseConstraint,
-              _this.#window
-            );
-            const schema = _this.#backend.convertSchema(
-              options.responseConstraint
-            );
-            _this.#sessionParams.generationConfig.responseMimeType =
-              'application/json';
-            _this.#sessionParams.generationConfig.responseSchema = schema;
-            _this.#backend.createSession(_this.#options, _this.#sessionParams);
-          }
+          _this.#applyResponseConstraint(options);
 
           const workaroundPrefix = _this.#getWorkaroundPrefix(input);
           const parts = await _this.#processInput(input);
@@ -1097,7 +1078,39 @@ export class LanguageModel extends EventTarget {
     }
   }
 
-  async measureContextUsage(input) {
+  /**
+   * Updates the backend for a prompt's `responseConstraint`. The constraint
+   * applies to that prompt only, not to the ones after it.
+   * @param {Object} options - LanguageModel prompt options.
+   */
+  #applyResponseConstraint(options) {
+    const { generationConfig } = this.#sessionParams;
+    if (options.responseConstraint) {
+      LanguageModel.#validateResponseConstraint(
+        options.responseConstraint,
+        this.#window
+      );
+      generationConfig.responseMimeType = 'application/json';
+      generationConfig.responseSchema = this.#backend.convertSchema(
+        options.responseConstraint
+      );
+      // Not part of `generationConfig`, which some backends pass to their API
+      // as is.
+      this.#sessionParams.omitResponseConstraintInput = Boolean(
+        options.omitResponseConstraintInput
+      );
+    } else if (generationConfig.responseSchema) {
+      delete generationConfig.responseMimeType;
+      delete generationConfig.responseSchema;
+      delete this.#sessionParams.omitResponseConstraintInput;
+    } else {
+      return;
+    }
+    // Re-create model with new config/schema (stored in backend)
+    this.#backend.createSession(this.#options, this.#sessionParams);
+  }
+
+  async measureContextUsage(input, options = {}) {
     this.#validateContext();
     if (this.#destroyed) {
       throw new (this.#window.DOMException || globalThis.DOMException)(
@@ -1122,9 +1135,24 @@ export class LanguageModel extends EventTarget {
         return 500000; // Mock large but under quota token count
       }
 
-      const totalTokens = await this.#backend.countTokens([
-        { role: 'user', parts },
-      ]);
+      if (options.responseConstraint) {
+        LanguageModel.#validateResponseConstraint(
+          options.responseConstraint,
+          this.#window
+        );
+      }
+      // Backends that include the constraint in the prompt count it, too.
+      const totalTokens = await this.#backend.countTokens(
+        [{ role: 'user', parts }],
+        {
+          responseSchema: options.responseConstraint
+            ? this.#backend.convertSchema(options.responseConstraint)
+            : undefined,
+          omitResponseConstraintInput: Boolean(
+            options.omitResponseConstraintInput
+          ),
+        }
+      );
       return totalTokens || 0;
     } catch {
       console.warn(

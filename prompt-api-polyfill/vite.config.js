@@ -31,6 +31,7 @@ export default defineConfig({
         'openai',
         '@google/genai',
         '@huggingface/transformers',
+        '@huggingface/transformers-structured-output',
         '@mlc-ai/web-llm',
       ],
       output: {

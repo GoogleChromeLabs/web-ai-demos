@@ -51,7 +51,13 @@ configured, the polyfill will use Transformers.js with the default model.
 
 ### Transformers.js (local after initial model download)
 
-- **Uses**: `@huggingface/transformers` SDK.
+- **Uses**: `@huggingface/transformers` SDK, and
+  `@huggingface/transformers-structured-output` to constrain generation to a
+  `responseConstraint` (JSON Schema or `RegExp`). JSON Schema `pattern` and
+  `format`, as well as regular expressions with lookarounds or backreferences,
+  cannot be enforced and fall back to prompt engineering. Unless you pass
+  `omitResponseConstraintInput: true`, the constraint is also included in the
+  prompt, which `measureContextUsage()` accounts for.
 - **Select by setting**: `window.TRANSFORMERS_CONFIG`.
 - **Note**: This is the **default backend** if no other configuration is
   provided.
