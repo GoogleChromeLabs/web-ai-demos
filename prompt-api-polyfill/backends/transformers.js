@@ -9,6 +9,7 @@ import {
   TextStreamer,
   env,
 } from '@huggingface/transformers';
+import { StructuredOutputProcessor } from '@huggingface/transformers-structured-output';
 import PolyfillBackend from './base.js';
 import { DEFAULT_MODELS } from './defaults.js';
 
@@ -29,6 +30,55 @@ const generatorKey = (modelName, device, dtype) =>
   `${modelName}|${device}|${dtype}`;
 
 /**
+ * Tokenizers that structured output constrains generation with, by pipeline.
+ * Preparing a tokenizer for constraints is expensive and cached per tokenizer
+ * object, so every session sharing a pipeline must share this one, too.
+ * @type {WeakMap<Object, Object>}
+ */
+const constraintTokenizers = new WeakMap();
+
+/**
+ * Returns the tokenizer to constrain generation with. Some tokenizers know
+ * more tokens than the model has logits for, for example Gemma 3's
+ * `<image_soft_token>`, which the text-only model never produces. The
+ * structured output processor rejects logits smaller than the vocabulary, so
+ * those tokens are left out.
+ * @param {Object} generator - The text generation pipeline.
+ * @returns {Object} The tokenizer.
+ */
+const constraintTokenizer = (generator) => {
+  let tokenizer = constraintTokenizers.get(generator);
+  if (tokenizer) {
+    return tokenizer;
+  }
+  tokenizer = generator.tokenizer;
+  const { config } = generator.model;
+  const vocabSize = config.vocab_size ?? config.text_config?.vocab_size;
+  const json = tokenizer._tokenizerJSON;
+  if (
+    Number.isInteger(vocabSize) &&
+    json?.added_tokens?.some((token) => token.id >= vocabSize)
+  ) {
+    tokenizer = Object.create(tokenizer, {
+      _tokenizerJSON: {
+        value: {
+          ...json,
+          added_tokens: json.added_tokens.filter(
+            (token) => token.id < vocabSize
+          ),
+        },
+      },
+      all_special_ids: {
+        value: tokenizer.all_special_ids?.filter((id) => id < vocabSize),
+      },
+      decode: { value: tokenizer.decode.bind(tokenizer) },
+    });
+  }
+  constraintTokenizers.set(generator, tokenizer);
+  return tokenizer;
+};
+
+/**
  * Transformers.js (ONNX Runtime) Backend
  */
 export default class TransformersBackend extends PolyfillBackend {
@@ -39,6 +89,8 @@ export default class TransformersBackend extends PolyfillBackend {
   #device;
   #dtype;
   #systemInstruction;
+  #responseFormat;
+  #omitResponseConstraintInput;
 
   constructor(config = {}) {
     super(config.modelName || DEFAULT_MODELS.transformers.modelName);
@@ -217,8 +269,14 @@ export default class TransformersBackend extends PolyfillBackend {
     env.experimental_useCrossOriginStorage = true;
     // "available" means ready for immediate use. A model that still has to be
     // fetched is "downloadable", which is what lets callers ask the user first.
+    // Only the files the text generation pipeline loads count: multimodal
+    // models like Gemma 4 also ship audio and vision encoders it never fetches.
     try {
-      return (await ModelRegistry.is_cached(modelName, { device, dtype }))
+      return (await ModelRegistry.is_pipeline_cached(
+        'text-generation',
+        modelName,
+        { device, dtype }
+      ))
         ? 'available'
         : 'downloadable';
     } catch {
@@ -247,11 +305,10 @@ export default class TransformersBackend extends PolyfillBackend {
     };
     this.#systemInstruction = sessionParams.systemInstruction;
     this.responseSchema = sessionParams.generationConfig?.responseSchema;
-    if (this.responseSchema) {
-      console.warn(
-        'Polyfill: `responseConstraint` is not natively supported by the Transformers.js backend and is implemented via prompt engineering, which may fail. For better results, consider adding few-shot examples to your prompt.'
-      );
-    }
+    this.#omitResponseConstraintInput = Boolean(
+      sessionParams.omitResponseConstraintInput
+    );
+    this.#responseFormat = this.#toResponseFormat(this.responseSchema);
 
     return this.#generator;
   }
@@ -274,6 +331,7 @@ export default class TransformersBackend extends PolyfillBackend {
     const output = await generator(prompt, {
       ...this.generationConfig,
       add_special_tokens: false,
+      logits_processor: this.#createLogitsProcessor(),
     });
     const text = output[0].generated_text;
 
@@ -299,10 +357,14 @@ export default class TransformersBackend extends PolyfillBackend {
       add_generation_prompt: true,
     });
 
+    // Counted before generating, like `generateContent()` does.
+    const usage = await this.countTokens(contents);
+
     const queue = [];
     let resolveSignal;
     let promise = new Promise((r) => (resolveSignal = r));
     let isDone = false;
+    let generationError;
 
     const on_token_callback = (text) => {
       queue.push(text);
@@ -321,6 +383,7 @@ export default class TransformersBackend extends PolyfillBackend {
     const generationPromise = generator(prompt, {
       ...this.generationConfig,
       add_special_tokens: false,
+      logits_processor: this.#createLogitsProcessor(),
       streamer,
     });
 
@@ -334,6 +397,7 @@ export default class TransformersBackend extends PolyfillBackend {
       })
       .catch((err) => {
         console.error('[Transformers.js] Generation error:', err);
+        generationError = err;
         isDone = true;
         if (resolveSignal) {
           resolveSignal();
@@ -354,11 +418,15 @@ export default class TransformersBackend extends PolyfillBackend {
           const newText = queue.shift();
           yield {
             text: () => newText,
-            usageMetadata: { totalTokenCount: 0 },
+            usageMetadata: { totalTokenCount: usage },
           };
         }
 
         if (isDone) {
+          // For example, a response constraint that reached a dead end.
+          if (generationError) {
+            throw generationError;
+          }
           break;
         }
       }
@@ -368,20 +436,29 @@ export default class TransformersBackend extends PolyfillBackend {
   /**
    * Counts tokens.
    * @param {Array} contents - The content to count.
+   * @param {Object} [constraint] - The response constraint to count instead
+   *     of the current one, as `{responseSchema, omitResponseConstraintInput}`.
    * @returns {Promise<number>} Total tokens.
    */
-  async countTokens(contents) {
+  async countTokens(contents, constraint) {
     await this.#ensureGenerator();
-    const messages = this.#contentsToMessages(contents);
-    const input_ids = this.#tokenizer.apply_chat_template(messages, {
+    const messages = this.#contentsToMessages(contents, constraint);
+    const { input_ids } = this.#tokenizer.apply_chat_template(messages, {
       tokenize: true,
       add_generation_prompt: false,
       return_tensor: false,
+      return_dict: true,
     });
     return input_ids.length;
   }
 
-  #contentsToMessages(contents) {
+  #contentsToMessages(
+    contents,
+    {
+      responseSchema = this.responseSchema,
+      omitResponseConstraintInput = this.#omitResponseConstraintInput,
+    } = {}
+  ) {
     const messages = contents.map((c) => {
       let role =
         c.role === 'model'
@@ -398,7 +475,9 @@ export default class TransformersBackend extends PolyfillBackend {
     }
 
     // Append JSON Schema constraint if present
-    this.#appendResponseSchema(messages);
+    if (!omitResponseConstraintInput) {
+      this.#appendResponseSchema(messages, responseSchema);
+    }
 
     if (this.modelName.toLowerCase().includes('gemma')) {
       const systemIndex = messages.findIndex((m) => m.role === 'system');
@@ -423,12 +502,73 @@ export default class TransformersBackend extends PolyfillBackend {
     return messages;
   }
 
-  #appendResponseSchema(messages) {
-    if (this.responseSchema) {
+  /**
+   * Maps a `responseConstraint` to a Transformers.js structured output format.
+   * Constraints the engine cannot enforce (for example, JSON Schema `pattern`
+   * or `format`, or regular expressions with lookarounds) fall back to prompt
+   * engineering alone.
+   * @param {Object|RegExp} [constraint] - The response constraint.
+   * @returns {Object|undefined} The response format, if it can be enforced.
+   */
+  #toResponseFormat(constraint) {
+    if (!constraint) {
+      return undefined;
+    }
+    const responseFormat =
+      constraint instanceof RegExp
+        ? { type: 'regex', regex: constraint.source }
+        : { type: 'json_schema', json_schema: constraint };
+    try {
+      // Validates the constraint, and prepares the tokenizer once so that the
+      // processors created for each generation are cheap.
+      new StructuredOutputProcessor(
+        constraintTokenizer(this.#generator),
+        responseFormat
+      );
+      return responseFormat;
+    } catch (error) {
+      console.warn(
+        this.#omitResponseConstraintInput
+          ? `Polyfill: The Transformers.js backend cannot enforce this \`responseConstraint\` (${error.message}), and \`omitResponseConstraintInput\` keeps it out of the prompt, so the response only follows the guidance in your prompt.`
+          : `Polyfill: The Transformers.js backend cannot enforce this \`responseConstraint\` (${error.message}) and falls back to prompt engineering, which may fail. For better results, consider adding few-shot examples to your prompt.`
+      );
+      return undefined;
+    }
+  }
+
+  /**
+   * Constrains generation to the response format, if there is one. The
+   * processor tracks the tokens generated so far, so every generation needs a
+   * fresh one.
+   * @returns {Array|undefined} The logits processors.
+   */
+  #createLogitsProcessor() {
+    if (!this.#responseFormat) {
+      return undefined;
+    }
+    return [
+      new StructuredOutputProcessor(
+        constraintTokenizer(this.#generator),
+        this.#responseFormat
+      ),
+    ];
+  }
+
+  #appendResponseSchema(messages, responseSchema) {
+    // Even when generation is constrained, telling the model what shape to
+    // produce keeps it from fighting the constraint.
+    if (responseSchema instanceof RegExp) {
+      const constraint = `Respond ONLY with text matching this regular expression: ${responseSchema}`;
+      if (messages.length > 0 && messages[0].role === 'system') {
+        messages[0].content = constraint + '\n\n' + messages[0].content;
+      } else {
+        messages.unshift({ role: 'system', content: constraint });
+      }
+    } else if (responseSchema) {
       const constraint = `Respond ONLY with a raw JSON object matching this JSON Schema:
 
 \`\`\`json
-${JSON.stringify(this.responseSchema, null, 2)}
+${JSON.stringify(responseSchema, null, 2)}
 \`\`\`
 
 DO NOT include Markdown code blocks, explanations, or any other text.`;
