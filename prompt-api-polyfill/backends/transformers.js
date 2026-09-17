@@ -217,8 +217,14 @@ export default class TransformersBackend extends PolyfillBackend {
     env.experimental_useCrossOriginStorage = true;
     // "available" means ready for immediate use. A model that still has to be
     // fetched is "downloadable", which is what lets callers ask the user first.
+    // Only the files the text generation pipeline loads count: multimodal
+    // models like Gemma 4 also ship audio and vision encoders it never fetches.
     try {
-      return (await ModelRegistry.is_cached(modelName, { device, dtype }))
+      return (await ModelRegistry.is_pipeline_cached(
+        'text-generation',
+        modelName,
+        { device, dtype }
+      ))
         ? 'available'
         : 'downloadable';
     } catch {
