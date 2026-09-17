@@ -24,6 +24,15 @@
         compacting, always-on download reporting, and user activation handled
         for you.
       </p>
+      <div class="requirements">
+        <p>This demo needs two flags enabled in Chrome:</p>
+        <dl>
+          <dt>Tool use</dt>
+          <dd><code>chrome://flags/#prompt-api-tool-use</code></dd>
+          <dt>Gemma 4</dt>
+          <dd><code>chrome://flags/#gemma4-for-built-in-ai</code></dd>
+        </dl>
+      </div>
     </header>
 
     <section id="status-panel">
@@ -130,8 +139,8 @@
     </main>
 
     <p id="unsupported" hidden class="error">
-      This browser doesn't support the Prompt API. Try Chrome with built-in AI
-      enabled.
+      This browser doesn't support the Prompt API, or tool use isn't enabled.
+      Try Chrome with the flags listed above.
     </p>
 
     <script type="module" src="/demo/main.js"></script>
