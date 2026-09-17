@@ -29,5 +29,6 @@
     "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git",
     "directory": "cos-resource-fetcher"
   },
-  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/cos-resource-fetcher#readme"
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/cos-resource-fetcher#readme",
+  "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues"
 }

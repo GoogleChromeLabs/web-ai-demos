@@ -3,6 +3,13 @@
   "version": "0.2.1",
   "description": "A near drop-in wrapper for the Prompt API's LanguageModel with sanitized output, streaming HTML, session compacting, always-on download reporting, and user activation handling.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git",
+    "directory": "easy-language-model"
+  },
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/easy-language-model#readme",
+  "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "type": "module",
   "files": [
     "dist",
