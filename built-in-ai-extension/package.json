@@ -16,7 +16,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "built-in-ai-task-apis-polyfills": "^1.17.1",
-    "prompt-api-polyfill": "^1.21.0"
+    "prompt-api-polyfill": "^1.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -26,7 +26,7 @@
     "globals": "^17.12.0",
     "node-addon-api": "^8.9.2",
     "node-gyp": "^13.0.2",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.7",
     "vite": "^8.3.0"
   }
 }

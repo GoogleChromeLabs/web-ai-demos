@@ -59,7 +59,7 @@
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",
   "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "dependencies": {
-    "prompt-api-polyfill": "^1.21.0"
+    "prompt-api-polyfill": "^1.22.0"
   },
   "peerDependencies": {
     "@huggingface/transformers": ">=4.2.0"

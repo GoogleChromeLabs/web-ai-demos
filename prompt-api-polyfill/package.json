@@ -58,11 +58,11 @@
     "vite": "^8.3.0"
   },
   "dependencies": {
-    "@google/genai": "^2.22.0",
+    "@google/genai": "^2.23.0",
     "@huggingface/transformers": "^4.3.0",
     "@huggingface/transformers-structured-output": "^4.3.0",
     "@mlc-ai/web-llm": "^0.2.85",
     "firebase": "^12.19.0",
-    "openai": "^7.15.0"
+    "openai": "^7.17.0"
   }
 }
