@@ -1,6 +1,6 @@
 {
   "name": "cos-resource-fetcher",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Fetch resource blobs via Cross-Origin Storage (COS) with Cache API fallback. Defaults to Hugging Face SHA-256 resolution, but accepts any custom resolver.",
   "type": "module",
   "exports": {
@@ -29,5 +29,6 @@
     "url": "git+https://github.com/GoogleChromeLabs/web-ai-demos.git",
     "directory": "cos-resource-fetcher"
   },
-  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/cos-resource-fetcher#readme"
+  "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/cos-resource-fetcher#readme",
+  "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues"
 }
