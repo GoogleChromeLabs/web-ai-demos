@@ -1,3 +1,11 @@
 .DS_Store
 **/node_modules
 .claude/
+
+# Local secrets. The `.env.example` and `.env.template` files that demos ship
+# are checked in on purpose, so only the filled-in ones are ignored, and the
+# placeholder overlay under scripts/sync stays visible.
+**/.env
+**/.env.local
+**/.env.json
+!scripts/sync/secrets.example/**
