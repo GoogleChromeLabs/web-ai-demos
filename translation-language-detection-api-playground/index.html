@@ -24,8 +24,43 @@
     <div class="not-supported-message" hidden>
       Your browser doesn't support the Translator or Language Detector APIs.
     </div>
+    <div class="download-progress" hidden>
+      <label for="detector-progress"
+        >Downloading the language detection model:</label
+      >
+      <progress id="detector-progress" max="1" value="0"></progress>
+    </div>
     <form>
       <label for="input">Input:</label>
+      <div class="samples">
+        <button type="button" data-text="Hello, world! How is the weather today?">
+          <span lang="en-US">English</span> (en-US)
+        </button>
+        <button type="button" data-text="¡Hola mundo! ¿Cómo está el clima hoy en Madrid?">
+          <span lang="es-ES">Español</span> (es-ES)
+        </button>
+        <button type="button" data-text="Bonjour tout le monde, comment allez-vous aujourd'hui ?">
+          <span lang="fr-FR">Français</span> (fr-FR)
+        </button>
+        <button type="button" data-text="今日はとても良い天気ですね。公園へ散歩に行きましょう。">
+          <span lang="ja-JP">日本語</span> (ja-JP)
+        </button>
+        <button type="button" data-text="안녕하세요! 오늘 날씨가 정말 좋네요. 공원에 산책하러 갈까요?">
+          <span lang="ko-KR">한국어</span> (ko-KR)
+        </button>
+        <button type="button" data-text="今天天气真好，我们去公园散步吧。">
+          <span lang="zh-Hans">简体中文</span> (zh-Hans)
+        </button>
+        <button type="button" data-text="今天天氣真好，我們去公園散步吧。">
+          <span lang="zh-Hant">繁體中文</span> (zh-Hant)
+        </button>
+        <button type="button" data-text="Guten Tag! Das Wetter ist heute wirklich wunderbar.">
+          <span lang="de-DE">Deutsch</span> (de-DE)
+        </button>
+        <button type="button" data-text="مرحباً بالعالم! الطقس جميل جداً اليوم في الحديقة.">
+          <span lang="ar-SA" dir="rtl">العربية</span> (ar-SA)
+        </button>
+      </div>
       <textarea id="input">Hello, world!</textarea>
       <p>I'm <span>not sure what language this is</span>.</p>
 
@@ -39,7 +74,13 @@
           <option selected value="es">Spanish</option>
         </select></label
       >
-      <button hidden type="submit" class="button-style">Translate</button>
+      <button hidden type="submit">Translate</button>
+      <div class="download-progress" hidden>
+        <label for="translator-progress"
+          >Downloading the translation model:</label
+        >
+        <progress id="translator-progress" max="1" value="0"></progress>
+      </div>
     </form>
     <label hidden for="output">Translation:</label>
     <output hidden id="output"></output>
