@@ -17,9 +17,7 @@ export function isPromptApiSupported() {
  *
  * @param {object} createOptions Passed through to `LanguageModel.create()`.
  * @param {object} easy The wrapper's own options.
- * @returns {Promise<{session: LanguageModel, finishDownloadUi: () => void}>}
- *   `finishDownloadUi` takes down a progress element that is still up waiting
- *   for the model to say something. Call it on the session's first output.
+ * @returns {Promise<LanguageModel>}
  */
 export async function createRawSession(createOptions, easy) {
   const reporter = createDownloadReporter(easy);
@@ -53,19 +51,14 @@ export async function createRawSession(createOptions, easy) {
     });
   }
 
-  let session;
   try {
-    session = await LanguageModel.create({
+    return await LanguageModel.create({
       ...createOptions,
       monitor: reporter.monitor,
     });
-  } catch (error) {
-    // Nothing is coming, so the progress element goes away and the wait for a
-    // first `downloadprogress` event stops.
-    reporter.finish();
-    throw error;
+  } finally {
+    // In a `finally` so a rejected `create()` also puts the progress element
+    // away and stops the wait for a first `downloadprogress` event.
+    reporter.reportReady();
   }
-
-  reporter.reportReady();
-  return { session, finishDownloadUi: reporter.finish };
 }

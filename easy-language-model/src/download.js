@@ -51,10 +51,6 @@ const FIRST_PROGRESS_TIMEOUT_MS = 30_000;
  * a gesture may still be waited on before one starts, so revealing the bar any
  * earlier leaves an empty bar on the page for as long as that takes.
  *
- * Once a download has been shown, the bar outlives `create()`: the last bytes
- * land well before the model can answer, so it stays up and indeterminate
- * until the session produces its first output, which `finish()` reports.
- *
  * @param {object} options
  * @param {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [options.onDownloadProgress]
  * @param {HTMLProgressElement} [options.downloadProgress]
@@ -69,9 +65,6 @@ export function createDownloadReporter({
   let downloadExpected = false;
   // Cleared by the first event, and when the `create()` call settles either way.
   let firstProgressTimer;
-  // Whether the bar was ever shown, which decides if there is anything to keep
-  // on screen once the session exists.
-  let shownForDownload = false;
 
   const resetProgressElement = () => {
     if (downloadProgress) {
@@ -90,13 +83,9 @@ export function createDownloadReporter({
     /** Called with the result of `availability()`. */
     reportAvailability(availability) {
       downloadExpected = availability !== 'available';
-      if (downloadProgress) {
-        // Reset, and left hidden: the first `downloadprogress` event is what
-        // reveals it, so the bar appears when there is progress to show.
-        downloadProgress.hidden = true;
-        downloadProgress.value = 0;
-        downloadProgress.max = 1;
-      }
+      // Reset, and left hidden: the first `downloadprogress` event is what
+      // reveals it, so the bar appears when there is progress to show.
+      resetProgressElement();
     },
 
     /** The `monitor` callback to hand to `LanguageModel.create()`. */
@@ -120,7 +109,6 @@ export function createDownloadReporter({
         const { total, loaded } = reported;
 
         if (downloadProgress) {
-          shownForDownload = true;
           if (loaded < total) {
             downloadProgress.hidden = false;
             downloadProgress.max = total;
@@ -139,30 +127,9 @@ export function createDownloadReporter({
       monitor?.(m);
     },
 
-    /**
-     * Called once the session exists.
-     *
-     * A bar that was shown for a download stays up and indeterminate: the
-     * model is downloaded but not yet answering, and the wait between those
-     * two is exactly what there is still to report. `finish()` takes it down.
-     */
+    /** Called once the `create()` call has settled, successfully or not. */
     reportReady() {
       stopWaitingForProgress();
-      if (downloadProgress && shownForDownload) {
-        downloadProgress.hidden = false;
-        downloadProgress.removeAttribute('value');
-        return;
-      }
-      resetProgressElement();
-    },
-
-    /**
-     * Called when the session first produces output, and when `create()`
-     * fails. Either way there is nothing left to wait for.
-     */
-    finish() {
-      stopWaitingForProgress();
-      shownForDownload = false;
       resetProgressElement();
     },
   };
