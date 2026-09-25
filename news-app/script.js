@@ -29,17 +29,26 @@ let translatedHTML = false;
 
 async function translateHTML() {
   if (translatedHTML) {
-    document.removeEventListener('click', translateHTML);
     return;
   }
   const searchParams = new URLSearchParams(location.search);
   if (searchParams.has('hl')) {
     const targetLanguage = searchParams.get('hl');
+    const options = { sourceLanguage: 'de', targetLanguage };
     try {
-      translator = await Translator.create({
-        sourceLanguage: 'de',
-        targetLanguage,
-      });
+      const availability = await Translator.availability(options);
+      if (availability === 'unavailable') {
+        throw new Error(
+          `Translating from German to ${targetLanguage} is unavailable.`
+        );
+      }
+      // A download needs user activation, which the dialog's download button
+      // provides. Once the model is in, the dialog calls `main()` again.
+      if (availability !== 'available') {
+        showTranslationModal(options);
+        return;
+      }
+      translator = await Translator.create(options);
       shouldTranslate = true;
       const translatables = document.querySelectorAll('[data-translate]');
       translatables.forEach(async (element) => {
@@ -55,9 +64,6 @@ async function translateHTML() {
       document.documentElement.lang = targetLanguage;
       translatedHTML = true;
     } catch (error) {
-      if (error.name === 'NotAllowedError') {
-        showTranslationModal('de', targetLanguage);
-      }
       console.error('Translation failed:', error);
     }
   }
@@ -70,7 +76,8 @@ function languageTagToHumanReadable(languageTag, targetLanguage) {
   return displayNames.of(languageTag);
 }
 
-function showTranslationModal(sourceLanguage, targetLanguage) {
+function showTranslationModal(options) {
+  const { sourceLanguage, targetLanguage } = options;
   const translationModal = document.getElementById('translation-modal');
   const translationProgress = translationModal.querySelector('progress');
   const source = translationModal.querySelector('.source');
@@ -90,9 +97,14 @@ function showTranslationModal(sourceLanguage, targetLanguage) {
   translationModal
     .querySelector('.translation-button')
     .addEventListener('click', async () => {
+      // Asked again with the same options right before `create()`, since the
+      // model may have been downloaded in another tab in the meantime.
+      const availability = await Translator.availability(options);
+      if (availability !== 'available' && !navigator.userActivation.isActive) {
+        return;
+      }
       await Translator.create({
-        sourceLanguage,
-        targetLanguage,
+        ...options,
         monitor(m) {
           m.addEventListener('downloadprogress', (e) => {
             translationProgress.value = e.loaded;
@@ -108,8 +120,6 @@ function showTranslationModal(sourceLanguage, targetLanguage) {
   translationModal.classList.add('visible');
   translationModal.showModal();
 }
-
-document.addEventListener('click', translateHTML);
 
 async function maybeTranslate(text) {
   if (!shouldTranslate) {
@@ -359,6 +369,25 @@ async function updateReadingLogDisplay() {
 }
 // --- Language Model (AI Recommendation) Functions ---
 
+// Resolves once the user has interacted with the page. Chrome only starts a
+// model download with user activation, which a tap, click, or key press grants.
+const waitForUserActivation = () =>
+  new Promise((resolve) => {
+    const controller = new AbortController();
+    const onInteraction = () => {
+      if (navigator.userActivation.isActive) {
+        controller.abort();
+        resolve();
+      }
+    };
+    for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+      document.addEventListener(type, onInteraction, {
+        capture: true,
+        signal: controller.signal,
+      });
+    }
+  });
+
 const createSession = async (options = {}) => {
   if (sessionCreationTriggered) return;
   progress.hidden = true;
@@ -368,19 +397,24 @@ const createSession = async (options = {}) => {
     if (!('LanguageModel' in self)) {
       throw new Error('The Prompt API is not supported by your browser.');
     }
-    const availability = await LanguageModel.availability({
-      expectedInputs: [{ type: 'text', languages: ['en'] }],
-      expectedOutputs: [{ type: 'text', languages: ['en'] }],
-    });
+    // The same options `create()` gets, so both ask about the same session.
+    const availability = await LanguageModel.availability(options);
     if (availability === 'unavailable') {
       throw new Error('The large language model is not available.');
     }
 
     const modelNewlyDownloaded = availability !== 'available';
+    if (modelNewlyDownloaded && !navigator.userActivation.isActive) {
+      const text =
+        'Klicken Sie irgendwo auf die Seite oder drücken Sie eine Taste, um das Modell herunterzuladen.';
+      recommendStatus.textContent = await maybeTranslate(text);
+      await waitForUserActivation();
+    }
     if (modelNewlyDownloaded) progress.hidden = false;
 
     sessionCreationTriggered = true;
     const session = await LanguageModel.create({
+      ...options,
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
           progress.value = e.loaded;
@@ -389,7 +423,6 @@ const createSession = async (options = {}) => {
           }
         });
       },
-      ...options,
     });
     sessionCreationTriggered = false;
     return session;
@@ -489,10 +522,11 @@ async function getRecommendations() {
     {
       const text = 'Initialisiere KI-Sitzung (kann dauern)...';
       recommendStatus.textContent = await maybeTranslate(text);
+      // The articles and the prompts are German, and so are the rationales.
       languageModelSession = await createSession({
         initialPrompts: [{ role: 'system', content: systemPromptContent }],
-        expectedInputs: [{ type: 'text', languages: ['en'] }],
-        expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        expectedInputs: [{ type: 'text', languages: ['de'] }],
+        expectedOutputs: [{ type: 'text', languages: ['de'] }],
       });
       console.log('System prompt:', {
         initialPrompts: [{ role: 'system', content: systemPromptContent }],
