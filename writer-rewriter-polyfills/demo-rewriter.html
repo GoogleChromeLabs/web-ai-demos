@@ -253,6 +253,46 @@ The Rewriter API provides a way to rewrite text while controlling the tone, form
         }
       };
 
+      // Resolves once the user has interacted with the page. A model download
+      // needs user activation, which a tap, click, or key press grants.
+      const waitForUserActivation = () =>
+        new Promise((resolve) => {
+          const controller = new AbortController();
+          const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+              controller.abort();
+              resolve();
+            }
+          };
+          for (const type of [
+            'keydown',
+            'mousedown',
+            'pointerup',
+            'touchend',
+          ]) {
+            document.addEventListener(type, onInteraction, {
+              capture: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
+      // Asks `availability()` with exactly the options `create()` gets, and
+      // waits for an interaction when a model still has to be downloaded.
+      const ensureAvailable = async (api, options, report) => {
+        const availability = await api.availability(options);
+        if (availability === 'unavailable') {
+          throw new Error(`${api.name} is unavailable for these options.`);
+        }
+        if (
+          availability !== 'available' &&
+          !navigator.userActivation.isActive
+        ) {
+          report('Click anywhere or press a key to download the model.');
+          await waitForUserActivation();
+        }
+      };
+
       const getRewriterOptions = () => ({
         sharedContext: sharedContext.value,
         tone: tone.value,
@@ -261,20 +301,30 @@ The Rewriter API provides a way to rewrite text while controlling the tone, form
         expectedInputLanguages: [expectedInputLanguages.value],
         expectedContextLanguages: [expectedContextLanguages.value],
         outputLanguage: outputLanguage.value,
-        signal: abortController.signal,
-        monitor: (m) => {
-          progress.style.display = 'block';
-          m.addEventListener('downloadprogress', (e) => {
-            progress.value = e.loaded;
-            progress.max = e.total;
-            setStatus('Generating content...');
-            if (e.loaded === e.total) {
-              setStatus('Model loaded.');
-              setTimeout(() => (progress.style.display = 'none'), 1000);
-            }
-          });
-        },
       });
+
+      const createRewriter = async () => {
+        const options = getRewriterOptions();
+        await ensureAvailable(Rewriter, options, setStatus);
+        return Rewriter.create({
+          ...options,
+          signal: abortController.signal,
+          monitor: (m) => {
+            progress.style.display = 'block';
+            m.addEventListener('downloadprogress', (e) => {
+              progress.value = e.loaded;
+              progress.max = e.total;
+              setStatus(
+                `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`,
+              );
+              if (e.loaded === e.total) {
+                setStatus('Model loaded.');
+                setTimeout(() => (progress.style.display = 'none'), 1000);
+              }
+            });
+          },
+        });
+      };
 
       rewriteBtn.onclick = async () => {
         output.textContent = 'Thinking...';
@@ -283,7 +333,7 @@ The Rewriter API provides a way to rewrite text while controlling the tone, form
         setStatus('Initializing Rewriter...');
 
         try {
-          const rewriter = await Rewriter.create(getRewriterOptions());
+          const rewriter = await createRewriter();
           setStatus('Generating content...');
           const result = await rewriter.rewrite(input.value, {
             context: context.value,
@@ -308,7 +358,7 @@ The Rewriter API provides a way to rewrite text while controlling the tone, form
         setStatus('Initializing Rewriter...');
 
         try {
-          const rewriter = await Rewriter.create(getRewriterOptions());
+          const rewriter = await createRewriter();
           setStatus('Streaming response...');
           const stream = rewriter.rewriteStreaming(input.value, {
             context: context.value,
