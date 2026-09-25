@@ -70,13 +70,14 @@ export class Rewriter extends BaseTaskModel {
     const { systemPrompt } = builder.buildPrompt('');
 
     const sessionOptions = {
+      ...this._languageModelOptions(validatedOptions),
       initialPrompts: [{ role: 'system', content: systemPrompt }],
-      signal: options.signal,
-      monitor: options.monitor,
     };
 
-    const win = this.__window || globalThis;
-    const session = await win.LanguageModel.create(sessionOptions);
+    const session = await this._createLanguageModelSession(
+      sessionOptions,
+      options,
+    );
     const rewriter = new this(session, builder, validatedOptions);
 
     if (options.signal) {
