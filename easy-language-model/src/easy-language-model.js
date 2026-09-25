@@ -295,17 +295,13 @@ export class EasyLanguageModel {
       );
     }
     const { easy, createOptions } = splitOptions(options);
-    const { session, finishDownloadUi } = await createRawSession(
-      createOptions,
-      easy
-    );
+    const session = await createRawSession(createOptions, easy);
     // The signal belongs to this one call and can't be reused when the session
     // is rebuilt by compact().
     const { signal, ...reusableOptions } = createOptions;
     return new EasyLanguageModel(session, {
       createOptions: reusableOptions,
       easy,
-      finishDownloadUi,
     });
   }
 
@@ -330,13 +326,9 @@ export class EasyLanguageModel {
   /** Name to tool, for dispatching what the model asks for. */
   #toolsByName = new Map();
 
-  /** Takes down a progress element still waiting for the model's first word. */
-  #finishDownloadUi = null;
-
   /** @internal Use `EasyLanguageModel.create()`. */
-  constructor(session, { createOptions, easy, finishDownloadUi }) {
+  constructor(session, { createOptions, easy }) {
     this.#session = session;
-    this.#finishDownloadUi = finishDownloadUi ?? null;
     this.#createOptions = createOptions;
     this.#easy = easy;
     this.#guard = createOutputGuard({
@@ -410,9 +402,6 @@ export class EasyLanguageModel {
   }
 
   destroy() {
-    // A session that is going away answers nothing, so a progress element left
-    // waiting for its first word comes down here.
-    this.#reportFirstOutput();
     this.#session.destroy();
     this.#compactor?.destroy();
     this.#compactor = null;
@@ -446,9 +435,9 @@ export class EasyLanguageModel {
     const seen = new Set();
 
     for (;;) {
-      const turn = await this.#session.prompt(next, options);
-      this.#reportFirstOutput();
-      const { text, calls } = partsOfTurn(turn);
+      const { text, calls } = partsOfTurn(
+        await this.#session.prompt(next, options)
+      );
       if (calls.length === 0) {
         const { removed, sanitized } = this.#guard.check(text);
         if (removed) {
@@ -528,7 +517,6 @@ export class EasyLanguageModel {
     for await (const chunk of readStream(
       this.#session.promptStreaming(input, options)
     )) {
-      this.#reportFirstOutput();
       if (typeof chunk !== 'string') {
         if (chunk.type === 'tool-call') {
           calls.push(chunk.value);
@@ -646,7 +634,6 @@ export class EasyLanguageModel {
       for await (const chunk of readStream(
         this.#session.promptStreaming(next, options)
       )) {
-        this.#reportFirstOutput();
         if (typeof chunk !== 'string') {
           if (chunk.type === 'tool-call') {
             calls.push(chunk.value);
@@ -725,19 +712,13 @@ export class EasyLanguageModel {
     this.#session.destroy();
 
     try {
-      ({ session: this.#session } = await this.#createSession(
-        messages,
-        languages
-      ));
+      this.#session = await this.#createSession(messages, languages);
       this.#history = messages;
     } catch (error) {
       // Fall back to the untouched history. That may land close to capacity
       // again, but the conversation is at least alive and can be compacted
       // again.
-      ({ session: this.#session } = await this.#createSession(
-        this.#fullHistory,
-        languages
-      ));
+      this.#session = await this.#createSession(this.#fullHistory, languages);
       this.#history = this.#fullHistory.map((message) => ({ ...message }));
       this.#reattachListeners();
       throw error;
@@ -774,21 +755,6 @@ export class EasyLanguageModel {
       options.expectedOutputs = [{ type: 'text', languages }];
     }
     return createRawSession(options, this.#easy);
-  }
-
-  /**
-   * Takes the download progress element down, once.
-   *
-   * The model is loaded well before it can answer, so the bar stays up and
-   * indeterminate across that gap. This is the far end of it: the session has
-   * produced something, and the wait is over.
-   */
-  #reportFirstOutput() {
-    if (this.#finishDownloadUi) {
-      const finish = this.#finishDownloadUi;
-      this.#finishDownloadUi = null;
-      finish();
-    }
   }
 
   #reattachListeners() {

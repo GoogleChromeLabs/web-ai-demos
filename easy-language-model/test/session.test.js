@@ -136,9 +136,8 @@ describe('creating a session', () => {
     assert.ok(reached, 'create() was called without waiting for a gesture');
   });
 
-  it('drives a progress element, then waits for the first output', async () => {
+  it('drives a progress element through the download and hides it after', async () => {
     const script = newScript();
-    script.response = 'Hello.';
     script.progress = [
       { loaded: 0.25, total: 1 },
       { loaded: 0.5, total: 1 },
@@ -148,58 +147,18 @@ describe('creating a session', () => {
 
     const seen = [];
     const downloadProgress = document.createElement('progress');
-    const session = await EasyLanguageModel.create({
+    await EasyLanguageModel.create({
       ...NO_SANITIZER,
       downloadProgress,
       onDownloadProgress: (p) => seen.push(p.percent),
     });
 
     assert.deepEqual(seen, [25, 50, 100], 'every event reported');
-    // The bytes are in, and the model still has to load before it can answer.
-    assert.equal(downloadProgress.hidden, false, 'still up after create()');
     assert.equal(
-      downloadProgress.hasAttribute('value'),
-      false,
-      'indeterminate while the model loads'
+      downloadProgress.hidden,
+      true,
+      'hidden once create() resolves'
     );
-
-    await session.prompt('Hi');
-    assert.equal(downloadProgress.hidden, true, 'hidden on the first output');
-  });
-
-  it('takes the progress element down on the first streamed chunk', async () => {
-    const script = newScript();
-    script.response = 'Hello.';
-    script.progress = [{ loaded: 1, total: 1 }];
-    install(script, { availability: ['downloadable'] });
-
-    const downloadProgress = document.createElement('progress');
-    const session = await EasyLanguageModel.create({
-      ...NO_SANITIZER,
-      downloadProgress,
-    });
-    assert.equal(downloadProgress.hidden, false, 'still up after create()');
-
-    const reader = session.promptStreaming('Hi').getReader();
-    await reader.read();
-    assert.equal(downloadProgress.hidden, true, 'hidden on the first chunk');
-    await reader.cancel();
-  });
-
-  it('takes the progress element down when the session is destroyed', async () => {
-    const script = newScript();
-    script.progress = [{ loaded: 1, total: 1 }];
-    install(script, { availability: ['downloadable'] });
-
-    const downloadProgress = document.createElement('progress');
-    const session = await EasyLanguageModel.create({
-      ...NO_SANITIZER,
-      downloadProgress,
-    });
-    assert.equal(downloadProgress.hidden, false, 'still up after create()');
-
-    session.destroy();
-    assert.equal(downloadProgress.hidden, true, 'nothing left to wait for');
   });
 
   it('keeps the progress element hidden until the first event', async () => {
