@@ -12,7 +12,7 @@ import { vi } from 'vitest';
 // Types and Interfaces for LanguageModel
 declare global {
   interface LanguageModel {
-    availability(): Promise<'readily' | 'after-download' | 'unavailable'>;
+    availability(): Promise<'available' | 'downloadable' | 'unavailable'>;
     create(options?: any): Promise<LanguageModelSession>;
   }
   interface LanguageModelSession {
@@ -24,7 +24,7 @@ declare global {
 
 // Global Mock State
 const mockState = {
-  availability: 'readily' as 'readily' | 'after-download' | 'unavailable',
+  availability: 'available' as 'available' | 'downloadable' | 'unavailable',
   nextGeneratedWords: [] as string[],
   nextSuggestions: null as string[] | null,
 };
@@ -61,7 +61,7 @@ const MockLanguageModel: LanguageModel = {
 globalThis.LanguageModel = MockLanguageModel;
 
 // Helper functions to control the mock
-export function setMockedAvailability(status: 'readily' | 'after-download' | 'unavailable') {
+export function setMockedAvailability(status: 'available' | 'downloadable' | 'unavailable') {
   mockState.availability = status;
 }
 
@@ -94,7 +94,7 @@ export async function setupE2ETest(options?: {
   skipWait?: boolean;
   skipDbInit?: boolean;
   skipMockReset?: boolean;
-  availability?: 'readily' | 'after-download' | 'unavailable';
+  availability?: 'available' | 'downloadable' | 'unavailable';
   score?: number;
   streak?: number;
   highScore?: number;
@@ -105,7 +105,7 @@ export async function setupE2ETest(options?: {
   }
 
   // Reset mock state
-  mockState.availability = options?.availability ?? 'readily';
+  mockState.availability = options?.availability ?? 'available';
   mockState.nextSuggestions = null;
 
   // Mock Canvas 2D Context for JSDOM

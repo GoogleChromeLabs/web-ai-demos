@@ -13,7 +13,7 @@ import {
 
 describe('Challenger 2 - Keyboard Playability and Focus Management Verification', () => {
   beforeEach(() => {
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE']);
   });
 

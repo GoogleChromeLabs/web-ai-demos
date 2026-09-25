@@ -21,7 +21,7 @@ import { saveStats, saveSession, loadStats, type LetterCell } from '../src/lib/d
 
 describe('Wordup PWA E2E Tier 4: Real-World Application Scenarios', () => {
   beforeEach(() => {
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE']);
     setNextSuggestions(['APPLE', 'GRAPE', 'PEACH']);
   });

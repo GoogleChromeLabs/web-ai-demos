@@ -19,7 +19,7 @@ describe('Tier 1 Feature Coverage E2E Tests', () => {
   beforeEach(() => {
     globalThis.LanguageModel.create = originalLanguageModelCreate;
     // Default setup for each test: readily available AI, default word APPLE
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE']);
     setNextSuggestions([]);
   });

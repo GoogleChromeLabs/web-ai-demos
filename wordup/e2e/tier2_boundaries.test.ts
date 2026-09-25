@@ -31,7 +31,7 @@ import { IDBFactory } from 'fake-indexeddb';
 describe('Wordup PWA - Tier 2 Boundary & Corner Cases E2E Tests', () => {
   beforeEach(async () => {
     // Standard setup before each test
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE']);
     setNextSuggestions(['APPLE', 'PEACH']);
     

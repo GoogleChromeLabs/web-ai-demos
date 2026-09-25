@@ -38,12 +38,34 @@ function debugLog(...args: any[]) {
   }
 }
 
-export async function generateWord(
-  difficulty: 'easy' | 'medium' | 'hard' | 'very_hard' | 'impossible',
-  allowDuplicates: boolean,
-  usedWords: string[],
-  onProgress?: (loaded: number, total: number) => void
-): Promise<string> {
+// Resolves once the user has interacted with the page. Chrome only starts a
+// model download with user activation, which a tap, click, or key press grants.
+function waitForUserActivation(): Promise<void> {
+  return new Promise((resolve) => {
+    const controller = new AbortController();
+    const onInteraction = () => {
+      if (navigator.userActivation.isActive) {
+        controller.abort();
+        resolve();
+      }
+    };
+    for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+      document.addEventListener(type, onInteraction, {
+        capture: true,
+        signal: controller.signal
+      });
+    }
+  });
+}
+
+// Creates a session with exactly the options `availability()` was asked
+// about. The first word is generated on page load, which has no user
+// activation, so when the model still has to be downloaded,
+// `onActivationNeeded` is called and the session waits for an interaction.
+async function createSession(
+  onProgress?: (loaded: number, total: number) => void,
+  onActivationNeeded?: () => void
+): Promise<LanguageModelSession> {
   if (typeof LanguageModel === 'undefined') {
     throw new Error('Prompt API (LanguageModel) is not supported in this browser.');
   }
@@ -53,7 +75,12 @@ export async function generateWord(
     throw new Error('On-device LanguageModel is unavailable on this system.');
   }
 
-  const session = await LanguageModel.create({
+  if (availability !== 'available' && !navigator.userActivation.isActive) {
+    onActivationNeeded?.();
+    await waitForUserActivation();
+  }
+
+  return LanguageModel.create({
     ...sessionOptions,
     monitor(m: any) {
       m.addEventListener('downloadprogress', (e: any) => {
@@ -64,6 +91,16 @@ export async function generateWord(
       });
     }
   });
+}
+
+export async function generateWord(
+  difficulty: 'easy' | 'medium' | 'hard' | 'very_hard' | 'impossible',
+  allowDuplicates: boolean,
+  usedWords: string[],
+  onProgress?: (loaded: number, total: number) => void,
+  onActivationNeeded?: () => void
+): Promise<string> {
+  const session = await createSession(onProgress, onActivationNeeded);
 
   try {
     let word = '';
@@ -157,28 +194,10 @@ export async function generateWord(
 export async function getSuggestions(
   guesses: LetterCell[][],
   allowDuplicates: boolean,
-  onProgress?: (loaded: number, total: number) => void
+  onProgress?: (loaded: number, total: number) => void,
+  onActivationNeeded?: () => void
 ): Promise<string[]> {
-  if (typeof LanguageModel === 'undefined') {
-    throw new Error('Prompt API (LanguageModel) is not supported in this browser.');
-  }
-
-  const availability = await LanguageModel.availability(sessionOptions);
-  if (availability === 'unavailable') {
-    throw new Error('On-device LanguageModel is unavailable on this system.');
-  }
-
-  const session = await LanguageModel.create({
-    ...sessionOptions,
-    monitor(m: any) {
-      m.addEventListener('downloadprogress', (e: any) => {
-        debugLog(`[AI MODEL DOWNLOAD] Downloaded ${e.loaded}/${e.total} bytes`);
-        if (onProgress && e.total) {
-          onProgress(e.loaded, e.total);
-        }
-      });
-    }
-  });
+  const session = await createSession(onProgress, onActivationNeeded);
 
   try {
     const correctLetters: string[] = ['', '', '', '', ''];

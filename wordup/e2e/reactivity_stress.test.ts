@@ -18,7 +18,7 @@ describe('Milestone 4.1 Reactivity & Rendering Stress Tests', () => {
     // Enforce clean, isolated database state for this test file
     globalThis.indexedDB = new IDBFactory();
 
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE', 'CROWN', 'SLATE']);
     
     try {

@@ -305,6 +305,38 @@ describe('Prompt API Client', () => {
     );
   });
 
+  it('should wait for user activation before downloading the model', async () => {
+    const mockSession = {
+      prompt: vi.fn().mockResolvedValue('["SHINE"]'),
+      destroy: vi.fn(),
+    };
+    global.LanguageModel = {
+      availability: vi.fn().mockResolvedValue('downloadable'),
+      create: vi.fn().mockResolvedValue(mockSession),
+    } as any;
+    // jsdom has no `navigator.userActivation`.
+    const userActivation = { isActive: false };
+    Object.defineProperty(navigator, 'userActivation', {
+      value: userActivation,
+      configurable: true,
+    });
+    const onActivationNeeded = vi.fn();
+
+    try {
+      const pending = generateWord('hard', false, [], undefined, onActivationNeeded);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(onActivationNeeded).toHaveBeenCalled();
+      expect(global.LanguageModel.create).not.toHaveBeenCalled();
+
+      userActivation.isActive = true;
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+      expect(await pending).toBe('SHINE');
+      expect(global.LanguageModel.create).toHaveBeenCalledTimes(1);
+    } finally {
+      delete (navigator as any).userActivation;
+    }
+  });
+
   it('should pass options to availability and create and monitor downloadprogress', async () => {
     const mockSession = {
       prompt: vi.fn().mockResolvedValue('["SHINE"]'),
