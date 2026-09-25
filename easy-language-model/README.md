@@ -729,7 +729,10 @@ const session = await EasyLanguageModel.create({
 });
 ```
 
-Both are fetched once and reused, so later calls download nothing.
+Both are fetched once and reused, so later calls download nothing. Compacting
+can run long after the click that started it, so when either model still has to
+be downloaded, `compact()` waits for a click on the `activationButton` passed to
+`create()`, exactly like `create()` does.
 
 Compaction swaps the underlying session in place: the `EasyLanguageModel` stays
 valid and listeners registered through it are re-attached. Messages with the

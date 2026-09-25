@@ -4,6 +4,7 @@
  */
 
 import { normalizeDownloadProgress } from './download.js';
+import { ensureUserActivation } from './user-activation.js';
 
 /**
  * Session compacting: summarize the conversation so far with the Summarizer
@@ -64,6 +65,21 @@ export class Compactor {
     this.#options.onStatus?.(status);
   }
 
+  /**
+   * Waits for the wrapper's activation button when a model still has to be
+   * downloaded, the same way creating a session does. Compacting runs long
+   * after the click that started it, so the gesture may have expired.
+   */
+  async #ensureActivation(availability) {
+    if (availability === 'available') {
+      return;
+    }
+    await ensureUserActivation({
+      activationButton: this.#options.activationButton,
+      activationHint: this.#options.activationHint,
+    });
+  }
+
   async #getDetector() {
     if (this.#detector) {
       return this.#detector;
@@ -71,9 +87,11 @@ export class Compactor {
     if (!('LanguageDetector' in globalThis)) {
       return null;
     }
-    if ((await LanguageDetector.availability()) === 'unavailable') {
+    const availability = await LanguageDetector.availability();
+    if (availability === 'unavailable') {
       return null;
     }
+    await this.#ensureActivation(availability);
     this.#detector = await LanguageDetector.create({
       monitor: (m) =>
         m.addEventListener('downloadprogress', (event) =>
@@ -135,6 +153,7 @@ export class Compactor {
         `The Summarizer API is unavailable for "${lang}" on this device.`
       );
     }
+    await this.#ensureActivation(availability);
 
     const summarizer = await Summarizer.create({
       ...options,
