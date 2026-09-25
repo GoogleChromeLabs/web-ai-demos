@@ -13,6 +13,11 @@
         color-scheme: dark light;
       }
 
+      .deprecation-warning {
+        border: orange solid 2px;
+        padding: 0.25rem 0.5rem;
+      }
+
       html {
         box-sizing: border-box;
       }
@@ -63,6 +68,9 @@
 
   <body>
     <h1>Rewriter API Polyfill Demo</h1>
+    <p class="deprecation-warning" role="note">
+      ⚠️ The Rewriter API is deprecated. Don't build new features on it.
+    </p>
     <div id="polyfill-mode-banner"></div>
 
     <div>
