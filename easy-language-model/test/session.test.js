@@ -6,7 +6,7 @@
 import { DomEvent } from './dom.js';
 
 import assert from 'node:assert/strict';
-import { afterEach, describe, it } from 'node:test';
+import { afterEach, describe, it, mock } from 'node:test';
 
 import { EasyLanguageModel } from '../src/easy-language-model.js';
 import { markdownToHtml, renderStreamingHTML } from 'streaming-markdown-html';
@@ -136,8 +136,9 @@ describe('creating a session', () => {
     assert.ok(reached, 'create() was called without waiting for a gesture');
   });
 
-  it('drives a progress element through the download and hides it after', async () => {
+  it('drives a progress element, then waits for the first output', async () => {
     const script = newScript();
+    script.response = 'Hello.';
     script.progress = [
       { loaded: 0.25, total: 1 },
       { loaded: 0.5, total: 1 },
@@ -147,14 +148,58 @@ describe('creating a session', () => {
 
     const seen = [];
     const downloadProgress = document.createElement('progress');
-    await EasyLanguageModel.create({
+    const session = await EasyLanguageModel.create({
       ...NO_SANITIZER,
       downloadProgress,
       onDownloadProgress: (p) => seen.push(p.percent),
     });
 
     assert.deepEqual(seen, [25, 50, 100], 'every event reported');
-    assert.equal(downloadProgress.hidden, true, 'hidden once ready');
+    // The bytes are in, and the model still has to load before it can answer.
+    assert.equal(downloadProgress.hidden, false, 'still up after create()');
+    assert.equal(
+      downloadProgress.hasAttribute('value'),
+      false,
+      'indeterminate while the model loads'
+    );
+
+    await session.prompt('Hi');
+    assert.equal(downloadProgress.hidden, true, 'hidden on the first output');
+  });
+
+  it('takes the progress element down on the first streamed chunk', async () => {
+    const script = newScript();
+    script.response = 'Hello.';
+    script.progress = [{ loaded: 1, total: 1 }];
+    install(script, { availability: ['downloadable'] });
+
+    const downloadProgress = document.createElement('progress');
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      downloadProgress,
+    });
+    assert.equal(downloadProgress.hidden, false, 'still up after create()');
+
+    const reader = session.promptStreaming('Hi').getReader();
+    await reader.read();
+    assert.equal(downloadProgress.hidden, true, 'hidden on the first chunk');
+    await reader.cancel();
+  });
+
+  it('takes the progress element down when the session is destroyed', async () => {
+    const script = newScript();
+    script.progress = [{ loaded: 1, total: 1 }];
+    install(script, { availability: ['downloadable'] });
+
+    const downloadProgress = document.createElement('progress');
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      downloadProgress,
+    });
+    assert.equal(downloadProgress.hidden, false, 'still up after create()');
+
+    session.destroy();
+    assert.equal(downloadProgress.hidden, true, 'nothing left to wait for');
   });
 
   it('keeps the progress element hidden until the first event', async () => {
@@ -185,6 +230,43 @@ describe('creating a session', () => {
       [false, false],
       'shown from the first event'
     );
+  });
+
+  it('stops warning once progress is reported', async () => {
+    mock.timers.enable({ apis: ['setTimeout'] });
+    const warnings = [];
+    const warn = console.warn;
+    console.warn = (message) => warnings.push(message);
+    try {
+      const script = newScript();
+      script.progress = [{ loaded: 0.5, total: 1 }];
+      install(script, { availability: ['downloadable'] });
+      await EasyLanguageModel.create(NO_SANITIZER);
+      mock.timers.tick(30_000);
+    } finally {
+      console.warn = warn;
+      mock.timers.reset();
+    }
+    assert.deepEqual(warnings, [], 'silent when the download is reporting');
+  });
+
+  it('stops warning when create() fails', async () => {
+    mock.timers.enable({ apis: ['setTimeout'] });
+    const warnings = [];
+    const warn = console.warn;
+    console.warn = (message) => warnings.push(message);
+    try {
+      install(newScript(), {
+        availability: ['downloadable'],
+        createRejects: true,
+      });
+      await assert.rejects(EasyLanguageModel.create(NO_SANITIZER));
+      mock.timers.tick(30_000);
+    } finally {
+      console.warn = warn;
+      mock.timers.reset();
+    }
+    assert.deepEqual(warnings, [], 'no warning for a session that never was');
   });
 
   it('leaves the progress element alone when nothing is downloaded', async () => {
