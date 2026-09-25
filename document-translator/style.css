@@ -40,3 +40,15 @@ img {
   max-height: 200px;
   width: auto;
 }
+
+/* Pinned to the bottom, so it's in view whichever button started the download. */
+.download-status {
+  position: sticky;
+  inset-block-end: 0;
+  padding-block: 0.5rem;
+  background-color: Canvas;
+}
+
+.download-status[hidden] {
+  display: none;
+}
