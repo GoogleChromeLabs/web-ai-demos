@@ -38,6 +38,11 @@ export function normalizeDownloadProgress(event, resource) {
  * passed as `downloadProgress` is driven automatically, including going indeterminate
  * once the bytes are all in and the browser is unpacking the model.
  *
+ * The element stays hidden until the first `downloadprogress` event arrives.
+ * `availability()` saying `downloadable` means a download would be needed, and
+ * a gesture may still be waited on before one starts, so revealing the bar any
+ * earlier leaves an empty bar on the page for as long as that takes.
+ *
  * @param {object} options
  * @param {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [options.onDownloadProgress]
  * @param {HTMLProgressElement} [options.downloadProgress]
@@ -56,7 +61,9 @@ export function createDownloadReporter({
     reportAvailability(availability) {
       downloadExpected = availability !== 'available';
       if (downloadProgress) {
-        downloadProgress.hidden = !downloadExpected;
+        // Reset, and left hidden: the first `downloadprogress` event is what
+        // reveals it, so the bar appears when there is progress to show.
+        downloadProgress.hidden = true;
         downloadProgress.value = 0;
         downloadProgress.max = 1;
       }

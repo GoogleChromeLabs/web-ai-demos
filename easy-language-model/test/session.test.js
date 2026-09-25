@@ -157,6 +157,36 @@ describe('creating a session', () => {
     assert.equal(downloadProgress.hidden, true, 'hidden once ready');
   });
 
+  it('keeps the progress element hidden until the first event', async () => {
+    const script = newScript();
+    script.progress = [
+      { loaded: 0.25, total: 1 },
+      { loaded: 1, total: 1 },
+    ];
+    const downloadProgress = document.createElement('progress');
+    // Read inside create(), after availability() reported `downloadable` and
+    // before any progress event: an empty bar must not be on the page yet.
+    let hiddenBeforeFirstEvent = null;
+    install(script, {
+      availability: ['downloadable'],
+      onCreate: () => (hiddenBeforeFirstEvent = downloadProgress.hidden),
+    });
+
+    const hiddenDuring = [];
+    await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      downloadProgress,
+      onDownloadProgress: () => hiddenDuring.push(downloadProgress.hidden),
+    });
+
+    assert.equal(hiddenBeforeFirstEvent, true, 'hidden until there is news');
+    assert.deepEqual(
+      hiddenDuring,
+      [false, false],
+      'shown from the first event'
+    );
+  });
+
   it('leaves the progress element alone when nothing is downloaded', async () => {
     const script = newScript();
     install(script);
