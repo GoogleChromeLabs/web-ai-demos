@@ -77,10 +77,54 @@
       const output = document.getElementById('output');
       const progressBar = document.getElementById('progress');
 
+      // Resolves once the user has interacted with the page. A model download
+      // needs user activation, which a tap, click, or key press grants.
+      const waitForUserActivation = () =>
+        new Promise((resolve) => {
+          const controller = new AbortController();
+          const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+              controller.abort();
+              resolve();
+            }
+          };
+          for (const type of [
+            'keydown',
+            'mousedown',
+            'pointerup',
+            'touchend',
+          ]) {
+            document.addEventListener(type, onInteraction, {
+              capture: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
       async function runTest() {
         try {
           status.textContent = 'Initializing LanguageModel (Gemini)...';
+          // Shared by `availability()` and `create()`, so both ask about the
+          // same session.
+          const options = {
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            expectedOutputs: [{ type: 'text', languages: ['en'] }],
+          };
+          const availability = await LanguageModel.availability(options);
+          if (availability === 'unavailable') {
+            throw new Error('LanguageModel is unavailable.');
+          }
+          // The test runs on page load, which has no user activation yet.
+          if (
+            availability !== 'available' &&
+            !navigator.userActivation.isActive
+          ) {
+            status.textContent =
+              'Click anywhere or press a key to download the model.';
+            await waitForUserActivation();
+          }
           const session = await LanguageModel.create({
+            ...options,
             monitor: (m) => {
               m.addEventListener('downloadprogress', (e) => {
                 console.log('Download progress:', e.loaded);
