@@ -10,7 +10,36 @@ declare global {
       LanguageModel: any;
       ai: any;
   }
+  // The DOM types of TypeScript 4.9 predate `navigator.userActivation`.
+  interface Navigator {
+      userActivation: { readonly isActive: boolean };
+  }
 }
+
+// Shared by `availability()` and `create()`, so both ask about the same session.
+const SESSION_OPTIONS = {
+    expectedInputs: [{ type: 'text', languages: ['en'] }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+};
+
+// Resolves once the user has interacted with the page. Chrome only starts a model download with
+// user activation, which a tap, click, or key press grants.
+const waitForUserActivation = (): Promise<void> =>
+    new Promise((resolve) => {
+        const controller = new AbortController();
+        const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+                controller.abort();
+                resolve();
+            }
+        };
+        for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+            document.addEventListener(type, onInteraction, {
+                capture: true,
+                signal: controller.signal,
+            });
+        }
+    });
 
 export default class BuiltinPrompting {
     constructor(private session: any) {}
@@ -30,21 +59,39 @@ export default class BuiltinPrompting {
         return window.LanguageModel !== undefined;
     }
 
-    static async createPrompting(): Promise<BuiltinPrompting> {
+    // `onStatus` is called with what to tell the user while the model is being downloaded, and
+    // with an empty string once the session is ready.
+    static async createPrompting(onStatus?: (status: string) => void): Promise<BuiltinPrompting> {
         // This method also expects `isBuiltinAiSupported()` to have been
         // called first.
-        if (window.LanguageModel && (await window.LanguageModel.availability({
-            expectedInputs: [{ type: 'text', languages: ['en'] }],
-            expectedOutputs: [{ type: 'text', languages: ['en'] }],
-        })) === 'available') {
-            let session = await window.LanguageModel.create({
-                expectedInputs: [{ type: 'text', languages: ['en'] }],
-                expectedOutputs: [{ type: 'text', languages: ['en'] }],
-            });
-            return new BuiltinPrompting(session);
-        } else {
+        const availability = window.LanguageModel
+            ? await window.LanguageModel.availability(SESSION_OPTIONS)
+            : 'unavailable';
+        if (availability === 'unavailable') {
             throw new Error("Built-in prompting not supported");
         }
+
+        // The weather arrives without the user doing anything, so the page may not have the user
+        // activation that a download needs yet.
+        const downloadNeeded = availability !== 'available';
+        if (downloadNeeded && !navigator.userActivation.isActive) {
+            onStatus?.('Click anywhere or press a key to download the AI model.');
+            await waitForUserActivation();
+        }
+
+        let session = await window.LanguageModel.create({
+            ...SESSION_OPTIONS,
+            monitor(m: EventTarget) {
+                m.addEventListener('downloadprogress', (e) => {
+                    if (downloadNeeded) {
+                        const loaded = (e as ProgressEvent).loaded;
+                        onStatus?.(`Downloading the AI model: ${Math.round(loaded * 100)}%`);
+                    }
+                });
+            },
+        });
+        onStatus?.('');
+        return new BuiltinPrompting(session);
     }
 }
 
