@@ -316,6 +316,46 @@ The quick brown fox jumps over the lazy dog.</textarea
         availabilityEl.textContent = `Availability: ${avail}`;
       });
 
+      // Resolves once the user has interacted with the page. A model download
+      // needs user activation, which a tap, click, or key press grants.
+      const waitForUserActivation = () =>
+        new Promise((resolve) => {
+          const controller = new AbortController();
+          const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+              controller.abort();
+              resolve();
+            }
+          };
+          for (const type of [
+            'keydown',
+            'mousedown',
+            'pointerup',
+            'touchend',
+          ]) {
+            document.addEventListener(type, onInteraction, {
+              capture: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
+      // Asks `availability()` with exactly the options `create()` gets, and
+      // waits for an interaction when a model still has to be downloaded.
+      const ensureAvailable = async (api, options, report) => {
+        const availability = await api.availability(options);
+        if (availability === 'unavailable') {
+          throw new Error(`${api.name} is unavailable for these options.`);
+        }
+        if (
+          availability !== 'available' &&
+          !navigator.userActivation.isActive
+        ) {
+          report('Click anywhere or press a key to download the model.');
+          await waitForUserActivation();
+        }
+      };
+
       let embedder = null;
       let loadingPromise = null;
 
@@ -333,17 +373,22 @@ The quick brown fox jumps over the lazy dog.</textarea
         progressEl.style.display = 'block';
         progressEl.value = 0;
 
-        loadingPromise = SemanticEmbedder.create({
-          monitor(m) {
-            m.addEventListener('downloadprogress', (e) => {
-              availabilityEl.textContent = 'Availability: downloading';
-              progressEl.value = e.loaded;
-              if (e.loaded < 1) {
-                statusEl.textContent = `Downloading model: ${Math.round(e.loaded * 100)}%`;
-              }
-            });
-          },
+        loadingPromise = ensureAvailable(SemanticEmbedder, {}, (message) => {
+          statusEl.textContent = message;
         })
+          .then(() =>
+            SemanticEmbedder.create({
+              monitor(m) {
+                m.addEventListener('downloadprogress', (e) => {
+                  availabilityEl.textContent = 'Availability: downloading';
+                  progressEl.value = e.loaded;
+                  if (e.loaded < 1) {
+                    statusEl.textContent = `Downloading model: ${Math.round(e.loaded * 100)}%`;
+                  }
+                });
+              },
+            }),
+          )
           .then(async (result) => {
             embedder = result;
             loadingPromise = null;

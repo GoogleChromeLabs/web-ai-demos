@@ -185,19 +185,67 @@ The web is a vast place. Built-in AI APIs like the Summarizer API allow develope
         }
       };
 
+      // Resolves once the user has interacted with the page. A model download
+      // needs user activation, which a tap, click, or key press grants.
+      const waitForUserActivation = () =>
+        new Promise((resolve) => {
+          const controller = new AbortController();
+          const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+              controller.abort();
+              resolve();
+            }
+          };
+          for (const type of [
+            'keydown',
+            'mousedown',
+            'pointerup',
+            'touchend',
+          ]) {
+            document.addEventListener(type, onInteraction, {
+              capture: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
+      // Asks `availability()` with exactly the options `create()` gets, and
+      // waits for an interaction when a model still has to be downloaded.
+      const ensureAvailable = async (api, options, report) => {
+        const availability = await api.availability(options);
+        if (availability === 'unavailable') {
+          throw new Error(`${api.name} is unavailable for these options.`);
+        }
+        if (
+          availability !== 'available' &&
+          !navigator.userActivation.isActive
+        ) {
+          report('Click anywhere or press a key to download the model.');
+          await waitForUserActivation();
+        }
+      };
+
+      const getSummarizerOptions = () => ({
+        type: type.value,
+        format: format.value,
+        length: length.value,
+        expectedInputLanguages: [expectedInputLanguages.value],
+        expectedContextLanguages: [expectedContextLanguages.value],
+        outputLanguage: outputLanguage.value,
+      });
+
       summarizeBtn.onclick = async () => {
         output.textContent = 'Summarizing...';
         abortController = new AbortController();
         stopBtn.disabled = false;
 
         try {
+          const options = getSummarizerOptions();
+          await ensureAvailable(Summarizer, options, (message) => {
+            status.textContent = message;
+          });
           const summarizer = await Summarizer.create({
-            type: type.value,
-            format: format.value,
-            length: length.value,
-            expectedInputLanguages: [expectedInputLanguages.value],
-            expectedContextLanguages: [expectedContextLanguages.value],
-            outputLanguage: outputLanguage.value,
+            ...options,
             signal: abortController.signal,
             monitor: (m) => {
               progress.style.display = 'block';
@@ -232,13 +280,12 @@ The web is a vast place. Built-in AI APIs like the Summarizer API allow develope
         stopBtn.disabled = false;
 
         try {
+          const options = getSummarizerOptions();
+          await ensureAvailable(Summarizer, options, (message) => {
+            status.textContent = message;
+          });
           const summarizer = await Summarizer.create({
-            type: type.value,
-            format: format.value,
-            length: length.value,
-            expectedInputLanguages: [expectedInputLanguages.value],
-            expectedContextLanguages: [expectedContextLanguages.value],
-            outputLanguage: outputLanguage.value,
+            ...options,
             signal: abortController.signal,
             monitor: (m) => {
               progress.style.display = 'block';

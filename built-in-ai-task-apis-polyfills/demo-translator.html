@@ -157,6 +157,46 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
         }
       };
 
+      // Resolves once the user has interacted with the page. A model download
+      // needs user activation, which a tap, click, or key press grants.
+      const waitForUserActivation = () =>
+        new Promise((resolve) => {
+          const controller = new AbortController();
+          const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+              controller.abort();
+              resolve();
+            }
+          };
+          for (const type of [
+            'keydown',
+            'mousedown',
+            'pointerup',
+            'touchend',
+          ]) {
+            document.addEventListener(type, onInteraction, {
+              capture: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
+      // Asks `availability()` with exactly the options `create()` gets, and
+      // waits for an interaction when a model still has to be downloaded.
+      const ensureAvailable = async (api, options, report) => {
+        const availability = await api.availability(options);
+        if (availability === 'unavailable') {
+          throw new Error(`${api.name} is unavailable for these options.`);
+        }
+        if (
+          availability !== 'available' &&
+          !navigator.userActivation.isActive
+        ) {
+          report('Click anywhere or press a key to download the model.');
+          await waitForUserActivation();
+        }
+      };
+
       async function getTranslator() {
         const src = sourceLanguage.value;
         const tgt = targetLanguage.value;
@@ -170,9 +210,10 @@ Hello, how are you today? I hope you are having a wonderful time.</textarea
         }
 
         setStatus('Initializing translator...');
+        const options = { sourceLanguage: src, targetLanguage: tgt };
+        await ensureAvailable(Translator, options, setStatus);
         translator = await Translator.create({
-          sourceLanguage: src,
-          targetLanguage: tgt,
+          ...options,
           monitor: (m) => {
             progress.style.display = 'block';
             m.addEventListener('downloadprogress', (e) => {

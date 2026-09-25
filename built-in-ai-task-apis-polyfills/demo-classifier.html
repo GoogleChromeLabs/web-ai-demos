@@ -182,6 +182,30 @@ The new experimental fusion reactor at the ITER site in France has successfully 
 
       let classifier = null;
 
+      // Resolves once the user has interacted with the page. A model download
+      // needs user activation, which a tap, click, or key press grants.
+      const waitForUserActivation = () =>
+        new Promise((resolve) => {
+          const controller = new AbortController();
+          const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+              controller.abort();
+              resolve();
+            }
+          };
+          for (const type of [
+            'keydown',
+            'mousedown',
+            'pointerup',
+            'touchend',
+          ]) {
+            document.addEventListener(type, onInteraction, {
+              capture: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
       async function init() {
         try {
           status.textContent = 'Initializing...';
@@ -193,6 +217,17 @@ The new experimental fusion reactor at the ITER site in France has successfully 
               'Error: Built-in AI (LanguageModel) not available in this browser.';
             classifyBtn.disabled = true;
             return;
+          }
+
+          // The page just loaded, so a model download has to wait for an
+          // interaction.
+          if (
+            availability !== 'available' &&
+            !navigator.userActivation.isActive
+          ) {
+            status.textContent =
+              'Click anywhere or press a key to download the model.';
+            await waitForUserActivation();
           }
 
           status.textContent =
