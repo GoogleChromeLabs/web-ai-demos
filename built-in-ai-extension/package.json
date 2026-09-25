@@ -1,6 +1,7 @@
 {
   "name": "built-in-ai-extension",
   "version": "1.10.2",
+  "private": true,
   "description": "",
   "main": "index.js",
   "type": "module",

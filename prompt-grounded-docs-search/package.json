@@ -1,6 +1,7 @@
 {
   "name": "prompt-grounded-docs-search",
   "version": "1.0.0",
+  "private": true,
   "description": "Semantic search over the DevDocs HTML documentation, using the proposed Vector Store API.",
   "scripts": {
     "dev": "vite",

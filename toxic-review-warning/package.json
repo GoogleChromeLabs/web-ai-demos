@@ -1,6 +1,7 @@
 {
   "name": "toxic-review-warning",
   "version": "1.0.0",
+  "private": true,
   "description": "Demo of using AI to detect toxic reviews",
   "scripts": {
     "start": "parcel src/index.html",
