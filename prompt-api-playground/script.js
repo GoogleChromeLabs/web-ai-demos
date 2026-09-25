@@ -24,6 +24,22 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   const maxTokensInfo = document.getElementById("max-tokens");
   const tokensLeftInfo = document.getElementById("tokens-left");
   const tokensSoFarInfo = document.getElementById("tokens-so-far");
+  const downloadStatus = document.getElementById("download-status");
+  const downloadMessage = document.getElementById("download-message");
+  const downloadProgress = document.getElementById("download-progress");
+
+  // Shared by `availability()` and `create()`, so both ask about the same
+  // session.
+  const SESSION_OPTIONS = {
+    initialPrompts: [
+      {
+        role: "system",
+        content: SYSTEM_PROMPT,
+      },
+    ],
+    expectedInputs: [{ type: "text", languages: ["en"] }],
+    expectedOutputs: [{ type: "text", languages: ["en"] }],
+  };
 
   responseArea.style.display = "none";
 
@@ -38,6 +54,43 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   promptArea.style.display = "block";
   copyLinkButton.style.display = "none";
   copyHelper.style.display = "none";
+
+  // Resolves with `null` when the model still has to be downloaded and the user
+  // hasn't interacted with the page yet, since Chrome only starts a download
+  // with user activation. Submitting a prompt provides it.
+  const createSession = async () => {
+    const availability = await LanguageModel.availability(SESSION_OPTIONS);
+    if (availability === "unavailable") {
+      throw new Error("The Prompt API is unavailable on this device.");
+    }
+    const downloadNeeded = availability !== "available";
+    if (downloadNeeded && !navigator.userActivation.isActive) {
+      downloadMessage.textContent = "Submit a prompt to download the model.";
+      downloadProgress.hidden = true;
+      downloadStatus.hidden = false;
+      return null;
+    }
+    try {
+      return await LanguageModel.create({
+        ...SESSION_OPTIONS,
+        monitor(m) {
+          m.addEventListener("downloadprogress", (e) => {
+            if (!downloadNeeded) {
+              return;
+            }
+            downloadMessage.textContent = `Downloading the model: ${Math.round(
+              e.loaded * 100,
+            )}%`;
+            downloadProgress.value = e.loaded;
+            downloadProgress.hidden = false;
+            downloadStatus.hidden = false;
+          });
+        },
+      });
+    } finally {
+      downloadStatus.hidden = true;
+    }
+  };
 
   const promptModel = async (highlight = false) => {
     copyLinkButton.style.display = "none";
@@ -57,8 +110,12 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
 
     try {
       if (!session) {
-        await updateSession();
+        session = await createSession();
         updateStats();
+      }
+      if (!session) {
+        p.textContent = "Submit the prompt to download the model.";
+        return;
       }
       const stream = await session.promptStreaming(prompt);
 
@@ -214,15 +271,11 @@ const SYSTEM_PROMPT = "You are a helpful and friendly assistant.";
   });
 
   const updateSession = async () => {
-    if (self.LanguageModel) {
-      session = await LanguageModel.create({
-        initialPrompts: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT,
-          },
-        ],
-      });
+    try {
+      session = await createSession();
+    } catch (error) {
+      errorMessage.style.display = "block";
+      errorMessage.textContent = error.message;
     }
     resetUI();
     updateStats();
