@@ -22,7 +22,10 @@ export async function initializeApp(statusBarElement) {
             throw new Error(`Embedder API is not available.`);
         }
         
-        if (availability === 'downloadable') {
+        // Chrome only starts a model download with user activation, and a
+        // page that just loaded has none, so a click on the button provides it.
+        const downloadNeeded = availability !== 'available';
+        if (downloadNeeded && !navigator.userActivation.isActive) {
             statusBarElement.textContent = "Click 'Start' to download the AI model";
             statusBarElement.style.color = "var(--warning-color)";
             
@@ -43,25 +46,23 @@ export async function initializeApp(statusBarElement) {
                     resolve();
                 }, { once: true });
             });
-            
-            statusBarElement.textContent = "Checking Semantic Embedder API (downloading model)...";
-            window.downloadAnimInterval = setInterval(() => {
-                const dots = Math.floor((Date.now() / 500) % 4);
-                statusBarElement.textContent = "Checking Semantic Embedder API (downloading model)" + ".".repeat(dots);
-            }, 500);
-        } else if (availability === 'downloading') {
-            statusBarElement.textContent = "Model is downloading... Please wait.";
-            statusBarElement.style.color = "var(--warning-color)";
-        } else {
-            statusBarElement.textContent = "Creating Embedder session...";
         }
-        
-        const embedder = await window.SemanticEmbedder.create();
-        
-        if (window.downloadAnimInterval) {
-            clearInterval(window.downloadAnimInterval);
-            window.downloadAnimInterval = null;
-        }
+
+        statusBarElement.textContent = downloadNeeded
+            ? "Checking Semantic Embedder API (downloading model)..."
+            : "Creating Embedder session...";
+
+        // The same options `availability()` was asked about, which are none
+        // besides the monitor.
+        const embedder = await window.SemanticEmbedder.create({
+            monitor(m) {
+                m.addEventListener('downloadprogress', (e) => {
+                    if (!downloadNeeded) return;
+                    const percentage = Math.round(e.loaded * 100);
+                    statusBarElement.textContent = `Checking Semantic Embedder API (downloading model ${percentage}%)`;
+                });
+            }
+        });
         
         statusBarElement.textContent = "Ready.";
         statusBarElement.className = "status-bar ready";

@@ -108,15 +108,26 @@ async function init() {
     try {
         if (!window.LanguageModel) throw new Error("Prompt API (LanguageModel) not found in this browser.");
         
-        const availability = await window.LanguageModel.availability({
+        // Shared by `availability()` and `create()`, so both ask about the
+        // same session.
+        const sessionOptions = {
+            initialPrompts: [{
+                role: "system",
+                content: "You are a strictly grounded assistant. Answer the user's question based ONLY on the provided <context> tags. Do not use external knowledge. Synthesize the information from ALL the provided documents to form your answer."
+            }],
+            expectedInputs: [ { type: "text", languages: ["en"] } ],
             expectedOutputs: [ { type: "text", languages: ["en"] } ]
-        });
+        };
+        const availability = await window.LanguageModel.availability(sessionOptions);
         
         if (availability === 'no' || availability === 'unavailable') {
             throw new Error(`Model availability: ${availability}`);
         }
 
-        if (availability === 'downloadable' || availability === 'downloading' || availability === 'after-download') {
+        // Chrome only starts a model download with user activation, which
+        // the button provides.
+        const downloadNeeded = availability === 'downloadable' || availability === 'downloading' || availability === 'after-download';
+        if (downloadNeeded && !navigator.userActivation.isActive) {
             statusText.textContent = 'Model needs downloading. Please click to start.';
             const btn = document.createElement('button');
             btn.textContent = 'Start Download';
@@ -134,10 +145,10 @@ async function init() {
 
         if(statusText) statusText.textContent = "Checking Prompt API (downloading model)...";
         languageModelSession = await window.LanguageModel.create({
-            systemPrompt: "You are a strictly grounded assistant. Answer the user's question based ONLY on the provided <context> tags. Do not use external knowledge. Synthesize the information from ALL the provided documents to form your answer.",
-            expectedOutputs: [ { type: "text", languages: ["en"] } ],
+            ...sessionOptions,
             monitor(m) {
                 m.addEventListener('downloadprogress', (e) => {
+                    if (!downloadNeeded) return;
                     const percentage = Math.round((e.loaded / e.total) * 100);
                     if(statusText) statusText.textContent = `Checking Prompt API (downloading model ${percentage}%)`;
                 });
