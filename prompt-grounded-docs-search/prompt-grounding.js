@@ -10,6 +10,8 @@
 // carries the instructions, and a clone of it carries one document, so the
 // briefing is paid for once and each document starts from the same clean slate.
 
+import { ensureUserActivation } from "./user-activation.js";
+
 const SYSTEM_PROMPT = `You surface the passage of a document that answers a
 question.
 
@@ -48,7 +50,11 @@ const OPTIONS = {
 
 // Answering with a quote is a lookup, not a composition, so the least creative
 // sampling available is the right one.
-const CREATE_OPTIONS = { ...OPTIONS, samplingMode: "most-predictable" };
+const CREATE_OPTIONS = {
+  ...OPTIONS,
+  samplingMode: "most-predictable",
+  initialPrompts: [{ role: "system", content: SYSTEM_PROMPT }],
+};
 
 let briefed;
 
@@ -62,14 +68,19 @@ export const availability = async () => {
 
 // The one session that holds the instructions. Every grounding call clones it,
 // so the system prompt is processed once rather than per document.
-export const brief = async (onDownloadProgress) => {
+export const brief = async (onDownloadProgress, onActivationNeeded) => {
   if (briefed) {
     return briefed;
   }
 
+  const state = await availability();
+  if (state === "unavailable") {
+    throw new Error("The Prompt API is unavailable.");
+  }
+  await ensureUserActivation(state, onActivationNeeded);
+
   briefed = await LanguageModel.create({
     ...CREATE_OPTIONS,
-    initialPrompts: [{ role: "system", content: SYSTEM_PROMPT }],
     monitor(monitor) {
       monitor.addEventListener("downloadprogress", (event) => {
         onDownloadProgress?.(event.loaded);
@@ -98,6 +109,8 @@ const SUMMARIZER_OPTIONS = {
   length: "short",
   expectedInputLanguages: ["en"],
   outputLanguage: "en",
+  sharedContext:
+    "Reference documentation for an HTML element or attribute. Keep the wording of the source where possible.",
 };
 
 // Enough left over for the question and the reply.
@@ -106,7 +119,7 @@ const MAX_ROUNDS = 3;
 
 let summarizer;
 
-const getSummarizer = async (onDownloadProgress) => {
+const getSummarizer = async (onDownloadProgress, onActivationNeeded) => {
   if (summarizer) {
     return summarizer;
   }
@@ -114,14 +127,14 @@ const getSummarizer = async (onDownloadProgress) => {
     return undefined;
   }
   // The same options as create(), or the answer describes a different session.
-  if ((await Summarizer.availability(SUMMARIZER_OPTIONS)) === "unavailable") {
+  const state = await Summarizer.availability(SUMMARIZER_OPTIONS);
+  if (state === "unavailable") {
     return undefined;
   }
+  await ensureUserActivation(state, onActivationNeeded);
 
   summarizer = await Summarizer.create({
     ...SUMMARIZER_OPTIONS,
-    sharedContext:
-      "Reference documentation for an HTML element or attribute. Keep the wording of the source where possible.",
     monitor(monitor) {
       monitor.addEventListener("downloadprogress", (event) => {
         onDownloadProgress?.(event.loaded);
@@ -198,7 +211,10 @@ const condense = async (session, document, question, onProgress) => {
     return { text: document, summarized: false };
   }
 
-  const active = await getSummarizer();
+  const active = await getSummarizer(
+    (loaded) => onProgress?.({ phase: "download", loaded }),
+    () => onProgress?.({ phase: "activate" }),
+  );
   if (!active) {
     return {
       text: await trimToFit(session, document, question),
