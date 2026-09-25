@@ -6,10 +6,13 @@
 import './dom.js';
 
 import assert from 'node:assert/strict';
-import { afterEach, describe, it } from 'node:test';
+import { afterEach, describe, it, mock } from 'node:test';
 
 import { Compactor } from '../src/compact.js';
-import { normalizeDownloadProgress } from '../src/download.js';
+import {
+  createDownloadReporter,
+  normalizeDownloadProgress,
+} from '../src/download.js';
 import { EasyLanguageModel } from '../src/easy-language-model.js';
 
 /**
@@ -156,5 +159,58 @@ describe('progress payloads reaching the app', () => {
       'language-detector',
       'summarizer',
     ]);
+  });
+});
+
+describe('waiting for the first downloadprogress event', () => {
+  /**
+   * Drives the reporter directly, because the wait only matters while
+   * `create()` is still pending, which is exactly when a real download is
+   * running and the stub session has already resolved.
+   */
+  function watch(availability) {
+    const monitor = new EventTarget();
+    const reporter = createDownloadReporter({});
+    reporter.reportAvailability(availability);
+    reporter.monitor(monitor);
+    return { reporter, monitor };
+  }
+
+  function collectWarnings(body) {
+    const warnings = [];
+    const warn = console.warn;
+    console.warn = (message) => warnings.push(message);
+    mock.timers.enable({ apis: ['setTimeout'] });
+    try {
+      body();
+      mock.timers.tick(30_000);
+    } finally {
+      console.warn = warn;
+      mock.timers.reset();
+    }
+    return warnings;
+  }
+
+  it('warns when nothing is reported within 30 seconds', () => {
+    const warnings = collectWarnings(() => watch('downloadable'));
+    assert.equal(warnings.length, 1, 'warned once');
+    assert.match(warnings[0], /No downloadprogress event after 30 seconds/);
+  });
+
+  it('stays quiet when no download was expected', () => {
+    const warnings = collectWarnings(() => watch('available'));
+    assert.deepEqual(warnings, [], 'an available model downloads nothing');
+  });
+
+  it('stays quiet once an event has arrived, with create() still running', () => {
+    const warnings = collectWarnings(() => {
+      const { monitor } = watch('downloadable');
+      monitor.dispatchEvent(
+        Object.assign(new Event('downloadprogress'), { loaded: 0.1, total: 1 })
+      );
+    });
+    // No `reportReady()` here: the download is still going, and the event
+    // itself has to be what ends the wait.
+    assert.deepEqual(warnings, [], 'a reporting download is not stalled');
   });
 });
