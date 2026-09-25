@@ -1,6 +1,7 @@
 {
   "name": "ai-synonym-finder",
   "version": "1.0.0",
+  "private": true,
   "description": "Use built-in Prompt API to find words with similar meaning",
   "main": "index.html",
   "scripts": {

@@ -1,6 +1,7 @@
 {
   "name": "perf-test",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
     "start": "parcel src/index.html",
     "build": "parcel build --public-url=./ src/index.html",

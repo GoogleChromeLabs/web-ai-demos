@@ -1,5 +1,6 @@
 {
   "name": "summary-evaluation",
+  "private": true,
   "module": "index.ts",
   "type": "module",
   "dependencies": {

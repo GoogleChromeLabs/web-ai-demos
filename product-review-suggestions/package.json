@@ -2,6 +2,7 @@
   "name": "product-review-suggestions",
   "description": "Demo of using Gen AI to help users write informative reviews",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
     "start": "parcel src/index.html",
     "build": "parcel build --public-url=./ src/index.html",
