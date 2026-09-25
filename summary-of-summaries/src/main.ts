@@ -58,40 +58,62 @@ splitItButton.addEventListener('click', async () => {
     inputTextArea.disabled = false;
 });
 
-const checkSummarizerSupport = async (): Promise<boolean> => {
-    // Checks model availability.
-    let availability = await window.Summarizer.availability({
-        expectedInputLanguages: ['en'],
-        expectedContextLanguages: ['en'],
-        outputLanguage: 'en',
+// Shared by `availability()` and `create()`, so both ask about the same summarizer.
+const SUMMARIZER_OPTIONS = {
+    format: 'plain-text',
+    type: 'tldr',
+    length: 'long',
+    expectedInputLanguages: ['en'],
+    expectedContextLanguages: ['en'],
+    outputLanguage: 'en',
+};
+
+// Resolves once the user has interacted with the page. Chrome only starts a model download with
+// user activation, which a tap, click, or key press grants.
+const waitForUserActivation = (): Promise<void> =>
+    new Promise((resolve) => {
+        const controller = new AbortController();
+        const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+                controller.abort();
+                resolve();
+            }
+        };
+        for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+            document.addEventListener(type, onInteraction, {
+                capture: true,
+                signal: controller.signal,
+            });
+        }
     });
-    return availability === 'available' || availability === 'downloadable';
- }
 
 setupButton.addEventListener('click', async () => {
   if (window.Summarizer) {
-    if (await checkSummarizerSupport()) {
-        // Check availaiblity of the model so the user can be warned about the model download.
-        const availability = await self.Summarizer.availability({
-            expectedInputLanguages: ['en'],
-            expectedContextLanguages: ['en'],
-            outputLanguage: 'en',
-        });
-        if (availability === 'downloadable') {
+    // Check availaiblity of the model so the user can be warned about the model download.
+    const availability = await window.Summarizer.availability(SUMMARIZER_OPTIONS);
+    if (availability !== 'unavailable') {
+        if (availability !== 'available') {
+            // The click on Setup provides it, unless it has somehow expired.
+            if (!navigator.userActivation.isActive) {
+                statusSpan.innerText = `Click anywhere or press a key to download the model.`;
+                await waitForUserActivation();
+            }
             statusSpan.innerText = `Hold on, Chrome is downloading the model. This can take a few minutes..`;    
         } else {
             statusSpan.innerText = `Getting the model ready.`;
         }
 
         const modelDownloadCallback = (e: any) => {
-            statusSpan.innerText = `Hold on, Chrome is downloading the model. Progress: ${e.loaded} of ${e.total}.`;
+            statusSpan.innerText = `Hold on, Chrome is downloading the model. Progress: ${Math.round(e.loaded * 100)}%.`;
         };
 
         const createOptions = {
-            format: 'plain-text',
-            type: 'tldr',
-            length: 'long',
-            monitor: (m: any) => m.addEventListener('downloadprogress', modelDownloadCallback),
+            ...SUMMARIZER_OPTIONS,
+            monitor: (m: any) => {
+                if (availability !== 'available') {
+                    m.addEventListener('downloadprogress', modelDownloadCallback);
+                }
+            },
         };
 
         // Trigger the model download.
