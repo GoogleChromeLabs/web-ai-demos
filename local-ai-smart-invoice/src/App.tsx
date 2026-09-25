@@ -44,6 +44,26 @@ const waitForUserActivation = () =>
     }
   });
 
+// The model sees images at most 768 pixels on a side, and Chrome warns when it
+// has to downscale a bigger one itself. Doing it here keeps the aspect ratio
+// and the console quiet.
+const MAX_IMAGE_SIZE = 768;
+
+const fitImage = async (file: File) => {
+  const image = await createImageBitmap(file);
+  const { width, height } = image;
+  const scale = MAX_IMAGE_SIZE / Math.max(width, height);
+  if (scale >= 1) {
+    return image;
+  }
+  image.close();
+  return createImageBitmap(file, {
+    resizeWidth: Math.round(width * scale),
+    resizeHeight: Math.round(height * scale),
+    resizeQuality: 'high',
+  });
+};
+
 interface InvoiceItem {
   id: string; // for React key
   description: string;
@@ -174,7 +194,7 @@ Return a JSON object with exactly these keys:
 CRITICAL: You MUST extract ALL items listed on the invoice. Do not skip any line items. Do not hallucinate.
 
 Use "" for missing string fields, 0 for missing numbers. JSON only, no text.` },
-            { type: 'image', value: file }
+            { type: 'image', value: await fitImage(file) }
           ]
         }
       ];
