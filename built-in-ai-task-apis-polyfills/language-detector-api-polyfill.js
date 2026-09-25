@@ -224,16 +224,17 @@ export class LanguageDetector extends BaseTaskModel {
     const { systemPrompt, initialPrompts } = builder.buildPrompt('');
 
     const sessionOptions = {
+      ...this._languageModelOptions(validatedOptions),
       initialPrompts: [
         { role: 'system', content: systemPrompt },
         ...initialPrompts,
       ],
-      signal: options.signal,
-      monitor: options.monitor,
     };
 
-    const win = this.__window || globalThis;
-    const session = await win.LanguageModel.create(sessionOptions);
+    const session = await this._createLanguageModelSession(
+      sessionOptions,
+      options,
+    );
     const detector = new this(session, builder, validatedOptions);
 
     if (options.signal) {
