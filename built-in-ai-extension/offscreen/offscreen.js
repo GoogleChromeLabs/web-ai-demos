@@ -8,6 +8,26 @@
 const sessions = new Map(); // requestId -> session instance
 const controllers = new Map(); // callId -> AbortController
 
+// The polyfills only start a model download with user activation, like
+// Chrome does, and an offscreen document never has any. The page that sent
+// the request checked for it instead, so while `callback` runs, the offscreen
+// document reports the activation the page had.
+const withUserActivation = async (userActivated, callback) => {
+  if (!userActivated) {
+    return callback();
+  }
+  Object.defineProperty(navigator, 'userActivation', {
+    configurable: true,
+    value: { isActive: true, hasBeenActive: true },
+  });
+  try {
+    return await callback();
+  } finally {
+    // Uncovers the real, always inactive, getter on the prototype again.
+    delete navigator.userActivation;
+  }
+};
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.target !== 'offscreen') return;
 
@@ -67,6 +87,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           callId,
           apiType,
           backend,
+          userActivated,
           senderTabId,
           senderFrameId,
         } = processedMessage;
@@ -117,11 +138,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const controller = new AbortController();
         if (callId) controllers.set(callId, controller);
         try {
-          const session = await ApiClass.create({
-            ...options,
-            monitor,
-            signal: controller.signal,
-          });
+          const session = await withUserActivation(userActivated, () =>
+            ApiClass.create({
+              ...options,
+              monitor,
+              signal: controller.signal,
+            })
+          );
 
           // Relay contextoverflow events
           session.addEventListener?.('contextoverflow', () => {

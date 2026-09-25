@@ -508,6 +508,10 @@
         callId,
         config,
         options: sanitizeOptions(options),
+        // A model download needs user activation, which only the page the
+        // user interacts with has. The offscreen document that runs the
+        // backend never does, so it's checked here and passed along.
+        userActivated: navigator.userActivation.isActive,
       });
 
       return new LanguageModelSession(
