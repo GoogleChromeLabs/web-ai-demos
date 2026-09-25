@@ -31,6 +31,14 @@ export function normalizeDownloadProgress(event, resource) {
 }
 
 /**
+ * How long to wait for the first `downloadprogress` event before saying so.
+ *
+ * Timed from the moment the monitor is installed, which is inside `create()`,
+ * so the wait for a user gesture is already over and bytes should be moving.
+ */
+const FIRST_PROGRESS_TIMEOUT_MS = 30_000;
+
+/**
  * Wires up download reporting for one `create()` call.
  *
  * Unlike the raw Prompt API, where `monitor` is opt-in, the wrapper always
@@ -42,6 +50,10 @@ export function normalizeDownloadProgress(event, resource) {
  * `availability()` saying `downloadable` means a download would be needed, and
  * a gesture may still be waited on before one starts, so revealing the bar any
  * earlier leaves an empty bar on the page for as long as that takes.
+ *
+ * Once a download has been shown, the bar outlives `create()`: the last bytes
+ * land well before the model can answer, so it stays up and indeterminate
+ * until the session produces its first output, which `finish()` reports.
  *
  * @param {object} options
  * @param {(progress: {resource: string, loaded: number, total: number, percent: number}) => void} [options.onDownloadProgress]
@@ -55,6 +67,24 @@ export function createDownloadReporter({
 } = {}) {
   // The model was missing when we started, so a download really is happening.
   let downloadExpected = false;
+  // Cleared by the first event, and when the `create()` call settles either way.
+  let firstProgressTimer;
+  // Whether the bar was ever shown, which decides if there is anything to keep
+  // on screen once the session exists.
+  let shownForDownload = false;
+
+  const resetProgressElement = () => {
+    if (downloadProgress) {
+      downloadProgress.hidden = true;
+      downloadProgress.value = 0;
+      downloadProgress.max = 1;
+    }
+  };
+
+  const stopWaitingForProgress = () => {
+    clearTimeout(firstProgressTimer);
+    firstProgressTimer = undefined;
+  };
 
   return {
     /** Called with the result of `availability()`. */
@@ -71,11 +101,26 @@ export function createDownloadReporter({
 
     /** The `monitor` callback to hand to `LanguageModel.create()`. */
     monitor(m) {
+      // A download was expected and the monitor is now installed, so the first
+      // event should follow shortly. Staying quiet past this leaves a caller
+      // with a page that reports nothing, so say it on the console.
+      if (downloadExpected) {
+        firstProgressTimer = setTimeout(() => {
+          console.warn(
+            `[EasyLanguageModel] No downloadprogress event after ` +
+              `${FIRST_PROGRESS_TIMEOUT_MS / 1000} seconds. The model ` +
+              `download may not have started.`
+          );
+        }, FIRST_PROGRESS_TIMEOUT_MS);
+      }
+
       m.addEventListener('downloadprogress', (event) => {
+        stopWaitingForProgress();
         const reported = normalizeDownloadProgress(event, 'language-model');
         const { total, loaded } = reported;
 
         if (downloadProgress) {
+          shownForDownload = true;
           if (loaded < total) {
             downloadProgress.hidden = false;
             downloadProgress.max = total;
@@ -94,13 +139,31 @@ export function createDownloadReporter({
       monitor?.(m);
     },
 
-    /** Called once the session exists. */
+    /**
+     * Called once the session exists.
+     *
+     * A bar that was shown for a download stays up and indeterminate: the
+     * model is downloaded but not yet answering, and the wait between those
+     * two is exactly what there is still to report. `finish()` takes it down.
+     */
     reportReady() {
-      if (downloadProgress) {
-        downloadProgress.hidden = true;
-        downloadProgress.value = 0;
-        downloadProgress.max = 1;
+      stopWaitingForProgress();
+      if (downloadProgress && shownForDownload) {
+        downloadProgress.hidden = false;
+        downloadProgress.removeAttribute('value');
+        return;
       }
+      resetProgressElement();
+    },
+
+    /**
+     * Called when the session first produces output, and when `create()`
+     * fails. Either way there is nothing left to wait for.
+     */
+    finish() {
+      stopWaitingForProgress();
+      shownForDownload = false;
+      resetProgressElement();
     },
   };
 }
