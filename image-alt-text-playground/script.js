@@ -8,6 +8,26 @@ if (!('showOpenFilePicker' in window)) {
 }
 
 const progress = document.querySelector('progress');
+const activationHint = document.querySelector('#activation-hint');
+
+// Resolves once the user has interacted with the page. Chrome only starts a
+// model download with user activation, which a tap, click, or key press grants.
+const waitForUserActivation = () =>
+  new Promise((resolve) => {
+    const controller = new AbortController();
+    const onInteraction = () => {
+      if (navigator.userActivation.isActive) {
+        controller.abort();
+        resolve();
+      }
+    };
+    for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+      document.addEventListener(type, onInteraction, {
+        capture: true,
+        signal: controller.signal,
+      });
+    }
+  });
 
 let sessionCreationTriggered = false;
 
@@ -24,10 +44,8 @@ const createSession = async (options = {}) => {
       throw new Error('LanguageModel is not supported.');
     }
 
-    const availability = await LanguageModel.availability({
-      expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }],
-      expectedOutputs: [{ type: 'text', languages: ['en'] }],
-    });
+    // The same options `create()` gets, so both ask about the same session.
+    const availability = await LanguageModel.availability(options);
     if (availability === 'unavailable') {
       throw new Error('LanguageModel is not available.');
     }
@@ -35,11 +53,17 @@ const createSession = async (options = {}) => {
     let modelNewlyDownloaded = false;
     if (availability !== 'available') {
       modelNewlyDownloaded = true;
+      if (!navigator.userActivation.isActive) {
+        activationHint.hidden = false;
+        await waitForUserActivation();
+        activationHint.hidden = true;
+      }
       progress.hidden = false;
     }
     sessionCreationTriggered = true;
 
     const llmSession = await LanguageModel.create({
+      ...options,
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
           progress.value = e.loaded;
@@ -50,7 +74,6 @@ const createSession = async (options = {}) => {
           }
         });
       },
-      ...options,
     });
 
     sessionCreationTriggered = false;
