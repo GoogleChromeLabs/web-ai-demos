@@ -41,6 +41,63 @@ function hideDownloadProgress() {
   dlProgress.style.display = 'none';
 }
 
+// Resolves once the user has interacted with the page, which a tap, click, or
+// key press counts as.
+function waitForUserActivation() {
+  return new Promise((resolve) => {
+    const controller = new AbortController();
+    const onInteraction = () => {
+      if (navigator.userActivation.isActive) {
+        controller.abort();
+        resolve();
+      }
+    };
+    for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+      document.addEventListener(type, onInteraction, {
+        capture: true,
+        signal: controller.signal,
+      });
+    }
+  });
+}
+
+// Chrome only starts a model download with user activation. The first session
+// is created on page load, and compacting runs long after the click that
+// started it, so either may have to wait for an interaction.
+async function ensureUserActivation(availability, what) {
+  if (availability === 'available' || navigator.userActivation.isActive) {
+    return;
+  }
+  setStatus(`Click anywhere or press a key to download the ${what}.`);
+  await waitForUserActivation();
+}
+
+// Creates a session with exactly the options `availability()` was asked about.
+async function createSession(options) {
+  const avail = await LanguageModel.availability(options);
+  if (avail === 'unavailable') {
+    throw new Error('LanguageModel is unavailable on this device.');
+  }
+  await ensureUserActivation(avail, 'model');
+  if (avail !== 'available') {
+    setStatus(`Model is ${avail}. Downloading…`);
+  }
+
+  const created = await LanguageModel.create({
+    ...options,
+    monitor(m) {
+      m.addEventListener('downloadprogress', (e) => {
+        setDownloadProgress(e.loaded, e.total);
+        setStatus(
+          `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`
+        );
+      });
+    },
+  });
+  hideDownloadProgress();
+  return created;
+}
+
 function updateTokenDisplay() {
   if (!session) return;
   const usage = session.contextUsage;
@@ -172,6 +229,7 @@ async function getSummarizer(format, lang) {
   if (sumAvail === 'unavailable') {
     throw new Error('Summarizer API is unavailable on this device.');
   }
+  await ensureUserActivation(sumAvail, 'summarizer');
 
   setStatus(
     sumAvail !== 'available'
@@ -204,6 +262,7 @@ async function getLanguageDetector() {
   if (avail === 'unavailable') {
     throw new Error('Language Detector API is unavailable on this device.');
   }
+  await ensureUserActivation(avail, 'language detector');
 
   setStatus(
     avail !== 'available'
@@ -260,30 +319,13 @@ async function init() {
     expectedOutputs: [{ type: 'text', languages: [navLang] }],
   };
 
-  const avail = await LanguageModel.availability(langOptions);
-
-  if (avail === 'unavailable') {
-    setStatus('LanguageModel is unavailable on this device.');
+  try {
+    session = await createSession(langOptions);
+  } catch (err) {
+    setStatus(err.message);
     return;
   }
 
-  if (avail !== 'available') {
-    setStatus(`Model is ${avail}. Downloading…`);
-  }
-
-  session = await LanguageModel.create({
-    ...langOptions,
-    monitor(m) {
-      m.addEventListener('downloadprogress', (e) => {
-        setDownloadProgress(e.loaded, e.total);
-        setStatus(
-          `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`
-        );
-      });
-    },
-  });
-
-  hideDownloadProgress();
   updateTokenDisplay();
   setStatus('Ready.');
   setControls(true);
@@ -397,7 +439,7 @@ async function compactSession() {
       expectedOutputs: [{ type: 'text', languages: sessionLangs }],
     };
 
-    session = await LanguageModel.create({
+    session = await createSession({
       ...sessionLangOptions,
       initialPrompts: compacted.map(({ role, content }) => ({ role, content })),
     });
@@ -476,7 +518,10 @@ async function compactSession() {
     if (!session) {
       try {
         setStatus('Recovering session from history…');
-        session = await LanguageModel.create({
+        const navLang = navigator.language;
+        session = await createSession({
+          expectedInputs: [{ type: 'text', languages: [navLang] }],
+          expectedOutputs: [{ type: 'text', languages: [navLang] }],
           initialPrompts: history.map(({ role, content }) => ({
             role,
             content,
