@@ -71,10 +71,57 @@ const SENSITIVITY_LABELS = {
   }
 
   // ── Create AI session ──
-  try {
-    session = await LanguageModel.create({
-      initialPrompts: [{ role: "system", content: SYSTEM_PROMPT }],
+  // Shared by `availability()` and `create()`, so both ask about the same
+  // session.
+  const sessionOptions = {
+    initialPrompts: [{ role: "system", content: SYSTEM_PROMPT }],
+    expectedInputs: [{ type: "text", languages: ["en"] }],
+    expectedOutputs: [{ type: "text", languages: ["en"] }],
+  };
+
+  // Resolves once the user has interacted with the page. Chrome only starts a
+  // model download with user activation, which a tap, click, or key press
+  // grants, so typing the first message is enough.
+  const waitForUserActivation = () =>
+    new Promise((resolve) => {
+      const controller = new AbortController();
+      const onInteraction = () => {
+        if (navigator.userActivation.isActive) {
+          controller.abort();
+          resolve();
+        }
+      };
+      for (const type of ["keydown", "mousedown", "pointerup", "touchend"]) {
+        document.addEventListener(type, onInteraction, {
+          capture: true,
+          signal: controller.signal,
+        });
+      }
     });
+
+  try {
+    const availability = await LanguageModel.availability(sessionOptions);
+    if (availability === "unavailable") {
+      throw new Error("The Prompt API is unavailable on this device.");
+    }
+    const downloadNeeded = availability !== "available";
+    // Nothing can be checked before the session exists.
+    sendBtn.disabled = true;
+    if (downloadNeeded && !navigator.userActivation.isActive) {
+      aiBadge.textContent = "Click anywhere or start typing to download AI";
+      await waitForUserActivation();
+    }
+    session = await LanguageModel.create({
+      ...sessionOptions,
+      monitor(m) {
+        m.addEventListener("downloadprogress", (e) => {
+          if (downloadNeeded) {
+            aiBadge.textContent = `Downloading AI: ${Math.round(e.loaded * 100)}%`;
+          }
+        });
+      },
+    });
+    sendBtn.disabled = false;
     aiBadge.textContent = "🟢 Local AI Ready";
     aiBadge.className = "badge badge-ready";
   } catch (err) {
