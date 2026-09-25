@@ -68,6 +68,11 @@ button {
   padding: 0.25rem;
 }
 
+.deprecation-warning {
+  border: orange solid 2px;
+  padding: 0.25rem;
+}
+
 footer {
   margin-block: 1rem;
 }
