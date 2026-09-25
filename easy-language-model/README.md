@@ -76,7 +76,7 @@ these, in four groups:
 
 | Option                                                   | Default | What it does                                                                                                                                                                                                                                        |
 | -------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `downloadProgress`                                       | —       | An `HTMLProgressElement` to drive automatically. It appears with the first `downloadprogress` event, goes indeterminate once the bytes are in, stays up while the model loads, and is hidden by the session's first output.                         |
+| `downloadProgress`                                       | —       | An `HTMLProgressElement` to drive automatically. It appears with the first `downloadprogress` event, goes indeterminate once the bytes are in, and is hidden when `create()` resolves.                                                              |
 | `onDownloadProgress({resource, loaded, total, percent})` | —       | The same events as a callback, independent of `downloadProgress`: pass either, both, or neither. The `percent` field is a whole number from 0 to 100, and `resource` is `language-model`, or `summarizer` / `language-detector` during `compact()`. |
 
 ##### Tool calling
@@ -200,10 +200,6 @@ const session = await LanguageModel.create({
     );
   },
 });
-
-// Still loading, so the indicator stays up until
-// the model says something.
-const answer = await session.prompt(question);
 downloadProgress.hidden = true;
 ```
 
@@ -239,15 +235,14 @@ const session = await EasyLanguageModel.create({
 
 On the left, `e.loaded === 1` marks the point where the bytes are in and the
 browser starts unpacking the model, which takes an unknown amount of time; the
-wrapper switches the indicator to indeterminate there. It stays up across that
-gap and comes down on the session's first output, so the page reports the whole
-wait. A session that is destroyed before it answers takes it down too.
+wrapper switches the indicator to indeterminate there, and hides it when
+`create()` resolves.
 
 The indicator appears with the first `downloadprogress` event. A report of
 `downloadable` from `availability()` says a download would be needed, and a
 gesture may still be waited on first, so showing it earlier puts an empty bar
-on the page for as long as that takes. If no event has arrived 30 seconds after `create()`
-installed the monitor, a warning is logged to the console.
+on the page for as long as that takes. If no event has arrived 30 seconds after
+`create()` installed the monitor, a warning is logged to the console.
 
 The `activationButton` and `activationHint` elements are hidden from the moment
 `create()` is called, shown if a gesture turns out to be needed, and hidden
