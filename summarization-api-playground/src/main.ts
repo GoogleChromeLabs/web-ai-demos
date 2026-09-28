@@ -5,14 +5,6 @@
 
 import './style.css'
 
-// Declare Summarizer as a global, to avoid the TS compiler complaining about unknown
-// objects in the global scope.
-declare global {
-  interface Window {
-      Summarizer: any;
-  }
-}
-
 const inputTextArea = document.querySelector('#input') as HTMLTextAreaElement;
 const summaryTypeSelect = document.querySelector('#type') as HTMLSelectElement;
 const summaryFormatSelect = document.querySelector('#format') as HTMLSelectElement;
@@ -70,7 +62,7 @@ const createSummarizationSession = async (
   downloadProgressListener?: (ev: ProgressEvent) => void): Promise<Summarizer> => {
 
   const options = { ...LANGUAGE_OPTIONS, type, format, length };
-  const availability = await window.Summarizer.availability(options);
+  const availability = await Summarizer.availability(options);
   if (availability === 'unavailable') {
     throw new Error('AI Summarization is not supported');
   }
@@ -88,7 +80,7 @@ const createSummarizationSession = async (
       };
   }
 
-  return window.Summarizer.create({ ...options, monitor });
+  return Summarizer.create({ ...options, monitor });
 }
 
 /*
@@ -97,7 +89,7 @@ const createSummarizationSession = async (
  * when it is not. A model that is still downloading counts as supported.
  */
 const checkSummarizerSupport = async (): Promise<boolean> => {
-  let availability = await window.Summarizer.availability(LANGUAGE_OPTIONS);
+  let availability = await Summarizer.availability(LANGUAGE_OPTIONS);
   return availability !== 'unavailable';
 }
 
@@ -107,7 +99,7 @@ const checkSummarizerSupport = async (): Promise<boolean> => {
  * able to run it before setting up the listeners to summarize the input added to the textarea.
  */
 const initializeApplication = async () => {
-  const summarizationApiAvailable = self.Summarizer !== undefined;
+  const summarizationApiAvailable = 'Summarizer' in self;
   if (!summarizationApiAvailable) {
     summarizationUnavailableDialog.style.display = 'block';
     return;
