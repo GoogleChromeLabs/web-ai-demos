@@ -100,3 +100,24 @@ lives outside the checkout, so `git add` in the workspace cannot reach it.
 Note that `weather-ai/src/env.js` is a tracked file whose committed value is a
 placeholder. The overlay overwrites it locally on every run, so don't commit
 that file from a workspace where the overlay has been applied.
+
+## Running it on a schedule
+
+A run installs around 9 GB of `node_modules` across the demos. The kernel
+charges all of that to whoever ran the sync as page cache, so an unconstrained
+scheduled run grows to well over 10 GB and becomes the most attractive target
+for the OOM killer. The builds themselves need about 2 GB.
+
+Under a systemd user unit, `MemoryHigh=4G` keeps it in check: the kernel
+reclaims the cache as the run goes, the builds keep their headroom, and nothing
+is ever killed. Expect a few extra minutes, since files have to be read from
+disk again.
+
+```ini
+[Service]
+Type=oneshot
+ExecStart=%h/path/to/sync-web-ai-demos.sh --live
+MemoryAccounting=yes
+MemoryHigh=4G
+TimeoutStartSec=1h
+```
