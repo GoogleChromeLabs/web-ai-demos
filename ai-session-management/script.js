@@ -131,8 +131,8 @@ async function createLanguageModel({ initialPrompts }) {
     };
 
     const assistant = await createLanguageModel(options);
-    const { inputQuota, inputUsage } = assistant;
-    console.log(uuid, inputUsage, inputQuota);
+    const { contextUsage, contextWindow } = assistant;
+    console.log(uuid, contextUsage, contextWindow);
 
     assistants[uuid] = { assistant, options };
 
@@ -148,8 +148,8 @@ async function createLanguageModel({ initialPrompts }) {
     const conversationContainer = assistantClone.querySelector(
       '.conversation-container'
     );
-    assistantClone.querySelector('.tokens-so-far').textContent = assistant.inputUsage;
-    assistantClone.querySelector('.tokens-left').textContent = assistant.inputQuota - assistant.inputUsage;
+    assistantClone.querySelector('.tokens-so-far').textContent = assistant.contextUsage;
+    assistantClone.querySelector('.tokens-left').textContent = assistant.contextWindow - assistant.contextUsage;
     assistantContainer.append(assistantClone);
 
     for (const initialPrompt of options.initialPrompts) {
@@ -199,7 +199,7 @@ const createAssistant = async (options = {}) => {
     const uuid = crypto.randomUUID();
     options.initialPrompts = options.initialPrompts || [];
     const assistant = await createLanguageModel(options);
-    assistantTemplate.content.querySelector('.tokens-left').textContent = assistant.inputQuota;
+    assistantTemplate.content.querySelector('.tokens-left').textContent = assistant.contextWindow;
     assistants[uuid] = { assistant, options };
     const uuids = getUUIDs();
     uuids.push(uuid);
@@ -275,12 +275,9 @@ promptForm.addEventListener('submit', async (e) => {
     }
     const details = conversationContainer.closest('details');
 
-    // The new API shape in Chrome Canary renames `tokenSoFar` to `inputUsage`, `maxTokens` to `inputQuota` and removes
-    // `tokensLeft`. The code below uses whichever version is available.
-    details.querySelector('.tokens-so-far').textContent =
-        assistant.tokensSoFar || assistant.inputUsage;
+    details.querySelector('.tokens-so-far').textContent = assistant.contextUsage;
     details.querySelector('.tokens-left').textContent =
-        assistant.tokensLeft || assistant.inputQuota - assistant.inputUsage;
+      assistant.contextWindow - assistant.contextUsage;
 
     options.initialPrompts.push(
       {
