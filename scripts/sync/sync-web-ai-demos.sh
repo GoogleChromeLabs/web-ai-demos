@@ -443,6 +443,7 @@ sync_to_bucket() {
             else
                 echo "  👍 Synchronization complete for $demo_name."
             fi
+            rm -rf "$staged"
             return 0
         fi
 
@@ -454,6 +455,9 @@ sync_to_bucket() {
         fi
     done
 
+    # Staged copies are dropped as soon as a demo is done, so that a run holds
+    # one of them at a time instead of a copy of every demo it has published.
+    rm -rf "$staged"
     echo "  ❌ Warning: gcloud storage rsync failed for $demo_name after $attempts attempts."
     return 1
 }
@@ -574,7 +578,10 @@ cd "$REPO_DIR" || { echo "Error: Failed to change directory to $REPO_DIR. Exitin
 apply_local_secrets
 echo
 
-LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sync-web-ai-demos.XXXXXX")"
+# Logs and the staging copies live in the workspace, on disk. `/tmp` is a
+# tmpfs on many systems, where staged files are unswappable RAM charged to
+# whatever runs the sync, which is how a scheduled run gets itself OOM-killed.
+LOG_DIR="$(mktemp -d "$WORKSPACE_DIR/.sync-web-ai-demos.XXXXXX")"
 trap 'rm -rf "$LOG_DIR"' EXIT
 
 echo "Traversing root-level folders to find demos to publish..."
