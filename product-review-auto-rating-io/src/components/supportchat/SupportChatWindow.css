@@ -27,3 +27,8 @@
 .chat-window > div {
 	padding: 8px;
 }
+
+.chat-download-status {
+	margin: 0;
+	font-size: 0.875rem;
+}
