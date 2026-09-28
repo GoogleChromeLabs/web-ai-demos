@@ -26,9 +26,55 @@
     });
   };
 
+  // Resolves once the user has interacted with the page. Chrome only starts a
+  // model download with user activation, which a tap, click, or key press
+  // grants.
+  const waitForUserActivation = () =>
+    new Promise((resolve) => {
+      const controller = new AbortController();
+      const onInteraction = () => {
+        if (navigator.userActivation.isActive) {
+          controller.abort();
+          resolve();
+        }
+      };
+      for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+        document.addEventListener(type, onInteraction, {
+          capture: true,
+          signal: controller.signal,
+        });
+      }
+    });
+
+  // Shows `message` in place of a progress bar until the user interacts with
+  // the page, then puts the bar back for the download.
+  const askForUserActivation = async (progress, message) => {
+    const label = progress.labels[0];
+    const downloadLabel = label.textContent;
+    label.textContent = message;
+    progress.hidden = true;
+    progress.parentElement.hidden = false;
+    await waitForUserActivation();
+    progress.parentElement.hidden = true;
+    progress.hidden = false;
+    label.textContent = downloadLabel;
+  };
+
   const detectorProgress = document.querySelector('#detector-progress');
   let detector;
   try {
+    // The same options as `create()`, which takes none besides the monitor.
+    const availability = await LanguageDetector.availability();
+    if (availability === 'unavailable') {
+      throw new Error('no language detection model is available');
+    }
+    // The detector is created on page load, which has no user activation.
+    if (availability !== 'available' && !navigator.userActivation.isActive) {
+      await askForUserActivation(
+        detectorProgress,
+        'Click anywhere or press a key to download the language detection model.'
+      );
+    }
     detector = await LanguageDetector.create({
       monitor: monitorDownload(detectorProgress),
     });
@@ -91,7 +137,10 @@
         const displaySourceLanguage = languageTagToHumanReadable(sourceLanguage, 'en') || '';
         const displayTargetLanguage = languageTagToHumanReadable(targetLanguage, 'en') || '';
 
-        const availability = await Translator.availability({ sourceLanguage, targetLanguage });
+        // Shared by `availability()` and `create()`, so both ask about the same
+        // translator.
+        const options = { sourceLanguage, targetLanguage };
+        const availability = await Translator.availability(options);
         const isUnavailable = availability === 'unavailable';
 
         if (isUnavailable) {
@@ -99,9 +148,14 @@
           return;
         }
         translatorProgress.labels[0].textContent = `Downloading the ${displaySourceLanguage} to ${displayTargetLanguage} translation model:`;
+        if (availability !== 'available' && !navigator.userActivation.isActive) {
+          await askForUserActivation(
+            translatorProgress,
+            `Click anywhere or press a key to download the ${displaySourceLanguage} to ${displayTargetLanguage} translation model.`
+          );
+        }
         const translator = await Translator.create({
-          sourceLanguage,
-          targetLanguage,
+          ...options,
           monitor: monitorDownload(translatorProgress),
         });
         output.textContent = await translator.translate(input.value.trim());
