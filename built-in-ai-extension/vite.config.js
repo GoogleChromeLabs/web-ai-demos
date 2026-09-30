@@ -10,9 +10,52 @@ import fs from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Stops the ONNX runtime's unused wasm fallback from pulling a 26 MB binary
+ * into the bundle.
+ *
+ * The runtime falls back to `new URL(<wasm>, import.meta.url)` when nothing
+ * told it where its binaries live. Transformers.js always sets `wasmPaths`
+ * before a session is created, so that branch never runs, but Vite still
+ * resolves the expression and emits a copy of the binary for it. That happens
+ * once per bundle carrying the runtime, and the semantic embedder's worker is a
+ * bundle of its own, so the cost is paid twice. Rewriting the expression to a
+ * plain string emits nothing, and still names the copy that
+ * copy-transformers-assets ships, should the branch ever be reached.
+ */
+function localizeOrtWasmUrl() {
+  return {
+    name: 'localize-ort-wasm-url',
+    // 'pre' puts this ahead of Vite's own `new URL(..., import.meta.url)`
+    // handling, which is what turns the expression into an emitted asset.
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.includes('onnxruntime-web')) {
+        return null;
+      }
+      const pattern =
+        /new URL\(\s*"(ort-wasm-simd-threaded[^"]*\.wasm)"\s*,\s*import\.meta\.url\s*\)\.href/g;
+      if (!pattern.test(code)) {
+        return null;
+      }
+      pattern.lastIndex = 0;
+      return {
+        code: code.replace(pattern, (_match, file) =>
+          JSON.stringify(`/src/transformers-assets/${file}`)
+        ),
+        map: null,
+      };
+    },
+  };
+}
+
 export default defineConfig({
   base: './',
   resolve: {
+    // Keeps a single copy of the library in the main bundle. The semantic
+    // embedder's worker is a separate bundle for a separate realm, so it
+    // necessarily carries its own.
+    dedupe: ['@huggingface/transformers'],
     alias: {
       // Avoid including remotely hosted code in a Manifest V3 item
       // to pass Chrome Web Store validation.
@@ -49,6 +92,21 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
+  // The SemanticEmbedder polyfill declares its worker the way bundlers expect,
+  // so Vite bundles it on its own. Naming that output predictably instead of
+  // with a content hash is what lets manifest.json list it as a web-accessible
+  // resource and the content script hand the polyfill its URL.
+  worker: {
+    format: 'es',
+    // The worker is bundled separately and does not inherit `plugins` above.
+    plugins: () => [localizeOrtWasmUrl()],
+    rollupOptions: {
+      output: {
+        entryFileNames: `src/semantic-embedder-worker.js`,
+        chunkFileNames: `src/chunks/[name]-[hash].js`,
+      },
+    },
+  },
   plugins: [
     {
       name: 'virtual-url-stub',
@@ -65,6 +123,7 @@ export default defineConfig({
         }
       },
     },
+    localizeOrtWasmUrl(),
     {
       name: 'copy-transformers-assets',
       closeBundle() {
