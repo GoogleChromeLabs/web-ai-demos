@@ -346,12 +346,13 @@ const groundOpenDocument = async (path) => {
         if (run !== groundingRun) {
           return;
         }
-        say(
-          progress.phase === "summarize"
-            ? `Too long to read at once — summarizing (pass ${progress.round})…`
-            : `Locating the passage for “${question}”…`,
-          true,
-        );
+        const messages = {
+          activate: "Click anywhere or press a key to download the summarizer.",
+          download: `Downloading the summarizer: ${Math.round(progress.loaded * 100)}%`,
+          summarize: `Too long to read at once — summarizing (pass ${progress.round})…`,
+          ground: `Locating the passage for “${question}”…`,
+        };
+        say(messages[progress.phase], true);
       },
     });
     // A newer document was opened while this one was being read.
@@ -497,9 +498,15 @@ const showPromptImplementation = async () => {
   try {
     // Paid for once: every grounding call clones this session rather than
     // repeating the instructions.
-    await brief((loaded) => {
-      promptBackend.textContent = `Prompt API ${Math.round(loaded * 100)}%`;
-    });
+    await brief(
+      (loaded) => {
+        promptBackend.textContent = `Prompt API ${Math.round(loaded * 100)}%`;
+      },
+      () => {
+        promptBackend.textContent =
+          "Prompt API: click anywhere or press a key to download";
+      },
+    );
     promptBackend.textContent = "Prompt API ready";
     promptBackend.dataset.state = "available";
     groundingReady = true;
@@ -605,6 +612,11 @@ const build = async () => {
       entries,
       db,
       onProgress: (progress) => {
+        if (progress.phase === "activate") {
+          indexStatus.textContent =
+            "Click anywhere or press a key to download the model.";
+          return;
+        }
         if (progress.phase === "download") {
           indexProgress.value = progress.loaded;
           indexStatus.textContent = `Downloading the model: ${Math.round(progress.loaded * 100)}%`;
