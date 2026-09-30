@@ -20,6 +20,7 @@ export interface GameState {
   helpActionsUsed: number;
   shakeCells: boolean[];
   downloadProgress: number | null;
+  activationNeeded: boolean;
 }
 
 export interface GameStore {

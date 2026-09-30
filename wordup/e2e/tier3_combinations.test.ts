@@ -14,7 +14,7 @@ import { saveStats, saveSession, loadStats, clearSession, type LetterCell } from
 
 describe('Wordup PWA E2E Tier 3: Cross-Feature Combinations', () => {
   beforeEach(() => {
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE']);
     setNextSuggestions(['APPLE', 'GRAPE', 'PEACH']);
   });

@@ -24,7 +24,7 @@ async function setupE2ETest(options?: {
   skipWait?: boolean;
   skipDbInit?: boolean;
   skipMockReset?: boolean;
-  availability?: 'readily' | 'after-download' | 'unavailable';
+  availability?: 'available' | 'downloadable' | 'unavailable';
   score?: number;
   streak?: number;
   highScore?: number;
@@ -44,7 +44,7 @@ async function setupE2ETest(options?: {
 
 describe('Wordup PWA - Adversarial and Coverage Hardening Tests', () => {
   beforeEach(async () => {
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE']);
     setNextSuggestions(['APPLE', 'PEACH']);
     

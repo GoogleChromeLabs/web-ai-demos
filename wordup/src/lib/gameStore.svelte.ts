@@ -48,6 +48,7 @@ export function createGameStore(): GameStore {
   let helpActionsUsed = $state<number>(0);
   let shakeCells = $state<boolean[]>([false, false, false, false, false]);
   let downloadProgress = $state<number | null>(null);
+  let activationNeeded = $state<boolean>(false);
 
   function syncLockedColumns() {
     activeRow = getSyncedActiveRow(isLocked, secretWord);
@@ -94,9 +95,13 @@ export function createGameStore(): GameStore {
       if (!secretWord) {
         downloadProgress = null;
         const word = await generateWord(activeDifficulty, activeAllowDuplicates, history, (loaded, total) => {
+          activationNeeded = false;
           const ratio = loaded / total;
           downloadProgress = ratio < 1 ? ratio : null;
+        }, () => {
+          activationNeeded = true;
         });
+        activationNeeded = false;
         if (generationId !== activeGenerationId) return;
         secretWord = word.toUpperCase();
         downloadProgress = null;
@@ -336,7 +341,8 @@ export function createGameStore(): GameStore {
     get activeAllowDuplicates() { return activeAllowDuplicates; },
     get helpActionsUsed() { return helpActionsUsed; },
     get shakeCells() { return shakeCells; },
-    get downloadProgress() { return downloadProgress; }
+    get downloadProgress() { return downloadProgress; },
+    get activationNeeded() { return activationNeeded; }
   };
 
   return {

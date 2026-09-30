@@ -131,6 +131,7 @@
         revealWord={revealWord}
         settingsDescription={settingsDescription}
         downloadProgress={game.state.downloadProgress}
+        activationNeeded={game.state.activationNeeded}
       />
 
       <!-- Hint Suggestion Error Notice -->

@@ -5,7 +5,8 @@
     guessesCount = 0,
     revealWord = '',
     settingsDescription = '',
-    downloadProgress = null
+    downloadProgress = null,
+    activationNeeded = false
   } = $props<{
     gameStatus: 'loading' | 'playing' | 'won' | 'lost' | 'error';
     errorMessage?: string;
@@ -13,6 +14,7 @@
     revealWord?: string;
     settingsDescription?: string;
     downloadProgress?: number | null;
+    activationNeeded?: boolean;
   }>();
 
   const isAiError = $derived(
@@ -35,6 +37,9 @@
   <div class="game-loading-panel" role="status" aria-label="Loading new word">
     <h2 class="game-loading-title">CONJURING A WORD...</h2>
     <p class="game-loading-text">{settingsDescription}</p>
+    {#if activationNeeded}
+      <p class="game-loading-text">Click anywhere or press a key to download the AI model.</p>
+    {/if}
     {#if downloadProgress !== null && downloadProgress < 1}
       <div class="download-progress-container">
         <progress id="model-download-progress" value={downloadProgress}></progress>

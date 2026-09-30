@@ -28,7 +28,7 @@ describe('Tier 5 Adversarial Coverage Hardening Tests', () => {
     originalLanguageModelCreate = globalThis.LanguageModel.create;
 
     // Reset default mock state
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE']);
     setNextSuggestions(['APPLE', 'PEACH']);
 

@@ -13,7 +13,7 @@ import {
 
 describe('Wordup PWA E2E Sanity Test', () => {
   beforeEach(() => {
-    setMockedAvailability('readily');
+    setMockedAvailability('available');
     setNextGeneratedWords(['APPLE']);
   });
 
