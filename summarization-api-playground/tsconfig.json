@@ -5,6 +5,9 @@
     "module": "ESNext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+    // Only these, so the Node.js types that tools elsewhere in the monorepo
+    // install don't leak into this browser app.
+    "types": ["vite/client", "dom-chromium-ai"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
