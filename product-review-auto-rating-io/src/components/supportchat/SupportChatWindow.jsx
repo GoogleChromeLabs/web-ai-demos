@@ -13,14 +13,19 @@ import { useEffect, useState } from 'preact/hooks';
 const DEFAULT_USER_LANGUAGE = 'pt';
 
 export default function SupportChatWindow() {
-	let [translationInstance, setTranslationInstance] = useState(new Translation(DEFAULT_USER_LANGUAGE));
+	// Tells the user about translation model downloads.
+	let [downloadStatus, setDownloadStatus] = useState('');
+	// Created once, rather than on every render, since each one may download models.
+	let [translationInstance, setTranslationInstance] = useState(
+		() => new Translation(DEFAULT_USER_LANGUAGE, { onStatus: setDownloadStatus })
+	);
 	let [messages, setMessages] = useState([{
 		sender: 'support', content: 'Hello, how can I help you today?', translatedContent: null
 	}]);
 	let [userLanguage, setUserLanguage] = useState(DEFAULT_USER_LANGUAGE);
 
 	const onLanguageChange = async (language) => {
-		setTranslationInstance(new Translation(language));
+		setTranslationInstance(new Translation(language, { onStatus: setDownloadStatus }));
 		setUserLanguage(language);
 	};
 
@@ -44,6 +49,7 @@ export default function SupportChatWindow() {
         <div className='chat-window'>
 			<TranslationContext.Provider value={translationInstance}>
 				<SupportChatHeader selectedLanguage={userLanguage} onLanguageChange={onLanguageChange} />
+				{downloadStatus && <p className='chat-download-status'>{downloadStatus}</p>}
 				<SupportChatMessages messages={messages} />
 				<SupportChatFooter onNewMessage={onNewUserMessage}/>
 			</TranslationContext.Provider>
