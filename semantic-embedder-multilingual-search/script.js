@@ -31,9 +31,40 @@ const checkAvailability = async () => {
   button.disabled = availability === "unavailable";
 };
 
+// Resolves once the user has interacted with the page. Chrome only starts a
+// model download with user activation, which a tap, click, or key press grants.
+const waitForUserActivation = () =>
+  new Promise((resolve) => {
+    const controller = new AbortController();
+    const onInteraction = () => {
+      if (navigator.userActivation.isActive) {
+        controller.abort();
+        resolve();
+      }
+    };
+    for (const type of ["keydown", "mousedown", "pointerup", "touchend"]) {
+      document.addEventListener(type, onInteraction, {
+        capture: true,
+        signal: controller.signal,
+      });
+    }
+  });
+
 const getEmbedder = async () => {
   if (embedder) {
     return embedder;
+  }
+
+  // Asked again right before `create()`, with the same options, which are none
+  // besides the monitor: the model may have been downloaded or evicted since
+  // the page loaded.
+  const availability = await self.SemanticEmbedder.availability();
+  if (availability === "unavailable") {
+    throw new Error("SemanticEmbedder is unavailable.");
+  }
+  if (availability !== "available" && !navigator.userActivation.isActive) {
+    status.textContent = "Click anywhere or press a key to download the model.";
+    await waitForUserActivation();
   }
 
   progress.hidden = false;
