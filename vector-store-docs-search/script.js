@@ -424,6 +424,11 @@ const build = async () => {
       entries,
       db,
       onProgress: (progress) => {
+        if (progress.phase === "activate") {
+          indexStatus.textContent =
+            "Click anywhere or press a key to download the model.";
+          return;
+        }
         if (progress.phase === "download") {
           indexProgress.value = progress.loaded;
           indexStatus.textContent = `Downloading the model: ${Math.round(progress.loaded * 100)}%`;

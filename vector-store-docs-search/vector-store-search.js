@@ -13,6 +13,8 @@
 // embedder polyfill is loaded underneath it when the browser has no native
 // implementation.
 
+import { ensureUserActivation } from "./user-activation.js";
+
 const STORE_ID = "devdocs-html";
 
 // The store chunks what it is given. These are the browser's own defaults, as
@@ -27,6 +29,14 @@ const STRIPPED =
   "mdn-survey, .baseline-indicator, .code-example, pre, table, iframe";
 
 export { BLOCKS, STRIPPED };
+
+// Shared by `availability()` and `create()`, so both ask about the same store.
+const STORE_OPTIONS = {
+  id: STORE_ID,
+  taskType: "retrieval",
+  chunkingStrategy: CHUNKING,
+  distance_type: "Cosine",
+};
 
 let store;
 let native;
@@ -59,7 +69,7 @@ const loadVectorStore = async () => {
 };
 
 export const availability = async () =>
-  (await loadVectorStore()).availability();
+  (await loadVectorStore()).availability(STORE_OPTIONS);
 
 export const params = async () => (await loadVectorStore()).params();
 
@@ -118,11 +128,14 @@ export const buildIndex = async ({ entries, db, onProgress, signal }) => {
   closeStore();
   await api.delete(STORE_ID);
 
+  const state = await api.availability(STORE_OPTIONS);
+  if (state === "unavailable") {
+    throw new Error("The Vector Store API is unavailable.");
+  }
+  await ensureUserActivation(state, () => onProgress?.({ phase: "activate" }));
+
   store = await api.create({
-    id: STORE_ID,
-    taskType: "retrieval",
-    chunkingStrategy: CHUNKING,
-    distance_type: "Cosine",
+    ...STORE_OPTIONS,
     monitor(monitor) {
       monitor.addEventListener("downloadprogress", (event) => {
         onProgress?.({ phase: "download", loaded: event.loaded });
