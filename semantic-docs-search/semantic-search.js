@@ -8,6 +8,8 @@
 // stands in: it runs EmbeddingGemma 300M locally through
 // @huggingface/transformers, which is the same model the proposal names.
 
+import { ensureUserActivation } from "./user-activation.js";
+
 const BATCH_SIZE = 8;
 
 // Vectors only mean something within the embedding space that produced them,
@@ -43,12 +45,19 @@ export const availability = async () => {
   return api.availability();
 };
 
-const getEmbedder = async (onDownloadProgress) => {
+const getEmbedder = async (onDownloadProgress, onActivationNeeded) => {
   if (embedder) {
     return embedder;
   }
 
   const api = await loadSemanticEmbedder();
+  // The same options as `create()`, which takes none besides the monitor.
+  const state = await api.availability();
+  if (state === "unavailable") {
+    throw new Error("The Semantic Embedder API is unavailable.");
+  }
+  await ensureUserActivation(state, onActivationNeeded);
+
   embedder = await api.create({
     monitor(monitor) {
       monitor.addEventListener("downloadprogress", (event) => {
@@ -274,8 +283,9 @@ export const split = (text, parts) => {
 };
 
 export const buildIndex = async ({ entries, db, onProgress, signal }) => {
-  const active = await getEmbedder((loaded) =>
-    onProgress?.({ phase: "download", loaded }),
+  const active = await getEmbedder(
+    (loaded) => onProgress?.({ phase: "download", loaded }),
+    () => onProgress?.({ phase: "activate" }),
   );
 
   const byPath = new Map(entries.map((entry) => [entry.path, entry]));
@@ -425,8 +435,13 @@ const cosineSimilarity = (a, b) => {
   return normA && normB ? dotProduct / Math.sqrt(normA * normB) : 0;
 };
 
-export const search = async (query, index, limit = 10) => {
-  const active = await getEmbedder();
+// The index outlives the embedder, so a search after a reload creates one, and
+// may have to download the model again if the browser evicted it.
+export const search = async (query, index, limit = 10, onProgress) => {
+  const active = await getEmbedder(
+    (loaded) => onProgress?.({ phase: "download", loaded }),
+    () => onProgress?.({ phase: "activate" }),
+  );
 
   const embedStarted = performance.now();
   const { embeddings, metadata } = await active.embed(query, {

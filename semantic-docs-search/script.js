@@ -543,6 +543,11 @@ const build = async () => {
       entries,
       db,
       onProgress: (progress) => {
+        if (progress.phase === "activate") {
+          indexStatus.textContent =
+            "Click anywhere or press a key to download the model.";
+          return;
+        }
         if (progress.phase === "download") {
           indexProgress.value = progress.loaded;
           indexStatus.textContent = `Downloading the model: ${Math.round(progress.loaded * 100)}%`;
@@ -592,7 +597,17 @@ const runSearch = async (event) => {
   searchButton.disabled = true;
   indexStatus.textContent = "Searching…";
   try {
-    const { matches, stats } = await search(query, semanticIndex);
+    const { matches, stats } = await search(
+      query,
+      semanticIndex,
+      undefined,
+      (progress) => {
+        indexStatus.textContent =
+          progress.phase === "activate"
+            ? "Click anywhere or press a key to download the model."
+            : `Downloading the model: ${Math.round(progress.loaded * 100)}%`;
+      },
+    );
     renderResults(matches, stats);
     indexStatus.textContent = matches.length
       ? summarizeIndex()
