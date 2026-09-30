@@ -480,6 +480,27 @@ ${phrasesCode}
         translationStatus.classList.toggle('error', Boolean(isError));
     }
 
+    // Resolves once the user has interacted with the page. Chrome only starts a
+    // model download with user activation, which a tap, click, or key press
+    // grants.
+    function waitForUserActivation() {
+        return new Promise((resolve) => {
+            const controller = new AbortController();
+            const onInteraction = () => {
+                if (navigator.userActivation.isActive) {
+                    controller.abort();
+                    resolve();
+                }
+            };
+            for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+                document.addEventListener(type, onInteraction, {
+                    capture: true,
+                    signal: controller.signal,
+                });
+            }
+        });
+    }
+
     function destroyTranslator() {
         if (translator) {
             try { translator.destroy(); } catch (e) {}
@@ -513,17 +534,25 @@ ${phrasesCode}
                 throw new Error(`Nothing to translate: recognition is already in "${targetLanguage}".`);
             }
 
-            const availability = await Translator.availability({ sourceLanguage, targetLanguage });
+            // Shared by `availability()` and `create()`, so both ask about the
+            // same translator.
+            const options = { sourceLanguage, targetLanguage };
+            const availability = await Translator.availability(options);
             if (availability === 'unavailable') {
                 throw new Error(`Translation from "${sourceLanguage}" to "${targetLanguage}" is unavailable.`);
             }
             if (availability !== 'available') {
+                // The first sentence arrives from the recognizer, not from a
+                // click, so the page may have no user activation by then.
+                if (!navigator.userActivation.isActive) {
+                    setTranslationStatus(`Click anywhere or press a key to download the ${sourceLanguage} \u2192 ${targetLanguage} model.`);
+                    await waitForUserActivation();
+                }
                 setTranslationStatus(`Preparing the ${sourceLanguage} \u2192 ${targetLanguage} model\u2026`);
             }
 
             const instance = await Translator.create({
-                sourceLanguage,
-                targetLanguage,
+                ...options,
                 monitor(monitor) {
                     monitor.addEventListener('downloadprogress', (e) => {
                         setTranslationStatus(`Downloading the ${sourceLanguage} \u2192 ${targetLanguage} model\u2026 ${Math.floor(e.loaded * 100)}%`);
