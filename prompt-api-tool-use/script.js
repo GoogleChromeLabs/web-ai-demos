@@ -59,10 +59,11 @@ const toolColors = new Map(
 );
 
 // Shared by availability() and create(), so the availability check asks about
-// the same session this demo actually wants: one that can emit tool calls and
+// exactly the session this demo creates: one that can emit tool calls and
 // accept tool responses. Declaring the output language keeps Chrome from
 // warning that none was specified.
 const SESSION_OPTIONS = {
+  initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
   expectedInputs: [
     { type: 'text', languages: ['en'] },
     { type: 'tool-response' },
@@ -593,7 +594,6 @@ async function createSession() {
     // cloned, never prompted.
     baseSession = await LanguageModel.create({
       ...SESSION_OPTIONS,
-      initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
       monitor(m) {
         dlProgress.style.display = 'block';
         m.addEventListener('downloadprogress', (e) => {
