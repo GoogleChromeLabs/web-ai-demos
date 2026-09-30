@@ -13,6 +13,57 @@ const getLanguageModelAPI = (): any => {
   return undefined;
 };
 
+// Keep the system prompt SHORT
+const SYSTEM_PROMPT = 'You are an expert invoice parser. Extract all data from scanned images into structured JSON. Reply with ONLY valid JSON, nothing else.';
+
+// Shared by `availability()` and `create()`, so both ask about the same session.
+const SESSION_OPTIONS = {
+  expectedInputs: [{ type: 'text', languages: ['en'] }, { type: 'image' }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
+  initialPrompts: [
+    { role: 'system', content: SYSTEM_PROMPT },
+  ],
+};
+
+// Resolves once the user has interacted with the page. Chrome only starts a
+// model download with user activation, which a tap, click, or key press grants.
+const waitForUserActivation = () =>
+  new Promise<void>((resolve) => {
+    const controller = new AbortController();
+    const onInteraction = () => {
+      if (navigator.userActivation.isActive) {
+        controller.abort();
+        resolve();
+      }
+    };
+    for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+      document.addEventListener(type, onInteraction, {
+        capture: true,
+        signal: controller.signal,
+      });
+    }
+  });
+
+// The model sees images at most 768 pixels on a side, and Chrome warns when it
+// has to downscale a bigger one itself. Doing it here keeps the aspect ratio
+// and the console quiet.
+const MAX_IMAGE_SIZE = 768;
+
+const fitImage = async (file: File) => {
+  const image = await createImageBitmap(file);
+  const { width, height } = image;
+  const scale = MAX_IMAGE_SIZE / Math.max(width, height);
+  if (scale >= 1) {
+    return image;
+  }
+  image.close();
+  return createImageBitmap(file, {
+    resizeWidth: Math.round(width * scale),
+    resizeHeight: Math.round(height * scale),
+    resizeQuality: 'high',
+  });
+};
+
 interface InvoiceItem {
   id: string; // for React key
   description: string;
@@ -61,9 +112,8 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Match the working playground pattern: just check if the global exists.
-    // The playground does: if (!("LanguageModel" in self)) { ... }
-    // It never calls availability() — that method may not behave as expected.
+    // Feature detection only. Whether the model still has to be downloaded is
+    // asked right before `create()`, with the session's own options.
     const lm = getLanguageModelAPI();
     if (lm) {
       setAiStatus('available');
@@ -120,9 +170,6 @@ export default function App() {
 
       setOcrStatus({ step: 'ai', message: 'Analyzing image with Chrome Local AI...' });
 
-      // Keep the system prompt SHORT
-      const SYSTEM_PROMPT = 'You are an expert invoice parser. Extract all data from scanned images into structured JSON. Reply with ONLY valid JSON, nothing else.';
-
       // Explicit, structured multimodal prompt
       const prompt = [
         {
@@ -147,7 +194,7 @@ Return a JSON object with exactly these keys:
 CRITICAL: You MUST extract ALL items listed on the invoice. Do not skip any line items. Do not hallucinate.
 
 Use "" for missing string fields, 0 for missing numbers. JSON only, no text.` },
-            { type: 'image', value: file }
+            { type: 'image', value: await fitImage(file) }
           ]
         }
       ];
@@ -156,14 +203,24 @@ Use "" for missing string fields, 0 for missing numbers. JSON only, no text.` },
       let session;
 
       try {
+        const availability = await lm.availability(SESSION_OPTIONS);
+        if (availability === 'unavailable') {
+          throw new Error('Chrome Local AI cannot read images on this device.');
+        }
+        const downloadNeeded = availability !== 'available';
+        // Picking a file can take long enough for the click that opened the
+        // file picker to no longer count as user activation.
+        if (downloadNeeded && !navigator.userActivation.isActive) {
+          setOcrStatus({ step: 'ai', message: 'Click anywhere or press a key to download the model.' });
+          await waitForUserActivation();
+        }
+
         // Create session with multimodal support
         session = await lm.create({
-          expectedInputs: [{ type: 'image' }],
-          initialPrompts: [
-            { role: 'system', content: SYSTEM_PROMPT },
-          ],
+          ...SESSION_OPTIONS,
           monitor(m: any) {
             m.addEventListener('downloadprogress', (e: any) => {
+              if (!downloadNeeded) return;
               const progress = Math.round((e.loaded / e.total) * 100);
               setOcrStatus(prev => ({ ...prev, message: `Downloading model: ${progress}%...`, progress }));
             });
