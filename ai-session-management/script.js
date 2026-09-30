@@ -12,6 +12,17 @@ const assistantContainer = document.querySelector('div');
 const promptForm = document.querySelector('.prompt-form');
 const activeAssistantForm = document.querySelector('.active-assistant-form');
 const promptInput = document.querySelector('.prompt-input');
+const downloadStatus = document.querySelector('.download-status');
+const downloadMessage = document.querySelector('.download-message');
+const downloadProgress = document.querySelector('.download-progress');
+
+// Shared by `availability()` and `create()`, so both ask about the same
+// session. Without the languages, Chrome warns that it can't attest to the
+// output's safety.
+const SESSION_OPTIONS = {
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
+};
 
 const assistants = {};
 
@@ -33,9 +44,61 @@ const getUUIDs = () => {
   }
 };
 
-async function createLanguageModel(options) {
-  if ("LanguageModel" in self) {
-    return await self.LanguageModel.create(options);
+// Resolves once the user has interacted with the page. Chrome only starts a
+// model download with user activation, which a tap, click, or key press grants.
+const waitForUserActivation = () =>
+  new Promise((resolve) => {
+    const controller = new AbortController();
+    const onInteraction = () => {
+      if (navigator.userActivation.isActive) {
+        controller.abort();
+        resolve();
+      }
+    };
+    for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+      document.addEventListener(type, onInteraction, {
+        capture: true,
+        signal: controller.signal,
+      });
+    }
+  });
+
+async function createLanguageModel({ initialPrompts }) {
+  if (!('LanguageModel' in self)) {
+    return;
+  }
+  const options = { ...SESSION_OPTIONS, initialPrompts };
+  const availability = await LanguageModel.availability(options);
+  if (availability === 'unavailable') {
+    throw new Error('The Prompt API is unavailable on this device.');
+  }
+  const downloadNeeded = availability !== 'available';
+  if (downloadNeeded && !navigator.userActivation.isActive) {
+    downloadMessage.textContent =
+      'Click anywhere or press a key to download the model.';
+    downloadProgress.hidden = true;
+    downloadStatus.hidden = false;
+    await waitForUserActivation();
+  }
+  try {
+    return await LanguageModel.create({
+      ...options,
+      monitor(m) {
+        m.addEventListener('downloadprogress', (e) => {
+          if (!downloadNeeded) {
+            return;
+          }
+          downloadMessage.textContent = `Downloading the model: ${Math.round(
+            e.loaded * 100
+          )}%`;
+          downloadProgress.value = e.loaded;
+          downloadProgress.hidden = false;
+          downloadStatus.hidden = false;
+        });
+      },
+    });
+  } finally {
+    downloadStatus.hidden = true;
   }
 }
 
@@ -68,8 +131,8 @@ async function createLanguageModel(options) {
     };
 
     const assistant = await createLanguageModel(options);
-    const { inputQuota, inputUsage } = assistant;
-    console.log(uuid, inputUsage, inputQuota);
+    const { contextUsage, contextWindow } = assistant;
+    console.log(uuid, contextUsage, contextWindow);
 
     assistants[uuid] = { assistant, options };
 
@@ -85,8 +148,8 @@ async function createLanguageModel(options) {
     const conversationContainer = assistantClone.querySelector(
       '.conversation-container'
     );
-    assistantClone.querySelector('.tokens-so-far').textContent = assistant.inputUsage;
-    assistantClone.querySelector('.tokens-left').textContent = assistant.inputQuota - assistant.inputUsage;
+    assistantClone.querySelector('.tokens-so-far').textContent = assistant.contextUsage;
+    assistantClone.querySelector('.tokens-left').textContent = assistant.contextWindow - assistant.contextUsage;
     assistantContainer.append(assistantClone);
 
     for (const initialPrompt of options.initialPrompts) {
@@ -136,7 +199,7 @@ const createAssistant = async (options = {}) => {
     const uuid = crypto.randomUUID();
     options.initialPrompts = options.initialPrompts || [];
     const assistant = await createLanguageModel(options);
-    assistantTemplate.content.querySelector('.tokens-left').textContent = assistant.inputQuota;
+    assistantTemplate.content.querySelector('.tokens-left').textContent = assistant.contextWindow;
     assistants[uuid] = { assistant, options };
     const uuids = getUUIDs();
     uuids.push(uuid);
@@ -212,12 +275,9 @@ promptForm.addEventListener('submit', async (e) => {
     }
     const details = conversationContainer.closest('details');
 
-    // The new API shape in Chrome Canary renames `tokenSoFar` to `inputUsage`, `maxTokens` to `inputQuota` and removes
-    // `tokensLeft`. The code below uses whichever version is available.
-    details.querySelector('.tokens-so-far').textContent =
-        assistant.tokensSoFar || assistant.inputUsage;
+    details.querySelector('.tokens-so-far').textContent = assistant.contextUsage;
     details.querySelector('.tokens-left').textContent =
-        assistant.tokensLeft || assistant.inputQuota - assistant.inputUsage;
+      assistant.contextWindow - assistant.contextUsage;
 
     options.initialPrompts.push(
       {
