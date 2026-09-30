@@ -13,6 +13,11 @@
         color-scheme: dark light;
       }
 
+      .deprecation-warning {
+        border: orange solid 2px;
+        padding: 0.25rem 0.5rem;
+      }
+
       html {
         box-sizing: border-box;
       }
@@ -74,6 +79,9 @@
 
   <body>
     <h1>Writer API Polyfill Demo</h1>
+    <p class="deprecation-warning" role="note">
+      ⚠️ The Writer API is deprecated. Don't build new features on it.
+    </p>
     <div id="polyfill-mode-banner"></div>
     <div id="unsupported"></div>
 
@@ -252,6 +260,46 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         }
       };
 
+      // Resolves once the user has interacted with the page. A model download
+      // needs user activation, which a tap, click, or key press grants.
+      const waitForUserActivation = () =>
+        new Promise((resolve) => {
+          const controller = new AbortController();
+          const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+              controller.abort();
+              resolve();
+            }
+          };
+          for (const type of [
+            'keydown',
+            'mousedown',
+            'pointerup',
+            'touchend',
+          ]) {
+            document.addEventListener(type, onInteraction, {
+              capture: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
+      // Asks `availability()` with exactly the options `create()` gets, and
+      // waits for an interaction when a model still has to be downloaded.
+      const ensureAvailable = async (api, options, report) => {
+        const availability = await api.availability(options);
+        if (availability === 'unavailable') {
+          throw new Error(`${api.name} is unavailable for these options.`);
+        }
+        if (
+          availability !== 'available' &&
+          !navigator.userActivation.isActive
+        ) {
+          report('Click anywhere or press a key to download the model.');
+          await waitForUserActivation();
+        }
+      };
+
       const getWriterOptions = () => ({
         sharedContext: sharedContext.value,
         tone: tone.value,
@@ -260,20 +308,30 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         expectedInputLanguages: [expectedInputLanguages.value],
         expectedContextLanguages: [expectedContextLanguages.value],
         outputLanguage: outputLanguage.value,
-        signal: abortController.signal,
-        monitor: (m) => {
-          progress.style.display = 'block';
-          m.addEventListener('downloadprogress', (e) => {
-            progress.value = e.loaded;
-            progress.max = e.total;
-            setStatus('Generating content...');
-            if (e.loaded === e.total) {
-              setStatus('Model loaded.');
-              setTimeout(() => (progress.style.display = 'none'), 1000);
-            }
-          });
-        },
       });
+
+      const createWriter = async () => {
+        const options = getWriterOptions();
+        await ensureAvailable(Writer, options, setStatus);
+        return Writer.create({
+          ...options,
+          signal: abortController.signal,
+          monitor: (m) => {
+            progress.style.display = 'block';
+            m.addEventListener('downloadprogress', (e) => {
+              progress.value = e.loaded;
+              progress.max = e.total;
+              setStatus(
+                `Downloading model: ${Math.round((e.loaded / e.total) * 100)}%`,
+              );
+              if (e.loaded === e.total) {
+                setStatus('Model loaded.');
+                setTimeout(() => (progress.style.display = 'none'), 1000);
+              }
+            });
+          },
+        });
+      };
 
       writeBtn.onclick = async () => {
         output.textContent = 'Thinking...';
@@ -282,7 +340,7 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         setStatus('Initializing Writer...');
 
         try {
-          const writer = await Writer.create(getWriterOptions());
+          const writer = await createWriter();
           setStatus('Generating content...');
           const result = await writer.write(input.value, {
             context: context.value,
@@ -307,7 +365,7 @@ The history of artificial intelligence started with Alan Turing's work...</texta
         setStatus('Initializing Writer...');
 
         try {
-          const writer = await Writer.create(getWriterOptions());
+          const writer = await createWriter();
           setStatus('Streaming response...');
           const stream = writer.writeStreaming(input.value, {
             context: context.value,
