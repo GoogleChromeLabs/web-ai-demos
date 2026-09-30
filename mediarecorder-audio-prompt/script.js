@@ -7,7 +7,10 @@
 // session. The transcript is in whatever language was spoken, so every output
 // language the Prompt API supports is declared.
 const SESSION_OPTIONS = {
-  expectedInputs: [{ type: "text", languages: ["en"] }, { type: "audio" }],
+  expectedInputs: [
+    { type: "text", languages: ["de", "en", "es", "fr", "ja"] },
+    { type: "audio" },
+  ],
   expectedOutputs: [
     { type: "text", languages: ["de", "en", "es", "fr", "ja"] },
   ],
