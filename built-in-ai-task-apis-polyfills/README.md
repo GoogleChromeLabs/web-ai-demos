@@ -11,6 +11,11 @@ specifically:
 - **Translator API**
 - **SemanticEmbedder API**
 
+> [!WARNING]
+>
+> The Writer and Rewriter APIs are deprecated. Their polyfills remain for
+> existing code, but don't build new features on them.
+
 The Summarizer, Writer, Rewriter, Language Detector, and Translator polyfills
 are backed by the
 [`prompt-api-polyfill`](https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/prompt-api-polyfill),

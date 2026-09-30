@@ -58,6 +58,48 @@ export class BaseTaskModel {
     this.constructor._checkContext();
   }
 
+  /**
+   * The languages the backing LanguageModel session is asked about. Shared by
+   * `availability()` and `create()`, so both describe the same session, and
+   * declared at all so the browser can attest to the output's safety.
+   */
+  static _languageModelOptions(options = {}) {
+    return {
+      expectedInputs: [
+        {
+          type: 'text',
+          languages: options.expectedInputLanguages || ['en'],
+        },
+      ],
+      expectedOutputs: [
+        {
+          type: 'text',
+          languages: options.outputLanguage ? [options.outputLanguage] : ['en'],
+        },
+      ],
+    };
+  }
+
+  /**
+   * Creates the backing LanguageModel session. `availability()` is asked first
+   * with exactly the options `create()` gets, as the Prompt API expects. The
+   * `signal` and the `monitor` only apply to `create()`.
+   */
+  static async _createLanguageModelSession(
+    sessionOptions,
+    { signal, monitor },
+  ) {
+    const win = this.__window || globalThis;
+    const availability = await win.LanguageModel.availability(sessionOptions);
+    if (availability === 'unavailable') {
+      throw new (win.DOMException || globalThis.DOMException)(
+        'The model is not available for the given options.',
+        'NotSupportedError',
+      );
+    }
+    return win.LanguageModel.create({ ...sessionOptions, signal, monitor });
+  }
+
   static baseAvailability(options = {}) {
     try {
       this._checkContext();
@@ -68,22 +110,7 @@ export class BaseTaskModel {
     }
     const p = (async () => {
       await this.ensureLanguageModel();
-      const lmOptions = {
-        expectedInputs: [
-          {
-            type: 'text',
-            languages: options.expectedInputLanguages || ['en'],
-          },
-        ],
-        expectedOutputs: [
-          {
-            type: 'text',
-            languages: options.outputLanguage
-              ? [options.outputLanguage]
-              : ['en'],
-          },
-        ],
-      };
+      const lmOptions = this._languageModelOptions(options);
 
       const win = this.__window || globalThis;
       return await win.LanguageModel.availability(lmOptions);
@@ -103,22 +130,7 @@ export class BaseTaskModel {
     const p = (async () => {
       this._checkContext();
       await this.ensureLanguageModel();
-      const lmOptions = {
-        expectedInputs: [
-          {
-            type: 'text',
-            languages: options.expectedInputLanguages || ['en'],
-          },
-        ],
-        expectedOutputs: [
-          {
-            type: 'text',
-            languages: options.outputLanguage
-              ? [options.outputLanguage]
-              : ['en'],
-          },
-        ],
-      };
+      const lmOptions = this._languageModelOptions(options);
 
       return await globalThis.LanguageModel.availability(lmOptions);
     })();
