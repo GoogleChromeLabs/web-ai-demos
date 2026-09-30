@@ -165,6 +165,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const response = await chrome.runtime.sendMessage({
       target: 'offscreen',
       type: 'create-session',
+      // The click on the button is the user activation a download needs.
+      userActivated: navigator.userActivation.isActive,
       config: {
         apiKey: 'dummy',
         modelName: modelName,
