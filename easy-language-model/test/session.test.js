@@ -589,6 +589,38 @@ describe('compacting', () => {
     );
   });
 
+  it('waits for the button when the summarizer must be downloaded', async () => {
+    const script = newScript('The quick brown fox jumps over the lazy dog.');
+    install(script, { userActivation: { isActive: false } });
+    const button = document.createElement('button');
+    document.body.append(button);
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      activationButton: button,
+    });
+    await conversation(session);
+
+    let summarizers = 0;
+    const { create } = Summarizer;
+    Summarizer.availability = async () => 'downloadable';
+    Summarizer.create = (options) => {
+      summarizers++;
+      return create(options);
+    };
+
+    const pending = session.compact();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(button.hidden, false, 'revealed the button');
+    assert.equal(summarizers, 0, 'must not create before the click');
+
+    const click = new DomEvent('click', { bubbles: true });
+    Object.defineProperty(click, 'isTrusted', { value: true });
+    button.dispatchEvent(click);
+    await pending;
+    assert.equal(summarizers, 1);
+    assert.equal(button.hidden, true, 'hid the button again');
+  });
+
   it('re-attaches listeners onto the new session', async () => {
     const script = newScript('The quick brown fox jumps over the lazy dog.');
     install(script);

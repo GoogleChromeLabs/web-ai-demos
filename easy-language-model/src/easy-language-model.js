@@ -695,6 +695,8 @@ export class EasyLanguageModel {
   async compact(options = {}) {
     this.#compactor ??= new Compactor({
       onDownloadProgress: this.#easy.onDownloadProgress,
+      activationButton: this.#easy.activationButton,
+      activationHint: this.#easy.activationHint,
       ...options,
     });
 
