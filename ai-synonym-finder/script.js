@@ -7,9 +7,68 @@ const form = document.querySelector('form');
 const input = document.querySelector('input');
 const output = document.querySelector('output');
 const pre = document.querySelector('pre');
+const downloadStatus = document.querySelector('.download-status');
+const downloadMessage = document.querySelector('.download-message');
+const downloadProgress = document.querySelector('.download-progress');
 
 const getPrompt = (word) =>
   `Suggest a list of unique synonyms for the word "${word}".`;
+
+// Resolves once the user has interacted with the page. Chrome only starts a
+// model download with user activation, which a tap, click, or key press grants.
+const waitForUserActivation = () =>
+  new Promise((resolve) => {
+    const controller = new AbortController();
+    const onInteraction = () => {
+      if (navigator.userActivation.isActive) {
+        controller.abort();
+        resolve();
+      }
+    };
+    for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+      document.addEventListener(type, onInteraction, {
+        capture: true,
+        signal: controller.signal,
+      });
+    }
+  });
+
+const createLanguageModel = async (createOptions) => {
+  // Asked again with the same options right before `create()`, since the
+  // model may have been downloaded or evicted since the page loaded.
+  const availability = await LanguageModel.availability(createOptions);
+  if (availability === 'unavailable') {
+    throw new Error('The Prompt API is unavailable on this device.');
+  }
+  const downloadNeeded = availability !== 'available';
+  if (downloadNeeded && !navigator.userActivation.isActive) {
+    downloadMessage.textContent =
+      'Click anywhere or press a key to download the model.';
+    downloadProgress.hidden = true;
+    downloadStatus.hidden = false;
+    await waitForUserActivation();
+  }
+  try {
+    return await LanguageModel.create({
+      ...createOptions,
+      monitor(m) {
+        m.addEventListener('downloadprogress', (e) => {
+          if (!downloadNeeded) {
+            return;
+          }
+          downloadMessage.textContent = `Downloading the model: ${Math.round(
+            e.loaded * 100
+          )}%`;
+          downloadProgress.value = e.loaded;
+          downloadProgress.hidden = false;
+          downloadStatus.hidden = false;
+        });
+      },
+    });
+  } finally {
+    downloadStatus.hidden = true;
+  }
+};
 
 (async () => {
   let isAvailable = false;
@@ -72,9 +131,9 @@ Each synonym may only occur once in the list.`,
 
   document.querySelector('main').hidden = false;
 
-  // Creates the model using either the new API shape available in Canary or the previous shape
-  // available in Chrome stable.
-  const languageModel = await LanguageModel.create(createOptions);
+  // Created on the first submit, which is a user interaction, so a model
+  // download that is still needed can start right away.
+  let languageModel;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -84,6 +143,7 @@ Each synonym may only occur once in the list.`,
     }
     const prompt = getPrompt(word);
     try {
+      languageModel ??= await createLanguageModel(createOptions);
       const assistantClone = await languageModel.clone();
       const stream = assistantClone.promptStreaming(prompt);
       output.innerHTML = '';
