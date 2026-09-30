@@ -25,6 +25,7 @@ function App() {
   const [weatherDescriptionDone, setWeatherDescriptionDone] = useState<boolean>();
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(true);
   const [promptApiSupported, setPromptApiSupported] = useState<boolean>(true);
+  const [modelStatus, setModelStatus] = useState<string>('');
 
   // Checks if the Prompt API is supported.
   useEffect(() => {
@@ -66,7 +67,7 @@ function App() {
         const streaming = urlParams.get('streaming');
 
         try {
-          const promptApi = await BuiltinPrompting.createPrompting();
+          const promptApi = await BuiltinPrompting.createPrompting(setModelStatus);
           if (streaming === null || streaming === 'true') {
               const reader = await promptApi.streamingPrompt(prompt);
               for await (const chunk of reader) {
@@ -116,6 +117,7 @@ function App() {
           ? <WeatherData weatherData={weatherData}></WeatherData>
           : <CircularProgress />
         }
+        {modelStatus && <p>{modelStatus}</p>}
         {weatherDescription
           && <>
               <Collapse in={weatherDescriptionDone}><Button variant="outlined" onClick={speakIt}>Read Weather Report</Button></Collapse>
