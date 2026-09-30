@@ -41,6 +41,62 @@ const legendContainer = document.querySelector('p:has(.legend)');
 
   let proofreader;
 
+  // Resolves once the user has interacted with the page. Chrome only starts a
+  // model download with user activation, which a tap, click, or key press
+  // grants.
+  const waitForUserActivation = () =>
+    new Promise((resolve) => {
+      const controller = new AbortController();
+      const onInteraction = () => {
+        if (navigator.userActivation.isActive) {
+          controller.abort();
+          resolve();
+        }
+      };
+      for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+        document.addEventListener(type, onInteraction, {
+          capture: true,
+          signal: controller.signal,
+        });
+      }
+    });
+
+  const createProofreader = async () => {
+    // Shared by `availability()` and `create()`, so both ask about the same
+    // proofreader.
+    const options = {
+      includeCorrectionTypes: includeCorrectionTypesCheckbox.checked,
+      includeCorrectionExplanations:
+        includeCorrectionExplanationsCheckbox.checked,
+      expectedInputLanguages: ['en'],
+      correctionExplanationLanguage: 'en',
+    };
+    const availability = await self.Proofreader.availability(options);
+    if (availability === 'unavailable') {
+      throw new Error('The Proofreader API is unavailable on this device.');
+    }
+    const downloadNeeded = availability !== 'available';
+    if (downloadNeeded && !navigator.userActivation.isActive) {
+      activityIndicator.textContent =
+        '👆 Click anywhere or press a key to download the model.';
+      await waitForUserActivation();
+    }
+    const created = await self.Proofreader.create({
+      ...options,
+      monitor(m) {
+        m.addEventListener('downloadprogress', (e) => {
+          if (downloadNeeded) {
+            activityIndicator.textContent = `⬇️ Downloading the model: ${Math.round(
+              e.loaded * 100
+            )}%`;
+          }
+        });
+      },
+    });
+    activityIndicator.textContent = '⏳ Proofreading...';
+    return created;
+  };
+
   [
     includeCorrectionExplanationsCheckbox,
     includeCorrectionTypesCheckbox,
@@ -105,15 +161,12 @@ const legendContainer = document.querySelector('p:has(.legend)');
     activityIndicator.textContent = '⏳ Proofreading...';
     // Use existing proofreader instance or create new instance.
     if (proofreaderAPISupported) {
-      proofreader =
-        proofreader ||
-        (await self.Proofreader.create({
-          includeCorrectionTypes: includeCorrectionTypesCheckbox.checked,
-          includeCorrectionExplanations:
-            includeCorrectionExplanationsCheckbox.checked,
-          expectedInputLanguagues: ['en'],
-          correctionExplanationLanguage: 'en',
-        }));
+      try {
+        proofreader ||= await createProofreader();
+      } catch (err) {
+        activityIndicator.textContent = `😕 ${err.message}`;
+        return;
+      }
     }
 
     // Remove previous highlights, only keep the legend highlights.
