@@ -20,7 +20,10 @@ const downloadProgress = document.querySelector('.download-progress');
 // The extracted text is in whatever language the document is in, so every
 // output language the Prompt API supports is declared.
 const PROMPT_OPTIONS = {
-  expectedInputs: [{ type: 'image' }, { type: 'text', languages: ['de', 'en', 'es', 'fr', 'ja'] }],
+  expectedInputs: [
+    { type: 'image' },
+    { type: 'text', languages: ['de', 'en', 'es', 'fr', 'ja'] },
+  ],
   expectedOutputs: [
     { type: 'text', languages: ['de', 'en', 'es', 'fr', 'ja'] },
   ],
