@@ -71,27 +71,85 @@ import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.
     rewriteForm.hidden = false;
   };
 
+  // Declared for every writer and rewriter, so Chrome doesn't warn about the
+  // missing languages.
+  const LANGUAGE_OPTIONS = {
+    expectedInputLanguages: ['en'],
+    expectedContextLanguages: ['en'],
+    outputLanguage: 'en',
+  };
+
+  // Resolves once the user has interacted with the page. Chrome only starts a
+  // model download with user activation, which a tap, click, or key press
+  // grants.
+  const waitForUserActivation = () =>
+    new Promise((resolve) => {
+      const controller = new AbortController();
+      const onInteraction = () => {
+        if (navigator.userActivation.isActive) {
+          controller.abort();
+          resolve();
+        }
+      };
+      for (const type of ['keydown', 'mousedown', 'pointerup', 'touchend']) {
+        document.addEventListener(type, onInteraction, {
+          capture: true,
+          signal: controller.signal,
+        });
+      }
+    });
+
+  // Creates a writer or a rewriter with exactly the options `availability()`
+  // was asked about, and shows the model download in the output area.
+  const createWithDownload = async (api, options) => {
+    output.style.display = 'block';
+    const availability = await api.availability(options);
+    if (availability === 'unavailable') {
+      throw new Error(`The ${api.name} API is unavailable.`);
+    }
+    const downloadNeeded = availability !== 'available';
+    if (downloadNeeded && !navigator.userActivation.isActive) {
+      output.textContent =
+        'Click anywhere or press a key to download the model.';
+      await waitForUserActivation();
+    }
+    return api.create({
+      ...options,
+      monitor(m) {
+        m.addEventListener('downloadprogress', (e) => {
+          if (downloadNeeded) {
+            output.textContent = `Downloading the model: ${Math.round(
+              e.loaded * 100
+            )}%`;
+          }
+        });
+      },
+    });
+  };
+
   const createWriter = async () => {
     const options = {
+      ...LANGUAGE_OPTIONS,
       tone: toneSelect.value,
       length: lengthSelect.value,
       format: formatSelect.value,
       sharedContext: context.value.trim(),
     };
 
-    writer = await Writer.create(options);
+    writer = await createWithDownload(Writer, options);
     console.log(writer);
   };
 
   const createRewriter = async () => {
     const options = {
+      ...LANGUAGE_OPTIONS,
       tone: rewriteToneSelect.value,
       length: rewriteLengthSelect.value,
       format: rewriteFormatSelect.value,
       sharedContext: context.value.trim(),
     };
 
-    rewriter = await Rewriter.create(options);
+    rewriter = await createWithDownload(Rewriter, options);
     console.log(rewriter);
   };
 
