@@ -12,6 +12,19 @@
   const data = JSON.parse(scriptTag.dataset.config || '{}');
   const { config, backend, forceInjection } = data;
 
+  // Read by the SemanticEmbedder polyfill when it spawns its worker. It has to
+  // be set before the task API polyfills are imported below, because the
+  // polyfill reads it at the point it starts a worker and availability() can be
+  // called immediately after injection.
+  window.SEMANTIC_EMBEDDER_CONFIG = {
+    workerUrl: data.semanticEmbedderWorkerUrl,
+    env: {
+      backends: {
+        onnx: { wasm: { wasmPaths: data.transformersWasmPaths } },
+      },
+    },
+  };
+
   // Capture native state BEFORE importing polyfills to avoid side-effect interference
   const nativeAPIs = {
     LanguageModel: window.LanguageModel,

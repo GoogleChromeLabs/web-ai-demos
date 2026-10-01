@@ -49,6 +49,15 @@
     backend,
     forceInjection,
     extensionId: chrome.runtime.id,
+    // The SemanticEmbedder polyfill runs in the page's main world, which has no
+    // chrome.runtime to resolve these itself. Both have to be extension URLs:
+    // the worker so its model code ships with the item, and the wasm directory
+    // so the ONNX runtime loads the binaries bundled here instead of the CDN
+    // Transformers.js would otherwise reach for.
+    semanticEmbedderWorkerUrl: chrome.runtime.getURL(
+      '/src/semantic-embedder-worker.js'
+    ),
+    transformersWasmPaths: chrome.runtime.getURL('/src/transformers-assets/'),
   });
 
   (document.head || document.documentElement).appendChild(script);

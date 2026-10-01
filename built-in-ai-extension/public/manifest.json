@@ -27,7 +27,12 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["src/main-world-entry.js", "src/chunks/*.js"],
+      "resources": [
+        "src/main-world-entry.js",
+        "src/chunks/*.js",
+        "src/semantic-embedder-worker.js",
+        "src/transformers-assets/*"
+      ],
       "matches": ["<all_urls>"]
     }
   ]
