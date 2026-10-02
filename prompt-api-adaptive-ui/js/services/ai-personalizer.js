@@ -47,7 +47,7 @@ export class AIPersonalizer {
         try {
             // CRITICAL: Check availability using recorded docs syntax
             if (typeof LanguageModel === 'undefined') {
-                this.logger.appendLog('LanguageModel not found. Check flags!', 'system');
+                this.logger.appendLog('LanguageModel API is not supported.', 'system');
                 return;
             }
             
@@ -59,7 +59,7 @@ export class AIPersonalizer {
                 return;
             }
 
-            this.logger.appendLog('AI Personalization ready.', 'system');
+            this.logger.appendLog('AI Personalization can be used.', 'system');
 
         } catch (e) {
             this.logger.appendLog(`Error: ${e.message}`, 'system');
@@ -121,9 +121,7 @@ Analyze the Product Data and find text snippets that match the User Interests. P
         } finally {
             if (session) {
                 try {
-                    if (typeof session.destroy === 'function') {
-                        session.destroy();
-                    }
+                    session.destroy();
                 } catch (err) {
                     console.warn('Failed to destroy session:', err);
                 }
