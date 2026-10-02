@@ -14,267 +14,126 @@
  * The optional `taskType` passed to embed() selects a task-specific prefix
  * so the embedding is optimized for that use case. When omitted, the raw
  * string is embedded as-is with no prefix.
+ *
+ * This module is the main-thread half and never imports Transformers.js: the
+ * model runs in `semantic-embedder-worker.js`, which is spawned from a URL of
+ * its own. Pointing the worker at this module's own `import.meta.url` instead
+ * would make it re-execute whatever chunk a downstream bundler happened to
+ * merge this file into, which is how it came to run page-level DOM code in a
+ * context that has no `document`.
  */
 
-const DEFAULT_MODEL = 'onnx-community/embeddinggemma-300m-ONNX';
-// EmbeddingGemma activations do not support fp16. q8 gives a good balance of
-// model size and quality in the browser.
-const DEFAULT_DTYPE = 'q8';
-// EmbeddingGemma's context window is 2048 tokens, but onnxruntime-web
-// overflows when a sequence fills it exactly (`OrtRun()` ERROR_CODE 1), so the
-// usable ceiling is one token below the window. Truncating to the window size
-// itself would push every oversized input straight into that failure.
-const MODEL_CONTEXT_TOKENS = 2048;
-const MAX_INPUT_TOKENS = MODEL_CONTEXT_TOKENS - 1;
-
-// The vector space the embeddings belong to. Vectors from different spaces are
-// not comparable, so callers need this to version what they store.
-const EMBEDDING_SPACE = 'embeddinggemma-300m';
-
-// EmbeddingGemma task-type prefixes (must match the model's training setup).
-// See https://ai.google.dev/gemma/docs/embeddinggemma/model_card for the
-// full prompt table.
-const TASK_PREFIXES = {
-  'semantic-similarity': 'task: sentence similarity | query: ',
-  'retrieval-query': 'task: search result | query: ',
-  'retrieval-document': 'title: none | text: ',
-  classification: 'task: classification | query: ',
-  clustering: 'task: clustering | query: ',
-};
-
-const VALID_TASK_TYPES = new Set(Object.keys(TASK_PREFIXES));
+import {
+  DEFAULT_DTYPE,
+  DEFAULT_MODEL,
+  EMBEDDING_SPACE,
+  MAX_INPUT_TOKENS,
+  VALID_TASK_TYPES,
+} from './semantic-embedder-constants.js';
 
 // Tracks which model IDs are currently being downloaded.
 const downloadingModels = new Set();
 
-let transformersModule = null;
-
-async function ensureTransformers() {
-  if (!transformersModule) {
-    transformersModule = await import('@huggingface/transformers');
-    // Share cached model weights across different origins when the
-    // Cross-Origin Storage extension is present.
-    transformersModule.env.experimental_useCrossOriginStorage = true;
-  }
-  return transformersModule;
+/**
+ * Transformers.js `env` overrides to hand the worker.
+ *
+ * The worker is a separate realm and cannot read any of this itself, so it
+ * travels in every message. `TRANSFORMERS_CONFIG` is the global the Prompt API
+ * polyfill's Transformers.js backend already reads, so a host that configures
+ * one gets the other for free.
+ *
+ * @returns {Object|undefined} A partial `env` object, if one is configured.
+ */
+function getEnvOverrides() {
+  return (
+    globalThis.SEMANTIC_EMBEDDER_CONFIG?.env ??
+    globalThis.TRANSFORMERS_CONFIG?.env
+  );
 }
 
-function applyPrefix(text, taskType) {
-  // No taskType means the raw input is embedded as-is, with no prefix.
-  const prefix = taskType ? TASK_PREFIXES[taskType] : undefined;
-  return prefix ? `${prefix}${text}` : text;
-}
+/**
+ * Spawns the embedder worker.
+ *
+ * By default the worker comes from this module's sibling
+ * `semantic-embedder-worker.js`, written as
+ * `new Worker(new URL(...), { type: 'module' })` because that exact spelling is
+ * what tells a bundler to emit the worker as its own chunk with its imports
+ * resolved. Anything less literal, such as hoisting the URL into a variable,
+ * gets the file copied out verbatim instead, leaving its bare
+ * `@huggingface/transformers` import unresolvable at runtime.
+ *
+ * A worker script also has to be same-origin with the document, which it is not
+ * when a browser extension injects this polyfill into a page. Such hosts bundle
+ * `built-in-ai-task-apis-polyfills/semantic-embedder-worker` into a script of
+ * their own and point `SEMANTIC_EMBEDDER_CONFIG.workerUrl` at it; it is then
+ * loaded through a same-origin blob that imports it.
+ *
+ * @returns {{worker: Worker, revoke: (() => void)}} The worker, and a callback
+ *     that releases the blob URL when one was needed.
+ */
+function spawnWorker() {
+  const configuredUrl = globalThis.SEMANTIC_EMBEDDER_CONFIG?.workerUrl;
 
-async function isModelCached(modelId, dtype) {
-  try {
-    const { ModelRegistry } = await ensureTransformers();
-    // include_processor: false avoids a network request for preprocessor_config.json,
-    // which this model doesn't have and would otherwise produce a 404.
-    const result = await ModelRegistry.is_cached_files(modelId, {
-      dtype,
-      include_processor: false,
-    });
-    // generation_config.json is an optional text-generation config that the
-    // transformers.js cache doesn't always persist; exclude it from the check.
-    const essential = result.files.filter(
-      (f) => f.file !== 'generation_config.json',
-    );
-    return essential.length > 0 && essential.every((f) => f.cached);
-  } catch {
-    return false;
-  }
-}
-
-const isWorker =
-  typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
-
-function getWorkerUrl() {
-  const url = import.meta.url;
-  try {
-    if (
-      typeof globalThis !== 'undefined' &&
-      globalThis.location &&
-      new URL(url).origin !== globalThis.location.origin
-    ) {
-      const blobCode = `import ${JSON.stringify(url)};`;
-      const blob = new Blob([blobCode], { type: 'application/javascript' });
-      return URL.createObjectURL(blob);
+  if (configuredUrl) {
+    const href = String(configuredUrl);
+    let sameOrigin = false;
+    try {
+      sameOrigin =
+        !!globalThis.location &&
+        new URL(href, globalThis.location.href).origin ===
+          globalThis.location.origin;
+    } catch {
+      // An unparseable URL is handed to Worker as-is and allowed to throw.
     }
-  } catch {
-    // Fallback to original URL
-  }
-  return url;
-}
 
-function runInTemporaryWorker(action, payload = {}) {
-  const url = getWorkerUrl();
-  const worker = new Worker(url, { type: 'module' });
-  return new Promise((resolve, reject) => {
-    worker.onmessage = (e) => {
-      const { type, result, error } = e.data;
-      if (type === 'response') {
-        resolve(result);
-        worker.terminate();
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      } else if (type === 'error') {
-        reject(new Error(error));
-        worker.terminate();
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      }
-    };
-    worker.onerror = (err) => {
-      reject(err);
-      worker.terminate();
-      if (url.startsWith('blob:')) {
-        URL.revokeObjectURL(url);
-      }
-    };
-    worker.postMessage({ action, payload });
-  });
-}
-
-if (isWorker) {
-  const abortedRequests = new Set();
-  let workerTokenizer = null;
-  let workerModel = null;
-
-  const initWorkerModel = async (modelId, dtype, hasMonitor) => {
-    const { AutoModel, AutoTokenizer } = await ensureTransformers();
-
-    let progressCallback = null;
-    if (hasMonitor) {
-      progressCallback = (progress) => {
-        if (progress.status === 'progress_total') {
-          self.postMessage({
-            type: 'progress',
-            loaded: progress.total > 0 ? progress.loaded / progress.total : 0,
-          });
-        }
+    if (sameOrigin) {
+      return {
+        worker: new Worker(href, { type: 'module' }),
+        revoke: () => {},
       };
     }
 
-    [workerTokenizer, workerModel] = await Promise.all([
-      AutoTokenizer.from_pretrained(modelId, {
-        progress_callback: progressCallback,
+    const blobUrl = URL.createObjectURL(
+      new Blob([`import ${JSON.stringify(href)};`], {
+        type: 'application/javascript',
       }),
-      AutoModel.from_pretrained(modelId, {
-        dtype,
-        progress_callback: progressCallback,
-      }),
-    ]);
+    );
+    return {
+      worker: new Worker(blobUrl, { type: 'module' }),
+      revoke: () => URL.revokeObjectURL(blobUrl),
+    };
+  }
+
+  return {
+    worker: new Worker(
+      new URL('./semantic-embedder-worker.js', import.meta.url),
+      { type: 'module' },
+    ),
+    revoke: () => {},
   };
+}
 
-  const checkAvailability = async (modelId, dtype) => {
-    if (typeof WebAssembly === 'undefined') {
-      return 'unavailable';
-    }
-    if (await isModelCached(modelId, dtype)) {
-      return 'available';
-    }
-    return 'downloadable';
-  };
-
-  self.onmessage = async (e) => {
-    const msg = e.data;
-
-    // Support static actions from temporary workers
-    if (msg.action === 'availability') {
-      try {
-        const { modelId, dtype } = msg.payload;
-        const status = await checkAvailability(modelId, dtype);
-        self.postMessage({ type: 'response', result: status });
-      } catch (err) {
-        self.postMessage({ type: 'error', error: err.message });
+function runInTemporaryWorker(action, payload = {}) {
+  const { worker, revoke } = spawnWorker();
+  return new Promise((resolve, reject) => {
+    const finish = (fn, arg) => {
+      worker.terminate();
+      revoke();
+      fn(arg);
+    };
+    worker.onmessage = (e) => {
+      const { type, result, error } = e.data;
+      if (type === 'response') {
+        finish(resolve, result);
+      } else if (type === 'error') {
+        finish(reject, new Error(error));
       }
-      return;
-    }
-
-    // Instance-level actions
-    if (msg.type === 'init') {
-      try {
-        await initWorkerModel(msg.modelId, msg.dtype, msg.hasMonitor);
-        self.postMessage({ type: 'ready' });
-      } catch (err) {
-        self.postMessage({
-          type: 'init-error',
-          error: err.message,
-          name: err.name || 'Error',
-        });
-      }
-    } else if (msg.type === 'embed') {
-      const { requestId, inputs, options } = msg;
-      try {
-        if (!workerModel || !workerTokenizer) {
-          throw new Error('Model is not initialized in the worker.');
-        }
-
-        const prefixedInputs = inputs.map((text) =>
-          applyPrefix(text, options.taskType),
-        );
-
-        // Measure each input on its own first, so the reported token count is
-        // the length of the text as given rather than of the padded, truncated
-        // batch. Counting the batch in one pass is not an option: padding it
-        // to an over-long member throws inside the tokenizer.
-        const tokenCounts = prefixedInputs.map((text) =>
-          workerTokenizer(text).input_ids.dims.at(-1),
-        );
-
-        const tokenized = await workerTokenizer(prefixedInputs, {
-          padding: true,
-          truncation: true,
-          max_length: MAX_INPUT_TOKENS,
-        });
-
-        if (abortedRequests.has(requestId)) {
-          abortedRequests.delete(requestId);
-          throw new DOMException('Aborted', 'AbortError');
-        }
-
-        const { sentence_embedding } = await workerModel(tokenized);
-
-        if (abortedRequests.has(requestId)) {
-          abortedRequests.delete(requestId);
-          throw new DOMException('Aborted', 'AbortError');
-        }
-
-        const dim = sentence_embedding.dims[1];
-        const data = sentence_embedding.data; // flat Float32Array
-
-        const embeddings = inputs.map((_, i) => ({
-          values: data.slice(i * dim, (i + 1) * dim),
-          statistics: {
-            tokenCount: tokenCounts[i],
-            truncated: tokenCounts[i] > MAX_INPUT_TOKENS,
-          },
-        }));
-
-        const result = {
-          embeddings,
-          metadata: {
-            embeddingSpace: EMBEDDING_SPACE,
-            maxInputTokens: MAX_INPUT_TOKENS,
-          },
-        };
-
-        self.postMessage({ type: 'embed-response', requestId, result });
-      } catch (err) {
-        abortedRequests.delete(requestId);
-        self.postMessage({
-          type: 'embed-error',
-          requestId,
-          error: err.message,
-          name: err.name || 'Error',
-        });
-      }
-    } else if (msg.type === 'abort-embed') {
-      abortedRequests.add(msg.requestId);
-    }
-  };
+    };
+    worker.onerror = (err) => {
+      finish(reject, err);
+    };
+    worker.postMessage({ action, payload, env: getEnvOverrides() });
+  });
 }
 
 export class SemanticEmbedder {
@@ -413,8 +272,7 @@ export class SemanticEmbedder {
 
     downloadingModels.add(modelId);
 
-    const url = getWorkerUrl();
-    const worker = new Worker(url, { type: 'module' });
+    const { worker, revoke } = spawnWorker();
 
     let cleanup = null;
 
@@ -424,23 +282,17 @@ export class SemanticEmbedder {
         if (msg.type === 'progress') {
           fireProgressEvent?.(msg.loaded);
         } else if (msg.type === 'ready') {
-          if (url.startsWith('blob:')) {
-            URL.revokeObjectURL(url);
-          }
+          revoke();
           resolve();
         } else if (msg.type === 'init-error') {
-          if (url.startsWith('blob:')) {
-            URL.revokeObjectURL(url);
-          }
+          revoke();
           const EX = globalThis[msg.name] || DOMException || Error;
           reject(new EX(msg.error, msg.name));
         }
       };
 
       const onError = (err) => {
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
+        revoke();
         reject(err);
       };
 
@@ -458,9 +310,7 @@ export class SemanticEmbedder {
       abortHandler = () => {
         cleanup?.();
         worker.terminate();
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
+        revoke();
         downloadingModels.delete(modelId);
       };
       options.signal.addEventListener('abort', abortHandler, { once: true });
@@ -472,6 +322,7 @@ export class SemanticEmbedder {
         modelId,
         dtype,
         hasMonitor: !!options.monitor,
+        env: getEnvOverrides(),
       });
 
       await readyPromise;
