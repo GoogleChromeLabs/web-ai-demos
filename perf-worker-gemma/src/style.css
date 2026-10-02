@@ -87,6 +87,18 @@ div.animated {
   padding-right: 0.4rem;
 }
 
+.warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffecb5;
+  border-left: 4px solid #ff9800;
+  color: #664d03;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.25rem;
+  margin: 0.5rem 0;
+  font-size: smaller;
+  line-height: 1.4;
+}
+
 @media (min-width: 760px) {
   /* CSS rules for screens larger than tablets */
   div.demo-explanation {
