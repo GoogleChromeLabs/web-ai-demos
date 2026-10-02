@@ -6,8 +6,6 @@
 import { FilesetResolver, LlmInference } from '@mediapipe/tasks-genai';
 import { MODEL_URL, MEDIAPIPE_WASM, MESSAGE_CODE } from './consts.js';
 
-let llmInference = null;
-
 function generatePrompt(userInput) {
   return `You will be provided with a product review written by a user. Your task is to analyze the review and determine if other potential buyers will find it helpful. 
 A helpful review should fulfill two main criteria:
@@ -122,21 +120,27 @@ function parseLlmResponse(response) {
 }
 
 // Trigger model preparation *before* the first message arrives
-(async function () {
+const llmInferencePromise = (async function () {
   console.info('[Worker] Preparing model...');
   self.postMessage({ code: MESSAGE_CODE.PREPARING_MODEL, payload: null });
   try {
     const genai = await FilesetResolver.forGenAiTasks(MEDIAPIPE_WASM);
-    llmInference = await LlmInference.createFromModelPath(genai, MODEL_URL);
+    const llmInference = await LlmInference.createFromModelPath(
+      genai,
+      MODEL_URL
+    );
     self.postMessage({ code: MESSAGE_CODE.MODEL_READY, payload: null });
+    return llmInference;
   } catch (error) {
     console.error('[Worker] Error preparing model:', error);
     self.postMessage({ code: MESSAGE_CODE.MODEL_ERROR, payload: null });
+    return null;
   }
 })();
 
 // Trigger inference upon receiving a message from the main script
 self.onmessage = async function (message) {
+  const llmInference = await llmInferencePromise;
   if (!llmInference) {
     // Just in case. This condition shouldn't normally be hit because the inference UI button is disabled until the model is ready
     self.postMessage({ code: MESSAGE_CODE.INFERENCE_ERROR });
