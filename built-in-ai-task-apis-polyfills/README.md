@@ -257,9 +257,9 @@ const scores = docsResult.embeddings.map((e) =>
 
 #### DecisionModel API
 
-Define a schema of `binary`, `categorical`, and `ordinal` questions, then ask
-the model to decide all of them for an input in a single forward pass. Every
-answer is one of the options you defined.
+Define a schema of `boolean`, `choice`, and `score` questions, then ask the
+model to decide all of them for an input in a single forward pass. Every answer
+is one of the options you defined.
 
 ```js
 const schema = {
@@ -268,7 +268,7 @@ const schema = {
   questions: [
     {
       id: 'command',
-      type: 'categorical',
+      type: 'choice',
       prompt: "Which command best fulfills the user's goal?",
       options: [
         { label: 'export_pdf', description: 'Download or save as a PDF' },
@@ -278,7 +278,7 @@ const schema = {
     },
     {
       id: 'urgent',
-      type: 'binary',
+      type: 'boolean',
       prompt: 'Does the user need this done right away?',
     },
   ],
@@ -295,8 +295,8 @@ if ((await DecisionModel.availability(schema)) !== 'unavailable') {
   });
 
   const { command } = await model.decide('let my coworkers view this file');
-  // command: { id: 'command', label: 'share_link', probability,
-  //            confidence, probabilities: [{ label, probability }, …] }
+  // command: { id: 'command', label: 'share_link', confidence,
+  //            probabilities: [{ label, probability }, …] }
   if (command.confidence > 0.6) {
     runCommand(command.label);
   }
@@ -304,13 +304,14 @@ if ((await DecisionModel.availability(schema)) !== 'unavailable') {
 }
 ```
 
-Each result reports the top `label`, its `probability`, the `probabilities` of
-all options in schema order, and a `confidence` between 0 and 1. The polyfill
-computes `confidence` as the margin between the two most likely options, so it
-is low whenever the model wavers between answers. `ordinal` results also carry
-an `expectedScore`, the expected 1-based position on the scale. `binary` results
-use the labels `'true'` and `'false'`. The polyfill rounds all values to four
-decimals.
+Each result reports the winning `label`, its probability as `confidence`, and
+the `probabilities` of all options in schema order. `boolean` questions use the
+labels `'true'` and `'false'`, and their results add `probability`, which is
+always P(`'true'`). `score` questions default to the options `'1'` to `'5'` when
+they define none, and their results add `expectedScore`. When all labels of a
+`score` question are numbers, `expectedScore` is weighted by those numbers.
+Otherwise it's weighted by each option's 1-based position. The polyfill rounds
+all values to four decimals.
 
 `decide()` throws a `QuotaExceededError` when the input doesn't fit into the
 model's context window next to the questions, and doesn't truncate the input. It

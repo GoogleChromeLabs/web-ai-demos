@@ -44,8 +44,12 @@ const BACKENDS = {
   },
 };
 
-const QUESTION_TYPES = new Set(['binary', 'categorical', 'ordinal']);
-const BINARY_LABELS = ['true', 'false'];
+const QUESTION_TYPES = new Set(['boolean', 'choice', 'score']);
+const BOOLEAN_LABELS = ['true', 'false'];
+// The scale a `score` question uses when it defines no options.
+const DEFAULT_SCORE_OPTIONS = ['1', '2', '3', '4', '5'].map((label) => ({
+  label,
+}));
 
 // The explainer asks for bounded numeric precision to limit fingerprinting.
 const PRECISION = 1e4;
@@ -129,8 +133,11 @@ function normalizeSchema(schema, method) {
     if (typeof prompt !== 'string' || prompt.trim() === '') {
       fail(`Question '${id}' needs a non-empty \`prompt\`.`);
     }
-    if (type === 'binary') {
+    if (type === 'boolean') {
       return { id, type, prompt };
+    }
+    if (type === 'score' && options === undefined) {
+      return { id, type, prompt, options: DEFAULT_SCORE_OPTIONS };
     }
     if (!Array.isArray(options) || options.length < 2) {
       fail(`The ${type} question '${id}' needs at least two options.`);
@@ -229,8 +236,8 @@ function modelKey(config) {
 function toResult(question, distribution) {
   const round = (x) => Math.round(x * PRECISION) / PRECISION;
   const labels =
-    question.type === 'binary'
-      ? BINARY_LABELS
+    question.type === 'boolean'
+      ? BOOLEAN_LABELS
       : question.options.map(({ label }) => label);
   let best = 0;
   for (let i = 1; i < distribution.length; i++) {
@@ -238,27 +245,29 @@ function toResult(question, distribution) {
       best = i;
     }
   }
-  const [first, second = 0] = [...distribution].sort((a, b) => b - a);
-  const result = {
-    id: question.id,
-    label: labels[best],
-    probability: round(distribution[best]),
-    // The margin between the two most likely options, which is high only
-    // when the model clearly prefers one answer. This matches the
-    // explainer's examples, where a p(true) of 0.98 has a confidence of 0.96.
-    // It is also comparable across both backends, which compute their own
-    // confidence values differently.
-    confidence: round(first - second),
-    probabilities: labels.map((label, i) => ({
-      label,
-      probability: round(distribution[i]),
-    })),
-  };
-  if (question.type === 'ordinal') {
-    // The expected 1-based position on the scale, so a four-level scale
-    // labeled "1" to "4" yields a score between 1 and 4.
+  const result = { id: question.id, label: labels[best] };
+  if (question.type === 'boolean') {
+    // P("true"), whichever label wins.
+    result.probability = round(distribution[0]);
+  }
+  // The winning label's probability.
+  result.confidence = round(distribution[best]);
+  result.probabilities = labels.map((label, i) => ({
+    label,
+    probability: round(distribution[i]),
+  }));
+  if (question.type === 'score') {
+    // Weighted by the labels themselves when they're all numbers, so a scale
+    // labeled "0" to "10" yields a score between 0 and 10, and by their 1-based
+    // positions otherwise.
+    const values = labels.map((label) =>
+      label.trim() === '' ? NaN : Number(label),
+    );
+    const weights = values.every(Number.isFinite)
+      ? values
+      : labels.map((_, i) => i + 1);
     result.expectedScore = round(
-      distribution.reduce((sum, p, i) => sum + p * (i + 1), 0),
+      distribution.reduce((sum, p, i) => sum + p * weights[i], 0),
     );
   }
   return result;
@@ -270,7 +279,7 @@ const quotaError = (message) =>
 /**
  * Backend adapters. Each `load()` resolves to an engine whose `prepare()`
  * converts the schema once, and whose `decide()` returns one probability
- * array per question, in option order (`[p(true), p(false)]` for binary).
+ * array per question, in option order (`[p(true), p(false)]` for `boolean`).
  */
 const engines = {
   'open-jev': {
@@ -311,10 +320,10 @@ const engines = {
           questions = schema.questions;
           native = questions.map((question) => {
             const instructions = instructionsFor(question, schema.context);
-            if (question.type === 'binary') {
+            if (question.type === 'boolean') {
               return { type: 'noul', instructions };
             }
-            if (question.type === 'categorical') {
+            if (question.type === 'choice') {
               return {
                 type: 'choice',
                 instructions,
@@ -356,7 +365,7 @@ const engines = {
           }
           return answers.map((answer, i) => {
             const question = questions[i];
-            if (question.type === 'binary') {
+            if (question.type === 'boolean') {
               return [answer.probability, 1 - answer.probability];
             }
             return native[i].options.map(
@@ -433,10 +442,10 @@ const engines = {
           native = Object.fromEntries(
             questions.map((question) => {
               const instructions = instructionsFor(question, schema.context);
-              if (question.type === 'binary') {
+              if (question.type === 'boolean') {
                 return [question.id, { type: 'noul', instructions }];
               }
-              if (question.type === 'categorical') {
+              if (question.type === 'choice') {
                 const hasDescriptions = question.options.some(
                   ({ description }) => description,
                 );
@@ -492,10 +501,10 @@ const engines = {
           const { answers } = await agent.predict(state, native);
           return questions.map((question) => {
             const answer = answers[question.id];
-            if (question.type === 'binary') {
+            if (question.type === 'boolean') {
               return [answer.noul, 1 - answer.noul];
             }
-            if (question.type === 'categorical') {
+            if (question.type === 'choice') {
               return question.options.map(
                 ({ label }) => answer.probabilities[label],
               );

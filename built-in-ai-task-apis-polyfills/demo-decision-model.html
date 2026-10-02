@@ -273,13 +273,13 @@
             questions: [
               {
                 id: 'pet_friendly',
-                type: 'binary',
+                type: 'boolean',
                 prompt:
                   'Does the traveler require pet-friendly accommodations?',
               },
               {
                 id: 'property_type',
-                type: 'categorical',
+                type: 'choice',
                 prompt:
                   "Which property type best matches the traveler's request?",
                 options: [
@@ -303,7 +303,7 @@
               },
               {
                 id: 'price_tier',
-                type: 'ordinal',
+                type: 'score',
                 prompt:
                   'Rate the target price tier from 1 (budget) to 4 (luxury).',
                 options: [
@@ -325,7 +325,7 @@
             questions: [
               {
                 id: 'command',
-                type: 'categorical',
+                type: 'choice',
                 prompt: "Which command best fulfills the user's goal?",
                 options: [
                   {
@@ -355,12 +355,12 @@
             questions: [
               {
                 id: 'has_repro_steps',
-                type: 'binary',
+                type: 'boolean',
                 prompt: 'Does the draft include steps to reproduce the issue?',
               },
               {
                 id: 'contains_pii',
-                type: 'binary',
+                type: 'boolean',
                 prompt:
                   'Does the draft contain personal contact info, API keys, or passwords?',
               },
@@ -378,7 +378,7 @@
             questions: [
               {
                 id: 'field_purpose',
-                type: 'categorical',
+                type: 'choice',
                 prompt:
                   'What type of user credential or data does this input field expect?',
                 options: [
