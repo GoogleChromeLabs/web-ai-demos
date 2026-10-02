@@ -57,6 +57,18 @@ export default defineConfig({
               name: 'decision-model-api-polyfill',
               test: /decision-model-api-polyfill\.js$/,
             },
+            // Both polyfills use Vite's preload helper for their dynamic
+            // imports. Left unassigned, it lands in one of the two chunks
+            // above, so the other polyfill's worker would import, and run,
+            // that whole polyfill. A chunk of its own keeps each worker to
+            // its own module.
+            {
+              name: 'vite-preload-helper',
+              test: /vite\/preload-helper/,
+              // Groups also capture the dependencies of what they match, so
+              // this one has to claim the helper before the groups above.
+              priority: 1,
+            },
           ],
         },
       },

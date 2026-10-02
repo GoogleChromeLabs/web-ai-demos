@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-task-apis-polyfills",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, DecisionModel, etc.)",
   "type": "module",
   "main": "./dist/index.js",
