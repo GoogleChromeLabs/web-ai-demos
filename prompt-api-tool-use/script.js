@@ -68,10 +68,7 @@ const SESSION_OPTIONS = {
     { type: 'text', languages: ['en'] },
     { type: 'tool-response' },
   ],
-  expectedOutputs: [
-    { type: 'text', languages: ['en'] },
-    { type: 'tool-call' },
-  ],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }, { type: 'tool-call' }],
   tools: declarations,
 };
 
@@ -215,10 +212,11 @@ async function createUnsafeMarkupDetector() {
     };
   }
 
-  console.info('[prompt-api] No native Sanitizer API, falling back to DOMPurify.');
-  const { default: DOMPurify } = await import(
-    'https://cdn.jsdelivr.net/npm/dompurify@3.2.0/dist/purify.es.mjs'
+  console.info(
+    '[prompt-api] No native Sanitizer API, falling back to DOMPurify.',
   );
+  const { default: DOMPurify } =
+    await import('https://cdn.jsdelivr.net/npm/dompurify@3.2.0/dist/purify.es.mjs');
   return (text) => {
     DOMPurify.sanitize(text);
     if (!DOMPurify.removed.length) {
@@ -566,14 +564,18 @@ async function ask(question) {
       // "system", "user", and "assistant". Every response for this round
       // travels in one message.
       const messages = [{ role: 'user', content: responses }];
-      logExchange('sent', `promptStreaming() round ${rounds}`, 'user', messages);
+      logExchange(
+        'sent',
+        `promptStreaming() round ${rounds}`,
+        'user',
+        messages,
+      );
       ({ calls, parts, blocked } = await streamResponse(messages));
       logExchange('received', `response ${rounds}`, 'assistant', parts);
       if (blocked) {
         return;
       }
     }
-
   } catch (error) {
     appendMessage('error', `Something went wrong: ${error.message}`);
     logError(`${error.name}: ${error.message}`);
