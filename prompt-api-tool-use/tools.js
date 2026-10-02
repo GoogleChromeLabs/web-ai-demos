@@ -31,8 +31,7 @@ const MAX_REPOS = 10;
 // message }` entry rather than sinking the whole batch: one repository that has
 // been renamed should not cost the model the other nine star counts.
 async function fetchRepoStars({ owner, repo }) {
-  const path =
-    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+  const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
   let response;
   try {
     response = await fetch(`${GITHUB_API}${path}`, {
@@ -252,11 +251,11 @@ export const tools = [
       'Search the npm registry for packages matching a query, for example ' +
       '"browser fs access". Only returns packages that have an associated ' +
       'GitHub repository. Use this to find candidate packages, then look up ' +
-      "their popularity with get_repo_stars. Comparing packages means passing " +
+      'their popularity with get_repo_stars. Comparing packages means passing ' +
       'every package this returns to get_repo_stars in one call, not just the ' +
       'first one. A package marked ' +
       '"sharedRepository": true lives inside a repository that holds several ' +
-      'packages, so that repository\'s star count covers all of them and is ' +
+      "packages, so that repository's star count covers all of them and is " +
       'not a measure of that one package. Say so whenever you report or ' +
       'compare stars for such a package.',
     inputSchema: {

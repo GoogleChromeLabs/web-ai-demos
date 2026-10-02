@@ -178,27 +178,27 @@ button.example:hover {
 }
 
 /* One slot per tool, assigned in declaration order. */
-.tool-call[data-tool='0'] {
+.tool-call[data-tool="0"] {
   --tool-ink: light-dark(#8a6d00, #d9b64a);
   --tool-bg: light-dark(#fffaf0, #241f14);
 }
-.tool-call[data-tool='1'] {
+.tool-call[data-tool="1"] {
   --tool-ink: light-dark(#12667f, #6cc3e0);
   --tool-bg: light-dark(#f0fafd, #14212a);
 }
-.tool-call[data-tool='2'] {
+.tool-call[data-tool="2"] {
   --tool-ink: light-dark(#6b3f9e, #b998e8);
   --tool-bg: light-dark(#faf5ff, #1f1a2b);
 }
-.tool-call[data-tool='3'] {
+.tool-call[data-tool="3"] {
   --tool-ink: light-dark(#2c7a4b, #7fce9c);
   --tool-bg: light-dark(#f2fbf6, #16241c);
 }
-.tool-call[data-tool='4'] {
+.tool-call[data-tool="4"] {
   --tool-ink: light-dark(#a5457a, #eb9cc6);
   --tool-bg: light-dark(#fff5fa, #2a1722);
 }
-.tool-call[data-tool='5'] {
+.tool-call[data-tool="5"] {
   --tool-ink: light-dark(#9c5518, #e0a86c);
   --tool-bg: light-dark(#fff7f0, #2a1d14);
 }
@@ -234,8 +234,8 @@ button.example:hover {
   padding: 0.5rem 1rem;
   cursor: pointer;
 }
-#send-btn[aria-disabled='true'],
-#user-input[aria-disabled='true'] {
+#send-btn[aria-disabled="true"],
+#user-input[aria-disabled="true"] {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -260,8 +260,8 @@ button.example:hover {
   cursor: pointer;
   white-space: nowrap;
 }
-#reset-btn[aria-disabled='true'],
-#activate-btn[aria-disabled='true'] {
+#reset-btn[aria-disabled="true"],
+#activate-btn[aria-disabled="true"] {
   opacity: 0.5;
   cursor: not-allowed;
 }
