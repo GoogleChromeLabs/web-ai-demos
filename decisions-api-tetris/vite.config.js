@@ -10,6 +10,7 @@ import { defineConfig } from 'vite';
 // module ends up in, plus everything the chunk imports. None of it may touch
 // `document`. Same setup as the polyfill's own demo build.
 export default defineConfig({
+  base: './',
   build: {
     // Vite's preload wrapper around dynamic imports reaches for `document`.
     modulePreload: false,
