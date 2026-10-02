@@ -24,9 +24,9 @@ export function installToolGlobals() {
     };
     Object.defineProperty(globalThis[name], 'name', { value: name });
   };
-  define('LanguageModelToolCall', ['callID', 'name', 'arguments']);
-  define('LanguageModelToolSuccess', ['callID', 'name', 'result']);
-  define('LanguageModelToolError', ['callID', 'name', 'errorMessage']);
+  define('LanguageModelToolCall', ['callId', 'name', 'arguments']);
+  define('LanguageModelToolSuccess', ['callId', 'name', 'result']);
+  define('LanguageModelToolError', ['callId', 'name', 'errorMessage']);
   return () => {
     for (const name of [
       'LanguageModelToolCall',
@@ -39,8 +39,18 @@ export function installToolGlobals() {
 }
 
 /** A tool call the way the model delivers one. */
-export function toolCall(name, args, callID = `${name}-1`) {
-  return new LanguageModelToolCall({ callID, name, arguments: args });
+export function toolCall(name, args, callId = `${name}-1`) {
+  return new LanguageModelToolCall({ callId, name, arguments: args });
+}
+
+/**
+ * A tool call the way browsers delivered one before `callID` was renamed to
+ * `callId`.
+ *
+ * TODO: Drop this once no supported browser sends `callID`.
+ */
+export function legacyToolCall(name, args, callID = `${name}-1`) {
+  return { callID, name, arguments: args };
 }
 
 /** Fires a `downloadprogress` event on a freshly built monitor. */

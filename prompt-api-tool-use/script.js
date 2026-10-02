@@ -244,8 +244,9 @@ function plainify(value) {
   if (Array.isArray(value)) {
     return value.map(plainify);
   }
-  if ('callID' in value) {
-    const out = { callID: value.callID, name: value.name };
+  // TODO: Drop `callID` once no supported browser sends it.
+  if ('callId' in value || 'callID' in value) {
+    const out = { callId: value.callId ?? value.callID, name: value.name };
     if ('arguments' in value) {
       out.arguments = value.arguments;
     }
@@ -431,11 +432,16 @@ function withoutNulls(value) {
 // The value has to be a real LanguageModelToolSuccess or LanguageModelToolError
 // instance: a plain object is rejected with "The value must be a
 // LanguageModelToolSuccess or LanguageModelToolError for type:'tool-response'".
-// Note the capital D in `callID`.
+//
+// The Prompt API is renaming `callID` to `callId`. The constructors ignore a
+// dictionary member they do not know, so passing both works either way.
+// TODO: Drop `callID` once no supported browser uses it.
 function toolResponsePart(call, outcome) {
+  const callId = call.callId ?? call.callID;
   const value = outcome.ok
     ? new LanguageModelToolSuccess({
-        callID: call.callID,
+        callId,
+        callID: callId,
         name: call.name,
         // `object` takes any JSON-serializable value, minus nulls. Chrome
         // currently supports only `text` and `object` here, not `image` or
@@ -443,7 +449,8 @@ function toolResponsePart(call, outcome) {
         result: [{ type: 'object', value: withoutNulls(outcome.value) ?? {} }],
       })
     : new LanguageModelToolError({
-        callID: call.callID,
+        callId,
+        callID: callId,
         name: call.name,
         errorMessage: outcome.message,
       });
