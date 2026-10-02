@@ -1,0 +1,85 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Decision Tetris</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <section class="play">
+        <canvas id="board" width="280" height="560"></canvas>
+        <div class="overlay" id="overlay" hidden></div>
+      </section>
+      <aside>
+        <h1>Decision Tetris</h1>
+        <p class="status" id="status">Choose a player and press Start.</p>
+        <progress id="progress" hidden></progress>
+
+        <div class="controls">
+          <label>
+            Player
+            <select id="mode">
+              <option value="model">Decision model</option>
+              <option value="heuristic">Heuristic baseline</option>
+              <option value="human">You (keyboard)</option>
+            </select>
+          </label>
+          <label id="backend-label">
+            Decision model backend
+            <select id="backend">
+              <option value="laya">Laya</option>
+              <option value="open-jev">open-jev</option>
+            </select>
+          </label>
+          <label>
+            Move speed
+            <input id="speed" type="range" min="0" max="200" value="40" />
+          </label>
+          <div class="buttons">
+            <button id="start">Start</button>
+            <button id="pause" disabled>Pause</button>
+          </div>
+        </div>
+
+        <dl class="stats">
+          <div>
+            <dt>Score</dt>
+            <dd id="score">0</dd>
+          </div>
+          <div>
+            <dt>Lines</dt>
+            <dd id="lines">0</dd>
+          </div>
+          <div>
+            <dt>Pieces</dt>
+            <dd id="pieces">0</dd>
+          </div>
+          <div>
+            <dt>Next</dt>
+            <dd><canvas id="next" width="80" height="48"></canvas></dd>
+          </div>
+        </dl>
+
+        <details open>
+          <summary>Last decision</summary>
+          <p class="meta" id="meta">No decision yet.</p>
+          <ol id="ranking"></ol>
+        </details>
+        <details>
+          <summary>What the model sees</summary>
+          <pre id="state"></pre>
+        </details>
+        <p class="hint" id="hint" hidden>
+          Arrows move, Up rotates, Space drops.
+        </p>
+      </aside>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
