@@ -1,0 +1,687 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DecisionModel API Polyfill Demo</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+      }
+
+      html {
+        box-sizing: border-box;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: clamp(320px, 90%, 900px);
+        margin: auto;
+        padding-bottom: 2rem;
+      }
+
+      textarea {
+        width: 100%;
+        font-family: inherit;
+        resize: vertical;
+      }
+
+      #inputText {
+        height: 80px;
+      }
+
+      #schemaInput {
+        height: 260px;
+        font-family: monospace;
+        font-size: 0.85rem;
+      }
+
+      button {
+        cursor: pointer;
+        padding: 0.4rem 0.8rem;
+      }
+
+      progress {
+        width: 100%;
+      }
+
+      #status {
+        font-style: italic;
+        color: gray;
+        min-height: 1.4em;
+      }
+
+      section {
+        margin-top: 2rem;
+      }
+
+      h2 {
+        margin-bottom: 0.5rem;
+      }
+
+      .controls {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .results {
+        border: 1px solid #ccc;
+        padding: 1rem;
+        min-height: 80px;
+      }
+
+      .question {
+        padding: 0.5rem 0 0.75rem;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+      }
+
+      .question:last-child {
+        border-bottom: none;
+      }
+
+      .question-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        align-items: baseline;
+        margin-bottom: 0.4rem;
+      }
+
+      .question-id {
+        font-family: monospace;
+        font-weight: bold;
+      }
+
+      .question-type {
+        font-size: 0.8rem;
+        opacity: 0.7;
+      }
+
+      .answer {
+        padding: 0.1rem 0.6rem;
+        border-radius: 1rem;
+        background: #0070f3;
+        color: white;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .answer.uncertain {
+        background: #b8860b;
+      }
+
+      .metrics {
+        font-size: 0.85rem;
+        font-variant-numeric: tabular-nums;
+        opacity: 0.8;
+      }
+
+      .option-row {
+        display: grid;
+        grid-template-columns: minmax(6rem, 12rem) 1fr 4.5ch;
+        gap: 0.75rem;
+        align-items: center;
+        font-size: 0.9rem;
+        padding: 0.1rem 0;
+      }
+
+      .option-label {
+        overflow-wrap: anywhere;
+      }
+
+      .option-row.top .option-label {
+        font-weight: bold;
+      }
+
+      .bar-bg {
+        background: rgba(128, 128, 128, 0.2);
+        border-radius: 3px;
+        overflow: hidden;
+        height: 8px;
+      }
+
+      .bar {
+        height: 100%;
+        background: #0070f3;
+        transition: width 0.3s ease;
+      }
+
+      .option-value {
+        text-align: end;
+        font-variant-numeric: tabular-nums;
+      }
+
+      #timing {
+        font-size: 0.85rem;
+        color: gray;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>DecisionModel API Polyfill Demo</h1>
+    <div id="polyfill-mode-banner"></div>
+    <p>
+      Demonstrates the proposed
+      <a
+        href="https://github.com/explainers-by-googlers/decisions-api"
+        target="_blank"
+        >Decisions API</a
+      >
+      (<code>window.DecisionModel</code>), which scores predefined options for
+      one or more typed questions in a single forward pass. The polyfill runs
+      either
+      <a
+        href="https://github.com/johnhenry/laya-js/blob/main/packages/laya/README.md"
+        target="_blank"
+        >Laya</a
+      >
+      or
+      <a href="https://github.com/nico-martin/open-jev" target="_blank"
+        >open-jev</a
+      >
+      in the browser, selected through
+      <code>window.DECISION_MODEL_CONFIG</code>.
+    </p>
+
+    <div class="controls">
+      <label for="backendSelect">Backend:</label>
+      <select id="backendSelect">
+        <option value="laya">Laya (ModernBERT, ~0.8 GB)</option>
+        <option value="open-jev">open-jev (kev-0.6b, ~0.4 GB)</option>
+      </select>
+      <span id="availability"></span>
+    </div>
+    <progress id="progress" value="0" max="1" style="display: none"></progress>
+    <div id="status"></div>
+
+    <section>
+      <h2>Schema</h2>
+      <div class="controls">
+        <label for="presetSelect">Use case:</label>
+        <select id="presetSelect"></select>
+      </div>
+      <textarea id="schemaInput" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Input</h2>
+      <textarea id="inputText"></textarea>
+      <div class="controls" style="margin-top: 0.5rem">
+        <button id="decideBtn">Decide</button>
+        <label>
+          <input type="checkbox" id="liveCheckbox" />
+          Decide as you type
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Result</h2>
+      <div id="results" class="results">
+        The result for each question will appear here.
+      </div>
+      <p id="timing"></p>
+    </section>
+
+    <script src="./demo-polyfill-mode.js"></script>
+    <script>
+      setupPolyfillModeBanner({
+        apiName: 'DecisionModel',
+        forceFlag: '__FORCE_DECISION_MODEL_POLYFILL__',
+      });
+    </script>
+    <script type="module">
+      import './decision-model-api-polyfill.js';
+
+      const backendSelect = document.getElementById('backendSelect');
+      const presetSelect = document.getElementById('presetSelect');
+      const schemaInput = document.getElementById('schemaInput');
+      const inputText = document.getElementById('inputText');
+      const decideBtn = document.getElementById('decideBtn');
+      const liveCheckbox = document.getElementById('liveCheckbox');
+      const resultsEl = document.getElementById('results');
+      const timingEl = document.getElementById('timing');
+      const progressEl = document.getElementById('progress');
+      const statusEl = document.getElementById('status');
+      const availabilityEl = document.getElementById('availability');
+
+      // Results below this confidence are shown as uncertain, the point at
+      // which the explainer's examples ask the user instead of acting.
+      const CONFIDENCE_THRESHOLD = 0.85;
+
+      // The use cases from the explainer.
+      const PRESETS = [
+        {
+          name: 'Natural language to search filters',
+          input: "dog-friendly hotel downtown that won't break the bank",
+          schema: {
+            context: 'Hotel reservation search filter converter.',
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            questions: [
+              {
+                id: 'pet_friendly',
+                type: 'boolean',
+                prompt:
+                  'Does the traveler require pet-friendly accommodations?',
+              },
+              {
+                id: 'property_type',
+                type: 'choice',
+                prompt:
+                  "Which property type best matches the traveler's request?",
+                options: [
+                  {
+                    label: 'hotel',
+                    description: 'Standard hotel, resort, or boutique inn',
+                  },
+                  {
+                    label: 'rental',
+                    description: 'Entire apartment, house, or cabin rental',
+                  },
+                  {
+                    label: 'hostel',
+                    description: 'Shared dormitory or budget hostel',
+                  },
+                  {
+                    label: 'any',
+                    description: 'No specific property type mentioned',
+                  },
+                ],
+              },
+              {
+                id: 'price_tier',
+                type: 'score',
+                prompt:
+                  'Rate the target price tier from 1 (budget) to 4 (luxury).',
+                options: [
+                  { label: '1', description: 'Budget or inexpensive stay' },
+                  { label: '2', description: 'Moderate or mid-range price' },
+                  { label: '3', description: 'Upscale or premium property' },
+                  { label: '4', description: 'Luxury or five-star resort' },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          name: 'Intent routing for a command palette',
+          input: 'let my coworkers view this file',
+          schema: {
+            context: 'Document editor command palette',
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            questions: [
+              {
+                id: 'command',
+                type: 'choice',
+                prompt: "Which command best fulfills the user's goal?",
+                options: [
+                  {
+                    label: 'export_pdf',
+                    description: 'Download or save the document as a PDF',
+                  },
+                  {
+                    label: 'share_link',
+                    description: 'Invite collaborators or copy a sharing link',
+                  },
+                  {
+                    label: 'archive_doc',
+                    description: 'Move the document to trash or archive',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          name: 'Pre-submission checks for a bug report',
+          input:
+            'The export button does nothing. My API key is sk-live-4f9a2c7e, in case you need to log in as me.',
+          schema: {
+            context: 'Bug report submission form pre-check',
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            questions: [
+              {
+                id: 'has_repro_steps',
+                type: 'boolean',
+                prompt: 'Does the draft include steps to reproduce the issue?',
+              },
+              {
+                id: 'contains_pii',
+                type: 'boolean',
+                prompt:
+                  'Does the draft contain personal contact info, API keys, or passwords?',
+              },
+            ],
+          },
+        },
+        {
+          name: 'Form field classification for autofill',
+          input:
+            'Label: "Enter the 6-digit security code sent to your phone" | Placeholder: "000000"',
+          schema: {
+            context:
+              'Form assistant classifying a non-standard input field from surrounding DOM labels',
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            questions: [
+              {
+                id: 'field_purpose',
+                type: 'choice',
+                prompt:
+                  'What type of user credential or data does this input field expect?',
+                options: [
+                  {
+                    label: 'username',
+                    description: 'Account email, login ID, or handle',
+                  },
+                  {
+                    label: 'current_password',
+                    description: 'Existing password for signing in',
+                  },
+                  {
+                    label: 'new_password',
+                    description: 'New or updated password being created',
+                  },
+                  {
+                    label: 'one_time_code',
+                    description: 'Two-factor verification or SMS code',
+                  },
+                  { label: 'other', description: 'Unrelated input field' },
+                ],
+              },
+            ],
+          },
+        },
+      ];
+
+      PRESETS.forEach(({ name }, i) => {
+        presetSelect.append(new Option(name, i));
+      });
+
+      const loadPreset = (index) => {
+        const preset = PRESETS[index];
+        schemaInput.value = JSON.stringify(preset.schema, null, 2);
+        inputText.value = preset.input;
+        resultsEl.textContent =
+          'The result for each question will appear here.';
+        timingEl.textContent = '';
+      };
+
+      loadPreset(0);
+
+      // The backend is read from the URL so a reload keeps it.
+      const params = new URLSearchParams(location.search);
+      backendSelect.value =
+        params.get('backend') === 'open-jev' ? 'open-jev' : 'laya';
+      const applyBackend = () => {
+        window.DECISION_MODEL_CONFIG = { backend: backendSelect.value };
+      };
+      applyBackend();
+
+      const parseSchema = () => {
+        try {
+          return JSON.parse(schemaInput.value);
+        } catch (err) {
+          throw new Error(`The schema is not valid JSON: ${err.message}`);
+        }
+      };
+
+      const showAvailability = async () => {
+        try {
+          const availability = await DecisionModel.availability(parseSchema());
+          availabilityEl.textContent = `Availability: ${availability}`;
+        } catch (err) {
+          availabilityEl.textContent = `Availability: ${err.message}`;
+        }
+      };
+
+      showAvailability();
+
+      // Resolves once the user has interacted with the page. A model download
+      // needs user activation, which a tap, click, or key press grants.
+      const waitForUserActivation = () =>
+        new Promise((resolve) => {
+          const controller = new AbortController();
+          const onInteraction = () => {
+            if (navigator.userActivation.isActive) {
+              controller.abort();
+              resolve();
+            }
+          };
+          for (const type of [
+            'keydown',
+            'mousedown',
+            'pointerup',
+            'touchend',
+          ]) {
+            document.addEventListener(type, onInteraction, {
+              capture: true,
+              signal: controller.signal,
+            });
+          }
+        });
+
+      // Asks `availability()` with exactly the options `create()` gets, and
+      // waits for an interaction when a model still has to be downloaded.
+      const ensureAvailable = async (api, options, report) => {
+        const availability = await api.availability(options);
+        if (availability === 'unavailable') {
+          throw new Error(`${api.name} is unavailable for these options.`);
+        }
+        if (
+          availability !== 'available' &&
+          !navigator.userActivation.isActive
+        ) {
+          report('Click anywhere or press a key to download the model.');
+          await waitForUserActivation();
+        }
+      };
+
+      // A model is bound to its schema and backend, so it's re-created
+      // whenever either changes. Concurrent callers share the same promise.
+      let model = null;
+      let modelKey = null;
+      let loadingPromise = null;
+      let loadingKey = null;
+
+      async function ensureModel() {
+        const schema = parseSchema();
+        const key = `${backendSelect.value}\n${JSON.stringify(schema)}`;
+        if (model && modelKey === key) {
+          return model;
+        }
+        if (loadingPromise && loadingKey === key) {
+          return loadingPromise;
+        }
+        model?.destroy();
+        model = null;
+
+        statusEl.textContent = 'Loading model…';
+        progressEl.style.display = 'block';
+        progressEl.value = 0;
+
+        loadingKey = key;
+        loadingPromise = ensureAvailable(DecisionModel, schema, (message) => {
+          statusEl.textContent = message;
+        })
+          .then(() =>
+            DecisionModel.create({
+              ...schema,
+              monitor(m) {
+                m.addEventListener('downloadprogress', (e) => {
+                  availabilityEl.textContent = 'Availability: downloading';
+                  progressEl.value = e.loaded;
+                  if (e.loaded < 1) {
+                    statusEl.textContent = `Downloading model: ${Math.round(e.loaded * 100)}%`;
+                  }
+                });
+              },
+            }),
+          )
+          .then((result) => {
+            if (loadingKey !== key) {
+              // The schema or backend changed while this model loaded.
+              result.destroy();
+              return ensureModel();
+            }
+            model = result;
+            modelKey = key;
+            loadingPromise = null;
+            showAvailability();
+            statusEl.textContent = 'Model loaded. Ready to decide.';
+            progressEl.style.display = 'none';
+            return model;
+          })
+          .catch((err) => {
+            if (loadingKey === key) {
+              loadingPromise = null;
+            }
+            statusEl.textContent = `Error loading model: ${err.message}`;
+            progressEl.style.display = 'none';
+            throw err;
+          });
+
+        return loadingPromise;
+      }
+
+      const renderResult = (schema, result) => {
+        resultsEl.replaceChildren();
+        for (const question of schema.questions) {
+          const answer = result[question.id];
+          const block = document.createElement('div');
+          block.className = 'question';
+
+          const header = document.createElement('div');
+          header.className = 'question-header';
+          const id = document.createElement('span');
+          id.className = 'question-id';
+          id.textContent = question.id;
+          const type = document.createElement('span');
+          type.className = 'question-type';
+          type.textContent = question.type;
+          const label = document.createElement('span');
+          label.className = 'answer';
+          label.classList.toggle(
+            'uncertain',
+            answer.confidence < CONFIDENCE_THRESHOLD,
+          );
+          label.textContent = answer.label;
+          const metrics = document.createElement('span');
+          metrics.className = 'metrics';
+          metrics.textContent =
+            `confidence ${answer.confidence.toFixed(2)}` +
+            (answer.expectedScore !== undefined
+              ? ` · expectedScore ${answer.expectedScore.toFixed(2)}`
+              : '');
+          header.append(id, type, label, metrics);
+          block.append(header);
+
+          for (const { label: option, probability } of answer.probabilities) {
+            const row = document.createElement('div');
+            row.className = 'option-row';
+            row.classList.toggle('top', option === answer.label);
+            const name = document.createElement('span');
+            name.className = 'option-label';
+            name.textContent = option;
+            const barBg = document.createElement('div');
+            barBg.className = 'bar-bg';
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.width = `${(probability * 100).toFixed(1)}%`;
+            barBg.append(bar);
+            const value = document.createElement('span');
+            value.className = 'option-value';
+            value.textContent = probability.toFixed(2);
+            row.append(name, barBg, value);
+            block.append(row);
+          }
+          resultsEl.append(block);
+        }
+      };
+
+      // Only the latest call matters while typing, so older ones are aborted.
+      let decideController = null;
+
+      async function decide() {
+        const input = inputText.value.trim();
+        if (!input) {
+          resultsEl.textContent = 'Please enter some input.';
+          return;
+        }
+        decideController?.abort();
+        const controller = new AbortController();
+        decideController = controller;
+
+        try {
+          const schema = parseSchema();
+          const decisionModel = await ensureModel();
+          statusEl.textContent = 'Deciding…';
+          const start = performance.now();
+          const result = await decisionModel.decide(input, {
+            signal: controller.signal,
+          });
+          const elapsed = performance.now() - start;
+          renderResult(schema, result);
+          timingEl.textContent = `Decided ${schema.questions.length} question${schema.questions.length === 1 ? '' : 's'} in ${Math.round(elapsed)} ms with ${backendSelect.value}.`;
+          statusEl.textContent = 'Done.';
+        } catch (err) {
+          if (err.name === 'AbortError' && controller.signal.aborted) {
+            return;
+          }
+          resultsEl.textContent = `${err.name}: ${err.message}`;
+          timingEl.textContent = '';
+          statusEl.textContent = 'Decision failed.';
+        }
+      }
+
+      decideBtn.onclick = async () => {
+        decideBtn.disabled = true;
+        await decide();
+        decideBtn.disabled = false;
+      };
+
+      let debounceTimer = null;
+      inputText.addEventListener('input', () => {
+        if (!liveCheckbox.checked) {
+          return;
+        }
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(decide, 250);
+      });
+
+      presetSelect.onchange = () => {
+        loadPreset(presetSelect.value);
+        showAvailability();
+      };
+
+      schemaInput.addEventListener('change', showAvailability);
+
+      backendSelect.onchange = () => {
+        const url = new URL(location.href);
+        url.searchParams.set('backend', backendSelect.value);
+        history.replaceState(null, '', url);
+        applyBackend();
+        model?.destroy();
+        model = null;
+        modelKey = null;
+        resultsEl.textContent =
+          'The result for each question will appear here.';
+        timingEl.textContent = '';
+        statusEl.textContent = '';
+        showAvailability();
+      };
+    </script>
+  </body>
+</html>
