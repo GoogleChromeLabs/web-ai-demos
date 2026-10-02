@@ -10,6 +10,7 @@ specifically:
 - **Language Detector API**
 - **Translator API**
 - **SemanticEmbedder API**
+- **DecisionModel API**
 
 > [!WARNING]
 >
@@ -30,6 +31,14 @@ in-browser via
 [`@huggingface/transformers`](https://huggingface.co/docs/transformers.js) (a
 peer dependency you must install separately).
 
+The DecisionModel polyfill implements the proposed
+[Decisions API](https://github.com/explainers-by-googlers/decisions-api) with
+one of two in-browser decision model runtimes, which you pick through
+`window.DECISION_MODEL_CONFIG`:
+[Laya](https://github.com/johnhenry/laya-js/blob/main/packages/laya/README.md)
+(the default) or [open-jev](https://github.com/nico-martin/open-jev). Both are
+optional peer dependencies, so install the one you use.
+
 When loaded in the browser, they define globals:
 
 ```js
@@ -39,6 +48,7 @@ window.Rewriter;
 window.LanguageDetector;
 window.Translator;
 window.SemanticEmbedder;
+window.DecisionModel;
 ```
 
 so you can use these Task APIs even in environments where they are not yet
@@ -56,6 +66,15 @@ If you use the **SemanticEmbedder** polyfill, also install the peer dependency:
 
 ```bash
 npm install @huggingface/transformers
+```
+
+If you use the **DecisionModel** polyfill, also install the backend you pick:
+
+```bash
+# Laya (default backend)
+npm install @johnhenry/laya @johnhenry/backend-webgpu
+# open-jev
+npm install open-jev @huggingface/transformers
 ```
 
 ## Quick start
@@ -91,6 +110,9 @@ defensive dynamic import strategy:
   }
   if (!('SemanticEmbedder' in window)) {
     polyfills.push(import('built-in-ai-task-apis-polyfills/semantic-embedder'));
+  }
+  if (!('DecisionModel' in window)) {
+    polyfills.push(import('built-in-ai-task-apis-polyfills/decision-model'));
   }
   await Promise.all(polyfills);
 
@@ -233,9 +255,102 @@ const scores = docsResult.embeddings.map((e) =>
 );
 ```
 
+#### DecisionModel API
+
+Define a schema of `binary`, `categorical`, and `ordinal` questions, then ask
+the model to decide all of them for an input in a single forward pass. Every
+answer is one of the options you defined.
+
+```js
+const schema = {
+  context: 'Document editor command palette',
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  questions: [
+    {
+      id: 'command',
+      type: 'categorical',
+      prompt: "Which command best fulfills the user's goal?",
+      options: [
+        { label: 'export_pdf', description: 'Download or save as a PDF' },
+        { label: 'share_link', description: 'Invite collaborators' },
+        { label: 'archive_doc', description: 'Move to trash or archive' },
+      ],
+    },
+    {
+      id: 'urgent',
+      type: 'binary',
+      prompt: 'Does the user need this done right away?',
+    },
+  ],
+};
+
+if ((await DecisionModel.availability(schema)) !== 'unavailable') {
+  const model = await DecisionModel.create({
+    ...schema,
+    monitor(m) {
+      m.addEventListener('downloadprogress', (e) => {
+        console.log(`Download progress: ${Math.round(e.loaded * 100)}%`);
+      });
+    },
+  });
+
+  const { command } = await model.decide('let my coworkers view this file');
+  // command: { id: 'command', label: 'share_link', probability,
+  //            confidence, probabilities: [{ label, probability }, …] }
+  if (command.confidence > 0.6) {
+    runCommand(command.label);
+  }
+  model.destroy();
+}
+```
+
+Each result reports the top `label`, its `probability`, the `probabilities` of
+all options in schema order, and a `confidence` between 0 and 1. The polyfill
+computes `confidence` as the margin between the two most likely options, so it
+is low whenever the model wavers between answers. `ordinal` results also carry
+an `expectedScore`, the expected 1-based position on the scale. `binary` results
+use the labels `'true'` and `'false'`. The polyfill rounds all values to four
+decimals.
+
+`decide()` throws a `QuotaExceededError` when the input doesn't fit into the
+model's context window next to the questions, and doesn't truncate the input. It
+accepts a `signal` to abort the call.
+
 ---
 
 ## Configuration
+
+### Configuring the DecisionModel backend
+
+Set `window.DECISION_MODEL_CONFIG` before calling `DecisionModel.create()`. All
+fields are optional.
+
+```js
+window.DECISION_MODEL_CONFIG = {
+  backend: 'open-jev', // 'laya' (default) or 'open-jev'
+};
+```
+
+| Field       | `open-jev`                                                               | `laya`                                                                  |
+| ----------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `model`     | `'kev-0.6b'` (default, ~0.4 GB), `'kev-4b'`, `'open-jev'`, or a Hub repo | A Hub repo id or base URL, default `'convaiinnovations/laya'` (~0.8 GB) |
+| `dtype`     | `'auto'` (default), `'fp32'`, `'fp16'`, `'q4'`, `'q4f16'`                | `'f16'` (default) or `'f32'`                                            |
+| `device`    | `'auto'` (default), `'webgpu'`, or `'wasm'`                              | `'auto'` (default), `'webgpu'`, or `'cpu'`                              |
+| `subfolder` | n/a                                                                      | Checkpoint folder inside the repo                                       |
+| `revision`  | n/a                                                                      | Branch, tag, or commit, default `'main'`                                |
+
+The open-jev models are English-only, so `availability()` reports
+`'unavailable'` for schemas that expect other languages. It does the same
+without WebGPU for the default models, because their 4-bit weights don't run on
+onnxruntime-web's WebAssembly backend. With Laya's default repo, schemas that
+expect languages other than English use its multilingual checkpoint
+(`subfolder: 'multilingual'`, ~0.6 GB). Without WebGPU, Laya falls back to its
+CPU backend. That backend runs everywhere and takes several seconds per
+decision.
+
+open-jev caches models through Transformers.js and shares them across origins
+when the Cross-Origin Storage extension is installed. Laya caches models in the
+Cache API of the page's origin.
 
 ### Configuring `.env.json`
 
@@ -263,6 +378,7 @@ documentation:
 - [Language Detector API](https://developer.chrome.com/docs/ai/language-detection-api)
 - [Translator API](https://developer.chrome.com/docs/ai/translator-api)
 - [SemanticEmbedder API](https://github.com/explainers-by-googlers/embedding-api)
+- [DecisionModel API](https://github.com/explainers-by-googlers/decisions-api)
 
 For complete examples, see:
 
@@ -272,6 +388,7 @@ For complete examples, see:
 - [`demo-language-detector.html`](demo-language-detector.html)
 - [`demo-translator.html`](demo-translator.html)
 - [`demo-semantic-embedder.html`](demo-semantic-embedder.html)
+- [`demo-decision-model.html`](demo-decision-model.html)
 
 ---
 

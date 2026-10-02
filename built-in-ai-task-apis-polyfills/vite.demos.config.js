@@ -16,8 +16,9 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'dist-demos',
-    // semantic-embedder-api-polyfill.js re-loads itself as a worker via
-    // `new Worker(import.meta.url)`. Vite's modulepreload machinery
+    // semantic-embedder-api-polyfill.js and decision-model-api-polyfill.js
+    // re-load themselves as workers via `new Worker(import.meta.url)`.
+    // Vite's modulepreload machinery
     // (the injected polyfill, and the `__vitePreload` wrapper it adds
     // around dynamic imports) unconditionally touches `document`/`window`,
     // which don't exist inside that worker. Disabling it avoids both:
@@ -28,6 +29,7 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         classifier: resolve(__dirname, 'demo-classifier.html'),
+        'decision-model': resolve(__dirname, 'demo-decision-model.html'),
         'language-detector': resolve(__dirname, 'demo-language-detector.html'),
         rewriter: resolve(__dirname, 'demo-rewriter.html'),
         'semantic-embedder': resolve(__dirname, 'demo-semantic-embedder.html'),
@@ -49,6 +51,11 @@ export default defineConfig({
             {
               name: 'semantic-embedder-api-polyfill',
               test: /semantic-embedder-api-polyfill\.js$/,
+            },
+            // decision-model-api-polyfill.js spawns its worker the same way.
+            {
+              name: 'decision-model-api-polyfill',
+              test: /decision-model-api-polyfill\.js$/,
             },
           ],
         },
