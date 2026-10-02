@@ -85,8 +85,8 @@ these, in four groups:
 | --------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tools`                                                               | —       | Tools the model may call, each `{name, description, inputSchema, execute}`. `execute` is called as `execute(args, {signal})`. Passing this adds `tool-call` and `tool-response` to the expected content types, which a tool-calling session needs and declaring `tools` does not imply. Whatever you expected yourself is kept. |
 | `maxToolRounds`                                                       | `8`     | How many rounds of tool calls to allow before giving up. A round can carry several calls.                                                                                                                                                                                                                                       |
-| `onToolCall({callID, name, arguments})`                               | —       | Fires as each call is about to run.                                                                                                                                                                                                                                                                                             |
-| `onToolResponse({callID, name, arguments, ok, result, errorMessage})` | —       | Fires as each call resolves, refused ones included.                                                                                                                                                                                                                                                                             |
+| `onToolCall({callId, name, arguments})`                               | —       | Fires as each call is about to run.                                                                                                                                                                                                                                                                                             |
+| `onToolResponse({callId, name, arguments, ok, result, errorMessage})` | —       | Fires as each call resolves, refused ones included.                                                                                                                                                                                                                                                                             |
 
 ##### User activation
 
@@ -585,7 +585,8 @@ const answer = await session.prompt(question);
 A round's calls run at once, so a round costs the slowest tool rather than the
 sum, and `onToolResponse` fires in completion order. What the model receives
 stays in the order it asked, whatever order the tools finished in. Both
-callbacks carry the `callID` that pairs a response with its call.
+callbacks carry the `callId` that pairs a response with its call, and the same
+value as `callID`, the Prompt API's old name for it.
 
 An invented tool, a missing required argument, and a repeat of a call already
 answered are each refused before `execute` runs. The `onToolResponse` callback

@@ -128,13 +128,13 @@ function describeCall(name, args) {
 /**
  * What ties a response back to the call it answers.
  *
- * `callID` is the field for it, so prefer it. An implementation that leaves it
+ * `callId` is the field for it, so prefer it. An implementation that leaves it
  * empty still leaves the name and the arguments, which tell a round's calls
  * apart on their own unless the model asked the same thing twice, and the
  * wrapper refuses the second of those before it ever runs.
  */
-function callKey({ callID, name, arguments: args }) {
-  return callID || describeCall(name, args);
+function callKey({ callId, name, arguments: args }) {
+  return callId || describeCall(name, args);
 }
 
 /** When each in-flight call started, so the pair can report how long it took. */
@@ -177,7 +177,8 @@ function dehydrate(message) {
         return {
           type: part.type,
           value: {
-            callID: value.callID,
+            // TODO: Drop `callID` once no supported browser sends it.
+            callId: value.callId ?? value.callID,
             name: value.name,
             arguments: value.arguments,
           },
@@ -187,7 +188,8 @@ function dehydrate(message) {
         return {
           type: part.type,
           value: {
-            callID: value.callID,
+            // TODO: Drop `callID` once no supported browser sends it.
+            callId: value.callId ?? value.callID,
             name: value.name,
             result: value.result ? [...value.result] : undefined,
             errorMessage: value.errorMessage,
