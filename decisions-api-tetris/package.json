@@ -1,0 +1,25 @@
+{
+  "name": "decisions-api-tetris",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tetris played by the proposed Decisions API, through its polyfill backed by Laya or open-jev.",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "fix": "prettier --write ."
+  },
+  "author": "Thomas Steiner (tomac@google.com)",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
+    "@johnhenry/backend-webgpu": "^0.6.0",
+    "@johnhenry/laya": "^0.3.2",
+    "built-in-ai-task-apis-polyfills": "^1.19.0",
+    "open-jev": "^0.1.2"
+  },
+  "devDependencies": {
+    "vite": "^8.3.0"
+  }
+}
