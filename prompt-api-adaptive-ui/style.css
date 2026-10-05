@@ -300,7 +300,32 @@ mark, .glow-highlight {
 .log-entry.ai-input { border-color: #a5b4fc; color: #a5b4fc; }
 .log-entry.ai-output { border-color: #c084fc; color: #e879f9; }
 .log-entry.system { border-color: #6b7280; color: #9ca3af; }
+.log-entry.error { border-color: #ef4444; color: #f87171; background: rgba(239, 68, 68, 0.12); }
 .log-entry.loading { animation: pulse 1.5s infinite; }
+
+.warning-banner {
+    background: #fef2f2;
+    border: 1px solid #ef4444;
+    color: #991b1b;
+    padding: 0.9rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+}
+
+.warning-banner[hidden] {
+    display: none;
+}
+
+.warning-banner a {
+    color: #b91c1c;
+    font-weight: 600;
+    text-decoration: underline;
+}
 
 .personalize-btn {
     background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);

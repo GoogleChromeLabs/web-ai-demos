@@ -19,10 +19,10 @@ export class Logger {
         this.container = document.getElementById(containerId);
     }
 
-    appendLog(text, type) {
+    appendLog(text, type, modifierClass = '') {
         if (!this.container) return;
         const el = document.createElement('div');
-        el.className = `log-entry ${type}`;
+        el.className = `log-entry ${type} ${modifierClass}`.trim();
         el.textContent = `[${type.toUpperCase()}]: ${text}`;
         this.container.appendChild(el);
         this.container.scrollTop = this.container.scrollHeight;

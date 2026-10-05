@@ -33,7 +33,13 @@ export class App {
             logger: this.logger
         });
         this.aiPersonalizer = new AIPersonalizer({
-            logger: this.logger
+            logger: this.logger,
+            onUnsupported: () => {
+                const banner = document.getElementById('api-warning-banner');
+                if (banner) {
+                    banner.hidden = false;
+                }
+            }
         });
         this.productView = new ProductView({
             containerId: 'product-view',
@@ -88,8 +94,8 @@ export class App {
     }
 
     async triggerPersonalization() {
-        if (typeof LanguageModel === 'undefined') {
-            this.logger.appendLog('LanguageModel not found. Check flags!', 'system');
+        if (!this.aiPersonalizer.isAvailable) {
+            this.logger.appendLog('AI Personalization / Highlights not available. Check Prompt API availability.', 'system', 'error');
             return;
         }
 
@@ -115,7 +121,7 @@ export class App {
             }
             this.logger.appendLog('✨ AI Personalization complete.', 'system');
         } catch (e) {
-            this.logger.appendLog(`AI Error: ${e.message}`, 'system');
+            this.logger.appendLog(`AI Error: ${e.message}`, 'system', 'error');
             console.error('AI Error:', e);
         } finally {
             removeLoading();

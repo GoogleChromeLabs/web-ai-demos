@@ -39,39 +39,43 @@ const SYSTEM_PROMPT =
     "You are a shopping assistant. Based on the user's past interactions, identify specific text in the current product's specs or reviews that matches their interests. Return ONLY valid JSON.";
 
 export class AIPersonalizer {
-    constructor({ logger }) {
+    constructor({ logger, onUnsupported }) {
         this.logger = logger;
+        this.onUnsupported = onUnsupported;
+        this.isAvailable = false;
     }
 
     async initAI() {
         try {
-            // CRITICAL: Check availability using recorded docs syntax
+            // Check Prompt API availability
             if (typeof LanguageModel === 'undefined') {
-                this.logger.appendLog('LanguageModel API is not supported.', 'system');
-                return;
-            }
-            
-            const availability = await LanguageModel.availability();
-            this.logger.appendLog(`AI Availability = ${availability}`, 'system');
-            
-            if (availability === 'unavailable') {
-                this.logger.appendLog('Model not available.', 'system');
+                this.logger.appendLog('Prompt API is not supported.', 'system', 'error');
+                if (this.onUnsupported) {
+                    this.onUnsupported();
+                }
                 return;
             }
 
+            const availability = await LanguageModel.availability();
+            this.logger.appendLog(`AI model availability = ${availability}`, 'system');
+
+            if (availability === 'unavailable') {
+                this.logger.appendLog('AI model not available.', 'system', 'error');
+                if (this.onUnsupported) {
+                    this.onUnsupported();
+                }
+                return;
+            }
+
+            this.isAvailable = true;
             this.logger.appendLog('AI Personalization can be used.', 'system');
 
         } catch (e) {
-            this.logger.appendLog(`Error: ${e.message}`, 'system');
+            this.logger.appendLog(`Error: ${e.message}`, 'system', 'error');
         }
     }
 
     async findHighlightTargets({ product, tabClicks, otherInterests }) {
-        if (typeof LanguageModel === 'undefined') {
-            this.logger.appendLog('LanguageModel not found. Check flags!', 'system');
-            return null;
-        }
-
         const currentProductText = JSON.stringify({
             name: product.name,
             specs: product.specs,
