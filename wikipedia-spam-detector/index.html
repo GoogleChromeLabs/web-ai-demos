@@ -25,7 +25,7 @@
         <a href="https://github.com/explainers-by-googlers/decisions-api"
           >Decisions API</a
         >: a <code>boolean</code> spam check, a <code>choice</code> of edit
-        type, and a <code>score</code> for the size of the contribution.
+        type, and a <code>score</code> for the tone.
       </p>
     </header>
 
@@ -51,14 +51,13 @@
           <select id="mode"></select>
         </label>
         <label>
-          Show
-          <select id="show">
-            <option value="all" selected>All edits</option>
-            <option value="flagged">Flagged edits</option>
-            <option value="spam">Spam</option>
-            <option value="vandalism">Vandalism</option>
+          When behind
+          <select id="flow">
+            <option value="drop" selected>Drop older edits</option>
+            <option value="hold">Hold back the stream</option>
           </select>
         </label>
+        <label><input id="debug" type="checkbox" /> Debug</label>
         <label class="threshold">
           Spam threshold
           <input
@@ -73,11 +72,34 @@
         </label>
       </section>
 
+      <fieldset class="show" id="show">
+        <legend>Show</legend>
+        <label data-label="spam"
+          ><input type="checkbox" value="spam" checked /> Spam</label
+        >
+        <label data-label="vandalism"
+          ><input type="checkbox" value="vandalism" checked /> Vandalism</label
+        >
+        <label data-label="test"
+          ><input type="checkbox" value="test" checked /> Test edit</label
+        >
+        <label data-label="revert"
+          ><input type="checkbox" value="revert" checked /> Revert</label
+        >
+        <label data-label="legit"
+          ><input type="checkbox" value="legit" checked /> Legit</label
+        >
+        <label data-label="unsure"
+          ><input type="checkbox" value="unsure" checked /> Unsure</label
+        >
+      </fieldset>
+
       <section class="status" aria-live="polite">
         <p>
           <span class="dot" id="stream-dot"></span>
           Stream: <span id="stream-status">disconnected</span>
         </p>
+        <p>Behind live: <output id="lag">–</output></p>
         <p>
           Models: <span id="model-status">checking…</span>
           <progress id="progress" max="1" value="0" hidden></progress>
@@ -142,13 +164,17 @@
             <span class="stack"></span>
             <p class="detail"></p>
           </section>
-          <section class="decision" data-decision="contribution">
-            <h3>Contribution <code>score</code></h3>
+          <section class="decision" data-decision="tone">
+            <h3>Tone <code>score</code></h3>
             <p class="value"></p>
             <span class="histogram"></span>
             <p class="detail"></p>
           </section>
         </div>
+        <details class="debug">
+          <summary>Debug</summary>
+          <div class="debug-panes"></div>
+        </details>
         <details>
           <summary>Diff</summary>
           <pre class="added"></pre>

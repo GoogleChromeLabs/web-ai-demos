@@ -117,6 +117,42 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
+.show {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+}
+
+.show legend {
+  float: left;
+  margin-right: 0.35rem;
+}
+
+.show label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.6rem 0.15rem 0.4rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--category);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.show label:has(input:not(:checked)) {
+  opacity: 0.55;
+}
+
+[data-label="unsure"] {
+  --category: var(--muted);
+}
+
 .status {
   display: flex;
   flex-wrap: wrap;
@@ -370,7 +406,7 @@ select {
   background: var(--accent);
 }
 
-[data-decision="contribution"] .value {
+[data-decision="tone"] .value {
   color: var(--text);
 }
 
@@ -404,6 +440,42 @@ details {
 summary {
   color: var(--muted);
   cursor: pointer;
+}
+
+:root:not(.debug) .debug {
+  display: none;
+}
+
+.debug-panes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.debug-panes section {
+  min-width: 0;
+}
+
+.debug-panes h4 {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.debug-panes h4::first-letter {
+  text-transform: uppercase;
+}
+
+.debug-panes h5 {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.debug-panes pre {
+  margin-top: 0.2rem;
+  background: var(--bar-bg);
 }
 
 pre {

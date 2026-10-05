@@ -10,11 +10,16 @@ one, using a model on your device and the proposed
 [Decisions API](https://github.com/explainers-by-googlers/decisions-api). There
 is one decision per question type:
 
-| Decision     | Type      | Answer                                                    |
-| :----------- | :-------- | :-------------------------------------------------------- |
-| Spam         | `boolean` | P(spam), judged against the threshold slider              |
-| Edit type    | `choice`  | `legit`, `spam`, `vandalism`, `test`, or `revert`         |
-| Contribution | `score`   | `expectedScore` from 1 (one word) to 5 (most of the page) |
+| Decision  | Type      | Answer                                              |
+| :-------- | :-------- | :-------------------------------------------------- |
+| Spam      | `boolean` | P(spam), judged against the threshold slider        |
+| Edit type | `choice`  | `legit`, `spam`, `vandalism`, `test`, or `revert`   |
+| Tone      | `score`   | The winning option, and `expectedScore` from 1 to 5 |
+
+The tone follows Wikipedia's
+[neutral point of view](https://en.wikipedia.org/wiki/Wikipedia:Neutral_point_of_view)
+policy, on a scale of neutral, slightly informal, opinionated, promotional, and
+abusive.
 
 `test` is Wikipedia's own term for good-faith experiments by newcomers, and
 `revert` is the counter-vandalism intention from research on edit intentions
@@ -24,27 +29,40 @@ large unexplained change.
 
 ## How it works
 
-1. The page subscribes to Wikimedia's
+1. The page reads Wikimedia's
    [EventStreams](https://wikitech.wikimedia.org/wiki/Event_Platform/EventStreams_HTTP_Service)
-   `recentchange` feed with `EventSource` and keeps the edits and page creations
-   on `enwiki`.
+   `recentchange` feed and keeps the edits and page creations on `enwiki`. See
+   [Stream and backpressure](#stream-and-backpressure).
 2. The feed carries metadata only, so the page fetches the diff from the
    MediaWiki API (`action=compare`) and extracts the added and removed text. A
    new page has no previous revision, and its whole wikitext counts as added.
 3. The page title, edit summary, size change, and diff go to the three
    decisions. The **Run** menu picks how:
-   - **Three models, in parallel**: one `DecisionModel` per decision, called
-     with `Promise.all()`.
-   - **Three models, one after another**: the same models, awaited in turn.
-   - **One model, three questions**: a single schema with all three questions,
-     which the explainer recommends because the input is encoded once.
+   - **Three DecisionModel instances, in parallel**: one instance per decision,
+     called with `Promise.all()`.
+   - **Three DecisionModel instances, one after another**: the same instances,
+     awaited in turn.
+   - **One DecisionModel instance, three questions**: a single schema with all
+     three questions, which the explainer recommends because the input is
+     encoded once.
 
-   The page shows the average time per edit of each mode over its 20 most recent
-   edits, so switching modes compares them on live traffic.
+   All three modes run the same model weights. The page shows the average time
+   per edit of each mode over its 20 most recent edits, so switching modes
+   compares them on live traffic.
 
 The explainer leaves acting on a decision to the page. An edit type counts
 toward the filters and the vandalism counter only when its confidence is at
 least 50%, and is shown as "unsure" otherwise.
+
+The **Show** checkboxes pick which edits the feed lists: spam, vandalism, test
+edits, reverts, legit edits, and unsure ones, in any combination. An edit counts
+as spam when the spam check is above the threshold or the edit type confidently
+says so.
+
+The **Debug** checkbox, kept in the URL as `?debug`, adds a section to every
+edit with what each decision got and gave: the schema passed to `create()`, the
+input passed to `decide()` after any cutting, and the result `decide()`
+returned.
 
 ## Models
 
@@ -72,32 +90,57 @@ Most of these models read 512 tokens at most, the kev models 8,192. Long diffs
 are cut, and cut further when `decide()` rejects with `QuotaExceededError`. A
 card whose diff was cut says so.
 
-Edits are checked one at a time. When they arrive faster than that, the queue
-keeps the 10 most recent and counts the rest as dropped.
+## Stream and backpressure
+
+The feed is a server-sent event stream, which the page reads with `fetch()`. The
+response body goes through a `TextDecoderStream` and a small parser, a
+`TransformStream` that follows the
+[event stream rules](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation)
+of the HTML standard, and an async generator hands out one edit at a time.
+Nothing is read until the page asks for the next edit. `EventSource` reads
+everything as it arrives, so it can't do that.
+
+Edits are checked one at a time, and the **When behind** menu decides what
+happens when they arrive faster than that:
+
+- **Drop older edits** reads as fast as edits arrive and keeps the 10 most
+  recent in a queue, counting the rest as dropped. The feed stays close to live.
+- **Hold back the stream** checks each edit before reading the next one. The
+  stream's buffers fill up, TCP flow control slows the server down, and no edit
+  is dropped. **Behind live** in the status line shows how far the edit being
+  checked lags behind the time it was made.
+
+After a dropped connection, the stream resumes from the time of the last event
+it read. The service's CORS policy doesn't allow the `Last-Event-ID` header that
+`EventSource` would send, so the time goes into the `since` query parameter, and
+events already seen at that time are skipped.
 
 ## Observations with the polyfill
 
 Measured in Chrome Canary on an Apple silicon Mac. With the default Laya English
 model:
 
-- A single decision takes about 165 ms on its own. With three models in
+- A single decision takes about 165 ms on its own. With three instances in
   parallel, each takes about 430 ms because the workers share the GPU, and an
   edit takes about 450 ms in all. One after another, an edit takes about 650 ms,
-  and so does one model with three questions.
+  and so does one instance with three questions.
 - The spam check separates well: obvious advertising scores P(spam) 0.75 to
   0.81, and ordinary edits stay below 0.2.
 - The edit type is reliable for reverts whose summary says so (90% and up), and
   usually unsure otherwise. On a hand-labeled set of 19 edits, accuracy rose
   from 9 to 13 when the `revert` option pointed at the edit summary and the
   input gained the size change.
-- The contribution score clusters between 1.5 and 3, so it orders edits better
-  than it measures them.
+- The tone score orders edits well and measures them less well. On the
+  hand-labeled set, neutral edits scored 1.7 to 2.4 and promotional or abusive
+  ones 3.1 to 3.6. A revert that removed an insult scored 3.5, since the model
+  reads the removed text too. An earlier question about the size of the edit
+  clustered between 1.5 and 3, and the diff answers it without a model anyway.
 
 With the other models:
 
 - kev 0.6B got 8 of the 19 edit types right, answering `legit` for nearly
   everything.
-- open-jev takes about 730 ms per edit with three models in parallel, and its
+- open-jev takes about 730 ms per edit with three instances in parallel, and its
   edit type came out as an unsure `revert` for every live edit.
 - The multilingual, fine-tuned, and kev 4B models are untested here.
 

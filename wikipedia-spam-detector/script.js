@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { connectToEditStream, fetchEditText } from './wikipedia.js';
+import { fetchEditText, streamEdits } from './wikipedia.js';
 import {
   DECISIONS,
   DEFAULT_MODEL,
@@ -17,8 +17,8 @@ import {
   useModel,
 } from './decisions.js';
 
-// Edits arrive faster than a diff can be fetched and checked now and then. The
-// queue keeps the most recent ones and drops the oldest.
+// Edits arrive faster than a diff can be fetched and checked now and then.
+// When older edits may be dropped, the queue keeps the most recent ones.
 const MAX_QUEUE = 10;
 const MAX_FEED = 150;
 // The explainer leaves acting on a decision to the page. An edit type counts
@@ -32,9 +32,12 @@ const $ = (id) => document.getElementById(id);
 const toggleButton = $('toggle');
 const namespaceSelect = $('namespace');
 const skipBotsCheckbox = $('skip-bots');
-const showSelect = $('show');
+const showFilter = $('show');
 const modeSelect = $('mode');
 const modelSelect = $('model');
+const debugCheckbox = $('debug');
+const flowSelect = $('flow');
+const lagOutput = $('lag');
 const thresholdInput = $('threshold');
 const thresholdValue = $('threshold-value');
 const streamDot = $('stream-dot');
@@ -53,16 +56,17 @@ const CATEGORY_NAMES = {
   test: 'Test edit',
   revert: 'Revert',
 };
-const CONTRIBUTION_NAMES = Object.fromEntries(
-  DECISIONS.contribution.questions[0].options.map(({ label, description }) => [
+// "Neutral", "Slightly informal", and so on, from the option descriptions.
+const TONE_NAMES = Object.fromEntries(
+  DECISIONS.tone.questions[0].options.map(({ label, description }) => [
     label,
-    description,
+    description.split(':')[0],
   ]),
 );
 const DECISION_NAMES = {
   spam: 'spam',
   category: 'edit type',
-  contribution: 'contribution',
+  tone: 'tone',
 };
 
 const threshold = () => Number(thresholdInput.value);
@@ -116,7 +120,8 @@ function renderTiming() {
 const modelPromises = {};
 let streamController = null;
 const queue = [];
-let processing = false;
+// The running `drainQueue()`, if any.
+let processing = null;
 
 // Counts status checks, so a slow check for a model that was switched away
 // from doesn't overwrite the current one.
@@ -182,40 +187,73 @@ const passesFilters = (change) =>
     String(change.namespace) === namespaceSelect.value) &&
   !(skipBotsCheckbox.checked && change.bot);
 
-function onEdit(change) {
-  stats.seen++;
-  if (!passesFilters(change)) {
-    stats.filtered++;
-  } else {
-    queue.push(change);
-    if (queue.length > MAX_QUEUE) {
-      queue.shift();
-      stats.dropped++;
+/**
+ * Reads the stream and hands every edit to the queue. When the stream is held
+ * back, each edit is checked before the next one is read, so nothing is
+ * dropped and the stream falls behind live instead. Otherwise edits are read
+ * as fast as they arrive, and the queue drops the oldest when it overflows.
+ */
+async function pump(signal) {
+  for await (const change of streamEdits({
+    signal,
+    onStatus: setStreamStatus,
+  })) {
+    if (signal.aborted) {
+      break;
     }
-    processQueue();
+    stats.seen++;
+    if (!passesFilters(change)) {
+      stats.filtered++;
+      renderStats();
+      continue;
+    }
+    queue.push(change);
+    if (flowSelect.value === 'hold') {
+      await processQueue(signal);
+    } else {
+      if (queue.length > MAX_QUEUE) {
+        queue.shift();
+        stats.dropped++;
+      }
+      processQueue(signal);
+    }
+    renderStats();
   }
-  renderStats();
 }
 
-async function processQueue() {
-  if (processing) {
-    return;
+// Starts draining the queue unless that is already happening, and resolves
+// once the queue is empty. A drain left over from before a restart stops at
+// its aborted signal, so this starts a new one for whatever remains.
+async function processQueue(signal) {
+  while (queue.length && !signal.aborted) {
+    processing ??= drainQueue(signal).finally(() => {
+      processing = null;
+    });
+    await processing;
   }
-  processing = true;
-  while (queue.length && streamController && !streamController.signal.aborted) {
+}
+
+async function drainQueue(signal) {
+  while (queue.length && !signal.aborted) {
     const change = queue.shift();
     try {
-      await checkEdit(change, streamController.signal);
+      await checkEdit(change, signal);
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.warn(`Skipped “${change.title}”:`, err);
       }
     }
   }
-  processing = false;
 }
 
+const formatLag = (ms) =>
+  ms < 60000
+    ? `${Math.max(0, Math.round(ms / 1000))} s`
+    : `${Math.floor(ms / 60000)} min ${Math.round((ms % 60000) / 1000)} s`;
+
 async function checkEdit(change, signal) {
+  // How far behind live the edit being checked is.
+  lagOutput.textContent = formatLag(Date.now() - change.time);
   const { added, removed } = await fetchEditText(change, signal);
   // Whitespace and markup-only changes leave nothing to judge.
   if (!added && !removed) {
@@ -274,13 +312,16 @@ function applyVerdict(card) {
     ? 'Spam'
     : 'Not spam';
   card.querySelector('[data-decision="spam"]').classList.toggle('hit', spam);
-  const show = showSelect.value;
-  card.hidden =
-    (show === 'spam' && !spam) ||
-    (show === 'vandalism' && category !== 'vandalism') ||
-    (show === 'flagged' &&
-      !spam &&
-      !['spam', 'vandalism', 'test'].includes(category));
+  // A card shows when any of its tags is checked. The spam check above the
+  // threshold tags a card as spam, whatever its edit type says.
+  const tags = new Set([category]);
+  if (spam) {
+    tags.add('spam');
+  }
+  const shown = new Set(
+    [...showFilter.querySelectorAll('input:checked')].map(({ value }) => value),
+  );
+  card.hidden = ![...tags].some((tag) => shown.has(tag));
 }
 
 function renderSpam(panel, answer) {
@@ -311,21 +352,46 @@ function renderCategory(panel, answer) {
     `${percent(answer.confidence)}, then ${CATEGORY_NAMES[runnerUp.label].toLowerCase()} ${percent(runnerUp.probability)} · ${ms(answer.time)}`;
 }
 
-function renderContribution(panel, answer) {
-  const score = answer.expectedScore;
-  panel.querySelector('.value').textContent =
-    `${score.toFixed(1)} / 5 · ${CONTRIBUTION_NAMES[Math.round(score)]}`;
+function renderTone(panel, answer) {
+  // The winning option, since the answers are often split between two
+  // distant options, and their average lands on one that hardly scored.
+  panel.querySelector('.value').textContent = TONE_NAMES[answer.label];
   const histogram = panel.querySelector('.histogram');
   const highest = Math.max(...answer.probabilities.map((p) => p.probability));
   for (const { label, probability } of answer.probabilities) {
     const bar = document.createElement('span');
     bar.style.height = percent(Math.max(probability / highest, 0.05));
     bar.classList.toggle('top', label === answer.label);
-    bar.title = `${label} (${CONTRIBUTION_NAMES[label]}) ${percent(probability)}`;
+    bar.title = `${label} (${TONE_NAMES[label]}) ${percent(probability)}`;
     histogram.append(bar);
   }
   panel.querySelector('.detail').textContent =
-    `expectedScore over 1–5 · ${ms(answer.time)}`;
+    `expectedScore ${answer.expectedScore.toFixed(1)} of 5 · ${ms(answer.time)}`;
+}
+
+// What each decision was asked, what it read, and what it answered, exactly
+// as passed to and returned by the API.
+function renderDebug(container, answers) {
+  const json = (value) => JSON.stringify(value, null, 2);
+  for (const [id, { debug }] of Object.entries(answers)) {
+    const pane = document.createElement('section');
+    const heading = document.createElement('h4');
+    const { type } = DECISIONS[id].questions[0];
+    heading.textContent = `${DECISION_NAMES[id]} (${type})`;
+    pane.append(heading);
+    for (const [title, text] of [
+      ['Schema passed to create()', json(debug.schema)],
+      ['Input passed to decide()', debug.input],
+      [`Result of decide(), key "${id}"`, json(debug.result)],
+    ]) {
+      const label = document.createElement('h5');
+      label.textContent = title;
+      const pre = document.createElement('pre');
+      pre.textContent = text;
+      pane.append(label, pre);
+    }
+    container.append(pane);
+  }
 }
 
 function addCard(change, edit, answers) {
@@ -344,7 +410,7 @@ function addCard(change, edit, answers) {
   if (change.isNew) {
     meta.push('new page');
   }
-  meta.push(new Date().toLocaleTimeString());
+  meta.push(new Date(change.time).toLocaleTimeString());
   card.querySelector('.meta').textContent = meta.join(' · ');
 
   const summary = card.querySelector('.summary');
@@ -356,10 +422,9 @@ function addCard(change, edit, answers) {
     card.querySelector('[data-decision="category"]'),
     answers.category,
   );
-  renderContribution(
-    card.querySelector('[data-decision="contribution"]'),
-    answers.contribution,
-  );
+  renderTone(card.querySelector('[data-decision="tone"]'), answers.tone);
+
+  renderDebug(card.querySelector('.debug-panes'), answers);
 
   const added = card.querySelector('.added');
   added.textContent = edit.added;
@@ -394,11 +459,9 @@ async function start() {
     return;
   }
   streamController = new AbortController();
-  connectToEditStream({
-    onEdit,
-    onStatus: setStreamStatus,
-    signal: streamController.signal,
-  });
+  pump(streamController.signal).catch((err) =>
+    console.warn('The edit stream stopped:', err),
+  );
   toggleButton.textContent = 'Pause';
   toggleButton.disabled = false;
   empty.textContent = 'Waiting for edits…';
@@ -408,6 +471,7 @@ function pause() {
   streamController?.abort();
   streamController = null;
   queue.length = 0;
+  setStreamStatus('disconnected');
   toggleButton.textContent = 'Start';
 }
 
@@ -423,7 +487,7 @@ const reapplyVerdicts = () => {
   renderStats();
 };
 thresholdInput.addEventListener('input', reapplyVerdicts);
-showSelect.addEventListener('change', reapplyVerdicts);
+showFilter.addEventListener('change', reapplyVerdicts);
 
 for (const [value, name] of Object.entries(MODES)) {
   modeSelect.append(new Option(name, value));
@@ -468,6 +532,22 @@ modelSelect.addEventListener('change', () => {
   history.replaceState(null, '', url);
   modelStatus.textContent = 'checking…';
   showModelStatus();
+});
+
+// The debug view is kept in the URL too, as `?debug`.
+const applyDebug = () =>
+  document.documentElement.classList.toggle('debug', debugCheckbox.checked);
+debugCheckbox.checked = params.has('debug');
+applyDebug();
+debugCheckbox.addEventListener('change', () => {
+  applyDebug();
+  const url = new URL(location.href);
+  if (debugCheckbox.checked) {
+    url.searchParams.set('debug', '');
+  } else {
+    url.searchParams.delete('debug');
+  }
+  history.replaceState(null, '', url);
 });
 
 // Only the polyfill's model is the page's to pick. The browser's own API

@@ -5,9 +5,9 @@
 
 // Three decisions about every edit, built on the proposed Decisions API, one
 // per question type: a `boolean` spam check, a `choice` between edit types,
-// and a `score` for how much the edit changes. They run in one of three modes:
-// one model per decision, all at once or one after another, or a single model
-// that answers all three questions. Chrome does not ship the API yet, so the
+// and a `score` for the tone of the edit. They run in one of three modes:
+// one `DecisionModel` instance per decision, all at once or one after another,
+// or a single instance that answers all three questions. Chrome does not ship the API yet, so the
 // polyfill stands in when `DecisionModel` is missing. It answers with a small
 // encoder model that scores the options in one forward pass, which is fast
 // enough to keep up with the live edit stream.
@@ -68,18 +68,24 @@ export const DECISIONS = {
       },
     ],
   }),
-  // Short descriptions score better than labeled rubric entries such as
-  // "Minor: a few words", which pull every answer toward the middle.
-  contribution: schema({
-    id: 'contribution',
+  // Tone against Wikipedia's neutral point of view policy. It needs judgment,
+  // which the size of an edit, computable from the diff, does not.
+  tone: schema({
+    id: 'tone',
     type: 'score',
-    prompt: 'How much text does this edit add or remove?',
+    prompt: 'How neutral is the tone of the text this edit adds?',
     options: [
-      { label: '1', description: 'one character or word' },
-      { label: '2', description: 'a few words' },
-      { label: '3', description: 'one sentence' },
-      { label: '4', description: 'a paragraph or table' },
-      { label: '5', description: 'a whole article or most of the page' },
+      { label: '1', description: 'Neutral: factual, encyclopedic wording' },
+      { label: '2', description: 'Slightly informal' },
+      {
+        label: '3',
+        description: 'Opinionated: judgments without sources',
+      },
+      {
+        label: '4',
+        description: 'Promotional: praise, marketing, or calls to action',
+      },
+      { label: '5', description: 'Abusive: insults, slurs, or mockery' },
     ],
   }),
 };
@@ -178,12 +184,13 @@ const COMBINED = {
 };
 
 export const MODES = {
-  parallel: 'Three models, in parallel',
-  sequential: 'Three models, one after another',
-  combined: 'One model, three questions',
+  parallel: 'Three DecisionModel instances, in parallel',
+  sequential: 'Three DecisionModel instances, one after another',
+  combined: 'One DecisionModel instance, three questions',
 };
 
-// The separate models serve both the parallel and the sequential mode.
+// The separate instances serve both the parallel and the sequential mode.
+// Every instance runs the same model weights.
 let separateModels = null;
 let combinedModel = null;
 // Counts model switches, so models that finish loading after a switch are
@@ -232,8 +239,8 @@ const monitorWith = (onProgress, created) => (m) =>
   });
 
 /**
- * Creates the models a mode needs, unless they exist. Of the separate models,
- * the first one downloads the weights and the others start once those are
+ * Creates the instances a mode needs, unless they exist. Of the separate
+ * instances, the first one downloads the weights and the others start once those are
  * cached, so nothing downloads twice.
  */
 export async function prepareModels(mode, { onProgress } = {}) {
@@ -300,15 +307,16 @@ const probabilityList = (probabilities) =>
       }));
 
 // Asks a model about an edit, cutting the diff further whenever the input
-// doesn't fit, and resolves to the answers of the questions `ids`.
-async function decide(model, ids, edit, signal) {
+// doesn't fit, and resolves to the answers of the questions `ids`. Each
+// answer carries the schema the instance was created with, the input it got,
+// and the result it returned, for the debug view.
+async function decide(model, schema, ids, edit, signal) {
   let budget = MAX_ADDED;
   const start = performance.now();
   for (;;) {
     try {
-      const result = await model.decide(describeEdit(edit, budget), {
-        signal,
-      });
+      const input = describeEdit(edit, budget);
+      const result = await model.decide(input, { signal });
       const truncated =
         Math.max(edit.added.length, edit.removed.length) > budget;
       const time = performance.now() - start;
@@ -324,6 +332,7 @@ async function decide(model, ids, edit, signal) {
                 probabilities.find((p) => p.label === label)?.probability ?? 0,
               truncated,
               time,
+              debug: { schema, input, result: result[id] },
             },
           ];
         }),
@@ -346,18 +355,27 @@ export async function decideAll(mode, edit, { signal } = {}) {
   const start = performance.now();
   let answers;
   if (mode === 'combined') {
-    answers = await decide(combinedModel, Object.keys(DECISIONS), edit, signal);
+    answers = await decide(
+      combinedModel,
+      COMBINED,
+      Object.keys(DECISIONS),
+      edit,
+      signal,
+    );
   } else if (mode === 'parallel') {
     const parts = await Promise.all(
       Object.entries(separateModels).map(([id, model]) =>
-        decide(model, [id], edit, signal),
+        decide(model, DECISIONS[id], [id], edit, signal),
       ),
     );
     answers = Object.assign({}, ...parts);
   } else {
     answers = {};
     for (const [id, model] of Object.entries(separateModels)) {
-      Object.assign(answers, await decide(model, [id], edit, signal));
+      Object.assign(
+        answers,
+        await decide(model, DECISIONS[id], [id], edit, signal),
+      );
     }
   }
   return { answers, time: performance.now() - start };
