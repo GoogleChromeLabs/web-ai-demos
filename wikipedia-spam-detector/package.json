@@ -1,0 +1,20 @@
+{
+  "name": "wikipedia-spam-detector",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Checks live English Wikipedia edits for spam with the proposed Decisions API.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
+    "built-in-ai-task-apis-polyfills": "^1.19.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.2"
+  }
+}
