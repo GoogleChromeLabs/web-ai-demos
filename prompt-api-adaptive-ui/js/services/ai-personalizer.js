@@ -48,7 +48,7 @@ export class AIPersonalizer {
     async initAI() {
         try {
             // Check Prompt API availability
-            if (typeof LanguageModel === 'undefined') {
+            if (!('LanguageModel' in self)) {
                 this.logger.appendLog('Prompt API is not supported.', 'system', 'error');
                 if (this.onUnsupported) {
                     this.onUnsupported();
