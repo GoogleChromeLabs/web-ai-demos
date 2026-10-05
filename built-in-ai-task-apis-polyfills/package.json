@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-task-apis-polyfills",
-  "version": "1.19.0",
+  "version": "1.19.1",
   "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, DecisionModel, etc.)",
   "type": "module",
   "main": "./dist/index.js",
@@ -62,39 +62,27 @@
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",
   "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "dependencies": {
+    "@johnhenry/backend-webgpu": "^0.6.0",
+    "@johnhenry/laya": "^0.3.2",
+    "open-jev": "^0.1.2",
     "prompt-api-polyfill": "^1.22.1"
   },
   "peerDependencies": {
-    "@huggingface/transformers": ">=4.2.0",
-    "@johnhenry/backend-webgpu": ">=0.6.0",
-    "@johnhenry/laya": ">=0.3.2",
-    "open-jev": ">=0.1.2"
+    "@huggingface/transformers": ">=4.2.0"
   },
   "peerDependenciesMeta": {
     "@huggingface/transformers": {
-      "optional": true
-    },
-    "@johnhenry/backend-webgpu": {
-      "optional": true
-    },
-    "@johnhenry/laya": {
-      "optional": true
-    },
-    "open-jev": {
       "optional": true
     }
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@huggingface/transformers": "^4.3.0",
-    "@johnhenry/backend-webgpu": "^0.6.0",
-    "@johnhenry/laya": "^0.3.2",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
     "node-addon-api": "^8.9.2",
     "node-gyp": "^13.1.0",
-    "open-jev": "^0.1.2",
     "prettier-plugin-curly": "^0.4.1",
     "vite": "^8.3.2"
   }

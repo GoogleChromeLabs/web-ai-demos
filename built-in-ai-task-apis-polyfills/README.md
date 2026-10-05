@@ -37,7 +37,8 @@ one of two in-browser decision model runtimes, which you pick through
 `window.DECISION_MODEL_CONFIG`:
 [Laya](https://github.com/johnhenry/laya-js/blob/main/packages/laya/README.md)
 (the default) or [open-jev](https://github.com/nico-martin/open-jev). Both are
-optional peer dependencies, so install the one you use.
+regular dependencies of this package, and neither ships model weights: models
+download from the Hugging Face Hub on first use.
 
 When loaded in the browser, they define globals:
 
@@ -66,15 +67,6 @@ If you use the **SemanticEmbedder** polyfill, also install the peer dependency:
 
 ```bash
 npm install @huggingface/transformers
-```
-
-If you use the **DecisionModel** polyfill, also install the backend you pick:
-
-```bash
-# Laya (default backend)
-npm install @johnhenry/laya @johnhenry/backend-webgpu
-# open-jev
-npm install open-jev @huggingface/transformers
 ```
 
 ## Quick start
