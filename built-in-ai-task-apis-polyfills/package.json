@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-task-apis-polyfills",
-  "version": "1.19.1",
+  "version": "1.19.2",
   "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, DecisionModel, etc.)",
   "type": "module",
   "main": "./dist/index.js",
@@ -66,7 +66,7 @@
     "@johnhenry/backend-webgpu": "^0.6.0",
     "@johnhenry/laya": "^0.3.2",
     "open-jev": "^0.1.2",
-    "prompt-api-polyfill": "^1.22.1"
+    "prompt-api-polyfill": "^1.22.2"
   },
   "peerDependencies": {
     "@huggingface/transformers": ">=4.2.0"
@@ -85,6 +85,6 @@
     "node-addon-api": "^8.9.2",
     "node-gyp": "^13.1.0",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^8.3.2"
+    "vite": "^8.3.3"
   }
 }
