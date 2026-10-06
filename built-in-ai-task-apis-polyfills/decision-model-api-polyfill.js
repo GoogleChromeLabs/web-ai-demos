@@ -785,9 +785,6 @@ export class DecisionModel {
 
     fireProgressEvent?.(0);
 
-    const key = modelKey(config);
-    downloadingModels.add(key);
-
     const url = getWorkerUrl();
     const worker = new Worker(url, { type: 'module' });
     const revokeUrl = () => {
@@ -795,6 +792,11 @@ export class DecisionModel {
         URL.revokeObjectURL(url);
       }
     };
+
+    // Marked only once the worker exists, since nothing would unmark it if
+    // `new Worker()` threw.
+    const key = modelKey(config);
+    downloadingModels.add(key);
 
     let cleanup = null;
 
