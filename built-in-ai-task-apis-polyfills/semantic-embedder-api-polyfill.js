@@ -40,14 +40,27 @@ const downloadingModels = new Set();
  * The worker is a separate realm and cannot read any of this itself, so it
  * travels in every message. `TRANSFORMERS_CONFIG` is the global the Prompt API
  * polyfill's Transformers.js backend already reads, so a host that configures
- * one gets the other for free.
+ * one gets the other for free. Messages are structured clones, so entries that
+ * cannot be cloned, such as a custom `fetch()`, stay behind.
  *
  * @returns {Object|undefined} A partial `env` object, if one is configured.
  */
 function getEnvOverrides() {
-  return (
+  const env =
     globalThis.SEMANTIC_EMBEDDER_CONFIG?.env ??
-    globalThis.TRANSFORMERS_CONFIG?.env
+    globalThis.TRANSFORMERS_CONFIG?.env;
+  if (!env) {
+    return undefined;
+  }
+  return Object.fromEntries(
+    Object.entries(env).filter(([, value]) => {
+      try {
+        structuredClone(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }),
   );
 }
 
