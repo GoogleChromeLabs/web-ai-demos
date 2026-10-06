@@ -9,6 +9,7 @@ import { unsafeOutputError } from './unsafe-output.js';
 import { createHtmlTokenStreamer } from 'streaming-markdown-html';
 import { createOutputGuard } from './sanitizer.js';
 import {
+  callIdFields,
   isToolUseSupported,
   runToolCall,
   splitTools,
@@ -233,11 +234,12 @@ function splitOptions(options) {
  *   passing to `fetch()` and anything else that takes one.
  * @property {number} [maxToolRounds] How many rounds of tool calls to allow
  *   before giving up. Default 8. A round can carry several calls.
- * @property {(call: {callID: string, name: string, arguments: object}) => void} [onToolCall]
+ * @property {(call: {callId: string, callID: string, name: string, arguments: object}) => void} [onToolCall]
  *   Fires as each call is about to run, for a line of UI saying what is
  *   happening. A round's calls all start together, so responses come back in
- *   whatever order the tools finish; `callID` pairs each one with its call.
- * @property {(response: {callID: string, name: string, arguments: object, ok: boolean, result?: unknown, errorMessage?: string}) => void} [onToolResponse]
+ *   whatever order the tools finish; `callId` pairs each one with its call.
+ *   `callID` carries the same value under the Prompt API's old name.
+ * @property {(response: {callId: string, callID: string, name: string, arguments: object, ok: boolean, result?: unknown, errorMessage?: string}) => void} [onToolResponse]
  *   Fires as each call resolves, whether it ran or the wrapper refused it.
  *   Three of the ways a call can fail never reach your `execute` at all, so
  *   without this a mistyped schema looks like a tool that silently never runs.
@@ -797,7 +799,7 @@ export class EasyLanguageModel {
     //
     // `Promise.all` rather than racing completions into an array, because the
     // order has to survive: position is what ties a response to the call it
-    // answers when a `callID` is missing. `onToolResponse` still fires as each
+    // answers when a `callId` is missing. `onToolResponse` still fires as each
     // one lands, so what an app sees interleaves even though what the model
     // sees does not.
     const content = await untilAborted(
@@ -806,7 +808,7 @@ export class EasyLanguageModel {
           // Runs before the first await in this callback, so every call is
           // announced, in order, before any tool has started.
           this.#easy.onToolCall?.({
-            callID: call.callID,
+            ...callIdFields(call),
             name: call.name,
             arguments: call.arguments,
           });
@@ -854,7 +856,7 @@ export class EasyLanguageModel {
     }
     const { errorMessage, result } = part.value;
     this.#easy.onToolResponse({
-      callID: call.callID,
+      ...callIdFields(call),
       name: call.name,
       arguments: call.arguments,
       ok: errorMessage === undefined,

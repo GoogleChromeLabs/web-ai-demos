@@ -1,0 +1,64 @@
+<!--
+ Copyright 2026 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperAudio - Intelligent Speaker Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔊</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Fugaz+One&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main>
+        <header>
+            <div>
+                <h1>HyperAudio</h1>
+                <span class="header-subtitle">Demo <a href="https://github.com/maudnals" target="_blank">@maudnals</a>.</span>
+            </div>
+            <div class="product-selector">
+                <button id="btn-prod-1" class="active" data-product-id="1">Product A</button>
+                <button id="btn-prod-2" data-product-id="2">Product B</button>
+                <button id="btn-prod-3" data-product-id="3">Product C</button>
+            </div>
+        </header>
+
+        <div id="api-warning-banner" class="warning-banner" role="alert" hidden>
+            <span>⚠️ <strong>Prompt API is not supported in this browser.</strong></span>
+        </div>
+
+        <div class="product-display" id="product-view">
+            <!-- Dynamic Content Here -->
+        </div>
+    </main>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Debugging logs</h2>
+            <button id="btn-clear-logs" class="clear-btn">Clear</button>
+        </div>
+        <div class="log-container" id="log-container">
+            <!-- Logs will appear here -->
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

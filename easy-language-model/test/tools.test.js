@@ -13,6 +13,7 @@ import {
   fakeCompactionApis,
   fakeLanguageModel,
   installToolGlobals,
+  legacyToolCall,
   stubGlobals,
   toolCall,
 } from './stubs.js';
@@ -424,11 +425,40 @@ describe('tool calling', () => {
     await session.prompt('Weather?');
     assert.deepEqual(announced, [
       {
+        callId: 'get_weather-1',
         callID: 'get_weather-1',
         name: 'get_weather',
         arguments: { location: 'Hamburg' },
       },
     ]);
+  });
+
+  // TODO: Drop this once no supported browser sends `callID`.
+  it('pairs calls that still carry the old `callID` name', async () => {
+    const script = install([
+      [
+        {
+          type: 'tool-call',
+          value: legacyToolCall('get_weather', { location: 'Hamburg' }),
+        },
+      ],
+      'Done.',
+    ]);
+    const { tool } = weatherTool();
+    const responses = [];
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+      onToolResponse: (r) => responses.push(r),
+    });
+
+    await session.prompt('Weather?');
+    assert.equal(responses[0].callId, 'get_weather-1');
+    assert.equal(responses[0].callID, 'get_weather-1');
+    const sent = script.sessions
+      .at(-1)
+      .prompts[1][0].content.find((p) => p.type === 'tool-response');
+    assert.equal(sent.value.callId, 'get_weather-1');
   });
 
   it('reports every outcome through onToolResponse', async () => {
@@ -501,8 +531,8 @@ describe('tool calling', () => {
     const session = await EasyLanguageModel.create({
       ...NO_SANITIZER,
       tools: [tool],
-      onToolCall: (c) => order.push(`call ${c.callID}`),
-      onToolResponse: (r) => order.push(`resp ${r.callID}`),
+      onToolCall: (c) => order.push(`call ${c.callId}`),
+      onToolResponse: (r) => order.push(`resp ${r.callId}`),
     });
     await session.prompt('both?');
 
@@ -522,7 +552,7 @@ describe('tool calling', () => {
       .at(-1)
       .prompts[1][0].content.filter((p) => p.type === 'tool-response');
     assert.deepEqual(
-      sent.map((p) => p.value.callID),
+      sent.map((p) => p.value.callId),
       ['call-A', 'call-B']
     );
     assert.deepEqual(sent[0].value.result[0].value, { city: 'Hamburg' });

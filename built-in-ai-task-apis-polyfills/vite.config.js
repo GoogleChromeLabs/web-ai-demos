@@ -63,6 +63,7 @@ export default defineConfig({
         ),
         translator: resolve(__dirname, 'translator-api-polyfill.js'),
         classifier: resolve(__dirname, 'classifier-api-polyfill.js'),
+        'decision-model': resolve(__dirname, 'decision-model-api-polyfill.js'),
       },
       formats: ['es'],
       fileName: (format, entryName) => `${entryName}.js`,
@@ -74,6 +75,8 @@ export default defineConfig({
       external: (id) =>
         id === 'prompt-api-polyfill' ||
         id === '@huggingface/transformers' ||
+        id === 'open-jev' ||
+        id.startsWith('@johnhenry/') ||
         isEmbedderSource(id),
     },
     target: 'esnext',

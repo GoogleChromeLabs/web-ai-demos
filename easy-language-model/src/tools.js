@@ -147,6 +147,30 @@ export function withToolExpectations({ expectedInputs, expectedOutputs }) {
 }
 
 /**
+ * The ID that pairs a tool call with its response.
+ *
+ * The Prompt API is renaming `callID` to `callId`, so read whichever one the
+ * browser sends.
+ *
+ * TODO: Drop `callID` once no supported browser sends it.
+ */
+export function callIdOf(call) {
+  return call.callId ?? call.callID;
+}
+
+/**
+ * The ID fields for a `LanguageModelToolSuccess` or `LanguageModelToolError`,
+ * under both names. The constructors ignore a dictionary member they do not
+ * know, so passing both works before and after the rename.
+ *
+ * TODO: Drop `callID` once no supported browser expects it.
+ */
+export function callIdFields(call) {
+  const id = callIdOf(call);
+  return { callId: id, callID: id };
+}
+
+/**
  * Builds the `tool-response` part that answers one call.
  *
  * `signal` is the one the caller passed to the prompting method, handed on so a
@@ -158,7 +182,7 @@ export async function runToolCall(call, byName, { seen, signal } = {}) {
   const fail = (errorMessage) => ({
     type: 'tool-response',
     value: new LanguageModelToolError({
-      callID: call.callID,
+      ...callIdFields(call),
       name: call.name,
       errorMessage,
     }),
@@ -199,7 +223,7 @@ export async function runToolCall(call, byName, { seen, signal } = {}) {
     return {
       type: 'tool-response',
       value: new LanguageModelToolSuccess({
-        callID: call.callID,
+        ...callIdFields(call),
         name: call.name,
         result: [toToolResultItem(output)],
       }),

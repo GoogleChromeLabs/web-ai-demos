@@ -6,23 +6,27 @@
 import { FilesetResolver, LlmInference } from '@mediapipe/tasks-genai';
 import { MODEL_URL, MEDIAPIPE_WASM, MESSAGE_CODE } from './consts.js';
 
-let llmInference = null;
-
 // Trigger model preparation *before* a message arrives
-(async function () {
+const llmInferencePromise = (async function () {
   console.info('[Worker] Preparing model...');
   self.postMessage({ code: MESSAGE_CODE.PREPARING_MODEL, payload: null });
   try {
     const genai = await FilesetResolver.forGenAiTasks(MEDIAPIPE_WASM);
-    llmInference = await LlmInference.createFromModelPath(genai, MODEL_URL);
+    const llmInference = await LlmInference.createFromModelPath(
+      genai,
+      MODEL_URL
+    );
     self.postMessage({ code: MESSAGE_CODE.MODEL_READY, payload: null });
+    return llmInference;
   } catch (error) {
     console.error('[Worker] Error preparing model:', error);
     self.postMessage({ code: MESSAGE_CODE.MODEL_ERROR, payload: null });
+    return null;
   }
 })();
 
 self.onmessage = async function (message) {
+  const llmInference = await llmInferencePromise;
   if (!llmInference) {
     // Just in case. This condition shouldn't normally be hit because the inference UI button is disabled until the model is ready
     throw new Error("Can't run inference, the model is not ready yet");

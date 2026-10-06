@@ -1,0 +1,200 @@
+<!--
+ Copyright 2026 Google LLC
+ SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Wikipedia spam detector</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧹</text></svg>"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="script.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Wikipedia spam detector</h1>
+      <p>
+        Live edits to the English Wikipedia, each run through three decisions on
+        your device with the proposed
+        <a href="https://github.com/explainers-by-googlers/decisions-api"
+          >Decisions API</a
+        >: a <code>boolean</code> spam check, a <code>choice</code> of edit
+        type, and a <code>score</code> for the tone.
+      </p>
+      <p class="disclaimer">
+        <strong>This is only a demo.</strong> None of the models it uses were
+        trained to detect spam or vandalism, so it is a proof of the overall
+        concept and nothing more. For edit scoring that Wikipedia actually
+        relies on, see the
+        <a
+          href="https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Multilingual_revert_risk"
+          >revert risk models</a
+        >
+        that Wikimedia serves on
+        <a href="https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing"
+          >Lift Wing</a
+        >.
+      </p>
+    </header>
+
+    <main>
+      <section class="controls" aria-label="Controls">
+        <button id="toggle" type="button">Start</button>
+        <label>
+          Pages
+          <select id="namespace">
+            <option value="0" selected>Articles</option>
+            <option value="*">All namespaces</option>
+          </select>
+        </label>
+        <label
+          ><input id="skip-bots" type="checkbox" checked /> Skip bots</label
+        >
+        <label hidden>
+          Model
+          <select id="model"></select>
+        </label>
+        <label>
+          Run
+          <select id="mode"></select>
+        </label>
+        <label>
+          When behind
+          <select id="flow">
+            <option value="drop" selected>Drop older edits</option>
+            <option value="hold">Hold back the stream</option>
+          </select>
+        </label>
+        <label><input id="debug" type="checkbox" /> Debug</label>
+        <label class="threshold">
+          Spam threshold
+          <input
+            id="threshold"
+            type="range"
+            min="0.05"
+            max="0.95"
+            step="0.01"
+            value="0.5"
+          />
+          <output id="threshold-value" for="threshold">50%</output>
+        </label>
+      </section>
+
+      <fieldset class="show" id="show">
+        <legend>Show</legend>
+        <label data-label="spam"
+          ><input type="checkbox" value="spam" checked /> Spam</label
+        >
+        <label data-label="vandalism"
+          ><input type="checkbox" value="vandalism" checked /> Vandalism</label
+        >
+        <label data-label="test"
+          ><input type="checkbox" value="test" checked /> Test edit</label
+        >
+        <label data-label="revert"
+          ><input type="checkbox" value="revert" checked /> Revert</label
+        >
+        <label data-label="legit"
+          ><input type="checkbox" value="legit" checked /> Legit</label
+        >
+        <label data-label="unsure"
+          ><input type="checkbox" value="unsure" checked /> Unsure</label
+        >
+      </fieldset>
+
+      <section class="status" aria-live="polite">
+        <p>
+          <span class="dot" id="stream-dot"></span>
+          Stream: <span id="stream-status">disconnected</span>
+        </p>
+        <p>Behind live: <output id="lag">–</output></p>
+        <p>
+          Models: <span id="model-status">checking…</span>
+          <progress id="progress" max="1" value="0" hidden></progress>
+        </p>
+      </section>
+
+      <dl class="stats">
+        <div>
+          <dt>Seen</dt>
+          <dd id="stat-seen">0</dd>
+        </div>
+        <div>
+          <dt>Checked</dt>
+          <dd id="stat-checked">0</dd>
+        </div>
+        <div class="spam">
+          <dt>Spam</dt>
+          <dd id="stat-spam">0</dd>
+        </div>
+        <div class="vandalism">
+          <dt>Vandalism</dt>
+          <dd id="stat-vandalism">0</dd>
+        </div>
+        <div>
+          <dt>Filtered out</dt>
+          <dd id="stat-filtered">0</dd>
+        </div>
+        <div>
+          <dt>Dropped</dt>
+          <dd id="stat-dropped">0</dd>
+        </div>
+      </dl>
+
+      <ul class="timing" id="timing" aria-live="polite">
+        <li>
+          Timings appear once the first edits are checked. Switch modes to
+          compare them.
+        </li>
+      </ul>
+
+      <p class="empty" id="empty">Press Start to watch edits come in.</p>
+      <ol class="feed" id="feed"></ol>
+    </main>
+
+    <template id="edit-template">
+      <li class="edit">
+        <div class="head">
+          <h2><a class="title" target="_blank" rel="noopener"></a></h2>
+          <p class="meta"></p>
+          <p class="summary"></p>
+        </div>
+        <div class="decisions">
+          <section class="decision" data-decision="spam">
+            <h3>Spam <code>boolean</code></h3>
+            <p class="value"></p>
+            <span class="bar"><span class="bar-fill"></span></span>
+            <p class="detail"></p>
+          </section>
+          <section class="decision" data-decision="category">
+            <h3>Edit type <code>choice</code></h3>
+            <p class="value"></p>
+            <span class="stack"></span>
+            <p class="detail"></p>
+          </section>
+          <section class="decision" data-decision="tone">
+            <h3>Tone <code>score</code></h3>
+            <p class="value"></p>
+            <span class="histogram"></span>
+            <p class="detail"></p>
+          </section>
+        </div>
+        <details class="debug">
+          <summary>Debug</summary>
+          <div class="debug-panes"></div>
+        </details>
+        <details>
+          <summary>Diff</summary>
+          <pre class="added"></pre>
+          <pre class="removed"></pre>
+        </details>
+      </li>
+    </template>
+  </body>
+</html>

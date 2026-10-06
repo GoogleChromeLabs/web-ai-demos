@@ -1,7 +1,7 @@
 {
   "name": "built-in-ai-task-apis-polyfills",
-  "version": "1.18.0",
-  "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, etc.)",
+  "version": "1.19.1",
+  "description": "Polyfills for the Built-in AI Task APIs (Summarizer, Writer, Rewriter, DecisionModel, etc.)",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -13,7 +13,8 @@
     "./translator": "./dist/translator.js",
     "./classifier": "./dist/classifier.js",
     "./semantic-embedder": "./dist/semantic-embedder-api-polyfill.js",
-    "./semantic-embedder-worker": "./dist/semantic-embedder-worker.js"
+    "./semantic-embedder-worker": "./dist/semantic-embedder-worker.js",
+    "./decision-model": "./dist/decision-model.js"
   },
   "files": [
     "dist/",
@@ -55,11 +56,16 @@
     "classifier",
     "semantic-embedder",
     "embeddings",
+    "decision-model",
+    "decisions",
     "web-ai"
   ],
   "homepage": "https://github.com/GoogleChromeLabs/web-ai-demos/tree/main/built-in-ai-task-apis-polyfills#readme",
   "bugs": "https://github.com/GoogleChromeLabs/web-ai-demos/issues",
   "dependencies": {
+    "@johnhenry/backend-webgpu": "^0.6.0",
+    "@johnhenry/laya": "^0.3.2",
+    "open-jev": "^0.1.2",
     "prompt-api-polyfill": "^1.22.1"
   },
   "peerDependencies": {
@@ -72,12 +78,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.11.0",
+    "@huggingface/transformers": "^4.3.0",
+    "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.12.0",
+    "globals": "^17.13.0",
     "node-addon-api": "^8.9.2",
-    "node-gyp": "^13.0.2",
+    "node-gyp": "^13.1.0",
     "prettier-plugin-curly": "^0.4.1",
-    "vite": "^8.3.1"
+    "vite": "^8.3.2"
   }
 }

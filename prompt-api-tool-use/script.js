@@ -68,10 +68,7 @@ const SESSION_OPTIONS = {
     { type: 'text', languages: ['en'] },
     { type: 'tool-response' },
   ],
-  expectedOutputs: [
-    { type: 'text', languages: ['en'] },
-    { type: 'tool-call' },
-  ],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }, { type: 'tool-call' }],
   tools: declarations,
 };
 
@@ -215,10 +212,11 @@ async function createUnsafeMarkupDetector() {
     };
   }
 
-  console.info('[prompt-api] No native Sanitizer API, falling back to DOMPurify.');
-  const { default: DOMPurify } = await import(
-    'https://cdn.jsdelivr.net/npm/dompurify@3.2.0/dist/purify.es.mjs'
+  console.info(
+    '[prompt-api] No native Sanitizer API, falling back to DOMPurify.',
   );
+  const { default: DOMPurify } =
+    await import('https://cdn.jsdelivr.net/npm/dompurify@3.2.0/dist/purify.es.mjs');
   return (text) => {
     DOMPurify.sanitize(text);
     if (!DOMPurify.removed.length) {
@@ -244,8 +242,9 @@ function plainify(value) {
   if (Array.isArray(value)) {
     return value.map(plainify);
   }
-  if ('callID' in value) {
-    const out = { callID: value.callID, name: value.name };
+  // TODO: Drop `callID` once no supported browser sends it.
+  if ('callId' in value || 'callID' in value) {
+    const out = { callId: value.callId ?? value.callID, name: value.name };
     if ('arguments' in value) {
       out.arguments = value.arguments;
     }
@@ -431,11 +430,16 @@ function withoutNulls(value) {
 // The value has to be a real LanguageModelToolSuccess or LanguageModelToolError
 // instance: a plain object is rejected with "The value must be a
 // LanguageModelToolSuccess or LanguageModelToolError for type:'tool-response'".
-// Note the capital D in `callID`.
+//
+// The Prompt API is renaming `callID` to `callId`. The constructors ignore a
+// dictionary member they do not know, so passing both works either way.
+// TODO: Drop `callID` once no supported browser uses it.
 function toolResponsePart(call, outcome) {
+  const callId = call.callId ?? call.callID;
   const value = outcome.ok
     ? new LanguageModelToolSuccess({
-        callID: call.callID,
+        callId,
+        callID: callId,
         name: call.name,
         // `object` takes any JSON-serializable value, minus nulls. Chrome
         // currently supports only `text` and `object` here, not `image` or
@@ -443,7 +447,8 @@ function toolResponsePart(call, outcome) {
         result: [{ type: 'object', value: withoutNulls(outcome.value) ?? {} }],
       })
     : new LanguageModelToolError({
-        callID: call.callID,
+        callId,
+        callID: callId,
         name: call.name,
         errorMessage: outcome.message,
       });
@@ -559,14 +564,18 @@ async function ask(question) {
       // "system", "user", and "assistant". Every response for this round
       // travels in one message.
       const messages = [{ role: 'user', content: responses }];
-      logExchange('sent', `promptStreaming() round ${rounds}`, 'user', messages);
+      logExchange(
+        'sent',
+        `promptStreaming() round ${rounds}`,
+        'user',
+        messages,
+      );
       ({ calls, parts, blocked } = await streamResponse(messages));
       logExchange('received', `response ${rounds}`, 'assistant', parts);
       if (blocked) {
         return;
       }
     }
-
   } catch (error) {
     appendMessage('error', `Something went wrong: ${error.message}`);
     logError(`${error.name}: ${error.message}`);
