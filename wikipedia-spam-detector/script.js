@@ -433,7 +433,7 @@ function addCard(change, edit, answers) {
   removed.textContent = edit.removed;
   removed.hidden = !edit.removed;
   if (Object.values(answers).some(({ truncated }) => truncated)) {
-    card.querySelector('details summary').textContent =
+    card.querySelector('details:not(.debug) summary').textContent =
       'Diff (only the start was checked)';
   }
 

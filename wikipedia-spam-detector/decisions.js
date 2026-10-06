@@ -268,33 +268,49 @@ export async function prepareModels(mode, { onProgress } = {}) {
     signal,
     monitor: monitorWith(onProgress, created),
   });
-  try {
-    const others = await Promise.all(
-      rest.map(([, s]) => DecisionModel.create({ ...s, signal })),
-    );
-    keepIfCurrent([first, ...others], created);
-    separateModels = Object.fromEntries([
-      [firstId, first],
-      ...rest.map(([id], i) => [id, others[i]]),
-    ]);
-  } catch (err) {
-    first.destroy();
-    throw err;
+  // Settling every create lets a failed one release the instances that did
+  // load.
+  const settled = await Promise.allSettled(
+    rest.map(([, s]) => DecisionModel.create({ ...s, signal })),
+  );
+  const others = settled
+    .filter(({ status }) => status === 'fulfilled')
+    .map(({ value }) => value);
+  const failed = settled.find(({ status }) => status === 'rejected');
+  if (failed) {
+    for (const model of [first, ...others]) {
+      model.destroy();
+    }
+    throw failed.reason;
   }
+  keepIfCurrent([first, ...others], created);
+  separateModels = Object.fromEntries([
+    [firstId, first],
+    ...rest.map(([id], i) => [id, others[i]]),
+  ]);
 }
 
 const clip = (text, max) =>
   text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
 
-const describeEdit = ({ title, summary, sizeChange, added, removed }, budget) =>
-  [
+// The characters of each diff field that fit in `budget`. Removed text matters
+// most when nothing was added, as in blanking.
+const limits = ({ added }, budget) => ({
+  added: budget,
+  removed: added ? Math.min(MAX_REMOVED, budget) : budget,
+});
+
+const describeEdit = (edit, budget) => {
+  const { title, summary, sizeChange, added, removed } = edit;
+  const limit = limits(edit, budget);
+  return [
     `Page: ${title}`,
     `Edit summary: ${summary || '(none)'}`,
     `Size change: ${sizeChange > 0 ? '+' : ''}${sizeChange} bytes`,
-    `Added:\n${clip(added, budget) || '(nothing)'}`,
-    // Removed text matters most when nothing was added, as in blanking.
-    `Removed:\n${clip(removed, added ? Math.min(MAX_REMOVED, budget) : budget) || '(nothing)'}`,
+    `Added:\n${clip(added, limit.added) || '(nothing)'}`,
+    `Removed:\n${clip(removed, limit.removed) || '(nothing)'}`,
   ].join('\n');
+};
 
 // The explainer keys `probabilities` by label, and the polyfill lists them in
 // option order. Both become a list.
@@ -317,8 +333,9 @@ async function decide(model, schema, ids, edit, signal) {
     try {
       const input = describeEdit(edit, budget);
       const result = await model.decide(input, { signal });
+      const limit = limits(edit, budget);
       const truncated =
-        Math.max(edit.added.length, edit.removed.length) > budget;
+        edit.added.length > limit.added || edit.removed.length > limit.removed;
       const time = performance.now() - start;
       return Object.fromEntries(
         ids.map((id) => {
