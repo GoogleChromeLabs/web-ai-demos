@@ -16,16 +16,54 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'dist-demos',
+    // decision-model-api-polyfill.js re-loads itself as a worker via
+    // `new Worker(import.meta.url)`. Vite's modulepreload machinery
+    // (the injected polyfill, and the `__vitePreload` wrapper it adds
+    // around dynamic imports) unconditionally touches `document`/`window`,
+    // which don't exist inside that worker. Disabling it avoids both:
+    // no polyfill import is injected, and dynamic imports no longer get
+    // wrapped with document-touching preload logic.
+    modulePreload: false,
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'index.html'),
         classifier: resolve(__dirname, 'demo-classifier.html'),
+        'decision-model': resolve(__dirname, 'demo-decision-model.html'),
         'language-detector': resolve(__dirname, 'demo-language-detector.html'),
         rewriter: resolve(__dirname, 'demo-rewriter.html'),
         'semantic-embedder': resolve(__dirname, 'demo-semantic-embedder.html'),
         summarizer: resolve(__dirname, 'demo-summarizer.html'),
         translator: resolve(__dirname, 'demo-translator.html'),
         writer: resolve(__dirname, 'demo-writer.html'),
+      },
+      output: {
+        // decision-model-api-polyfill.js spawns its own worker by pointing
+        // `new Worker()` at its own `import.meta.url`. That only works if the
+        // worker's URL resolves to a chunk containing solely that module's
+        // code: if bundling inlines it into the demo page's entry chunk
+        // instead, the worker re-executes the whole page bundle (including its
+        // DOM-touching top-level code) in a context with no `document`, and
+        // throws. Force it into an isolated chunk so the worker only ever
+        // (re-)loads itself.
+        advancedChunks: {
+          groups: [
+            {
+              name: 'decision-model-api-polyfill',
+              test: /decision-model-api-polyfill\.js$/,
+            },
+            // The polyfills use Vite's preload helper for their dynamic
+            // imports. Left unassigned, it can land in another polyfill's
+            // chunk, so the worker would import, and run, that whole polyfill.
+            // A chunk of its own keeps the worker to its own module.
+            {
+              name: 'vite-preload-helper',
+              test: /vite\/preload-helper/,
+              // Groups also capture the dependencies of what they match, so
+              // this one has to claim the helper before the group above.
+              priority: 1,
+            },
+          ],
+        },
       },
     },
     target: 'esnext',
