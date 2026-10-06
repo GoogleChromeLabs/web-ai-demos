@@ -77,6 +77,15 @@ header p {
   color: var(--muted);
 }
 
+header .disclaimer {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--vandalism);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;

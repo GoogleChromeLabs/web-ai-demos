@@ -10,6 +10,13 @@ one, using a model on your device and the proposed
 [Decisions API](https://github.com/explainers-by-googlers/decisions-api). There
 is one decision per question type:
 
+> [!IMPORTANT] This is only a demo. None of the models it uses were trained to
+> detect spam or vandalism, so it is a proof of the overall concept and nothing
+> more. For edit scoring that Wikipedia actually relies on, see the
+> [revert risk models](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Multilingual_revert_risk)
+> that Wikimedia serves on
+> [Lift Wing](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing).
+
 | Decision  | Type      | Answer                                              |
 | :-------- | :-------- | :-------------------------------------------------- |
 | Spam      | `boolean` | P(spam), judged against the threshold slider        |
