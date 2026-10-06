@@ -16,9 +16,8 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'dist-demos',
-    // semantic-embedder-api-polyfill.js and decision-model-api-polyfill.js
-    // re-load themselves as workers via `new Worker(import.meta.url)`.
-    // Vite's modulepreload machinery
+    // decision-model-api-polyfill.js re-loads itself as a worker via
+    // `new Worker(import.meta.url)`. Vite's modulepreload machinery
     // (the injected polyfill, and the `__vitePreload` wrapper it adds
     // around dynamic imports) unconditionally touches `document`/`window`,
     // which don't exist inside that worker. Disabling it avoids both:
@@ -38,35 +37,29 @@ export default defineConfig({
         writer: resolve(__dirname, 'demo-writer.html'),
       },
       output: {
-        // semantic-embedder-api-polyfill.js spawns its own worker by
-        // pointing `new Worker()` at its own `import.meta.url`. That only
-        // works if the worker's URL resolves to a chunk containing solely
-        // that module's code — if bundling inlines it into the demo page's
-        // entry chunk instead, the worker re-executes the whole page bundle
-        // (including its DOM-touching top-level code) in a context with no
-        // `document`, and throws. Force it into an isolated chunk so the
-        // worker only ever (re-)loads itself.
+        // decision-model-api-polyfill.js spawns its own worker by pointing
+        // `new Worker()` at its own `import.meta.url`. That only works if the
+        // worker's URL resolves to a chunk containing solely that module's
+        // code: if bundling inlines it into the demo page's entry chunk
+        // instead, the worker re-executes the whole page bundle (including its
+        // DOM-touching top-level code) in a context with no `document`, and
+        // throws. Force it into an isolated chunk so the worker only ever
+        // (re-)loads itself.
         advancedChunks: {
           groups: [
-            {
-              name: 'semantic-embedder-api-polyfill',
-              test: /semantic-embedder-api-polyfill\.js$/,
-            },
-            // decision-model-api-polyfill.js spawns its worker the same way.
             {
               name: 'decision-model-api-polyfill',
               test: /decision-model-api-polyfill\.js$/,
             },
-            // Both polyfills use Vite's preload helper for their dynamic
-            // imports. Left unassigned, it lands in one of the two chunks
-            // above, so the other polyfill's worker would import, and run,
-            // that whole polyfill. A chunk of its own keeps each worker to
-            // its own module.
+            // The polyfills use Vite's preload helper for their dynamic
+            // imports. Left unassigned, it can land in another polyfill's
+            // chunk, so the worker would import, and run, that whole polyfill.
+            // A chunk of its own keeps the worker to its own module.
             {
               name: 'vite-preload-helper',
               test: /vite\/preload-helper/,
               // Groups also capture the dependencies of what they match, so
-              // this one has to claim the helper before the groups above.
+              // this one has to claim the helper before the group above.
               priority: 1,
             },
           ],
