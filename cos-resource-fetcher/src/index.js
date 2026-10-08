@@ -176,7 +176,13 @@ export async function fetchBlob(url, options = {}) {
     cacheName = DEFAULT_CACHE_NAME,
   } = options;
 
-  if ('crossOriginStorage' in navigator) {
+  // Checking for `getFileHandle()` itself means an implementation that exposes
+  // `navigator.crossOriginStorage` without the method falls back to the Cache
+  // API.
+  if (
+    typeof globalThis.navigator?.crossOriginStorage?.getFileHandle ===
+    'function'
+  ) {
     let sha256 = directSha256;
     if (!sha256) {
       try {
