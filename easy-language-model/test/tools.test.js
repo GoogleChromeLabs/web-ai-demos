@@ -108,6 +108,37 @@ describe('tool calling', () => {
     );
   });
 
+  it('answers from a text-only turn that arrives as parts', async () => {
+    // With `tool-call` among the expected outputs, `prompt()` resolves to an
+    // array on every turn, so the final answer comes as text parts.
+    install([
+      [
+        {
+          type: 'tool-call',
+          value: toolCall('get_weather', { location: 'Hamburg' }),
+        },
+      ],
+      [
+        { type: 'text', value: 'It is 18 °C ' },
+        { type: 'text', value: 'in Hamburg.' },
+      ],
+    ]);
+    const { tool, calls } = weatherTool();
+    const session = await EasyLanguageModel.create({
+      ...NO_SANITIZER,
+      tools: [tool],
+    });
+
+    const answer = await session.prompt('Weather in Hamburg?');
+
+    assert.deepEqual(calls, [{ location: 'Hamburg' }], 'the tool ran once');
+    assert.equal(
+      answer,
+      'It is 18 °C in Hamburg.',
+      'the text parts are joined into the answer'
+    );
+  });
+
   it('keeps `execute` away from create(), and asks for the tool types', async () => {
     const script = install(['fine']);
     const { tool } = weatherTool();
