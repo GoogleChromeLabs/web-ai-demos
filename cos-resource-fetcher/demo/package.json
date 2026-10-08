@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@litert-lm/core": "^0.12.1",
+    "@litert-lm/core": "^0.18.0",
     "cos-resource-fetcher": "file:.."
   },
   "devDependencies": {
-    "vite": "^8.0.16"
+    "vite": "^8.3.3"
   },
   "license": "Apache-2.0",
   "private": true
