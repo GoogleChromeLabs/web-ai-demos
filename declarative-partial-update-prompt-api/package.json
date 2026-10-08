@@ -1,0 +1,22 @@
+{
+  "name": "declarative-partial-update-prompt-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Streams Prompt API responses into a page out of order with <template for>, processing instructions, and the streaming HTML insertion methods.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "prettier --write ."
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "easy-language-model": "^0.2.6",
+    "html-setters-polyfill": "^0.1.1",
+    "template-for-polyfill": "^0.1.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.2"
+  }
+}
