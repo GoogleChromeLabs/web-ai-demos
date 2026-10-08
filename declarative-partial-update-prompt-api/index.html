@@ -1,0 +1,118 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>"
+    />
+    <title>Declarative Partial Updates with the Prompt API</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>🧩 Declarative Partial Updates with the Prompt API</h1>
+      <p class="lede">
+        A city guide whose five cards are written by five concurrent Prompt API
+        sessions. Each one streams its answer into
+        <code>streamAppendHTMLUnsafe()</code> wrapped in a
+        <code>&lt;template for&gt;</code>, and the browser patches it into the
+        card's <code>&lt;?start&gt;</code>…<code>&lt;?end&gt;</code> range in
+        whatever order the answers arrive. Follow-up questions stream through
+        the sanitizing <code>streamHTML()</code>. Read more in
+        <a
+          href="https://developer.chrome.com/docs/web-platform/declarative-partial-updates"
+          >Declarative partial updates</a
+        >.
+      </p>
+      <dl id="support">
+        <dt><code>&lt;template for&gt;</code></dt>
+        <dd id="support-template-for">…</dd>
+        <dt>Streaming HTML insertion</dt>
+        <dd id="support-streaming">…</dd>
+      </dl>
+    </header>
+
+    <section id="status-panel">
+      <div class="row">
+        <span class="badge" id="state-badge">checking</span>
+        <span id="status">Checking availability…</span>
+      </div>
+      <progress id="download-progress" hidden value="0" max="1"></progress>
+      <label class="visually-hidden" for="download-progress">
+        Model download progress
+      </label>
+      <p id="activation-hint" hidden>
+        The model needs to be downloaded, which requires a user gesture.
+      </p>
+      <button type="button" id="activation-btn" hidden>
+        Download the model
+      </button>
+    </section>
+
+    <main hidden id="app">
+      <form id="city-form">
+        <label for="city-input">City</label>
+        <div class="row">
+          <input id="city-input" autocomplete="off" value="Lisbon" required />
+          <button type="submit" id="generate-btn">Write the guide</button>
+          <button type="button" id="stop-btn" disabled>Stop</button>
+        </div>
+      </form>
+
+      <!--
+        Each card holds a named range. The skeleton between `<?start>` and
+        `<?end>` shows until a `<template for>` with the same name arrives
+        anywhere inside `#guide`, which replaces it. The page stamps one card
+        per section from this template and names each range after it.
+      -->
+      <template id="card-template">
+        <article class="card">
+          <h2></h2>
+          <?start>
+          <div class="skeleton"><span></span><span></span><span></span></div>
+          <?end>
+        </article>
+      </template>
+      <div id="guide"></div>
+
+      <details id="wire-details">
+        <summary>
+          The HTML written to <code>#guide</code>, chunk by chunk and colored by
+          stream
+        </summary>
+        <pre id="wire"></pre>
+      </details>
+
+      <section id="follow-up">
+        <h2>Follow-up</h2>
+        <form id="ask-form">
+          <label for="ask-input">Ask about the guide</label>
+          <div class="row">
+            <input
+              id="ask-input"
+              autocomplete="off"
+              value="Plan a rainy afternoon using only places from the guide."
+              required
+            />
+            <button type="submit" id="ask-btn">Ask</button>
+          </div>
+        </form>
+        <output id="answer" class="prose"></output>
+      </section>
+    </main>
+
+    <p id="unsupported" hidden class="error">
+      This browser doesn't support the Prompt API. Try Chrome with built-in AI
+      enabled.
+    </p>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
