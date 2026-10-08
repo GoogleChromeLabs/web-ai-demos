@@ -162,7 +162,7 @@ npm run dev
 ## How the fallback works
 
 ```
-navigator.crossOriginStorage available?
+navigator.crossOriginStorage.getFileHandle() available?
   ├─ yes → look up hash in COS
   │         ├─ found → return cached blob (zero download)
   │         └─ not found → download → write to COS → return blob

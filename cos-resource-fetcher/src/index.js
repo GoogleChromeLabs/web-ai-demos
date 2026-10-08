@@ -102,7 +102,7 @@ async function fetchViaCOS(url, { sha256, onProgress }) {
   const hash = { algorithm: 'SHA-256', value: sha256 };
 
   try {
-    const handle = await navigator.crossOriginStorage.requestFileHandle(hash);
+    const handle = await navigator.crossOriginStorage.getFileHandle(hash);
     const file = await handle.getFile();
     return new Blob([file], { type: file.type });
   } catch (err) {
@@ -111,13 +111,10 @@ async function fetchViaCOS(url, { sha256, onProgress }) {
     // Not yet in COS: download, then store for future use by any origin
     const blob = await fetchWithProgress(url, onProgress);
     try {
-      const handle = await navigator.crossOriginStorage.requestFileHandle(
-        hash,
-        {
-          create: true,
-          origins: '*',
-        }
-      );
+      const handle = await navigator.crossOriginStorage.getFileHandle(hash, {
+        create: true,
+        origins: '*',
+      });
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
@@ -179,7 +176,13 @@ export async function fetchBlob(url, options = {}) {
     cacheName = DEFAULT_CACHE_NAME,
   } = options;
 
-  if ('crossOriginStorage' in navigator) {
+  // Checking for `getFileHandle()` itself means an implementation that exposes
+  // `navigator.crossOriginStorage` without the method falls back to the Cache
+  // API.
+  if (
+    typeof globalThis.navigator?.crossOriginStorage?.getFileHandle ===
+    'function'
+  ) {
     let sha256 = directSha256;
     if (!sha256) {
       try {
