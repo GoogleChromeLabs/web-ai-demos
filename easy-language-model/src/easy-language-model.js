@@ -75,8 +75,9 @@ function pendingTagStart(text) {
 /**
  * Splits one non-streaming turn into its text and the tools it asked for.
  *
- * `prompt()` resolves to a plain string when the model just talks, and to an
- * array of parts when it wants a tool.
+ * A session that expects tool calls gets an array of parts from `prompt()` on
+ * every turn, including a turn where the model only talks. A text-only session
+ * gets a plain string.
  */
 function partsOfTurn(result) {
   if (typeof result === 'string') {
