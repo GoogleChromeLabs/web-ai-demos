@@ -31,8 +31,8 @@ const SYSTEM_PROMPT =
   'You are a concise travel guide. Answer in Markdown. Never use headings, ' +
   'never add a preamble or a closing remark, and keep every answer short.';
 
-// The order here is the order of the cards, and nothing else. The answers are
-// patched in whenever they finish.
+// The order here is the order of the cards, and nothing else. Each answer is
+// streamed into its own card whenever it arrives.
 const SECTIONS = [
   {
     name: 'overview',
@@ -82,18 +82,17 @@ const escapeHTML = (text) =>
       ]
   );
 
+// The default config drops `class`, which styles the arrival and error lines.
+// Where there is no `Sanitizer`, there is no `streamHTML()` to hand it to.
+const sanitizer = globalThis.Sanitizer ? new Sanitizer() : undefined;
+sanitizer?.allowAttribute('class');
+
 let session = null;
 let busy = false;
 // Aborts whatever is in flight, the guide or a follow-up.
 let controller = null;
 
 function showSupport() {
-  $('support-template-for').textContent = !nativeSupport.templateFor
-    ? 'polyfilled by template-for-polyfill'
-    : nativeSupport.streamingInsertion
-      ? 'native'
-      : 'native, but patched by template-for-polyfill, because ' +
-        'html-setters-polyfill inserts outside the parser';
   $('support-streaming').textContent = nativeSupport.streamingInsertion
     ? 'native, parsed as the chunks arrive'
     : 'polyfilled by html-setters-polyfill, which buffers each stream and ' +
@@ -116,45 +115,32 @@ function setBusy(value) {
   cityInput.readOnly = value;
 }
 
-/**
- * Gives the `<?start>` marker in a freshly stamped card its section's name.
- *
- * A browser that supports `<template for>` parses the marker as a processing
- * instruction. Elsewhere it is a comment whose text starts with `?start`, which
- * is what `template-for-polyfill` looks for. Both keep their text in `data`.
- */
-function nameStartMarker(card, name) {
-  const walker = document.createTreeWalker(
-    card,
-    NodeFilter.SHOW_PROCESSING_INSTRUCTION | NodeFilter.SHOW_COMMENT
-  );
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (node.nodeType === Node.PROCESSING_INSTRUCTION_NODE) {
-      if (node.target === 'start') {
-        node.data = `name="${name}"`;
-      }
-    } else if (node.data.startsWith('?start')) {
-      node.data = `?start name="${name}"`;
-    }
-  }
-}
-
-/**
- * Stamps one card per section, each with an unconsumed `<?start>` range around
- * its skeleton. Every patch consumes its range, so each new guide starts from
- * fresh cards.
- */
+/** Stamps one card per section, each showing a skeleton until it streams. */
 function resetGuide() {
   guide.replaceChildren(
     ...SECTIONS.map(({ name, title }) => {
       const card = cardTemplate.content.firstElementChild.cloneNode(true);
       card.dataset.section = name;
       card.querySelector('h2').textContent = title;
-      nameStartMarker(card, name);
       return card;
     })
   );
   wire.replaceChildren();
+}
+
+/**
+ * Opens a stream that replaces `element`'s children with the HTML written to
+ * it, run through the Sanitizer API with `class` allowed.
+ *
+ * `html-setters-polyfill` can add `streamHTML()` only where `setHTML()` exists,
+ * so fall back to `streamHTMLUnsafe()` where it doesn't. That is fine for what
+ * this page writes: EasyLanguageModel's Markdown parser escapes all text the
+ * model wrote and emits only tags it chose itself.
+ */
+function streamInto(element) {
+  return 'streamHTML' in element
+    ? element.streamHTML({ sanitizer })
+    : element.streamHTMLUnsafe();
 }
 
 /** Mirrors one chunk into the wire log, tagged with the stream it went to. */
@@ -166,40 +152,26 @@ function logWire(name, html) {
 }
 
 /**
- * Streams one section into `#guide` as `<template for="name">…</template>`.
+ * Streams one section into its card.
  *
- * Nothing here looks up the card to fill it. The stream's target is the guide
- * as a whole, and the `for` attribute is what routes the content into the
- * matching `<?start>` range, the same way a server streaming a page out of
- * order would. Each section opens a stream of its own, so all five are in
- * flight at once, and a native implementation fills each card as its chunks
- * arrive.
+ * Each section has a stream of its own, so all five are in flight at once, and
+ * a native implementation fills each card as its chunks arrive.
  */
 async function streamSection(base, { name, prompt }, city, arrival, signal) {
-  // `streamAppendHTMLUnsafe()`, because the sanitizer has no place for
-  // `<template for>`. What goes through it is safe to insert as is: the
-  // template tags are written here, and EasyLanguageModel's Markdown parser
-  // escapes all text the model wrote and emits only tags it chose itself.
-  const writer = guide.streamAppendHTMLUnsafe().getWriter();
-  const write = (html) => {
-    logWire(name, html);
-    return writer.write(html);
-  };
-
   const card = guide.querySelector(`[data-section="${name}"]`);
   card.dataset.state = 'queued';
 
-  // A native patch clears the range as soon as the opening tag is parsed, so
-  // the opening tag waits for the first chunk, and the skeleton stays up for
-  // as long as the section is only queued.
-  let opened = false;
-  const writeInTemplate = async (html) => {
-    if (!opened) {
-      opened = true;
+  // `streamHTML()` replaces the skeleton, so the stream is opened with the
+  // first chunk, and the skeleton stays up for as long as the section is only
+  // queued.
+  let writer = null;
+  const write = async (html) => {
+    if (!writer) {
       card.dataset.state = 'streaming';
-      await write(`<template for="${name}">`);
+      writer = streamInto(card.querySelector('.card-body')).getWriter();
     }
-    await write(html);
+    logWire(name, html);
+    await writer.write(html);
   };
 
   let clone = null;
@@ -208,11 +180,11 @@ async function streamSection(base, { name, prompt }, city, arrival, signal) {
     for await (const chunk of clone.promptStreamingHTML(prompt(city), {
       signal,
     })) {
-      await writeInTemplate(chunk);
+      await write(chunk);
     }
-    await writeInTemplate(
+    await write(
       `<p class="arrival">Arrived ${ordinal(arrival.next())} of ` +
-        `${SECTIONS.length}</p></template>`
+        `${SECTIONS.length}</p>`
     );
     card.dataset.state = 'done';
   } catch (error) {
@@ -220,13 +192,11 @@ async function streamSection(base, { name, prompt }, city, arrival, signal) {
       error.name === 'AbortError'
         ? 'Stopped.'
         : `${error.name}: ${error.message}`;
-    await writeInTemplate(
-      `<p class="error">${escapeHTML(message)}</p></template>`
-    );
+    await write(`<p class="error">${escapeHTML(message)}</p>`);
     card.dataset.state = 'error';
   } finally {
     clone?.destroy();
-    await writer.close();
+    await writer?.close();
   }
 }
 
@@ -254,7 +224,7 @@ async function writeGuide(city) {
   // The on-device model answers one prompt at a time, so the sections finish
   // in the order they start. Starting them in a random order shows that the
   // cards don't depend on it: the layout comes from the markup, and each
-  // answer lands wherever its `<template for>` points.
+  // answer streams into its own card.
   await Promise.all(
     shuffle(SECTIONS).map((section) =>
       streamSection(session, section, city, arrival, signal)
@@ -275,12 +245,7 @@ async function askFollowUp(question) {
   setBusy(true);
   setState('busy', 'Answering…');
 
-  // `streamHTML()` replaces the answer's children and runs every chunk
-  // through the Sanitizer API. The polyfill offers the safe variant only where
-  // `setHTML()` exists, so fall back to the unsafe one where it doesn't, which
-  // is fine for EasyLanguageModel's escaped output.
-  const sink =
-    'streamHTML' in answer ? answer.streamHTML() : answer.streamHTMLUnsafe();
+  const sink = streamInto(answer);
   const clone = await session.clone();
   try {
     const guideText = guide.innerText;
