@@ -315,11 +315,30 @@ classify_app() {
 install_dependencies() {
     local app_dir="$1"
     local install_log="$LOG_DIR/$(slug "$app_dir").install.log"
+    local manifest stamp want
+
+    # `npm ci` deletes `node_modules` and installs it again from scratch, which
+    # across all the demos is around 9 GB written per run. The manifests change
+    # a handful of times a month, so a scheduled run that repeats every half
+    # hour spends most of its time, and most of its page cache, reinstalling
+    # dependencies that were already correct. Record what a tree was installed
+    # from, and install again only once that changes.
+    manifest="$app_dir/package-lock.json"
+    [ -f "$manifest" ] || manifest="$app_dir/package.json"
+    want="$(sha256sum "$manifest" | cut -d' ' -f1)"
+    stamp="$app_dir/node_modules/.sync-installed-from"
+
+    if [ -d "$app_dir/node_modules" ] &&
+        [ "$(cat "$stamp" 2>/dev/null)" = "$want" ]; then
+        echo "  📦 Dependencies already match $(basename "$manifest"), skipping install."
+        return 0
+    fi
 
     if [ -f "$app_dir/package-lock.json" ]; then
         echo "  📦 Installing dependencies (npm ci)..."
         if (cd "$app_dir" && npm ci --no-audit --no-fund --loglevel=error) \
             >"$install_log" 2>&1; then
+            printf '%s\n' "$want" >"$stamp"
             return 0
         fi
         echo "  ↩️  npm ci failed, retrying with npm install..."
@@ -329,6 +348,7 @@ install_dependencies() {
 
     if (cd "$app_dir" && npm install --no-audit --no-fund --loglevel=error) \
         >>"$install_log" 2>&1; then
+        printf '%s\n' "$want" >"$stamp"
         return 0
     fi
 
