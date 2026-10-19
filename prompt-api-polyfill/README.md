@@ -71,6 +71,15 @@ configured, the polyfill will use Transformers.js with the default model.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
 
+### Native (on device, through the app that embeds the page)
+
+- **Uses**: on-device models of the host app, such as a browser or a WebView
+  app, through a bridge the host injects into the page. Chromium for iOS uses it
+  to back the APIs with Apple Foundation Models or Gemma 4.
+- **Select by setting**: `window.NATIVE_CONFIG`, with `bridge` naming the global
+  the host injects (`__builtInAINativeBridge` by default).
+- **Model**: Whatever the host runs.
+
 ---
 
 ## Installation
@@ -201,6 +210,32 @@ npm install prompt-api-polyfill
   const session = await LanguageModel.create();
 </script>
 ```
+
+### Backed by the native host (on device, through the embedding app)
+
+1. **No API Key required**: the host app runs the models.
+2. **Inject a bridge** from the host, and name it in `window.NATIVE_CONFIG`.
+3. **Import the polyfill**.
+
+```html
+<script type="module">
+  // The host injects a global with `send(message)` and `listen(callback)`.
+  window.NATIVE_CONFIG = { bridge: '__builtInAINativeBridge' };
+
+  if (!('LanguageModel' in window)) {
+    await import('prompt-api-polyfill');
+  }
+
+  const session = await LanguageModel.create();
+</script>
+```
+
+The polyfill sends the host plain objects with an `id` and a `cmd`
+(`availability`, `create`, `generate`, `countTokens`, `abort`, or `destroy`).
+The host answers each `id` with any number of `chunk` and `progress` events,
+then exactly one `result` or `error`. The polyfill keeps the conversation and
+sends all of it with each turn, so the host can rebuild a session whenever it
+has to. See [`backends/native.js`](backends/native.js) for the details.
 
 ---
 
