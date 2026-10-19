@@ -97,6 +97,11 @@ function showSupport() {
     ? 'native, parsed as the chunks arrive'
     : 'polyfilled by html-setters-polyfill, which buffers each stream and ' +
       'inserts it on close';
+  // The same check `streamInto()` makes, after the polyfill has had its turn.
+  $('support-sanitizing').textContent =
+    'streamHTML' in Element.prototype
+      ? 'streamHTML() with the Sanitizer API, class allowed'
+      : 'streamHTMLUnsafe(), because this browser has no setHTML()';
 }
 
 function setState(state, message) {

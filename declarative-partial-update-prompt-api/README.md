@@ -38,7 +38,8 @@ appears in one go when its section is complete, and natively it fills in chunk
 by chunk. The polyfill can add `streamHTML()` only where `setHTML()` exists, so
 in browsers without it the page falls back to `streamHTMLUnsafe()`, which is
 safe here because every tag comes from the Markdown parser. The header of the
-page says which of the two you are getting.
+page says whether the streaming methods are native or polyfilled, and whether
+the chunks go through `streamHTML()` or `streamHTMLUnsafe()`.
 
 ## Running it
 
