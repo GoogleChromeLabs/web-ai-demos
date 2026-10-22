@@ -588,7 +588,9 @@
           header.append(id, type, label, metrics);
           block.append(header);
 
-          for (const { label: option, probability } of answer.probabilities) {
+          for (const [option, probability] of Object.entries(
+            answer.probabilities,
+          )) {
             const row = document.createElement('div');
             row.className = 'option-row';
             row.classList.toggle('top', option === answer.label);
