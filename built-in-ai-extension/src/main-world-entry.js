@@ -99,8 +99,30 @@
   const sanitizeOptions = (options) => {
     // eslint-disable-next-line no-unused-vars
     const { monitor, signal, ...rest } = options;
+    if (rest.samplingMode !== undefined) {
+      delete rest.temperature;
+      delete rest.topK;
+    }
     return rest;
   };
+
+  class CreateMonitor extends EventTarget {
+    #ondownloadprogress = null;
+
+    get ondownloadprogress() {
+      return this.#ondownloadprogress;
+    }
+
+    set ondownloadprogress(handler) {
+      if (this.#ondownloadprogress) {
+        this.removeEventListener('downloadprogress', this.#ondownloadprogress);
+      }
+      this.#ondownloadprogress = typeof handler === 'function' ? handler : null;
+      if (this.#ondownloadprogress) {
+        this.addEventListener('downloadprogress', this.#ondownloadprogress);
+      }
+    }
+  }
 
   const handleSignal = (signal, requestId, callId) => {
     if (!signal) return;
@@ -258,6 +280,14 @@
           sessionTargets.set(requestId, this);
         }
 
+        get samplingMode() {
+          return (
+            sessionData.get(this).attributes.samplingMode ||
+            sessions.get(this).options?.samplingMode ||
+            'balanced'
+          );
+        }
+
         get contextUsage() {
           return sessionData.get(this).attributes.contextUsage || 0;
         }
@@ -274,9 +304,10 @@
           if (data.oncontextoverflow) {
             this.removeEventListener('contextoverflow', data.oncontextoverflow);
           }
-          data.oncontextoverflow = handler;
-          if (typeof handler === 'function') {
-            this.addEventListener('contextoverflow', handler);
+          data.oncontextoverflow =
+            typeof handler === 'function' ? handler : null;
+          if (data.oncontextoverflow) {
+            this.addEventListener('contextoverflow', data.oncontextoverflow);
           }
         }
 
@@ -463,7 +494,7 @@
           handleSignal(options.signal, requestId, callId);
 
           if (options.monitor) {
-            const target = new EventTarget();
+            const target = new CreateMonitor();
             progressTargets.set(newRequestId, target);
             options.monitor(target);
           }
@@ -507,7 +538,7 @@
       handleSignal(options.signal, requestId, callId);
 
       if (options.monitor) {
-        const target = new EventTarget();
+        const target = new CreateMonitor();
         progressTargets.set(requestId, target);
         options.monitor(target);
       }

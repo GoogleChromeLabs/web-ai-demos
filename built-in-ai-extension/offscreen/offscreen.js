@@ -163,6 +163,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             attributes: {
               contextUsage: session.contextUsage,
               contextWindow: session.contextWindow,
+              samplingMode: session.samplingMode,
             },
           });
         } finally {
@@ -228,12 +229,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             monitor,
             signal: controller.signal,
           });
+          session.addEventListener?.('contextoverflow', () => {
+            chrome.runtime.sendMessage({
+              target: senderTabId ? 'content' : 'options',
+              type: 'context-overflow',
+              requestId,
+              senderTabId,
+              senderFrameId,
+            });
+          });
           sessions.set(requestId, session);
           sendResponse({
             success: true,
             attributes: {
               contextUsage: session.contextUsage,
               contextWindow: session.contextWindow,
+              samplingMode: session.samplingMode,
             },
           });
         } finally {
