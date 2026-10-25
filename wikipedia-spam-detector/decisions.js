@@ -312,15 +312,15 @@ const describeEdit = (edit, budget) => {
   ].join('\n');
 };
 
-// The explainer keys `probabilities` by label, and the polyfill lists them in
-// option order. Both become a list.
-const probabilityList = (probabilities) =>
+// `probabilities` maps each option label to its probability. Polyfill
+// versions up to 1.19.2 list them as `{ label, probability }` objects, which
+// this turns into the same record.
+const probabilityRecord = (probabilities) =>
   Array.isArray(probabilities)
-    ? probabilities
-    : Object.entries(probabilities).map(([label, probability]) => ({
-        label,
-        probability,
-      }));
+    ? Object.fromEntries(
+        probabilities.map(({ label, probability }) => [label, probability]),
+      )
+    : probabilities;
 
 // Asks a model about an edit, cutting the diff further whenever the input
 // doesn't fit, and resolves to the answers of the questions `ids`. Each
@@ -339,14 +339,11 @@ async function decide(model, schema, ids, edit, signal) {
       const time = performance.now() - start;
       return Object.fromEntries(
         ids.map((id) => {
-          const probabilities = probabilityList(result[id].probabilities);
           return [
             id,
             {
               ...result[id],
-              probabilities,
-              probabilityOf: (label) =>
-                probabilities.find((p) => p.label === label)?.probability ?? 0,
+              probabilities: probabilityRecord(result[id].probabilities),
               truncated,
               time,
               debug: { schema, input, result: result[id] },
