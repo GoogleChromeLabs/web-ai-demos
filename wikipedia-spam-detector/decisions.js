@@ -312,16 +312,6 @@ const describeEdit = (edit, budget) => {
   ].join('\n');
 };
 
-// `probabilities` maps each option label to its probability. Polyfill
-// versions up to 1.19.2 list them as `{ label, probability }` objects, which
-// this turns into the same record.
-const probabilityRecord = (probabilities) =>
-  Array.isArray(probabilities)
-    ? Object.fromEntries(
-        probabilities.map(({ label, probability }) => [label, probability]),
-      )
-    : probabilities;
-
 // Asks a model about an edit, cutting the diff further whenever the input
 // doesn't fit, and resolves to the answers of the questions `ids`. Each
 // answer carries the schema the instance was created with, the input it got,
@@ -338,18 +328,15 @@ async function decide(model, schema, ids, edit, signal) {
         edit.added.length > limit.added || edit.removed.length > limit.removed;
       const time = performance.now() - start;
       return Object.fromEntries(
-        ids.map((id) => {
-          return [
-            id,
-            {
-              ...result[id],
-              probabilities: probabilityRecord(result[id].probabilities),
-              truncated,
-              time,
-              debug: { schema, input, result: result[id] },
-            },
-          ];
-        }),
+        ids.map((id) => [
+          id,
+          {
+            ...result[id],
+            truncated,
+            time,
+            debug: { schema, input, result: result[id] },
+          },
+        ]),
       );
     } catch (err) {
       if (err.name !== 'QuotaExceededError' || budget <= MIN_TEXT) {

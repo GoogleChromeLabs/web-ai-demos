@@ -12,7 +12,7 @@
   "type": "module",
   "dependencies": {
     "@huggingface/transformers": "^4.3.1",
-    "built-in-ai-task-apis-polyfills": "^1.19.2"
+    "built-in-ai-task-apis-polyfills": "^2.0.0"
   },
   "devDependencies": {
     "vite": "^8.3.5"
