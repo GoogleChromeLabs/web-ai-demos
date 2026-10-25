@@ -39,6 +39,26 @@ preferred backend and API keys.
 - `npm run lint`: Check the code formatting.
 - `./zip-extension.sh`: Package the extension into a zip file for distribution.
 
+## Publishing
+
+`publish-extension.mjs` builds the extension and submits it to the Chrome Web
+Store through the
+[Chrome Web Store API v2](https://developer.chrome.com/docs/webstore/using-api),
+authenticating as a
+[service account](https://developer.chrome.com/docs/webstore/service-accounts)
+linked to the publisher. Copy `.env.example` to `.env` and fill in the
+credentials, then bump the version in both `public/manifest.json` and
+`package.json`.
+
+```sh
+npm run release -- --status   # check credentials and what the store has
+npm run release -- --dry-run  # build and check the version, upload nothing
+npm run release               # upload and submit for review
+```
+
+Pass `--staged` to hold the release after approval and publish it later from the
+Developer Dashboard.
+
 ## Credits
 
 Uses the following polyfills:

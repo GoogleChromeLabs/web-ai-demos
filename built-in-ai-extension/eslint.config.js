@@ -33,6 +33,12 @@ export default [
     },
   },
   {
+    files: ['publish-extension.mjs'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
     ignores: ['dist/**', 'node_modules/**'],
   },
 ];

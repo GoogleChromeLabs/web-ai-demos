@@ -10,7 +10,8 @@
     "build": "vite build",
     "fix": "eslint . --fix && prettier --write .",
     "lint": "eslint . && prettier --check .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release": "node publish-extension.mjs"
   },
   "keywords": [],
   "author": "Thomas Steiner (tomac@google.com)",
