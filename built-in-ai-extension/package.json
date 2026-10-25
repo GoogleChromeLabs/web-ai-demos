@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-extension",
-  "version": "1.10.4",
+  "version": "1.11.0",
   "private": true,
   "description": "",
   "main": "index.js",
@@ -21,13 +21,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.12.0",
+    "eslint": "^10.13.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
     "node-addon-api": "^8.9.2",
     "node-gyp": "^13.1.0",
-    "prettier": "^3.9.9",
-    "vite": "^8.3.3"
+    "prettier": "^3.9.10",
+    "vite": "^8.3.5"
   }
 }
