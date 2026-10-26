@@ -245,17 +245,15 @@ function toResult(question, distribution) {
       best = i;
     }
   }
-  const result = { id: question.id, label: labels[best] };
-  if (question.type === 'boolean') {
-    // P("true"), whichever label wins.
-    result.probability = round(distribution[0]);
-  }
-  // The winning label's probability.
-  result.confidence = round(distribution[best]);
-  result.probabilities = labels.map((label, i) => ({
-    label,
-    probability: round(distribution[i]),
-  }));
+  const result = {
+    id: question.id,
+    label: labels[best],
+    // The winning label's probability.
+    confidence: round(distribution[best]),
+    probabilities: Object.fromEntries(
+      labels.map((label, i) => [label, round(distribution[i])]),
+    ),
+  };
   if (question.type === 'score') {
     // Weighted by the labels themselves when they're all numbers, so a scale
     // labeled "0" to "10" yields a score between 0 and 10, and by their 1-based
@@ -701,7 +699,7 @@ export class DecisionModel {
         req.reject(error);
       }
       this.#pendingRequests.clear();
-      this.destroy(error);
+      this.#destroy(error);
     };
   }
 
@@ -863,7 +861,7 @@ export class DecisionModel {
     const model = new this(worker, schema.questions);
 
     if (signal) {
-      signal.addEventListener('abort', () => model.destroy(signal.reason), {
+      signal.addEventListener('abort', () => model.#destroy(signal.reason), {
         once: true,
       });
     }
@@ -935,7 +933,11 @@ export class DecisionModel {
     });
   }
 
-  destroy(reason) {
+  destroy() {
+    this.#destroy();
+  }
+
+  #destroy(reason) {
     if (this.#destroyed) {
       return;
     }

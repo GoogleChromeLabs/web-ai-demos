@@ -288,7 +288,7 @@ if ((await DecisionModel.availability(schema)) !== 'unavailable') {
 
   const { command } = await model.decide('let my coworkers view this file');
   // command: { id: 'command', label: 'share_link', confidence,
-  //            probabilities: [{ label, probability }, …] }
+  //            probabilities: { export_pdf, share_link, archive_doc } }
   if (command.confidence > 0.6) {
     runCommand(command.label);
   }
@@ -297,13 +297,12 @@ if ((await DecisionModel.availability(schema)) !== 'unavailable') {
 ```
 
 Each result reports the winning `label`, its probability as `confidence`, and
-the `probabilities` of all options in schema order. `boolean` questions use the
-labels `'true'` and `'false'`, and their results add `probability`, which is
-always P(`'true'`). `score` questions default to the options `'1'` to `'5'` when
-they define none, and their results add `expectedScore`. When all labels of a
-`score` question are numbers, `expectedScore` is weighted by those numbers.
-Otherwise it's weighted by each option's 1-based position. The polyfill rounds
-all values to four decimals.
+the `probabilities` record mapping each option label to its probability.
+`boolean` questions use the labels `'true'` and `'false'`. `score` questions
+default to the options `'1'` to `'5'` when they define none, and their results
+add `expectedScore`. When all labels of a `score` question are numbers,
+`expectedScore` is weighted by those numbers. Otherwise it's weighted by each
+option's 1-based position. The polyfill rounds all values to four decimals.
 
 `decide()` throws a `QuotaExceededError` when the input doesn't fit into the
 model's context window next to the questions, and doesn't truncate the input. It

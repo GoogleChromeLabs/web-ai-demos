@@ -282,7 +282,7 @@ async function checkEdit(change, signal) {
   if (times.length > TIMING_WINDOW) {
     times.shift();
   }
-  spamProbabilities.push(answers.spam.probabilityOf('true'));
+  spamProbabilities.push(answers.spam.probabilities.true);
   if (
     answers.category.label === 'vandalism' &&
     answers.category.confidence >= CONFIDENT
@@ -325,7 +325,7 @@ function applyVerdict(card) {
 }
 
 function renderSpam(panel, answer) {
-  const p = answer.probabilityOf('true');
+  const p = answer.probabilities.true;
   panel.querySelector('.bar-fill').style.width = percent(p);
   panel.querySelector('.detail').textContent =
     `P(spam) ${percent(p)} · ${ms(answer.time)}`;
@@ -338,18 +338,18 @@ function renderCategory(panel, answer) {
   panel.dataset.label = answer.label;
   panel.classList.toggle('unsure', !confident);
   const stack = panel.querySelector('.stack');
-  for (const { label, probability } of answer.probabilities) {
+  for (const [label, probability] of Object.entries(answer.probabilities)) {
     const segment = document.createElement('span');
     segment.dataset.label = label;
     segment.style.flexGrow = probability;
     segment.title = `${CATEGORY_NAMES[label]} ${percent(probability)}`;
     stack.append(segment);
   }
-  const [, runnerUp] = answer.probabilities.toSorted(
-    (a, b) => b.probability - a.probability,
-  );
+  const [, [runnerUp, runnerUpProbability]] = Object.entries(
+    answer.probabilities,
+  ).toSorted(([, a], [, b]) => b - a);
   panel.querySelector('.detail').textContent =
-    `${percent(answer.confidence)}, then ${CATEGORY_NAMES[runnerUp.label].toLowerCase()} ${percent(runnerUp.probability)} · ${ms(answer.time)}`;
+    `${percent(answer.confidence)}, then ${CATEGORY_NAMES[runnerUp].toLowerCase()} ${percent(runnerUpProbability)} · ${ms(answer.time)}`;
 }
 
 function renderTone(panel, answer) {
@@ -357,8 +357,8 @@ function renderTone(panel, answer) {
   // distant options, and their average lands on one that hardly scored.
   panel.querySelector('.value').textContent = TONE_NAMES[answer.label];
   const histogram = panel.querySelector('.histogram');
-  const highest = Math.max(...answer.probabilities.map((p) => p.probability));
-  for (const { label, probability } of answer.probabilities) {
+  const highest = Math.max(...Object.values(answer.probabilities));
+  for (const [label, probability] of Object.entries(answer.probabilities)) {
     const bar = document.createElement('span');
     bar.style.height = percent(Math.max(probability / highest, 0.05));
     bar.classList.toggle('top', label === answer.label);
@@ -396,7 +396,7 @@ function renderDebug(container, answers) {
 
 function addCard(change, edit, answers) {
   const card = template.content.firstElementChild.cloneNode(true);
-  card.dataset.spamProbability = answers.spam.probabilityOf('true');
+  card.dataset.spamProbability = answers.spam.probabilities.true;
   card.dataset.category =
     answers.category.confidence >= CONFIDENT
       ? answers.category.label

@@ -365,8 +365,10 @@ export class BaseTaskModel {
         once: true,
       });
 
-      this.#session
-        .measureInputUsage(input)
+      const measureUsage =
+        this.#session.measureContextUsage ?? this.#session.measureInputUsage;
+      measureUsage
+        .call(this.#session, input)
         .then(resolve)
         .catch(reject)
         .finally(() => {
@@ -378,7 +380,7 @@ export class BaseTaskModel {
   }
 
   get inputQuota() {
-    return this.#session.inputQuota;
+    return this.#session.contextWindow ?? this.#session.inputQuota;
   }
 
   destroy(reason) {

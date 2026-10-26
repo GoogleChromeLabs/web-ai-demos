@@ -66,6 +66,34 @@ async function convertToHistory(prompts, win = globalThis) {
   return history;
 }
 
+const SAMPLING_MODES = {
+  'most-predictable': { temperature: 0.0, topK: 1 },
+  predictable: { temperature: 0.3, topK: 32 },
+  'slightly-predictable': { temperature: 0.7, topK: 64 },
+  balanced: { temperature: 1.0, topK: 64 },
+  'slightly-creative': { temperature: 1.1, topK: 72 },
+  creative: { temperature: 1.15, topK: 80 },
+  'most-creative': { temperature: 1.2, topK: 100 },
+};
+
+class CreateMonitor extends EventTarget {
+  #ondownloadprogress = null;
+
+  get ondownloadprogress() {
+    return this.#ondownloadprogress;
+  }
+
+  set ondownloadprogress(handler) {
+    if (this.#ondownloadprogress) {
+      this.removeEventListener('downloadprogress', this.#ondownloadprogress);
+    }
+    this.#ondownloadprogress = typeof handler === 'function' ? handler : null;
+    if (this.#ondownloadprogress) {
+      this.addEventListener('downloadprogress', this.#ondownloadprogress);
+    }
+  }
+}
+
 /**
  * Main LanguageModel Class
  */
@@ -76,7 +104,7 @@ export class LanguageModel extends EventTarget {
   #sessionParams;
   #destroyed;
   #contextUsage;
-  #oncontextoverflow;
+  #oncontextoverflow = null;
   #window;
 
   constructor(
@@ -95,8 +123,11 @@ export class LanguageModel extends EventTarget {
     this.#sessionParams = sessionParams;
     this.#destroyed = false;
     this.#contextUsage = contextUsage;
-    this.#oncontextoverflow = {};
     this.#window = win;
+  }
+
+  get samplingMode() {
+    return this.#options.samplingMode ?? 'balanced';
   }
 
   get contextUsage() {
@@ -114,9 +145,9 @@ export class LanguageModel extends EventTarget {
     if (this.#oncontextoverflow) {
       this.removeEventListener('contextoverflow', this.#oncontextoverflow);
     }
-    this.#oncontextoverflow = handler;
-    if (typeof handler === 'function') {
-      this.addEventListener('contextoverflow', handler);
+    this.#oncontextoverflow = typeof handler === 'function' ? handler : null;
+    if (this.#oncontextoverflow) {
+      this.addEventListener('contextoverflow', this.#oncontextoverflow);
     }
   }
 
@@ -214,9 +245,9 @@ export class LanguageModel extends EventTarget {
   static async #validateOptions(options = {}, win = globalThis) {
     if (
       options.samplingMode !== undefined &&
-      typeof options.samplingMode !== 'string'
+      !Object.hasOwn(SAMPLING_MODES, options.samplingMode)
     ) {
-      throw new TypeError(`The samplingMode option must be a string.`);
+      throw new TypeError(`Invalid samplingMode: "${options.samplingMode}".`);
     }
 
     // Language validation for expectedInputs and expectedOutputs
@@ -322,12 +353,6 @@ export class LanguageModel extends EventTarget {
     // Validate options early so create() throws RangeError for out-of-range params.
     await LanguageModel.#validateOptions(options, win);
 
-    if (options.samplingMode !== undefined) {
-      console.warn(
-        `Prompt API Polyfill: The samplingMode option ("${options.samplingMode}") is not supported and will be silently ignored.`
-      );
-    }
-
     if (options.signal?.aborted) {
       throw (
         options.signal.reason ||
@@ -377,11 +402,14 @@ export class LanguageModel extends EventTarget {
     const BackendClass = await LanguageModel.#getBackendClass(win);
     const backend = new BackendClass(info.configValue);
 
-    const resolvedOptions = { ...options };
+    const resolvedOptions = {
+      ...options,
+      samplingMode: options.samplingMode ?? 'balanced',
+    };
 
     const sessionParams = {
       model: backend.modelName,
-      generationConfig: {},
+      generationConfig: { ...SAMPLING_MODES[resolvedOptions.samplingMode] },
     };
 
     let initialHistory = [];
@@ -453,7 +481,7 @@ export class LanguageModel extends EventTarget {
 
     let monitorTarget = null;
     if (typeof resolvedOptions.monitor === 'function') {
-      monitorTarget = new EventTarget();
+      monitorTarget = new CreateMonitor();
       resolvedOptions.monitor(monitorTarget);
     }
 

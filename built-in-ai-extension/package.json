@@ -1,6 +1,6 @@
 {
   "name": "built-in-ai-extension",
-  "version": "1.10.4",
+  "version": "1.11.0",
   "private": true,
   "description": "",
   "main": "index.js",
@@ -10,24 +10,25 @@
     "build": "vite build",
     "fix": "eslint . --fix && prettier --write .",
     "lint": "eslint . && prettier --check .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release": "node publish-extension.mjs"
   },
   "keywords": [],
   "author": "Thomas Steiner (tomac@google.com)",
   "license": "Apache-2.0",
   "dependencies": {
-    "built-in-ai-task-apis-polyfills": "^1.19.2",
-    "prompt-api-polyfill": "^1.22.2"
+    "built-in-ai-task-apis-polyfills": "^2.0.0",
+    "prompt-api-polyfill": "^1.23.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.12.0",
+    "eslint": "^10.13.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
     "node-addon-api": "^8.9.2",
     "node-gyp": "^13.1.0",
-    "prettier": "^3.9.9",
-    "vite": "^8.3.3"
+    "prettier": "^3.9.10",
+    "vite": "^8.3.5"
   }
 }
