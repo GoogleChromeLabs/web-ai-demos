@@ -127,13 +127,23 @@ function hostOptions(options = {}, config = {}) {
       }));
     }
   }
-  for (const key of ['temperature', 'topK']) {
-    if (typeof options[key] === 'number') {
-      result[key] = options[key];
-    }
-  }
   if (config.backend) {
     result.backend = config.backend;
+  }
+  return result;
+}
+
+/**
+ * The sampling parameters the polyfill derived from `samplingMode`.
+ * @param {Object} [generationConfig] - The session's generation config.
+ * @returns {Object} `temperature` and `topK`, where set.
+ */
+function sampling(generationConfig = {}) {
+  const result = {};
+  for (const key of ['temperature', 'topK']) {
+    if (typeof generationConfig[key] === 'number') {
+      result[key] = generationConfig[key];
+    }
   }
   return result;
 }
@@ -161,7 +171,17 @@ export default class NativeBackend extends PolyfillBackend {
    * @returns {Promise<string>}
    */
   static async availability(options = {}, config = {}) {
-    return NativeClient.for(config).call('availability', {
+    let client;
+    try {
+      client = NativeClient.for(config);
+    } catch (error) {
+      // Without the bridge, there is no model.
+      if (error.name === 'NotSupportedError') {
+        return 'unavailable';
+      }
+      throw error;
+    }
+    return client.call('availability', {
       options: hostOptions(options, config),
     }).promise;
   }
@@ -190,6 +210,7 @@ export default class NativeBackend extends PolyfillBackend {
         session: this.#sessionId,
         options: {
           ...hostOptions(options, this.#config),
+          ...sampling(sessionParams.generationConfig),
           systemInstruction: sessionParams.systemInstruction,
         },
         // A download needs a user gesture, and only the page can tell.
@@ -285,7 +306,7 @@ export default class NativeBackend extends PolyfillBackend {
     );
     promise.then(
       (result) => {
-        usage = result.usage;
+        usage = result?.usage ?? 0;
         done = true;
         wake?.();
       },

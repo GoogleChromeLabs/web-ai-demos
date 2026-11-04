@@ -217,8 +217,8 @@ export class LanguageModel extends EventTarget {
   static #getBackendInfo(win = globalThis) {
     for (const b of LanguageModel.#backends) {
       const config = win[b.config] || globalThis[b.config];
-      // The native backend needs no key, just the bridge the host injected.
-      if (config && (config.apiKey || config.bridge)) {
+      // The native backend needs no key, and its bridge has a default name.
+      if (config && (config.apiKey || b.config === 'NATIVE_CONFIG')) {
         return { ...b, configValue: config };
       }
     }
