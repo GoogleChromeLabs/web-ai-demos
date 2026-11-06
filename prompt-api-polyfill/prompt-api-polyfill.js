@@ -20,6 +20,7 @@
  *    - For Gemini: Define `window.GEMINI_CONFIG`.
  *    - For OpenAI: Define `window.OPENAI_CONFIG`.
  *    - For Transformers.js: Define `window.TRANSFORMERS_CONFIG`.
+ *    - For on-device models of a host app: Define `window.NATIVE_CONFIG`.
  */
 
 import './async-iterator-polyfill.js';
@@ -134,7 +135,9 @@ export class LanguageModel extends EventTarget {
     return this.#contextUsage;
   }
   get contextWindow() {
-    return 1000000;
+    // Backends that know their model's limit report it; the others have none
+    // worth enforcing.
+    return this.#backend.contextWindow ?? 1000000;
   }
 
   get oncontextoverflow() {
@@ -214,7 +217,8 @@ export class LanguageModel extends EventTarget {
   static #getBackendInfo(win = globalThis) {
     for (const b of LanguageModel.#backends) {
       const config = win[b.config] || globalThis[b.config];
-      if (config && config.apiKey) {
+      // The native backend needs no key, and its bridge has a default name.
+      if (config && (config.apiKey || b.config === 'NATIVE_CONFIG')) {
         return { ...b, configValue: config };
       }
     }
@@ -560,7 +564,8 @@ export class LanguageModel extends EventTarget {
         }
         contextUsageValue = (await backend.countTokens(fullHistory)) || 0;
 
-        if (contextUsageValue > 1000000) {
+        const contextWindow = backend.contextWindow ?? 1000000;
+        if (contextUsageValue > contextWindow) {
           const ErrorClass =
             win.QuotaExceededError ||
             win.DOMException ||
@@ -575,7 +580,7 @@ export class LanguageModel extends EventTarget {
             configurable: true,
           });
           error.requested = contextUsageValue;
-          error.quota = 1000000; // contextWindow
+          error.quota = contextWindow;
           throw error;
         }
       }
