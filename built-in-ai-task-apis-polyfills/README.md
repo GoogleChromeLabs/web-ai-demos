@@ -255,7 +255,6 @@ is one of the options you defined.
 
 ```js
 const schema = {
-  context: 'Document editor command palette',
   expectedInputs: [{ type: 'text', languages: ['en'] }],
   questions: [
     {

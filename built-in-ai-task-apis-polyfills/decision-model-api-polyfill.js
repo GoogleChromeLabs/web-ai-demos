@@ -85,11 +85,6 @@ function optionText({ label, description }) {
   return description ? `${label}: ${description}` : label;
 }
 
-// Developer text, kept apart from the user's input, which goes into the state.
-function instructionsFor(question, context) {
-  return context ? `${context}\n${question.prompt}` : question.prompt;
-}
-
 /**
  * Validates a schema and returns a structured-cloneable copy of it. Throws a
  * `TypeError` for malformed schemas and a `RangeError` for invalid language
@@ -104,10 +99,7 @@ function normalizeSchema(schema, method) {
   if (!schema || typeof schema !== 'object') {
     fail('The schema must be an object.');
   }
-  const { context, expectedInputs = [], questions } = schema;
-  if (context !== undefined && typeof context !== 'string') {
-    fail('The schema `context` must be a string.');
-  }
+  const { expectedInputs = [], questions } = schema;
   if (!Array.isArray(expectedInputs)) {
     fail('The schema `expectedInputs` must be an array.');
   }
@@ -174,7 +166,6 @@ function normalizeSchema(schema, method) {
   }
 
   return {
-    context: context || '',
     questions: normalizedQuestions,
     inputTypes: [...inputTypes],
     languages: [...languages],
@@ -317,7 +308,7 @@ const engines = {
         prepare(schema) {
           questions = schema.questions;
           native = questions.map((question) => {
-            const instructions = instructionsFor(question, schema.context);
+            const instructions = question.prompt;
             if (question.type === 'boolean') {
               return { type: 'noul', instructions };
             }
@@ -439,7 +430,7 @@ const engines = {
           questions = schema.questions;
           native = Object.fromEntries(
             questions.map((question) => {
-              const instructions = instructionsFor(question, schema.context);
+              const instructions = question.prompt;
               if (question.type === 'boolean') {
                 return [question.id, { type: 'noul', instructions }];
               }

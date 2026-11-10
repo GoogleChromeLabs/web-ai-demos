@@ -268,7 +268,6 @@
           name: 'Natural language to search filters',
           input: "dog-friendly hotel downtown that won't break the bank",
           schema: {
-            context: 'Hotel reservation search filter converter.',
             expectedInputs: [{ type: 'text', languages: ['en'] }],
             questions: [
               {
@@ -320,7 +319,6 @@
           name: 'Intent routing for a command palette',
           input: 'let my coworkers view this file',
           schema: {
-            context: 'Document editor command palette',
             expectedInputs: [{ type: 'text', languages: ['en'] }],
             questions: [
               {
@@ -350,7 +348,6 @@
           input:
             'The export button does nothing. My API key is sk-live-4f9a2c7e, in case you need to log in as me.',
           schema: {
-            context: 'Bug report submission form pre-check',
             expectedInputs: [{ type: 'text', languages: ['en'] }],
             questions: [
               {
@@ -372,8 +369,6 @@
           input:
             'Label: "Enter the 6-digit security code sent to your phone" | Placeholder: "000000"',
           schema: {
-            context:
-              'Form assistant classifying a non-standard input field from surrounding DOM labels',
             expectedInputs: [{ type: 'text', languages: ['en'] }],
             questions: [
               {
