@@ -304,12 +304,12 @@
                 id: 'price_tier',
                 type: 'score',
                 prompt:
-                  'Rate the target price tier from 1 (budget) to 4 (luxury).',
+                  'Rate the target price tier from 0 (budget) to 3 (luxury).',
                 options: [
-                  { label: '1', description: 'Budget or inexpensive stay' },
-                  { label: '2', description: 'Moderate or mid-range price' },
-                  { label: '3', description: 'Upscale or premium property' },
-                  { label: '4', description: 'Luxury or five-star resort' },
+                  { label: '0', description: 'Budget or inexpensive stay' },
+                  { label: '1', description: 'Moderate or mid-range price' },
+                  { label: '2', description: 'Upscale or premium property' },
+                  { label: '3', description: 'Luxury or five-star resort' },
                 ],
               },
             ],
@@ -577,8 +577,8 @@
           metrics.className = 'metrics';
           metrics.textContent =
             `confidence ${answer.confidence.toFixed(2)}` +
-            (answer.expectedScore !== undefined
-              ? ` · expectedScore ${answer.expectedScore.toFixed(2)}`
+            (answer.score !== undefined
+              ? ` · score ${answer.score.toFixed(2)}`
               : '');
           header.append(id, type, label, metrics);
           block.append(header);
