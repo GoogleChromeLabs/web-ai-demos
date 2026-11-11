@@ -1,0 +1,20 @@
+{
+  "name": "prompt-api-date-range-picker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A date range picker that understands phrases like \"Last 3 Fridays\" or \"Weekends since October\" with the Prompt API.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "prettier --write ."
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "easy-language-model": "^0.2.6"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}
