@@ -37,10 +37,12 @@ configured, the polyfill will use Transformers.js with the default model.
 
 ### Google Gemini API (cloud)
 
-- **Uses**: `@google/generative-ai` SDK.
+- **Uses**: `@google/genai` SDK, which targets the `v1` Gemini Developer API.
 - **Select by setting**: `window.GEMINI_CONFIG`.
 - **Model**: Uses default if not specified (see
-  [`backends/defaults.js`](backends/defaults.js)).
+  [`backends/defaults.js`](backends/defaults.js)). Pass an explicit model name
+  such as `gemini-3.1-flash-lite`. The `v1` API does not serve the `-latest`
+  aliases like `gemini-flash-lite-latest`.
 
 ### OpenAI API (cloud)
 
