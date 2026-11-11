@@ -17,11 +17,11 @@ is one decision per question type:
 > that Wikimedia serves on
 > [Lift Wing](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing).
 
-| Decision  | Type      | Answer                                              |
-| :-------- | :-------- | :-------------------------------------------------- |
-| Spam      | `boolean` | P(spam), judged against the threshold slider        |
-| Edit type | `choice`  | `legit`, `spam`, `vandalism`, `test`, or `revert`   |
-| Tone      | `score`   | The winning option, and `expectedScore` from 1 to 5 |
+| Decision  | Type      | Answer                                            |
+| :-------- | :-------- | :------------------------------------------------ |
+| Spam      | `boolean` | P(spam), judged against the threshold slider      |
+| Edit type | `choice`  | `legit`, `spam`, `vandalism`, `test`, or `revert` |
+| Tone      | `score`   | The winning option, and `score` from 0 to 4       |
 
 The tone follows Wikipedia's
 [neutral point of view](https://en.wikipedia.org/wiki/Wikipedia:Neutral_point_of_view)
@@ -138,10 +138,11 @@ model:
   from 9 to 13 when the `revert` option pointed at the edit summary and the
   input gained the size change.
 - The tone score orders edits well and measures them less well. On the
-  hand-labeled set, neutral edits scored 1.7 to 2.4 and promotional or abusive
-  ones 3.1 to 3.6. A revert that removed an insult scored 3.5, since the model
+  hand-labeled set, neutral edits scored 0.7 to 1.4 and promotional or abusive
+  ones 2.1 to 2.6. A revert that removed an insult scored 2.5, since the model
   reads the removed text too. An earlier question about the size of the edit
-  clustered between 1.5 and 3, and the diff answers it without a model anyway.
+  clustered in the middle of its scale, and the diff answers it without a model
+  anyway.
 
 With the other models:
 

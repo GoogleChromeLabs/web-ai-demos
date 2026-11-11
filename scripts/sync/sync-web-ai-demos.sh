@@ -390,6 +390,16 @@ build_app() {
         log "  🔨 Building with $build_script..."
     fi
 
+    # Cached bundlers leave the previous output untouched when nothing changed.
+    # Parcel does this as soon as its `.parcel-cache` is warm and the installed
+    # dependencies are unchanged, and the freshness check below then reads the
+    # output of an earlier run as a build that produced nothing. Clear the
+    # candidates first, so whatever is there afterwards came from this build. A
+    # warm cache rewrites them in seconds.
+    for candidate in "${OUTPUT_DIR_CANDIDATES[@]}"; do
+        rm -rf "$app_dir/$candidate"
+    done
+
     # Timestamp reference, so we can tell a directory this build wrote from a
     # stale one left behind by an earlier run or committed to the repository.
     marker="$LOG_DIR/$(slug "$app_dir").marker"

@@ -366,7 +366,7 @@ function renderTone(panel, answer) {
     histogram.append(bar);
   }
   panel.querySelector('.detail').textContent =
-    `expectedScore ${answer.expectedScore.toFixed(1)} of 5 · ${ms(answer.time)}`;
+    `score ${answer.score.toFixed(1)} of 4 · ${ms(answer.time)}`;
 }
 
 // What each decision was asked, what it read, and what it answered, exactly
