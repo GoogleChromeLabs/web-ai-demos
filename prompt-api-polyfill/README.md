@@ -29,7 +29,8 @@ configured, the polyfill will use Transformers.js with the default model.
 - **Uses**: `firebase/ai` SDK.
 - **Select by setting**: `window.FIREBASE_CONFIG`.
 - **API Provider**: Supports `"developer"` (Gemini Developer API, default) or
-  `"vertex"` (Vertex AI).
+  `"vertex"` (the Agent Platform Gemini API, formerly Vertex AI, in the `global`
+  location).
 - **App Check**: Supports optional App Check protection via `useAppCheck`,
   `reCaptchaSiteKey`, and `useLimitedUseAppCheckTokens`.
 - **Model**: Uses default if not specified (see
@@ -413,7 +414,8 @@ Then open `.env.json` and fill in the values.
   - **Transformers.js** / **WebLLM**: Use `"dummy"`.
 - `projectId` / `appId`: **Firebase AI Logic only**.
 - `geminiApiProvider`: **Firebase AI Logic only**. Either `"developer"` (Gemini
-  Developer API, default) or `"vertex"` (Vertex AI).
+  Developer API, default) or `"vertex"` (the Agent Platform Gemini API, formerly
+  Vertex AI).
 - `useAppCheck`: **Firebase AI Logic only**. Whether to use Firebase App Check
   (default `false`).
 - `reCaptchaSiteKey`: **Firebase AI Logic only**. Your reCAPTCHA Enterprise site
