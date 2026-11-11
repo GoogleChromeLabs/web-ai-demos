@@ -75,17 +75,17 @@ export const DECISIONS = {
     type: 'score',
     prompt: 'How neutral is the tone of the text this edit adds?',
     options: [
-      { label: '1', description: 'Neutral: factual, encyclopedic wording' },
-      { label: '2', description: 'Slightly informal' },
+      { label: '0', description: 'Neutral: factual, encyclopedic wording' },
+      { label: '1', description: 'Slightly informal' },
       {
-        label: '3',
+        label: '2',
         description: 'Opinionated: judgments without sources',
       },
       {
-        label: '4',
+        label: '3',
         description: 'Promotional: praise, marketing, or calls to action',
       },
-      { label: '5', description: 'Abusive: insults, slurs, or mockery' },
+      { label: '4', description: 'Abusive: insults, slurs, or mockery' },
     ],
   }),
 };
