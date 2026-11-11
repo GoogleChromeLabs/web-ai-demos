@@ -10,10 +10,9 @@ export const DEFAULT_MODELS = {
   // Firebase AI Logic docs say stable Gemini 2.5+ model names have no
   // auto-updated alias and recommend pinning an explicit stable name.
   firebase: { modelName: 'gemini-3.1-flash-lite' },
-  // 'gemini-flash-lite-latest' is a Gemini Developer API alias that always
-  // resolves to the newest stable Flash-Lite release (2-week notice before
-  // any swap), so the default stays current without code changes.
-  gemini: { modelName: 'gemini-flash-lite-latest' },
+  // `@google/genai` 3.x targets the `v1` Gemini Developer API, which only
+  // serves explicit model names. The `-latest` aliases exist on `v1beta` only.
+  gemini: { modelName: 'gemini-3.1-flash-lite' },
   openai: { modelName: 'gpt-4o' },
   transformers: {
     modelName: 'onnx-community/gemma-3-1b-it-ONNX-GQA',

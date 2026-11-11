@@ -12,7 +12,7 @@ import {
   getAI,
   getGenerativeModel,
   GoogleAIBackend,
-  VertexAIBackend,
+  AgentPlatformBackend,
   InferenceMode,
 } from 'firebase/ai';
 import PolyfillBackend from './base.js';
@@ -42,13 +42,15 @@ export default class FirebaseBackend extends PolyfillBackend {
         isTokenAutoRefreshEnabled: true,
       });
     }
+    // Firebase renamed the Vertex AI Gemini API to the Agent Platform Gemini
+    // API. The `'vertex'` config value stays for compatibility.
     const backend =
       geminiApiProvider === 'vertex'
-        ? new VertexAIBackend()
+        ? new AgentPlatformBackend()
         : new GoogleAIBackend();
     this.#ai = getAI(app, {
       backend,
-      useLimitedUseAppCheckTokens: useLimitedUseAppCheckTokens || true,
+      useLimitedUseAppCheckTokens: useLimitedUseAppCheckTokens === true,
     });
   }
 

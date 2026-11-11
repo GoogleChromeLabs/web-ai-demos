@@ -18,6 +18,10 @@ export const BACKENDS = [
     path: './backends/gemini.js',
   },
   {
+    config: 'NATIVE_CONFIG',
+    path: './backends/native.js',
+  },
+  {
     config: 'OPENAI_CONFIG',
     path: './backends/openai.js',
   },
@@ -37,6 +41,9 @@ export async function getBackendClass(path) {
   }
   if (path === './backends/gemini.js') {
     return (await import('./backends/gemini.js')).default;
+  }
+  if (path === './backends/native.js') {
+    return (await import('./backends/native.js')).default;
   }
   if (path === './backends/openai.js') {
     return (await import('./backends/openai.js')).default;

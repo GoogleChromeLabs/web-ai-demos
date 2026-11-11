@@ -545,7 +545,6 @@ interface LanguageModel : EventTarget {
   // **DEPRECATED**: This attribute will be removed; use samplingMode instead. Only available in extension contexts.
   readonly attribute float temperature;
 
-  // **EXPERIMENTAL**: Only available in experimental contexts.
   readonly attribute LanguageModelSamplingMode? samplingMode;
 
   Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
@@ -580,7 +579,6 @@ dictionary LanguageModelCreateCoreOptions {
   // **DEPRECATED**: This option will be removed; use samplingMode instead. Only available in extension contexts.
   unrestricted double temperature;
 
-  // **EXPERIMENTAL**: Only available in experimental contexts.
   LanguageModelSamplingMode samplingMode;
 
   // The expected types and languages for the session.

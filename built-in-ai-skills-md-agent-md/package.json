@@ -1,9 +1,12 @@
 {
   "name": "built-in-ai-skills-md-agent-md",
-  "version": "1.5.4",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
+  "bin": {
+    "built-in-ai-skills-md-agent-md": "scripts/install.js"
+  },
   "scripts": {
     "update-idls": "node scripts/fetch-idls.js",
     "postinstall": "node scripts/install.js",
@@ -28,6 +31,6 @@
     "AGENTS.md"
   ],
   "devDependencies": {
-    "prettier": "^3.9.10"
+    "prettier": "^3.10.0"
   }
 }

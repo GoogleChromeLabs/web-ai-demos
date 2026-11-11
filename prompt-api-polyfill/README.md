@@ -29,7 +29,8 @@ configured, the polyfill will use Transformers.js with the default model.
 - **Uses**: `firebase/ai` SDK.
 - **Select by setting**: `window.FIREBASE_CONFIG`.
 - **API Provider**: Supports `"developer"` (Gemini Developer API, default) or
-  `"vertex"` (Vertex AI).
+  `"vertex"` (the Agent Platform Gemini API, formerly Vertex AI, in the `global`
+  location).
 - **App Check**: Supports optional App Check protection via `useAppCheck`,
   `reCaptchaSiteKey`, and `useLimitedUseAppCheckTokens`.
 - **Model**: Uses default if not specified (see
@@ -37,10 +38,12 @@ configured, the polyfill will use Transformers.js with the default model.
 
 ### Google Gemini API (cloud)
 
-- **Uses**: `@google/generative-ai` SDK.
+- **Uses**: `@google/genai` SDK, which targets the `v1` Gemini Developer API.
 - **Select by setting**: `window.GEMINI_CONFIG`.
 - **Model**: Uses default if not specified (see
-  [`backends/defaults.js`](backends/defaults.js)).
+  [`backends/defaults.js`](backends/defaults.js)). Pass an explicit model name
+  such as `gemini-3.1-flash-lite`. The `v1` API does not serve the `-latest`
+  aliases like `gemini-flash-lite-latest`.
 
 ### OpenAI API (cloud)
 
@@ -70,6 +73,15 @@ configured, the polyfill will use Transformers.js with the default model.
 - **Select by setting**: `window.WEBLLM_CONFIG`.
 - **Model**: Uses default if not specified (see
   [`backends/defaults.js`](backends/defaults.js)).
+
+### Native (on device, through the app that embeds the page)
+
+- **Uses**: on-device models of the host app, such as a browser or a WebView
+  app, through a bridge the host injects into the page. Chromium for iOS uses it
+  to back the APIs with Apple Foundation Models or Gemma 4.
+- **Select by setting**: `window.NATIVE_CONFIG`, with `bridge` naming the global
+  the host injects (`__builtInAINativeBridge` by default).
+- **Model**: Whatever the host runs.
 
 ---
 
@@ -201,6 +213,32 @@ npm install prompt-api-polyfill
   const session = await LanguageModel.create();
 </script>
 ```
+
+### Backed by the native host (on device, through the embedding app)
+
+1. **No API Key required**: the host app runs the models.
+2. **Inject a bridge** from the host, and name it in `window.NATIVE_CONFIG`.
+3. **Import the polyfill**.
+
+```html
+<script type="module">
+  // The host injects a global with `send(message)` and `listen(callback)`.
+  window.NATIVE_CONFIG = { bridge: '__builtInAINativeBridge' };
+
+  if (!('LanguageModel' in window)) {
+    await import('prompt-api-polyfill');
+  }
+
+  const session = await LanguageModel.create();
+</script>
+```
+
+The polyfill sends the host plain objects with an `id` and a `cmd`
+(`availability`, `create`, `generate`, `countTokens`, `abort`, or `destroy`).
+The host answers each `id` with any number of `chunk` and `progress` events,
+then exactly one `result` or `error`. The polyfill keeps the conversation and
+sends all of it with each turn, so the host can rebuild a session whenever it
+has to. See [`backends/native.js`](backends/native.js) for the details.
 
 ---
 
@@ -376,7 +414,8 @@ Then open `.env.json` and fill in the values.
   - **Transformers.js** / **WebLLM**: Use `"dummy"`.
 - `projectId` / `appId`: **Firebase AI Logic only**.
 - `geminiApiProvider`: **Firebase AI Logic only**. Either `"developer"` (Gemini
-  Developer API, default) or `"vertex"` (Vertex AI).
+  Developer API, default) or `"vertex"` (the Agent Platform Gemini API, formerly
+  Vertex AI).
 - `useAppCheck`: **Firebase AI Logic only**. Whether to use Firebase App Check
   (default `false`).
 - `reCaptchaSiteKey`: **Firebase AI Logic only**. Your reCAPTCHA Enterprise site
