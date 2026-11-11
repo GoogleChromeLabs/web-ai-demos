@@ -16,10 +16,10 @@ const CONTEXT =
   'The input is an edit to an English Wikipedia page, in wikitext: the page title, the edit summary, the size change in bytes, the text the edit added, and the text it removed.';
 const EXPECTED_INPUTS = [{ type: 'text', languages: ['en'] }];
 
+// The schema has no context option, so every prompt starts with the context.
 const schema = (question) => ({
-  context: CONTEXT,
   expectedInputs: EXPECTED_INPUTS,
-  questions: [question],
+  questions: [{ ...question, prompt: `${CONTEXT}\n${question.prompt}` }],
 });
 
 export const DECISIONS = {
@@ -75,17 +75,17 @@ export const DECISIONS = {
     type: 'score',
     prompt: 'How neutral is the tone of the text this edit adds?',
     options: [
-      { label: '1', description: 'Neutral: factual, encyclopedic wording' },
-      { label: '2', description: 'Slightly informal' },
+      { label: '0', description: 'Neutral: factual, encyclopedic wording' },
+      { label: '1', description: 'Slightly informal' },
       {
-        label: '3',
+        label: '2',
         description: 'Opinionated: judgments without sources',
       },
       {
-        label: '4',
+        label: '3',
         description: 'Promotional: praise, marketing, or calls to action',
       },
-      { label: '5', description: 'Abusive: insults, slurs, or mockery' },
+      { label: '4', description: 'Abusive: insults, slurs, or mockery' },
     ],
   }),
 };
@@ -178,7 +178,6 @@ export const availability = async () => {
 // All three questions in one schema, which the explainer recommends: the
 // input is encoded once for all of them.
 const COMBINED = {
-  context: CONTEXT,
   expectedInputs: EXPECTED_INPUTS,
   questions: Object.values(DECISIONS).map(({ questions }) => questions[0]),
 };

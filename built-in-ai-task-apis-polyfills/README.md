@@ -255,7 +255,6 @@ is one of the options you defined.
 
 ```js
 const schema = {
-  context: 'Document editor command palette',
   expectedInputs: [{ type: 'text', languages: ['en'] }],
   questions: [
     {
@@ -299,10 +298,9 @@ if ((await DecisionModel.availability(schema)) !== 'unavailable') {
 Each result reports the winning `label`, its probability as `confidence`, and
 the `probabilities` record mapping each option label to its probability.
 `boolean` questions use the labels `'true'` and `'false'`. `score` questions
-default to the options `'1'` to `'5'` when they define none, and their results
-add `expectedScore`. When all labels of a `score` question are numbers,
-`expectedScore` is weighted by those numbers. Otherwise it's weighted by each
-option's 1-based position. The polyfill rounds all values to four decimals.
+need 2 to 10 options, ordered from the lowest level to the highest, and their
+results add `score`, the expected 0-based level. Their option labels are only
+for display. The polyfill rounds all values to four decimals.
 
 `decide()` throws a `QuotaExceededError` when the input doesn't fit into the
 model's context window next to the questions, and doesn't truncate the input. It

@@ -46,10 +46,8 @@ const BACKENDS = {
 
 const QUESTION_TYPES = new Set(['boolean', 'choice', 'score']);
 const BOOLEAN_LABELS = ['true', 'false'];
-// The scale a `score` question uses when it defines no options.
-const DEFAULT_SCORE_OPTIONS = ['1', '2', '3', '4', '5'].map((label) => ({
-  label,
-}));
+// The number of ordered levels a `score` question can have.
+const MAX_SCORE_OPTIONS = 10;
 
 // The explainer asks for bounded numeric precision to limit fingerprinting.
 const PRECISION = 1e4;
@@ -85,11 +83,6 @@ function optionText({ label, description }) {
   return description ? `${label}: ${description}` : label;
 }
 
-// Developer text, kept apart from the user's input, which goes into the state.
-function instructionsFor(question, context) {
-  return context ? `${context}\n${question.prompt}` : question.prompt;
-}
-
 /**
  * Validates a schema and returns a structured-cloneable copy of it. Throws a
  * `TypeError` for malformed schemas and a `RangeError` for invalid language
@@ -104,10 +97,7 @@ function normalizeSchema(schema, method) {
   if (!schema || typeof schema !== 'object') {
     fail('The schema must be an object.');
   }
-  const { context, expectedInputs = [], questions } = schema;
-  if (context !== undefined && typeof context !== 'string') {
-    fail('The schema `context` must be a string.');
-  }
+  const { expectedInputs = [], questions } = schema;
   if (!Array.isArray(expectedInputs)) {
     fail('The schema `expectedInputs` must be an array.');
   }
@@ -136,11 +126,13 @@ function normalizeSchema(schema, method) {
     if (type === 'boolean') {
       return { id, type, prompt };
     }
-    if (type === 'score' && options === undefined) {
-      return { id, type, prompt, options: DEFAULT_SCORE_OPTIONS };
-    }
     if (!Array.isArray(options) || options.length < 2) {
       fail(`The ${type} question '${id}' needs at least two options.`);
+    }
+    if (type === 'score' && options.length > MAX_SCORE_OPTIONS) {
+      fail(
+        `The score question '${id}' can have at most ${MAX_SCORE_OPTIONS} options.`,
+      );
     }
     const labels = new Set();
     return {
@@ -174,7 +166,6 @@ function normalizeSchema(schema, method) {
   }
 
   return {
-    context: context || '',
     questions: normalizedQuestions,
     inputTypes: [...inputTypes],
     languages: [...languages],
@@ -255,18 +246,9 @@ function toResult(question, distribution) {
     ),
   };
   if (question.type === 'score') {
-    // Weighted by the labels themselves when they're all numbers, so a scale
-    // labeled "0" to "10" yields a score between 0 and 10, and by their 1-based
-    // positions otherwise.
-    const values = labels.map((label) =>
-      label.trim() === '' ? NaN : Number(label),
-    );
-    const weights = values.every(Number.isFinite)
-      ? values
-      : labels.map((_, i) => i + 1);
-    result.expectedScore = round(
-      distribution.reduce((sum, p, i) => sum + p * weights[i], 0),
-    );
+    // The expected 0-based level, from the lowest option to the highest. The
+    // labels are only for display.
+    result.score = round(distribution.reduce((sum, p, i) => sum + p * i, 0));
   }
   return result;
 }
@@ -317,7 +299,7 @@ const engines = {
         prepare(schema) {
           questions = schema.questions;
           native = questions.map((question) => {
-            const instructions = instructionsFor(question, schema.context);
+            const instructions = question.prompt;
             if (question.type === 'boolean') {
               return { type: 'noul', instructions };
             }
@@ -439,7 +421,7 @@ const engines = {
           questions = schema.questions;
           native = Object.fromEntries(
             questions.map((question) => {
-              const instructions = instructionsFor(question, schema.context);
+              const instructions = question.prompt;
               if (question.type === 'boolean') {
                 return [question.id, { type: 'noul', instructions }];
               }
