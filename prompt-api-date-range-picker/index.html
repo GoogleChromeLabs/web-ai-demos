@@ -1,0 +1,150 @@
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>"
+    />
+    <title>Date Range Picker with the Prompt API</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>📅 Date Range Picker with the Prompt API</h1>
+      <p class="lede">
+        Type the dates you mean, like “Last 3 Fridays” or “Weekends since
+        October”. The Prompt API describes the phrase as structured JSON, and
+        the page works out the days from it. Press <kbd>Tab</kbd> or
+        <kbd>→</kbd> to accept a suggested word.
+      </p>
+    </header>
+
+    <section id="status-panel">
+      <div class="row">
+        <span class="badge" id="state-badge">checking</span>
+        <span id="status">Checking availability…</span>
+      </div>
+      <progress id="download-progress" hidden value="0" max="1"></progress>
+      <label class="visually-hidden" for="download-progress">
+        Model download progress
+      </label>
+      <p id="activation-hint" hidden>
+        The model needs to be downloaded, which requires a user gesture.
+      </p>
+      <button type="button" id="activation-btn" hidden>
+        Download the model
+      </button>
+    </section>
+
+    <p id="unsupported" hidden class="error">
+      This browser doesn't support the Prompt API. You can still pick dates on
+      the calendar and with the shortcuts.
+    </p>
+
+    <main>
+      <div class="picker">
+        <div class="picker-card">
+          <div class="query">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+              <path d="M3.5 10h17M8 3v4M16 3v4" />
+            </svg>
+            <div class="field">
+              <!-- The suggested rest of the word, drawn behind the input. -->
+              <div class="ghost" id="ghost" aria-hidden="true"></div>
+              <input
+                id="query"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="What dates are you looking for?"
+                aria-label="Dates"
+                aria-describedby="summary"
+              />
+            </div>
+            <span class="spinner" id="spinner" hidden></span>
+            <button
+              type="button"
+              class="icon-button"
+              id="clear-btn"
+              aria-label="Clear"
+              hidden
+            >
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6-7z" />
+                <path d="m11 9.5 5 5m0-5-5 5" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="body">
+            <ul class="presets" id="presets"></ul>
+            <div class="months">
+              <button
+                type="button"
+                class="icon-button nav prev"
+                id="prev-btn"
+                aria-label="Previous month"
+              >
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m15 5-7 7 7 7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="icon-button nav next"
+                id="next-btn"
+                aria-label="Next month"
+              >
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m9 5 7 7-7 7" />
+                </svg>
+              </button>
+              <div class="month" id="month-0"></div>
+              <div class="month" id="month-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="picker-footer">
+          <output id="summary" aria-live="polite">Type or select dates.</output>
+          <button type="button" class="apply" id="apply-btn" disabled>
+            Apply dates
+          </button>
+        </footer>
+      </div>
+
+      <div class="examples">
+        <span>Try:</span>
+        <ul id="examples"></ul>
+      </div>
+
+      <section class="inspector">
+        <h2>Applied</h2>
+        <output id="applied">Nothing applied yet.</output>
+        <h2>The model's answer</h2>
+        <p id="answer-meta">
+          The model's JSON for the last phrase shows up here.
+        </p>
+        <pre id="answer"></pre>
+      </section>
+    </main>
+
+    <template id="month-template">
+      <label class="month-label">
+        <span class="visually-hidden"></span>
+        <select></select>
+      </label>
+      <div class="grid" role="group"></div>
+    </template>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

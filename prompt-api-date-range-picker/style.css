@@ -1,0 +1,570 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  color-scheme: light dark;
+  --page: light-dark(#ededed, #161617);
+  --card: light-dark(#fff, #222224);
+  --tray: light-dark(#f4f4f4, #1b1b1c);
+  --fg: light-dark(#1d1d1f, #ececee);
+  --muted: light-dark(#6e6e73, #9a9aa0);
+  --faint: light-dark(#b8b8bd, #55555a);
+  --line: light-dark(#e6e6e8, #333336);
+  --band: light-dark(#ececee, #353539);
+  --hover: light-dark(#f2f2f4, #2d2d30);
+  --accent: light-dark(#3346f0, #6b7bff);
+  --on-accent: #fff;
+  --ink: light-dark(#111, #f4f4f5);
+  --on-ink: light-dark(#fff, #111);
+  --ok: light-dark(#15803d, #86efac);
+  --warn: light-dark(#b45309, #fcd34d);
+  --error: light-dark(#b91c1c, #fca5a5);
+  --cell: 2.25rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--page);
+}
+
+h1 {
+  margin-bottom: 0.25rem;
+  font-size: 1.75rem;
+}
+
+h2 {
+  font-size: 0.875rem;
+  margin: 1.25rem 0 0.25rem;
+}
+
+.lede {
+  max-width: 64ch;
+  color: var(--muted);
+}
+
+kbd {
+  font: inherit;
+  font-size: 0.85em;
+  padding: 0 0.35em;
+  border: 1px solid var(--line);
+  border-radius: 0.3em;
+  background: var(--card);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.error {
+  color: var(--error);
+}
+
+/* Status. */
+
+#status-panel {
+  margin-block: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--card);
+  font-size: 0.875rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line);
+}
+
+.badge[data-state='ready'] {
+  color: var(--ok);
+  border-color: currentColor;
+}
+
+.badge[data-state='error'] {
+  color: var(--error);
+  border-color: currentColor;
+}
+
+.badge[data-state='busy'],
+.badge[data-state='downloading'] {
+  color: var(--warn);
+  border-color: currentColor;
+}
+
+progress {
+  width: 100%;
+  height: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* The picker: a white card sitting in a gray tray that holds the footer. */
+
+.picker {
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 1rem;
+  background: var(--tray);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 12px 32px -12px rgb(0 0 0 / 0.18);
+}
+
+.picker-card {
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+
+.icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.icon-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* The text field, with the suggested rest of the word drawn behind it. */
+
+.query {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem 0.625rem 1rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.field input,
+.ghost {
+  width: 100%;
+  margin: 0;
+  padding: 0.375rem 0;
+  font: inherit;
+  font-size: 1rem;
+  letter-spacing: normal;
+  border: 0;
+}
+
+.field input {
+  position: relative;
+  background: transparent;
+  color: var(--fg);
+  caret-color: var(--accent);
+  outline: none;
+}
+
+.field input::placeholder {
+  color: var(--muted);
+}
+
+.ghost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.ghost .typed {
+  color: transparent;
+}
+
+.ghost .rest {
+  color: var(--faint);
+}
+
+.query:focus-within {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.spinner[hidden],
+.icon-button[hidden] {
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* Shortcuts on the side, two months on the right. */
+
+.body {
+  display: flex;
+}
+
+.presets {
+  flex: none;
+  margin: 0;
+  padding: 0.75rem 0.5rem;
+  list-style: none;
+  border-right: 1px solid var(--line);
+}
+
+.presets button {
+  display: block;
+  width: 100%;
+  padding: 0.3rem 0.625rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: none;
+  font-size: 0.8125rem;
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.presets button:hover {
+  background: var(--hover);
+}
+
+.months {
+  position: relative;
+  display: flex;
+  gap: 2rem;
+  padding: 0.75rem 1.25rem 1rem;
+}
+
+.nav {
+  position: absolute;
+  top: 0.75rem;
+}
+
+.nav.prev {
+  left: 0.75rem;
+}
+
+.nav.next {
+  right: 0.75rem;
+}
+
+.month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.month-label select {
+  appearance: none;
+  height: 2rem;
+  padding: 0 2rem 0 0.875rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+      no-repeat right 0.75rem center / 0.875rem,
+    var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, var(--cell));
+  grid-auto-rows: var(--cell);
+  row-gap: 0.25rem;
+  align-items: center;
+}
+
+.weekday {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+}
+
+.day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.day .number {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.day:hover:not(:disabled) .number {
+  background: var(--hover);
+}
+
+.day:focus-visible {
+  outline: none;
+}
+
+.day:focus-visible .number {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.day:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.day.today .number {
+  box-shadow: inset 0 0 0 1px var(--faint);
+}
+
+/* A continuous range is a band, broken into one pill per week row. */
+
+.day.in-range::before {
+  content: '';
+  position: absolute;
+  inset: 0.125rem 0;
+  background: var(--band);
+}
+
+.day.row-start::before,
+.day.range-start::before {
+  left: 0.125rem;
+  border-start-start-radius: 999px;
+  border-end-start-radius: 999px;
+}
+
+.day.row-end::before,
+.day.range-end::before {
+  right: 0.125rem;
+  border-start-end-radius: 999px;
+  border-end-end-radius: 999px;
+}
+
+.day.in-range:hover:not(:disabled) .number {
+  background: color-mix(in srgb, var(--band), var(--fg) 8%);
+}
+
+.day.endpoint .number,
+.day.endpoint:hover .number {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.day.anchor .number {
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 3.5px var(--accent);
+}
+
+/* The footer in the tray. */
+
+.picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem 0.75rem 0.625rem 1rem;
+}
+
+#summary {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.apply {
+  flex: none;
+  padding: 0.4rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.apply:disabled {
+  background: var(--faint);
+  color: var(--card);
+  cursor: default;
+}
+
+/* Examples and what the model said. */
+
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin-block: 1.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.examples ul {
+  display: contents;
+  list-style: none;
+}
+
+.examples button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.examples button:hover {
+  border-color: var(--muted);
+}
+
+.inspector output {
+  display: block;
+  white-space: pre-wrap;
+  font-size: 0.875rem;
+}
+
+#answer-meta {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+#answer {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--card);
+  font-size: 0.8125rem;
+  overflow-x: auto;
+}
+
+#answer:empty {
+  display: none;
+}
+
+/* Narrow screens: shortcuts across the top, one month at a time. */
+
+@media (width < 46rem) {
+  :root {
+    --cell: 2.4rem;
+  }
+
+  .picker {
+    width: 100%;
+  }
+
+  .body {
+    flex-direction: column;
+  }
+
+  .presets {
+    display: flex;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .months {
+    justify-content: center;
+  }
+
+  #month-0 {
+    display: none;
+  }
+
+  .grid {
+    grid-template-columns: repeat(7, minmax(0, var(--cell)));
+  }
+}
