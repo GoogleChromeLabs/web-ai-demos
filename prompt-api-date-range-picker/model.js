@@ -210,6 +210,9 @@ export const createSession = (options) =>
     ...options,
   });
 
+const MONTH_NAME =
+  /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i;
+
 /**
  * Puts back a year the model left out. The on-device model tends to drop it,
  * reading “March 2025” as plain March, but the year is right there in the
@@ -227,14 +230,25 @@ function restoreYear(spec, text) {
   for (const ref of refs) {
     ref.year = Number(years[0]);
   }
-  // In “December 20 to January 5 2025”, the start is in the year before.
+  // A range that crosses New Year's Eve, like “December to January 2025”,
+  // needs its ends a year apart. The year goes with the end it is written
+  // next to: a month named after it, as in “December 2024 to January”, means
+  // it belongs to the start, so the end moves a year on; otherwise the start
+  // moves a year back.
   const { from, to } = spec;
+  const named = (ref) => ['date', 'month'].includes(ref.kind);
   if (
-    from.kind === 'date' &&
-    to.kind === 'date' &&
-    (from.month > to.month || (from.month === to.month && from.day > to.day))
+    named(from) &&
+    named(to) &&
+    (from.month > to.month ||
+      (from.month === to.month && from.day && to.day && from.day > to.day))
   ) {
-    from.year--;
+    const afterYear = text.slice(text.indexOf(years[0]) + years[0].length);
+    if (MONTH_NAME.test(afterYear)) {
+      to.year++;
+    } else {
+      from.year--;
+    }
   }
   return spec;
 }

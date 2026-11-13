@@ -284,6 +284,9 @@ const rangeFormat = new Intl.DateTimeFormat('en', {
 
 /** "Fridays · Oct 30 – Nov 13, 2026 · 3 days" */
 export function summarize({ dates, label }) {
+  if (!dates.length) {
+    return '';
+  }
   const days = `${dates.length} ${dates.length === 1 ? 'day' : 'days'}`;
   const range = rangeFormat.formatRange(dates[0], dates.at(-1));
   return [label, range, days].filter(Boolean).join(' · ');
