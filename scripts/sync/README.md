@@ -103,21 +103,29 @@ that file from a workspace where the overlay has been applied.
 
 ## Running it on a schedule
 
-A run installs around 9 GB of `node_modules` across the demos. The kernel
+A first run installs around 9 GB of `node_modules` across the demos. The kernel
 charges all of that to whoever ran the sync as page cache, so an unconstrained
 scheduled run grows to well over 10 GB and becomes the most attractive target
-for the OOM killer. The builds themselves need about 2 GB.
+for the OOM killer. The builds themselves need about 2 GB. Later runs are
+lighter, since a demo whose manifest has not changed keeps the dependencies it
+already has.
 
-Under a systemd user unit, `MemoryHigh=4G` keeps it in check: the kernel
-reclaims the cache as the run goes, the builds keep their headroom, and nothing
-is ever killed. Expect a few extra minutes, since files have to be read from
-disk again.
+Under a systemd user unit, `MemoryHigh` keeps the page cache in check: the
+kernel reclaims it as the run goes, and the limit throttles the cgroup without
+ever killing anything in it. Leave the run plenty of room. At `MemoryHigh=4G`
+the reclaim never stops, sustained reclaim is itself memory pressure, and
+`systemd-oomd` kills whichever cgroup in the session has the most of it, which
+took down both this job and the session's editor while the job was using a
+fraction of its limit. `MemoryHigh=8G` with `MemoryMax=12G` as a backstop runs
+cleanly.
 
 ```ini
 [Service]
 Type=oneshot
 ExecStart=%h/path/to/sync-web-ai-demos.sh --live
 MemoryAccounting=yes
-MemoryHigh=4G
+MemoryHigh=8G
+MemoryMax=12G
 TimeoutStartSec=1h
+Nice=10
 ```
